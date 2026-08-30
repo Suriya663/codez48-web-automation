@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Program | CODEZ48</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #1e293b; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border: 1px solid rgba(0, 0, 0, 0.08); }
+        .btn-royal { background-color: #2563EB; color: white; transition: all 0.3s ease; }
+        .btn-royal:hover { background-color: #1d4ed8; transform: translateY(-2px); box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.4); }
+        .sidebar-item { transition: all 0.3s ease; }
+        .sidebar-item.active { background-color: #2563EB; color: white; }
+        .golden-highlight { background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; font-weight: bold; border: 2px solid #FFD700; }
+
+        /* Silver Elite Badge Theme */
+        .badge-silver-elite {
+            background: linear-gradient(135deg, #000000 0%, #434343 45%, #ffffff 50%, #434343 55%, #000000 100%);
+            background-size: 200% auto;
+            color: white;
+            border: 1px solid #C0C0C0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.2);
+            animation: silverShine 3s linear infinite;
+        }
+
+        @keyframes silverShine {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Premium Intro Overlay */
+        #premium-intro {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease-in-out;
+        }
+
+        .intro-text-unit {
+            position: absolute;
+            color: #000000;
+            font-size: clamp(24px, 5vw, 64px);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            opacity: 0;
+            transform: translateY(20px) scale(0.98);
+            text-align: center;
+            width: 90%;
+            pointer-events: none;
+            animation: introReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 0.5s;
+        }
+
+        @keyframes introReveal {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Painting Spreading Animation (Left to Right) */
+        #painting-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2100;
+            pointer-events: none;
+            background: #090909;
+            clip-path: circle(0% at 0% 50%);
+            display: none;
+        }
+
+        @keyframes paintingSpread {
+            0% { clip-path: circle(0% at 0% 50%); }
+            100% { clip-path: circle(150% at 0% 50%); }
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC]">
+
+    <!-- Premium Cinematic Intro -->
+    <div id="premium-intro">
+        <div id="intro-msg" class="intro-text-unit">WELCOME TO codez48 DEVELOPER PROGRAM</div>
+    </div>
+
+    <!-- Painting Spread Reveal -->
+    <div id="painting-overlay"></div>
+
+    <!-- Auth View -->
+    <div id="auth-view" class="fixed inset-0 z-[100] bg-slate-50 flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-8 rounded-[2rem] bg-white shadow-xl text-center">
+            <div id="login-form">
+                <h2 class="text-3xl font-black mb-6 uppercase tracking-tighter">Developer Program</h2>
+                <div class="space-y-4">
+                    <input type="email" id="login-email" placeholder="Email Address" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                    <input type="password" id="login-pass" placeholder="Password" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                    <button onclick="handleLogin()" class="w-full btn-royal py-4 rounded-xl font-black uppercase tracking-widest text-xs">Access Dashboard</button>
+                    <p class="text-xs text-slate-400 font-bold mt-4">Don't have an account? <button onclick="toggleAuth(true)" class="text-royal hover:underline">Register Now</button></p>
+                </div>
+            </div>
+
+            <div id="register-form" class="hidden">
+                <h2 class="text-3xl font-black mb-6 uppercase tracking-tighter">Join Program</h2>
+                <div class="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                    <input type="text" id="reg-name" placeholder="Full Name" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                    <input type="tel" id="reg-mobile" placeholder="Mobile Number" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                    <input type="text" id="reg-upi" placeholder="UPI ID (for payments)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                    <input type="email" id="reg-email" placeholder="Email Address" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                    <input type="password" id="reg-pass" placeholder="Create Password" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-royal font-medium">
+                </div>
+                <button onclick="handleSignup()" class="w-full btn-royal py-4 rounded-xl font-black uppercase tracking-widest text-xs mt-4">Register as Developer</button>
+                <p class="text-xs text-slate-400 font-bold mt-4">Already a developer? <button onclick="toggleAuth(false)" class="text-royal hover:underline">Login Here</button></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard View -->
+    <div id="dashboard-view" class="hidden flex flex-col md:flex-row min-h-screen">
+        <!-- Mobile Header -->
+        <header class="md:hidden bg-white border-b border-slate-100 p-4 flex justify-between items-center sticky top-0 z-40">
+            <h1 class="text-lg font-black tracking-tighter uppercase">CODEZ<span class="text-royal">48</span></h1>
+            <button onclick="toggleMobileMenu()" class="text-slate-600 focus:outline-none">
+                <i class="fa-solid fa-bars-staggered text-2xl"></i>
+            </button>
+        </header>
+
+        <!-- Sidebar / Drawer -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-slate-100 flex flex-col p-6 space-y-2 fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50 md:z-auto shadow-2xl md:shadow-none">
+            <div class="flex justify-between items-center mb-8 md:block">
+                <h1 class="text-xl font-black tracking-tighter uppercase">CODEZ<span class="text-royal">48</span></h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <button onclick="showSection('home'); toggleMobileMenu(false)" id="side-home" class="sidebar-item active w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                <i class="fa-solid fa-house"></i> Overview
+            </button>
+            <button onclick="showSection('leads'); toggleMobileMenu(false)" id="side-leads" class="sidebar-item w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                <i class="fa-solid fa-users"></i> Referrals
+            </button>
+            <button onclick="showSection('wallet'); toggleMobileMenu(false)" id="side-wallet" class="sidebar-item w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                <i class="fa-solid fa-wallet"></i> Wallet
+            </button>
+            <button onclick="showSection('meetings'); toggleMobileMenu(false)" id="side-meetings" class="sidebar-item w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                <i class="fa-solid fa-video"></i> Weekly Live
+            </button>
+
+            <!-- Admin Only Sidebar Items -->
+            <div id="admin-menu" class="hidden pt-8 space-y-2 border-t border-slate-100 mt-4">
+                <p class="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-2 px-4">Architect Tools</p>
+                <button onclick="showSection('admin-approvals'); toggleMobileMenu(false)" id="side-admin-approvals" class="sidebar-item w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                    <i class="fa-solid fa-check-double"></i> Pending Leads
+                </button>
+                <button onclick="showSection('admin-withdrawals'); toggleMobileMenu(false)" id="side-admin-withdrawals" class="sidebar-item w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Payouts
+                </button>
+                <button onclick="showSection('admin-meetings'); toggleMobileMenu(false)" id="side-admin-meetings" class="sidebar-item w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-plus"></i> Set Meeting
+                </button>
+            </div>
+
+            <div class="mt-auto pt-8 border-t border-slate-100">
+                <button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all">
+                    <i class="fa-solid fa-power-off"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div id="sidebar-overlay" onclick="toggleMobileMenu(false)" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+            <!-- Header -->
+            <header class="flex justify-between items-center mb-12">
+                <div>
+                    <h2 id="section-title" class="text-3xl font-black uppercase tracking-tightest">Overview</h2>
+                    <p id="user-welcome" class="text-slate-400 font-bold text-sm">Welcome back, Developer.</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="user-badge" class="bg-white border border-slate-100 px-4 py-2 rounded-full flex items-center gap-3 shadow-sm cursor-pointer" onclick="showSection('profile')">
+                        <i class="fa-solid fa-circle-user text-royal text-xl"></i>
+                        <span id="user-name-badge" class="text-[10px] font-black uppercase tracking-widest">---</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SECTIONS -->
+
+            <!-- 1. Home / Overview -->
+            <div id="sec-home" class="dashboard-section space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+                    <div class="glass-card p-8 rounded-3xl bg-white shadow-sm text-center">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Network Growth</p>
+                        <p id="stat-global-developers" class="text-4xl font-black text-royal">0</p>
+                        <p class="text-[7px] text-slate-300 font-bold uppercase mt-2">Active Developers</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl bg-white shadow-sm text-center">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Direct Clicks</p>
+                        <p id="stat-total-visits" class="text-4xl font-black text-slate-900">0</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl bg-white shadow-sm text-center">
+                        <p class="text-[9px] font-black text-royal uppercase tracking-widest mb-2">Profile Views</p>
+                        <p id="stat-profile-visits" class="text-4xl font-black text-royal">0</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl bg-white shadow-sm text-center">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Applications</p>
+                        <p id="stat-total-leads" class="text-4xl font-black text-slate-900">0</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl bg-white shadow-sm text-center border-emerald-500">
+                        <p class="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-2">Completed Nodes</p>
+                        <p id="stat-success-leads" class="text-4xl font-black text-slate-900">0</p>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl bg-royal shadow-lg text-center">
+                        <p class="text-[9px] font-black text-black uppercase tracking-widest mb-2">Total Earnings</p>
+                        <p id="stat-total-earnings" class="text-4xl font-black text-black">₹0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Referral Link Card -->
+                    <div class="glass-card p-8 rounded-[2.5rem] bg-white shadow-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest mb-6">Invite & Earn</h4>
+                        <div class="space-y-4">
+                            <p class="text-slate-500 text-xs font-medium">Earn <span class="font-bold text-royal">₹500</span> on ₹2,500 registration and <span class="font-bold text-royal">₹1,000</span> on ₹4,000 registration.</p>
+                            <div class="relative">
+                                <input type="text" id="referral-link" readonly class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pr-12 text-[10px] font-mono font-bold text-royal">
+                                <button onclick="copyReferralLink()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-royal transition-all"><i class="fa-solid fa-copy"></i></button>
+                            </div>
+                            <button onclick="shareOnWhatsApp()" class="w-full bg-emerald-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20">
+                                <i class="fa-brands fa-whatsapp text-lg"></i> Share via WhatsApp
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Top Developers Leaderboard -->
+                    <div class="glass-card p-8 rounded-[2.5rem] bg-white shadow-sm">
+                        <h4 class="text-xs font-black uppercase tracking-widest mb-6">Leaderboard (Weekly)</h4>
+                        <div id="leaderboard-list" class="space-y-3">
+                            <!-- Injected -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Bonus Banner -->
+                <div id="monthly-bonus-banner" class="hidden glass-card p-10 rounded-[3rem] bg-white border-2 border-dashed border-amber-300 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-amber-50/50 -z-10"></div>
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div class="flex items-center gap-6">
+                            <div class="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl shadow-inner">
+                                <i class="fa-solid fa-trophy text-amber-500"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-black uppercase tracking-tighter">Monthly Performer Bonus</h3>
+                                <p class="text-slate-500 text-xs font-medium">Earn ₹30,000 this month to unlock a <span class="text-amber-600 font-bold">₹3,000 extra reward!</span></p>
+                            </div>
+                        </div>
+                        <div id="bonus-progress-cont" class="w-full md:w-64 space-y-2">
+                             <div class="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                 <span>Progress</span>
+                                 <span id="bonus-percent">0%</span>
+                             </div>
+                             <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                 <div id="bonus-progress-bar" class="h-full bg-amber-500" style="width: 0%"></div>
+                             </div>
+                             <p class="text-[8px] text-slate-400 text-right uppercase font-bold" id="bonus-needed">₹30,000 needed</p>
+                        </div>
+                        <button id="btn-claim-reward" onclick="claimMonthlyReward()" class="hidden btn-royal px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl animate-bounce">Claim ₹3,000 Bonus</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Leads / Referrals -->
+            <div id="sec-leads" class="dashboard-section hidden space-y-8">
+                <div class="glass-card rounded-[2.5rem] bg-white overflow-hidden shadow-sm">
+                    <div class="p-8 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+                        <h4 class="text-xs font-black uppercase tracking-widest">Your Referrals</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-8 py-5">Registrant</th>
+                                    <th class="px-8 py-5">Mobile</th>
+                                    <th class="px-8 py-5">Plan</th>
+                                    <th class="px-8 py-5 text-center">Status</th>
+                                    <th class="px-8 py-5 text-right">Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leads-list" class="text-[10px] font-bold text-slate-600 divide-y divide-slate-50">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Wallet -->
+            <div id="sec-wallet" class="dashboard-section hidden space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Balance Card -->
+                    <div class="glass-card p-10 rounded-[3rem] bg-white border-2 border-royal shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-8 opacity-10"><i class="fa-solid fa-wallet text-8xl"></i></div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Available for Withdrawal</p>
+                        <h3 id="wallet-balance" class="text-6xl font-black text-royal mb-8">₹0</h3>
+                        <div class="space-y-4">
+                            <button id="btn-request-withdrawal" onclick="requestWithdrawal()" class="w-full btn-royal py-5 rounded-3xl font-black uppercase tracking-widest text-[11px] shadow-lg">Request Payout</button>
+                            <p class="text-[8px] text-slate-400 text-center uppercase font-black tracking-widest"><i class="fa-solid fa-circle-info mr-1"></i> Settlements available 7 days after success</p>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Chart -->
+                    <div class="glass-card p-8 rounded-[3rem] bg-white shadow-sm h-full">
+                         <h4 class="text-xs font-black uppercase tracking-widest mb-6">Earnings Velocity</h4>
+                         <div class="h-48">
+                             <canvas id="earningsChart"></canvas>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="glass-card rounded-[2.5rem] bg-white overflow-hidden shadow-sm">
+                    <div class="p-8 border-b border-slate-50 bg-slate-50/30">
+                        <h4 class="text-xs font-black uppercase tracking-widest">Withdrawal History</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-8 py-5">Date</th>
+                                    <th class="px-8 py-5">Amount</th>
+                                    <th class="px-8 py-5">Status</th>
+                                    <th class="px-8 py-5 text-right">Transaction ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawal-history" class="text-[10px] font-bold text-slate-600 divide-y divide-slate-50">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Meetings -->
+            <div id="sec-meetings" class="dashboard-section hidden space-y-8">
+                 <div id="active-meeting" class="glass-card p-12 rounded-[3.5rem] bg-white border-2 border-emerald-500 shadow-xl text-center hidden">
+                     <div class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6 text-emerald-500 text-4xl shadow-inner">
+                         <i class="fa-solid fa-headset animate-pulse"></i>
+                     </div>
+                     <h3 class="text-3xl font-black uppercase tracking-tightest mb-4">Weekly Live Workshop</h3>
+                     <p id="meeting-desc" class="text-slate-500 text-sm max-w-md mx-auto mb-8 font-medium">Join our strategy session to scale your business nodes and maximize earnings.</p>
+                     <div class="flex flex-col items-center gap-4">
+                         <div class="px-6 py-2 bg-slate-50 rounded-full border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400" id="meeting-date">Next Session: ---</div>
+                         <a id="meeting-link" href="#" target="_blank" class="px-12 py-5 bg-emerald-500 text-white rounded-3xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:scale-105 transition-transform flex items-center gap-3">
+                             <i class="fa-brands fa-google"></i> Join Google Meet
+                         </a>
+                     </div>
+                 </div>
+
+                 <div id="no-meeting" class="glass-card p-20 rounded-[3.5rem] bg-white text-center border border-dashed border-slate-200">
+                     <i class="fa-solid fa-calendar-xmark text-slate-200 text-6xl mb-6"></i>
+                     <h3 class="text-xl font-black text-slate-400 uppercase tracking-widest">No Scheduled Sessions</h3>
+                     <p class="text-slate-300 text-[10px] font-bold mt-2">The Architect will notify you of the next weekly live meeting.</p>
+                 </div>
+            </div>
+
+            <!-- 5. Profile -->
+            <div id="sec-profile" class="dashboard-section hidden space-y-8">
+                <div class="max-w-2xl mx-auto glass-card p-12 rounded-[3.5rem] bg-white shadow-xl relative overflow-hidden">
+                    <div class="text-center space-y-6">
+                        <!-- Clickable Profile Image Container -->
+                        <div class="relative group mx-auto w-32 h-32">
+                            <div id="profile-img-container" onclick="document.getElementById('profile-upload-input').click()" class="w-32 h-32 rounded-[2.5rem] bg-slate-100 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden cursor-pointer hover:opacity-90 transition-all">
+                                <i id="profile-img-placeholder" class="fa-solid fa-user text-6xl text-slate-300"></i>
+                            </div>
+                            <!-- Upload Trigger Overlay -->
+                            <button onclick="document.getElementById('profile-upload-input').click()" class="absolute -bottom-2 -right-2 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center shadow-xl border-4 border-white hover:bg-royal transition-all">
+                                <i class="fa-solid fa-camera text-xs"></i>
+                            </button>
+                            <input type="file" id="profile-upload-input" accept="image/*" class="hidden" onchange="handleProfilePhoto(this)">
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-center gap-3">
+                                <h3 id="profile-name" class="text-2xl font-black uppercase tracking-tighter">---</h3>
+                                <div id="profile-elite-badge" class="hidden badge-silver-elite px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                    <i class="fa-solid fa-shield-halved"></i> Silver Elite
+                                </div>
+                            </div>
+                            <p id="profile-email" class="text-royal font-bold text-xs">---</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Full Identity</label>
+                                <input type="text" id="prof-edit-name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-royal transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Communication</label>
+                                <input type="tel" id="prof-edit-mobile" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-royal transition-all">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Payout Endpoint (UPI)</label>
+                            <input type="text" id="prof-edit-upi" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-bold text-royal font-mono focus:ring-2 focus:ring-royal transition-all">
+                        </div>
+                        <button onclick="updateProfile()" class="w-full btn-royal py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-lg shadow-royal/20">Sync Identity Updates</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN SECTIONS -->
+
+            <!-- Admin 1: Approvals -->
+            <div id="sec-admin-approvals" class="dashboard-section hidden space-y-8">
+                 <div class="flex justify-between items-center">
+                     <h4 class="text-xs font-black uppercase tracking-widest">Incoming Leads Registry</h4>
+                     <span id="pending-count-badge" class="bg-amber-100 text-amber-600 px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">0 Pending</span>
+                 </div>
+                 <div id="admin-leads-list" class="grid grid-cols-1 gap-4">
+                     <!-- Injected -->
+                 </div>
+            </div>
+
+            <!-- Admin 2: Withdrawals -->
+            <div id="sec-admin-withdrawals" class="dashboard-section hidden space-y-8">
+                <div class="glass-card rounded-[2.5rem] bg-white overflow-hidden shadow-sm">
+                    <div class="p-8 border-b border-slate-50 bg-slate-50/30">
+                        <h4 class="text-xs font-black uppercase tracking-widest">Payout Queue</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-8 py-5">Developer</th>
+                                    <th class="px-8 py-5">Amount</th>
+                                    <th class="px-8 py-5">UPI / Method</th>
+                                    <th class="px-8 py-5 text-center">Protocol Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-withdrawal-list" class="text-[10px] font-bold text-slate-600 divide-y divide-slate-50">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin 3: Meetings -->
+            <div id="sec-admin-meetings" class="dashboard-section hidden space-y-8">
+                <div class="max-w-xl mx-auto glass-card p-10 rounded-[3rem] bg-white shadow-xl">
+                    <h4 class="text-xs font-black uppercase tracking-widest mb-8 text-center">Broadcast Weekly Session</h4>
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Google Meet Link</label>
+                            <input type="url" id="meet-url-input" placeholder="https://meet.google.com/..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Session Timestamp</label>
+                            <input type="datetime-local" id="meet-date-input" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Description</label>
+                            <textarea id="meet-desc-input" placeholder="What is this week's focus?" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none" rows="3"></textarea>
+                        </div>
+                        <button onclick="broadcastMeeting()" class="w-full bg-emerald-500 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">Authorize & Broadcast</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="success-modal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
+        <div class="glass-card w-full max-w-sm rounded-[3rem] p-12 bg-white text-center">
+            <div class="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fa-solid fa-check text-white text-3xl"></i></div>
+            <h3 id="success-title" class="text-2xl font-black uppercase tracking-tightest mb-2">Protocol Success</h3>
+            <p id="success-msg" class="text-slate-400 text-xs font-medium mb-8">Operation confirmed and synchronized.</p>
+            <button onclick="closeModal('success-modal')" class="w-full btn-royal py-4 rounded-3xl font-black uppercase tracking-widest text-[10px]">Continue</button>
+        </div>
+    </div>
+
+    <script type="module" src="js/dev-program.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Push Helper</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+</head>
+<body>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJK-7By6I9xps518HCYc2Kow44vp9fDpY",
+            authDomain: "nshandlooms-a19be.firebaseapp.com",
+            projectId: "nshandlooms-a19be",
+            messagingSenderId: "711669261779",
+            appId: "1:711669261779:web:d323a1e50b5404ec10fb26"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+
+        async function init() {
+            try {
+                // Register local service worker
+                const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                const token = await messaging.getToken({ serviceWorkerRegistration: reg });
+
+                if (token) {
+                    window.parent.postMessage({ type: 'C48_PUSH_TOKEN', token: token }, '*');
+                }
+            } catch (e) {
+                console.error('[C48 Helper] Error:', e.message);
+                window.parent.postMessage({ type: 'C48_PUSH_ERROR', error: e.message }, '*');
+            }
+        }
+
+        // Wait for request from parent
+        window.addEventListener('message', (event) => {
+            if (event.data === 'GET_TOKEN') {
+                init();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+- [x] Update `index.html` with new EmailJS credentials (`service_l1ekcnj`, `template_nt6exnr`, `cjqL4yCfb-BvAW5ki`, `htTBhs0cFJdUXRklWZfut`)
+- [x] Ensure `customer_email` mapping matches the template requirements
+- [x] Update EmailJS initialization in `initApp`
+- [x] Verify changes

@@ -1,0 +1,4 @@
+<resources>
+    <!-- THE BUILDER SCRIPT WILL REPLACE THIS NAME DYNAMICALLY -->
+    <string name="app_name">Storefront App</string>
+</resources>

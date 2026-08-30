@@ -1,0 +1,4 @@
+- [x] Update `index.html` width constraints for `#tracker-view`
+- [x] Fix site registry card overflow and grid in `js/tracker-tool.js`
+- [x] Fix dashboard table stability in `index.html` and `js/tracker-tool.js`
+- [x] Final UI verification

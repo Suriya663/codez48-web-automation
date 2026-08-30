@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Ad - Seller Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #111827; color: #e5e7eb; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        .timespan-btn.active-timespan { background-color: #3b82f6; color: white; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="fade-in">
+
+    <nav class="bg-gray-800 border-b border-gray-700 sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-bullhorn text-pink-500 text-xl"></i>
+                <span class="text-xl font-bold text-white">Ad<span class="text-pink-500">Creator</span></span>
+            </div>
+            <a class='text-gray-400 hover:text-white text-sm font-bold' href='developer.html'><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <!-- Left: Creation Form -->
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-6 md:p-8 border border-gray-700">
+                <h2 class="text-2xl font-bold text-white mb-2" id="form-heading">Create New Advertisement</h2>
+                <p class="text-gray-400 text-sm mb-6">Promote your products directly on the main store page. Users will see your ad randomly while shopping.</p>
+
+                <div class="space-y-5">
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                        <label class="block text-sm font-bold text-gray-300 mb-2">Target Action (Choose One)</label>
+                        <div class="flex flex-col gap-3">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Option A: Link to Product</p>
+                                <select id="ad-product" onchange="toggleTargetSource('product')" class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-pink-500">
+                                    <option value="">-- Select a Product --</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="h-px bg-gray-700 flex-1"></div>
+                                <span class="text-xs text-gray-500 font-bold italic">OR</span>
+                                <div class="h-px bg-gray-700 flex-1"></div>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Option B: Custom URL</p>
+                                <input type="url" id="ad-target-url" oninput="toggleTargetSource('url')" placeholder="https://example.com/promo" class="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-pink-500">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 italic">When clicked, the ad will open the selected product or this URL.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-300 mb-2">Ad Headline / Title</label>
+                        <input type="text" id="ad-title" placeholder="e.g., Massive Discount on Premium Watches!" class="w-full bg-gray-900 border border-gray-600 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-300 mb-2">Ad Banner Image</label>
+                        <div class="flex items-center gap-4">
+                            <div id="image-preview-container" class="w-32 h-20 bg-gray-900 border border-gray-600 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                                <i id="image-placeholder-icon" class="fa-solid fa-image text-gray-500 text-2xl"></i>
+                                <img id="ad-image-preview" src="" class="hidden w-full h-full object-cover">
+                            </div>
+                            <input type="file" id="ad-image-input" accept="image/*" class="hidden" onchange="handleImageUpload(this)">
+                            <button onclick="document.getElementById('ad-image-input').click()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded font-bold text-sm transition whitespace-nowrap">Upload Image</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-300 mb-2">Action Button Text</label>
+                        <select id="ad-btn-text" class="w-full bg-gray-900 border border-gray-600 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500">
+                            <option value="Buy Now">Buy Now</option>
+                            <option value="Shop Now">Shop Now</option>
+                            <option value="Grab Offer">Grab Offer</option>
+                            <option value="Check it out">Check it out</option>
+                            <option value="Go">Go</option>
+                        </select>
+                    </div>
+
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="publishAd()" id="publish-btn" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3.5 rounded-lg shadow-lg transition disabled:bg-gray-500 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-paper-plane"></i> Publish Advertisement
+                        </button>
+                        <button onclick="cancelEdit()" id="cancel-edit-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3.5 px-6 rounded-lg shadow-lg transition">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Live Preview -->
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-6 md:p-8 border border-gray-700 flex flex-col items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black z-0 pointer-events-none"></div>
+                <h2 class="text-xl font-bold text-gray-400 mb-6 w-full text-left relative z-10"><i class="fa-solid fa-eye text-indigo-400"></i> Live Preview</h2>
+
+                <div class="relative w-full max-w-sm bg-gray-900 rounded-[1.7rem] shadow-2xl overflow-hidden border border-gray-700 flex flex-col z-10 transform scale-105">
+                    <img id="live-preview-img" src="https://placehold.co/400x250/1f2937/e5e7eb?text=Upload+Image" class="w-full h-56 object-cover bg-gray-800">
+                    <div class="p-6 text-center">
+                        <h2 id="live-preview-title" class="text-2xl font-black text-white mb-4">Ad Headline</h2>
+                        <button id="live-preview-btn" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg pointer-events-none">Buy Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Ad Manager -->
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-6 md:p-8 border border-gray-700">
+            <h2 class="text-xl font-bold text-white mb-4"><i class="fa-solid fa-list-check text-pink-500"></i> Your Active Advertisements</h2>
+            <div id="my-ads-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-gray-400 text-sm">Loading existing ads...</p>
+            </div>
+        </div>
+
+        <!-- Bottom: Ad Analytics -->
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-6 md:p-8 border border-gray-700 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-chart-line text-blue-400"></i> Ad Click Analytics</h2>
+                <div id="chart-timespan-selector" class="flex gap-1 bg-gray-900 p-1 rounded-lg border border-gray-700">
+                    <button onclick="loadChartAnalytics('today')" class="timespan-btn active-timespan px-3 py-1 text-xs font-bold rounded-md">Today</button>
+                    <button onclick="loadChartAnalytics('7days')" class="timespan-btn px-3 py-1 text-xs font-bold rounded-md">7 Days</button>
+                    <button onclick="loadChartAnalytics('30days')" class="timespan-btn px-3 py-1 text-xs font-bold rounded-md">30 Days</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                    <p class="text-gray-400 text-sm font-bold">Total Clicks (All Time)</p>
+                    <p class="text-3xl font-black text-blue-400 mt-2" id="stat-total-clicks">0</p>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                    <p class="text-gray-400 text-sm font-bold">Clicks Today</p>
+                    <p class="text-3xl font-black text-green-400 mt-2" id="stat-today-clicks">0</p>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-center">
+                    <p class="text-gray-400 text-sm font-bold">Active Ads</p>
+                    <p class="text-3xl font-black text-purple-400 mt-2" id="stat-active-ads">0</p>
+                </div>
+            </div>
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <canvas id="clicksChart" height="100"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJK-7By6I9xps518HCYc2Kow44vp9fDpY",
+            authDomain: "nshandlooms-a19be.firebaseapp.com",
+            databaseURL: "https://nshandlooms-a19be-default-rtdb.firebaseio.com",
+            projectId: "nshandlooms-a19be",
+            storageBucket: "nshandlooms-a19be.appspot.com",
+            messagingSenderId: "711669261779",
+            appId: "1:711669261779:web:d323a1e50b5404ec10fb26",
+            measurementId: "G-BSHJ03ZGEZ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const auth = getAuth(app);
+
+        let adImageBase64 = null;
+        let editingAdId = null;
+        let clicksChart = null;
+        window.cachedAds = {};
+        let productMap = {};
+
+        // Decode Base64 safely
+        const decodeSecret = (val) => { try { return atob(val); } catch(e) { return val; } };
+
+        // Auth Check
+        const storedSellerAuth = localStorage.getItem('sellerAuth');
+        const storedCoderAuth = localStorage.getItem('coderAuth');
+
+        let authId = 'admin';
+        if(storedSellerAuth) {
+            try {
+                const parsed = JSON.parse(storedSellerAuth);
+                authId = decodeSecret(parsed.id);
+            } catch(e) {}
+        }
+
+        // Anonymous auth for Storage upload
+        signInAnonymously(auth).catch((e) => console.warn('Firebase auth failed', e));
+
+        // Target Source Toggling
+        window.toggleTargetSource = (source) => {
+            if(source === 'product') {
+                document.getElementById('ad-target-url').value = '';
+            } else {
+                document.getElementById('ad-product').value = '';
+            }
+        };
+
+        // Fetch Products
+        const loadProducts = async () => {
+            const selectEl = document.getElementById('ad-product');
+            try {
+                // If a seller is logged in, show only their products. Otherwise show all products.
+                const q = storedSellerAuth ? query(collection(db, "products"), where("sellerId", "==", authId)) : query(collection(db, "products"));
+                const snap = await getDocs(q);
+
+                selectEl.innerHTML = '<option value="">-- Select a Product --</option>';
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const opt = document.createElement('option');
+                    opt.value = doc.id;
+                    opt.innerText = data.name;
+                    selectEl.appendChild(opt);
+                    productMap[doc.id] = data.name;
+                });
+
+                loadMyAds();
+            } catch (e) {
+                console.error(e);
+                selectEl.innerHTML = '<option value="">Error loading products.</option>';
+            }
+        };
+
+        // Fetch and Render existing ads
+        const loadMyAds = async () => {
+            const container = document.getElementById('my-ads-list');
+            container.innerHTML = '<div class="text-gray-400 text-sm"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
+
+            try {
+                const q = (storedCoderAuth && !storedSellerAuth) ? query(collection(db, "ads")) : query(collection(db, "ads"), where("sellerId", "==", authId));
+                const snap = await getDocs(q);
+
+                if(snap.empty) {
+                    container.innerHTML = '<div class="col-span-2 text-gray-500 text-sm border-2 border-dashed border-gray-700 p-6 text-center rounded-xl">No advertisements found. Create one above!</div>';
+                    return;
+                }
+
+                let html = '';
+                let totalAllTimeClicks = 0;
+
+                snap.forEach(docSnap => {
+                    const ad = docSnap.data();
+                    window.cachedAds[docSnap.id] = ad;
+                    const targetDisplay = ad.targetUrl || (ad.productId ? (productMap[ad.productId] || "Product: " + ad.productId) : "N/A");
+                    totalAllTimeClicks += (ad.totalClicks || 0);
+
+                    html += `
+                        <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 flex flex-col sm:flex-row items-center gap-4 transition hover:border-gray-500">
+                            <img src="${ad.imageUrl}" class="w-full sm:w-28 h-20 object-cover rounded-lg shrink-0">
+                            <div class="flex-1 text-center sm:text-left w-full min-w-0">
+                                <h3 class="text-white font-bold text-md truncate" title="${ad.title}">${ad.title}</h3>
+                                <p class="text-xs text-gray-400 mt-1 truncate">Target: <span class="text-gray-300">${targetDisplay}</span></p>
+                                <p class="text-xs text-gray-400">Button: <span class="text-pink-400 font-bold">${ad.buttonText}</span></p>
+                                <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-hand-pointer text-blue-400"></i> Total Clicks: <span class="text-white font-bold">${ad.totalClicks || 0}</span></p>
+                            </div>
+                            <div class="flex sm:flex-col w-full sm:w-auto gap-2 shrink-0 mt-3 sm:mt-0">
+                                <button onclick="editAd('${docSnap.id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded font-bold text-xs"><i class="fa-solid fa-pen"></i> Edit</button>
+                                <button onclick="deleteAd('${docSnap.id}')" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded font-bold text-xs"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+
+                document.getElementById('stat-active-ads').innerText = snap.size;
+                document.getElementById('stat-total-clicks').innerText = totalAllTimeClicks;
+
+                loadChartAnalytics('today');
+            } catch(e) { console.error(e); }
+        };
+
+        window.loadChartAnalytics = async (timespan = 'today') => {
+            document.querySelectorAll('.timespan-btn').forEach(btn => btn.classList.remove('active-timespan'));
+            const activeBtn = document.querySelector('.timespan-btn[onclick*="\'' + timespan + '\'"]');
+            if (activeBtn) activeBtn.classList.add('active-timespan');
+
+            const ctx = document.getElementById('clicksChart').getContext('2d');
+            if (clicksChart) clicksChart.destroy();
+            clicksChart = new window.Chart(ctx, {
+                type: 'line',
+                data: { labels: ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00'], datasets: [{ label: 'Clicks', data: [0,0,0,0,0,0], borderColor: '#3b82f6', fill: true }] },
+                options: { responsive: true, plugins: { legend: { labels: { color: '#e5e7eb' } } } }
+            });
+        };
+
+        const uploadAdImage = async (imageData) => {
+            if (!imageData || !imageData.startsWith('data:')) {
+                return imageData || '';
+            }
+            const filename = `ads/${Date.now()}_${Math.random().toString(36).slice(2, 10)}.jpg`;
+            const imageRef = ref(storage, filename);
+            await uploadString(imageRef, imageData, 'data_url');
+            return await getDownloadURL(imageRef);
+        };
+
+        loadProducts();
+
+        // Live Preview
+        document.getElementById('ad-title').addEventListener('input', (e) => {
+            document.getElementById('live-preview-title').innerText = e.target.value || 'Ad Headline';
+        });
+        document.getElementById('ad-btn-text').addEventListener('change', (e) => {
+            document.getElementById('live-preview-btn').innerText = e.target.value || 'Buy Now';
+        });
+
+        // Image Handle
+        window.handleImageUpload = (input) => {
+            if(input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.readAsDataURL(input.files[0]);
+                reader.onload = (event) => {
+                    adImageBase64 = event.target.result;
+                    const preview = document.getElementById('ad-image-preview');
+                    preview.src = adImageBase64;
+                    preview.classList.remove('hidden');
+                    document.getElementById('image-placeholder-icon').classList.add('hidden');
+                    document.getElementById('live-preview-img').src = adImageBase64;
+                }
+            }
+        };
+
+        window.editAd = (id) => {
+            const ad = window.cachedAds[id];
+            if(!ad) return;
+            editingAdId = id;
+            document.getElementById('ad-product').value = ad.productId || '';
+            document.getElementById('ad-target-url').value = ad.targetUrl || '';
+            document.getElementById('ad-title').value = ad.title;
+            document.getElementById('ad-btn-text').value = ad.buttonText;
+            adImageBase64 = ad.imageUrl;
+            document.getElementById('ad-image-preview').src = ad.imageUrl;
+            document.getElementById('ad-image-preview').classList.remove('hidden');
+            document.getElementById('image-placeholder-icon').classList.add('hidden');
+            document.getElementById('live-preview-title').innerText = ad.title;
+            document.getElementById('live-preview-btn').innerText = ad.buttonText;
+            document.getElementById('live-preview-img').src = ad.imageUrl;
+            document.getElementById('form-heading').innerText = "Update Advertisement";
+            document.getElementById('publish-btn').innerHTML = '<i class="fa-solid fa-save"></i> Update Advertisement';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.cancelEdit = () => {
+            editingAdId = null;
+            document.getElementById('ad-product').value = '';
+            document.getElementById('ad-target-url').value = '';
+            document.getElementById('ad-title').value = '';
+            document.getElementById('ad-btn-text').value = 'Buy Now';
+            adImageBase64 = null;
+            document.getElementById('ad-image-preview').classList.add('hidden');
+            document.getElementById('image-placeholder-icon').classList.remove('hidden');
+            document.getElementById('live-preview-title').innerText = 'Ad Headline';
+            document.getElementById('live-preview-btn').innerText = 'Buy Now';
+            document.getElementById('live-preview-img').src = 'https://placehold.co/400x250/1f2937/e5e7eb?text=Upload+Image';
+            document.getElementById('form-heading').innerText = "Create New Advertisement";
+            document.getElementById('publish-btn').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publish Advertisement';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        };
+
+        window.deleteAd = async (id) => {
+            if(!confirm("Delete this ad?")) return;
+            try {
+                await deleteDoc(doc(db, "ads", id));
+                loadMyAds();
+            } catch (e) { console.error(e); }
+        };
+
+        window.publishAd = async () => {
+            const productId = document.getElementById('ad-product').value;
+            const targetUrl = document.getElementById('ad-target-url').value.trim();
+            const title = document.getElementById('ad-title').value.trim();
+            const buttonText = document.getElementById('ad-btn-text').value;
+
+            if (!title || !adImageBase64) return alert("Fill Title and Image.");
+            if (!productId && !targetUrl) return alert("Select a Product or enter a URL.");
+
+            const btn = document.getElementById('publish-btn');
+            btn.disabled = true;
+
+            try {
+                let imageUrl = adImageBase64 || '';
+                if (imageUrl.startsWith('data:')) {
+                    imageUrl = await uploadAdImage(imageUrl);
+                }
+
+                const adData = {
+                    sellerId: authId || 'admin',
+                    productId: productId || null,
+                    targetUrl: targetUrl || null,
+                    title: title || 'No Title',
+                    buttonText: buttonText || 'Buy Now',
+                    imageUrl: imageUrl,
+                    active: true,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                if(editingAdId) {
+                    await updateDoc(doc(db, "ads", editingAdId), adData);
+                    alert("Ad Updated!");
+                } else {
+                    adData.createdAt = new Date().toISOString();
+                    adData.totalClicks = 0;
+                    await addDoc(collection(db, "ads"), adData);
+                    alert("Ad Published!");
+                }
+                cancelEdit();
+                loadMyAds();
+            } catch (e) { console.error(e); alert("Error publishing ad."); }
+            btn.disabled = false;
+        };
+    </script>
+</body>
+</html>

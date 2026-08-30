@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODEZ48 | High-Performance Business Network</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Meta Pixel Code -->
+    <!-- Meta Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1318887030322672');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+                   src="https://www.facebook.com/tr?id=1318887030322672&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2387499775323719&ev=PageView&noscript=1"/></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- SheetJS for Excel Parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Onboarding Animations */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-in.slide-in-from-right {
+            animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FFFFFF;
+            color: #1e293b;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        .bg-royal { background-color: #2563EB; }
+        .text-royal { color: #2563EB; }
+
+        .container-fluid {
+            width: 100%;
+            max-width: 1800px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        @media (min-width: 768px) {
+            .container-fluid {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
+        .view-section { display: none; }
+        .view-active { display: block; animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .tracking-tightest { letter-spacing: -0.05em; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 1440px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px);
+            border-color: #2563EB;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Tracker Specific Enhancements */
+        .stat-card {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            border: 1px solid #f1f5f9;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { border-color: #2563EB; background: #f8faff; }
+
+        .motion-badge {
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 2px 8px;
+            border-radius: 99px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .scroll-top { background: #eff6ff; color: #2563EB; }
+        .scroll-bottom { background: #fff1f2; color: #e11d48; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+        /* Template A: Minimalist */
+        .template-a .profile-header {
+            text-align: center;
+            padding-bottom: 4rem;
+        }
+        .template-a .logo-container {
+            margin: 0 auto 2rem;
+            width: 220px;
+            height: 220px;
+            padding: 4px;
+            border-width: 1px;
+        }
+        @media (min-width: 768px) {
+            .template-a .logo-container {
+                width: 320px;
+                height: 320px;
+                padding: 6px;
+            }
+        }
+
+        /* Template B: Inventory Focused */
+        .template-b .profile-header {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: start;
+            text-align: left;
+        }
+
+        @media (min-width: 768px) {
+            .template-b .profile-header {
+                grid-template-columns: 1fr 2fr;
+                gap: 3rem;
+            }
+        }
+        .template-b .banner {
+            grid-column: span 2;
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 2rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .template-b .banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .premium-card {
+            border: 2px solid #000000;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+            position: relative;
+            background: linear-gradient(to bottom right, #ffffff, #f0f7ff);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.2);
+            border-color: #2563EB;
+        }
+        .premium-card::after {
+            content: 'ELITE NODE';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #2563EB;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 99px;
+            letter-spacing: 0.15em;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-royal {
+            background-color: #2563EB;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-royal:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-black {
+            background-color: #000000;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-black:hover {
+            background-color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Developer Program Intro Modal Styles */
+        #dev-program-intro-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+        }
+
+        .coin-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .coin {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #B8860B);
+            border-radius: 50%;
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3), 2px 2px 10px rgba(255,215,0,0.4);
+            animation: float-coin 10s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes float-coin {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-10vh) rotate(360deg); }
+        }
+
+        .professional-coin {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #8B4513);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #5D4037;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3), inset 0 0 15px rgba(255,255,255,0.5);
+            border: 4px solid #DAA520;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .professional-coin::before {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            border: 2px dashed rgba(0,0,0,0.1);
+            border-radius: 50%;
+        }
+
+        /* Custom Horizontal Scroll for Mobile Action Bar */
+        .profile-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            padding-bottom: 0.5rem;
+        }
+        .profile-action-bar::-webkit-scrollbar { display: none; }
+
+        @media (min-width: 768px) {
+            .profile-action-bar {
+                overflow-x: visible;
+                white-space: normal;
+                justify-content: space-between;
+                padding-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Global Loader -->
+    <div id="global-loader" class="fixed inset-0 z-[100] bg-white flex items-center justify-center hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <p class="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">CODEZ48 Protocol Syncing...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-header" id="main-nav">
+        <div class="container-fluid px-6 py-4 flex flex-wrap justify-between items-center">
+            <!-- Brand & Hamburger Group -->
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="showView('landing')">
+                    <span class="text-xl font-black tracking-tighter text-black uppercase">CODEZ<span class="text-royal">48</span></span>
+                </div>
+                <button class="md:hidden text-black focus:outline-none" onclick="toggleMobileMenu()">
+                    <i class="fa-solid fa-bars-staggered text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center flex-1 max-w-md mx-0 md:mx-10 order-last md:order-none w-full md:w-auto mt-6 md:mt-0">
+                <!-- Autofill Honeypot -->
+                <input type="text" style="display:none" name="username">
+                <input type="password" style="display:none" name="password">
+
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="global-search" name="network_discovery_v2" placeholder="Search brands, services..." autocomplete="one-time-code" readonly onfocus="this.removeAttribute('readonly')" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-12 pr-4 text-xs font-bold text-black focus:outline-none focus:border-black transition-all">
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center gap-8">
+                <!-- Language Switcher -->
+                <button onclick="window.showLanguageSelection()" class="text-slate-400 hover:text-black transition p-2" title="Change Language">
+                    <i class="fa-solid fa-globe"></i>
+                </button>
+
+                <!-- Tools Dropdown -->
+                <div class="relative group">
+                    <button onclick="location.href='tools/index.html'" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest flex items-center gap-2">
+                        Tools <i class="fa-solid fa-chevron-down text-[8px] transition-transform group-hover:rotate-180"></i>
+                    </button>
+                    <div class="absolute top-full left-0 mt-2 w-56 bg-white border border-slate-100 shadow-xl rounded-2xl py-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <button onclick="location.href='tools/index.html'" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-royal hover:bg-slate-50 transition uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-robot text-xs"></i> Automations
+                        </button>
+                        <button onclick="showView('tracker')" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-royal hover:bg-slate-50 transition uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-chart-line text-xs"></i> Website Tracker
+                        </button>
+                        <button onclick="window.handleToolAction('push')" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-royal hover:bg-slate-50 transition uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-bell text-xs"></i> Push Notifications
+                        </button>
+                    </div>
+                </div>
+
+                <a href="#merchant-directory" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Network</a>
+                <button onclick="window.openDevProgramIntro()" class="text-[10px] font-black text-royal hover:text-black transition uppercase tracking-widest">Dev Program</button>
+                <a href="about.html" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">About</a>
+                <a href="#pricing" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Pricing</a>
+                <a href="mailto:codez4848@gmail.com" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Help Centre</a>
+
+                <!-- Dynamic Auth UI -->
+                <div class="flex items-center gap-4">
+                    <button id="nav-register-btn" onclick="openRegisterWizard()" class="btn-black text-[10px] font-black px-8 py-3 rounded-full shadow-lg uppercase tracking-widest">Register Now</button>
+                    <button id="nav-profile-btn" onclick="goToMyProfile()" class="hidden w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden flex items-center justify-center hover:border-royal transition-all" title="My Node Profile">
+                        <i class="fa-solid fa-circle-user text-2xl text-royal"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-nav-menu" class="hidden md:hidden bg-white border-t border-slate-100 flex flex-col p-6 space-y-6 shadow-xl absolute top-full left-0 w-full z-40 animate-in slide-in-from-top-4 duration-300 max-h-[85vh] overflow-y-auto">
+            <button onclick="window.showLanguageSelection(); toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-globe"></i> Change Language
+            </button>
+
+            <!-- Mobile Tools -->
+            <div class="space-y-4">
+                <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">Available Tools</p>
+                <button onclick="location.href='tools/index.html'; toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <i class="fa-solid fa-robot text-royal"></i> AI Automations
+                </button>
+                <button onclick="showView('tracker'); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <i class="fa-solid fa-chart-line text-royal"></i> Website Tracker
+                </button>
+            </div>
+
+            <a href="#merchant-directory" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Network</a>
+            <button onclick="window.openDevProgramIntro(); toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest text-left">Dev Program</button>
+            <a href="about.html" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">About</a>
+            <a href="#pricing" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pricing</a>
+            <a href="mailto:codez4848@gmail.com" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Help Centre</a>
+            <button id="nav-register-btn-mobile" onclick="openRegisterWizard(); toggleMobileMenu()" class="w-full btn-black text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest">Register Now</button>
+            <button id="nav-profile-btn-mobile" onclick="goToMyProfile(); toggleMobileMenu()" class="hidden w-full bg-slate-50 text-royal text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest border border-slate-100 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-circle-user text-lg"></i>
+                <span>My Profile</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="views-wrapper" class="w-full relative">
+
+        <!-- LANDING PAGE VIEW -->
+        <section id="landing-view" class="view-section view-active">
+            <!-- Merchant Directory Section -->
+            <div id="merchant-directory" class="pt-48 pb-32 bg-white">
+                <div class="container-fluid">
+                    <!-- Home Conversion CTA -->
+                    <div id="home-conversion-cta" class="mb-24">
+                        <div class="glass-card p-10 rounded-[3rem] bg-royal text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-royal/20">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl">
+                                    <i class="fa-solid fa-code"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-2xl font-black uppercase tracking-tightest">Developer Program</h3>
+                                    <p class="text-white/60 text-sm font-medium">Join our network as a developer and earn commissions on referrals.</p>
+                                </div>
+                            </div>
+                            <button onclick="window.openDevProgramIntro()" class="bg-white text-royal px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 transition-all">Join Program Now</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row md:justify-between items-start md:items-end mb-16 gap-8">
+                        <div>
+                            <h2 class="text-2xl md:text-4xl font-black text-black tracking-tightest uppercase mb-4">Business Network</h2>
+                        </div>
+                        <div class="flex gap-4">
+                            <button onclick="filterDirectory('all')" class="text-[9px] font-black uppercase tracking-widest px-6 py-3 rounded-full bg-black text-white shadow-lg">All Nodes</button>
+                        </div>
+                    </div>
+
+                    <div id="directory-grid" class="grid grid-cols-1 gap-8 md:gap-12">
+                        <div class="col-span-full py-20 text-center">
+                            <div style="color: red;" class="w-16 h-16 border-4 border-slate-200 border-t-royal rounded-full animate-spin mx-auto mb-6"></div>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Querying CODEZ48 Registry...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing -->
+            <div id="pricing" class="py-32 bg-white">
+                <div class="container-fluid">
+                    <div class="text-center mb-20">
+                        <h2 class="text-4xl md:text-5xl font-extrabold text-black mb-6 uppercase tracking-tighter">Scale Your Protocol</h2>
+                        <p class="text-slate-500 font-medium max-w-xl mx-auto">Choose the tier that matches your network velocity.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+                        <div onclick="selectRegPlan('starter')" id="plan-starter" class="glass-card p-12 rounded-[3rem] flex flex-col cursor-pointer border-2 border-transparent transition-all">
+                            <div class="mb-10">
+                                <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Business Plan</h3>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-5xl font-black text-black">₹2,500</span>
+                                    <span class="text-slate-400 font-bold text-sm">/Month</span>
+                                </div>
+                            </div>
+                            <ul class="space-y-3 mb-12 flex-1">
+                                <li class="text-slate-600 text-xs font-semibold">• Business Profile Creation</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Business Profile Page</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Products / Services Add</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Unlimited Product Listing</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Product Website</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Online Payment Integration</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Customer Enquiry / Contact</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Business Information & Contact Details</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Product Images & Details</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Basic Business Management</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Basic Templates</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Basic AI Tools</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Ad Creation</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Ad Credits</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Basic Analytics</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Mobile-friendly Website</li>
+                                <li class="text-slate-600 text-xs font-semibold">• Online Business Presence</li>
+                            </ul>
+                            <button id="cta-starter-btn" onclick="openRegisterWizard(); window.trackEvent('cta_create_clicked', { location: 'pricing_starter' })" class="w-full py-5 rounded-2xl bg-slate-100 text-black font-black hover:bg-black hover:text-white transition uppercase tracking-widest text-[10px]">Deploy Business Plan</button>
+                        </div>
+                        <div onclick="selectRegPlan('premium')" id="plan-premium" class="premium-card bg-white p-12 rounded-[3rem] flex flex-col relative cursor-pointer border-2 border-transparent transition-all">
+                            <div class="mb-10">
+                                <h3 class="text-sm font-black text-royal uppercase tracking-widest mb-3">Premium Business Plan</h3>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-5xl font-black text-royal">₹4,000</span>
+                                    <span class="text-slate-400 font-bold text-sm">/Month</span>
+                                </div>
+                            </div>
+                            <ul class="space-y-3 mb-12 flex-1">
+                                <li class="text-black text-xs font-bold">• ₹2,500 plan included</li>
+                                <li class="text-black text-xs font-bold">• Verified Business Profile</li>
+                                <li class="text-black text-xs font-bold">• SEO (Search Engine Optimization)</li>
+                                <li class="text-black text-xs font-bold">• AI Salesman</li>
+                                <li class="flex flex-col ml-10 text-slate-500 text-[10px] space-y-1">
+                                    <span>- 24/7 automatic customer conversation</span>
+                                    <span>- Customer questions answer</span>
+                                    <span>- Product information explain</span>
+                                    <span>- Integrated Lead Management System</span>
+                                </li>
+                                <li class="text-black text-xs font-bold">• Android Application</li>
+                                <li class="text-black text-xs font-bold">• Advanced AI Features</li>
+                                <li class="text-black text-xs font-bold">• Advanced Business Profile</li>
+                                <li class="text-black text-xs font-bold">• Premium Templates</li>
+                                <li class="text-black text-xs font-bold">• Advanced Analytics</li>
+                                <li class="text-black text-xs font-bold">• Advanced Ad Creation</li>
+                                <li class="text-black text-xs font-bold">• Ad Credits</li>
+                                <li class="text-black text-xs font-bold">• Customer Lead Management</li>
+                                <li class="text-black text-xs font-bold">• Better Search Visibility</li>
+                                <li class="text-black text-xs font-bold">• Premium Business Presence</li>
+                            </ul>
+                            <button id="cta-premium-btn" onclick="openRegisterWizard(); window.trackEvent('cta_create_clicked', { location: 'pricing_premium' })" class="w-full py-5 rounded-2xl btn-royal font-black uppercase tracking-widest text-[10px] shadow-2xl">Go Premium</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MERCHANT PUBLIC PROFILE VIEW -->
+        <section id="public-profile-view" class="view-section py-40 bg-white min-h-screen">
+            <div class="container-fluid">
+                <!-- Profile Conversion CTA -->
+                <div id="profile-conversion-cta" class="mb-16 hidden"></div>
+
+                <div class="profile-action-bar mb-12">
+                    <button onclick="showView('landing')" class="text-slate-400 hover:text-black transition font-black text-[10px] uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Directory
+                    </button>
+                    <div id="admin-action-container" class="flex gap-4 items-center"></div>
+                </div>
+
+                <!-- Profile Render Target -->
+                <div id="profile-render-target"></div>
+
+                <!-- Product Catalog Grid -->
+                <div class="border-t border-slate-100 pt-16">
+                    <div id="profile-products-grid" class="flex md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 overflow-x-auto md:overflow-x-visible pb-6 custom-scrollbar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WEBSITE TRACKER TOOL VIEW -->
+        <section id="tracker-view" class="view-section min-h-screen bg-[#F8FAFC] pt-32 pb-40 overflow-x-hidden">
+            <div class="w-[90%] lg:w-[50%] mx-auto">
+                <div class="flex flex-col md:flex-row md:justify-between items-start md:items-end mb-12 gap-6">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <h2 class="text-3xl font-black uppercase tracking-tight text-slate-900">Website Tracker</h2>
+                        </div>
+                        <p class="text-slate-500 font-medium text-sm">Real-time motion analysis and business intelligence.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="btn-back-to-sites" onclick="window.showTrackerSection('list')" class="hidden bg-white text-slate-600 border border-slate-200 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:bg-slate-50 transition-all">
+                            <i class="fa-solid fa-arrow-left"></i> Back to Registry
+                        </button>
+                        <button id="btn-add-site" onclick="window.showTrackerSection('setup')" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl hover:bg-black transition-all">
+                            <i class="fa-solid fa-plus"></i> New Website
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1. Site Registry (List) -->
+                <div id="tracker-section-list">
+                    <div id="external-sites-grid" class="grid grid-cols-1 gap-6 w-full overflow-hidden">
+                        <!-- Site cards injected here -->
+                    </div>
+                </div>
+
+                <!-- 2. Site Setup (Simplified) -->
+                <div id="tracker-section-setup" class="hidden max-w-3xl mx-auto">
+                    <div class="bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                        <div id="setup-step-1">
+                            <h3 class="text-xl font-black mb-6 uppercase tracking-tight text-slate-900">Register Target Domain</h3>
+                            <div class="space-y-8">
+                                <div>
+                                    <label class="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">AUTHORIZED URL</label>
+                                    <input type="url" id="tracker-url-input" placeholder="https://yourwebsite.com" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-bold">
+                                </div>
+
+                                <!-- Tracking Configuration -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <label class="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tracking Configuration</label>
+                                        <button onclick="window.toggleAllFeatures(true)" class="text-[8px] font-black text-royal hover:underline uppercase tracking-widest">Enable All</button>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="feature-config-grid">
+                                        <label class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:border-royal transition-all group">
+                                            <input type="checkbox" id="feat-visitors" checked class="w-4 h-4 rounded accent-royal">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-900 uppercase">Website Visitors</span>
+                                                <span class="text-[8px] text-slate-400 font-bold">Base Analytics & Views</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:border-royal transition-all group">
+                                            <input type="checkbox" id="feat-live" checked class="w-4 h-4 rounded accent-royal">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-900 uppercase">Live Monitoring</span>
+                                                <span class="text-[8px] text-slate-400 font-bold">Real-time Presence</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:border-royal transition-all group">
+                                            <input type="checkbox" id="feat-scroll" checked class="w-4 h-4 rounded accent-royal">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-900 uppercase">Scroll Motion</span>
+                                                <span class="text-[8px] text-slate-400 font-bold">Top/Bottom Direction</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:border-royal transition-all group">
+                                            <input type="checkbox" id="feat-clicks" checked class="w-4 h-4 rounded accent-royal">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-900 uppercase">Click Tracking</span>
+                                                <span class="text-[8px] text-slate-400 font-bold">Left/Right/Buttons</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:border-royal transition-all group col-span-full">
+                                            <input type="checkbox" id="feat-duration" checked class="w-4 h-4 rounded accent-royal">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-black text-slate-900 uppercase">Session Duration</span>
+                                                <span class="text-[8px] text-slate-400 font-bold">Time Tracking (Min/Sec/Ms)</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button onclick="window.generateTrackingCode()" class="w-full bg-royal text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-royal/20 hover:scale-[1.02] transition-transform">Initialize Protocol</button>
+                            </div>
+                        </div>
+
+                        <div id="setup-step-2" class="hidden space-y-8">
+                            <div class="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                <i class="fa-solid fa-circle-check text-royal text-xl"></i>
+                                <div>
+                                    <p class="text-xs font-black text-blue-900 uppercase">Registry Confirmed</p>
+                                    <p class="text-[10px] text-blue-700 font-medium">Install the block below to start receiving lively data.</p>
+                                </div>
+                            </div>
+
+                            <div id="push-setup-instruction"></div>
+
+                            <div class="relative group">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">Copy Tracking Script</p>
+                                <pre class="bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-auto text-[10px] font-mono leading-relaxed h-[240px] custom-scrollbar" id="tracking-code-block"></pre>
+                                <button onclick="window.copyTrackingCode(event)" class="absolute top-10 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all backdrop-blur-md">Copy Code</button>
+                            </div>
+
+                            <div class="flex flex-col gap-4">
+                                <button onclick="window.verifyWebsiteInstallation()" id="btn-verify-site" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-black transition-all">Verify Connection</button>
+                                <div id="verification-status" class="text-center text-[10px] font-black uppercase hidden"></div>
+                                <button onclick="window.bypassVerification()" class="text-slate-300 hover:text-royal transition-colors text-[8px] font-black uppercase tracking-widest underline underline-offset-4">Developer Bypass</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. REAL-TIME DASHBOARD (RE-DESIGNED) -->
+                <div id="tracker-section-dashboard" class="hidden space-y-8">
+                    <!-- Dashboard Header with Tab Switcher -->
+                    <div class="flex justify-between items-center bg-white p-4 rounded-[2rem] border border-slate-100">
+                        <div class="flex gap-2">
+                            <button onclick="switchTrackerDashboardTab('analytics')" id="tracker-tab-analytics" class="px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest bg-black text-white shadow-lg transition-all">Analytics</button>
+                            <button onclick="switchTrackerDashboardTab('push')" id="tracker-tab-push" class="px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-50 text-slate-400 hover:text-black transition-all">Push Notifications</button>
+                        </div>
+                        <select id="tracker-time-range" onchange="updateTrackerDashboard()" class="bg-slate-50 border-none text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full focus:ring-0">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="7days">Last 7 Days</option>
+                            <option value="30days">Last 30 Days</option>
+                        </select>
+                    </div>
+
+                    <div id="tracker-dashboard-analytics-view" class="space-y-8">
+                        <!-- Top Metrics Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="stat-card">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Live Visitors</p>
+                                <p id="tracker-live-visitors" class="text-4xl font-black text-slate-900">0</p>
+                                <div class="mt-2 inline-flex items-center gap-1.5 text-emerald-500 text-[7px] font-black uppercase tracking-widest">
+                                    <span class="w-1 h-1 rounded-full bg-emerald-500 animate-ping"></span> Real-time
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Visitors</p>
+                                <p id="tracker-all-time-visits" class="text-4xl font-black text-slate-900">0</p>
+                                <p class="text-[7px] text-slate-400 font-bold uppercase mt-2">All Time</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Unique Visitors</p>
+                                <p id="tracker-total-visits" class="text-4xl font-black text-slate-900">0</p>
+                                <p class="text-[7px] text-slate-400 font-bold uppercase mt-2">Selected Range</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Sessions</p>
+                                <p id="tracker-total-sessions" class="text-4xl font-black text-slate-900">0</p>
+                                <p class="text-[7px] text-slate-400 font-bold uppercase mt-2">Today</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Avg. Depth</p>
+                                <p id="tracker-avg-duration" class="text-4xl font-black text-slate-900">0s</p>
+                                <p class="text-[7px] text-slate-400 font-bold uppercase mt-2">Retention</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Interaction Hub</p>
+                                <p id="tracker-total-events" class="text-4xl font-black text-slate-900">0</p>
+                                <p class="text-[7px] text-slate-400 font-bold uppercase mt-2">Total Events</p>
+                            </div>
+                        </div>
+
+                        <!-- Main Dashboard Area -->
+                        <div class="grid grid-cols-1 gap-8 items-start w-full overflow-hidden">
+                            <!-- Left: Activity & Rank -->
+                            <div class="space-y-8 min-w-0 w-full">
+                                <!-- Tables Row -->
+                                <div class="grid grid-cols-1 gap-6 w-full">
+                                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+                                        <div class="flex justify-between items-center mb-6">
+                                            <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Popular Pathways</h4>
+                                            <i class="fa-solid fa-map-location text-slate-200"></i>
+                                        </div>
+                                        <div id="tracker-top-pages" class="space-y-1"></div>
+                                    </div>
+                                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+                                        <div class="flex justify-between items-center mb-6">
+                                            <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Active Elements</h4>
+                                            <i class="fa-solid fa-fingerprint text-slate-200"></i>
+                                        </div>
+                                        <div id="tracker-top-elements" class="space-y-1"></div>
+                                    </div>
+                                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+                                        <div class="flex justify-between items-center mb-6">
+                                            <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Referrer Sources</h4>
+                                            <i class="fa-solid fa-share-nodes text-slate-200"></i>
+                                        </div>
+                                        <div id="tracker-top-referrers" class="space-y-1"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Real-Time Detail Table -->
+                                <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                                    <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                        <div class="flex items-center gap-4">
+                                            <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Live Node Detail</h4>
+                                            <div class="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                <span class="text-[7px] font-black text-emerald-600 uppercase tracking-widest">Lively Connection</span>
+                                            </div>
+                                        </div>
+                                        <span id="live-visitor-count-badge" class="bg-royal text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-royal/10">0 Online</span>
+                                    </div>
+                                    <div class="overflow-x-auto custom-scrollbar w-full">
+                                        <table class="w-full text-left table-fixed min-w-[600px]">
+                                            <thead class="bg-slate-50/80 text-slate-400 text-[8px] font-black uppercase tracking-widest border-b border-slate-100">
+                                                <tr>
+                                                    <th class="px-8 py-5 w-[100px]">Status</th>
+                                                    <th class="px-8 py-5 w-auto">Pathway</th>
+                                                    <th class="px-8 py-5 w-[150px]">Environment</th>
+                                                    <th class="px-8 py-5 w-[100px]">Language</th>
+                                                    <th class="px-8 py-5 text-right w-[100px]">Last Signal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tracker-live-visitors-list" class="text-[10px] font-bold text-slate-600">
+                                                <!-- Dynamic Rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Live Feed (Moved below on narrow layout) -->
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-[600px] flex flex-col">
+                                <div class="flex justify-between items-center mb-8 shrink-0">
+                                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Interaction Stream</h4>
+                                    <div id="stream-pulse" class="w-2 h-2 rounded-full bg-royal animate-ping"></div>
+                                </div>
+                                <div id="tracker-activity-feed" class="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                                    <p class="text-center py-10 text-slate-300 text-[9px] font-black uppercase tracking-widest italic">Awaiting Lively Signals...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Push Notifications View -->
+                    <div id="tracker-dashboard-push-view" class="hidden space-y-8">
+                        <div class="grid grid-cols-1 gap-8">
+                            <!-- Left: Push Stats & Subscriber List -->
+                            <div class="space-y-8">
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="stat-card">
+                                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Subscribers</p>
+                                        <p id="push-total-subscribers" class="text-3xl font-black text-slate-900">0</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Active Devices</p>
+                                        <p id="push-active-subscribers" class="text-3xl font-black text-emerald-500">0</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Avg. CTR</p>
+                                        <p id="push-avg-ctr" class="text-3xl font-black text-royal">0%</p>
+                                    </div>
+                                </div>
+
+                                <!-- Campaign History -->
+                                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-6">Campaign History</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left">
+                                            <thead class="text-slate-400 text-[8px] font-black uppercase border-b border-slate-50">
+                                                <tr>
+                                                    <th class="py-4 px-4">Campaign</th>
+                                                    <th class="py-4 px-4">Audience</th>
+                                                    <th class="py-4 px-4">Sent</th>
+                                                    <th class="py-4 px-4">Clicks</th>
+                                                    <th class="py-4 px-4">CTR</th>
+                                                    <th class="py-4 px-4 text-right">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="push-campaign-list" class="text-[10px] font-bold text-slate-600">
+                                                <!-- Dynamic rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Subscriber List -->
+                                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-6">Recent Subscribers</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left">
+                                            <thead class="text-slate-400 text-[8px] font-black uppercase border-b border-slate-50">
+                                                <tr>
+                                                    <th class="py-4 px-4">Device</th>
+                                                    <th class="py-4 px-4">Browser</th>
+                                                    <th class="py-4 px-4">Joined</th>
+                                                    <th class="py-4 px-4 text-right">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="push-subscriber-list" class="text-[10px] font-bold text-slate-600">
+                                                <!-- Dynamic rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Create Campaign & Preview -->
+                            <div class="space-y-8">
+                                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-4">New Campaign</h4>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="text-[8px] font-black text-slate-400 uppercase block mb-2">Notification Title</label>
+                                            <input type="text" id="push-title" placeholder="Weekend Sale 🎉" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold">
+                                        </div>
+                                        <div>
+                                            <label class="text-[8px] font-black text-slate-400 uppercase block mb-2">Description</label>
+                                            <textarea id="push-desc" placeholder="Get 20% off today..." class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold" rows="3"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="text-[8px] font-black text-slate-400 uppercase block mb-2">Image URL (Optional)</label>
+                                            <input type="url" id="push-image" placeholder="https://..." class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold">
+                                        </div>
+                                        <div>
+                                            <label class="text-[8px] font-black text-slate-400 uppercase block mb-2">Target URL</label>
+                                            <input type="url" id="push-url" placeholder="https://..." class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold">
+                                        </div>
+                                        <div>
+                                            <label class="text-[8px] font-black text-slate-400 uppercase block mb-2">Target Audience</label>
+                                            <select id="push-audience" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold">
+                                                <option value="all">All Subscribers</option>
+                                                <option value="active">Active (Last 7 Days)</option>
+                                                <option value="returning">Returning Visitors</option>
+                                            </select>
+                                        </div>
+                                        <button onclick="publishCampaign()" class="w-full btn-royal py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-royal/20">Publish Notification</button>
+                                    </div>
+                                </div>
+
+                                <!-- Real-time Preview -->
+                                <div class="bg-slate-900 p-6 rounded-[2rem] shadow-xl space-y-4">
+                                    <h4 class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Device Preview</h4>
+                                    <div class="bg-white/10 p-4 rounded-2xl flex gap-4 items-start border border-white/5">
+                                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-bell text-white/20"></i>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p id="preview-push-title" class="text-white text-[11px] font-black truncate">Notification Title</p>
+                                            <p id="preview-push-desc" class="text-slate-400 text-[10px] leading-tight mt-1 line-clamp-2">Your message will appear here on the user's device.</p>
+                                            <p class="text-[8px] text-slate-500 font-bold uppercase mt-2">website-domain.com</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AUTH VIEW (MULTI-STEP REGISTRATION WIZARD) -->
+        <section id="auth-view" class="view-section py-40 bg-slate-50 min-h-screen">
+            <div class="container-fluid px-6 flex justify-center">
+                <div class="glass-card w-full max-w-2xl p-12 rounded-[3.5rem] bg-white relative overflow-hidden">
+                    <!-- Step 1: Login / Identity -->
+                    <div id="auth-step-1" class="wizard-step">
+                        <div class="text-center mb-12">
+                            <h2 id="auth-title" class="text-2xl md:text-3xl font-black text-black mb-3">Seller Secure Login</h2>
+                            <p id="auth-subtitle" class="text-slate-500 text-sm font-medium">Authenticate to access your business node.</p>
+                        </div>
+                        <div class="space-y-6">
+                            <div id="register-fields" class="hidden space-y-6">
+                                <div class="flex justify-center mb-8">
+                                    <div class="relative group">
+                                        <div id="reg-img-preview" onclick="document.getElementById('auth-photo').click()" class="w-24 h-24 rounded-3xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden cursor-pointer hover:border-royal hover:bg-slate-50 transition-all group/upload">
+                                            <i class="fa-solid fa-cloud-arrow-up text-slate-400 text-3xl group-hover/upload:scale-110 transition-transform"></i>
+                                        </div>
+                                        <input type="file" id="auth-photo" accept="image/*" class="hidden" onchange="handleAuthPhoto(this)">
+                                        <button onclick="document.getElementById('auth-photo').click()" class="absolute -bottom-2 -right-2 bg-black text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:bg-royal transition-colors"><i class="fa-solid fa-camera text-[10px]"></i></button>
+                                    </div>
+                                </div>
+                                <input type="text" id="auth-username" placeholder="Username (URL identity)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                                <input type="text" id="auth-brand" placeholder="Business / Brand Name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                                <input type="text" id="auth-products-desc" placeholder="What are the products are you building?" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                                <input type="text" id="auth-services-desc" placeholder="What services are you providing?" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                            </div>
+                            <input type="email" id="auth-email" placeholder="Network Email" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                            <input type="password" id="auth-pass" placeholder="Secure Password" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                            <button onclick="handleAuth()" id="btn-auth-primary" class="w-full btn-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-4">Access Console</button>
+                            <button onclick="toggleAuthMode()" id="btn-auth-toggle" class="w-full text-center text-[10px] font-bold text-slate-400 hover:text-royal transition uppercase tracking-widest mt-4">Register Now</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Plan Selection -->
+                    <div id="auth-step-2" class="wizard-step hidden text-center">
+                        <h2 class="text-3xl font-black text-black mb-12">Select your subscription method</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                            <div onclick="selectRegPlan('starter')" id="plan-starter-wizard" class="glass-card p-8 rounded-[2.5rem] border-2 border-transparent hover:border-royal cursor-pointer transition-all relative group data-[selected=true]:border-royal data-[selected=true]:bg-blue-50/50">
+                                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Business Plan</h3>
+                                <div class="flex items-baseline justify-center gap-1 mb-6">
+                                    <span class="text-4xl font-black text-black">₹2,500</span>
+                                    <span class="text-slate-400 font-bold text-xs">/Month</span>
+                                </div>
+                                <ul class="text-[10px] text-slate-500 font-bold uppercase tracking-tight space-y-2 text-left px-4">
+                                    <li>• Standard Profile</li>
+                                    <li>• Basic AI Tools</li>
+                                    <li>• Ad Creation</li>
+                                </ul>
+                                <div class="mt-8 text-[9px] font-black uppercase tracking-widest text-royal opacity-0 group-data-[selected=true]:opacity-100 transition-opacity">Selected</div>
+                            </div>
+
+                            <div onclick="selectRegPlan('premium')" id="plan-premium-wizard" class="premium-card p-8 rounded-[2.5rem] border-2 border-transparent hover:border-royal cursor-pointer transition-all relative group data-[selected=true]:border-royal data-[selected=true]:bg-blue-50/50">
+                                <h3 class="text-[10px] font-black text-royal uppercase tracking-widest mb-4">Premium Plan</h3>
+                                <div class="flex items-baseline justify-center gap-1 mb-6">
+                                    <span class="text-4xl font-black text-royal">₹4,000</span>
+                                    <span class="text-slate-400 font-bold text-xs">/Month</span>
+                                </div>
+                                <ul class="text-[10px] text-slate-700 font-bold uppercase tracking-tight space-y-2 text-left px-4">
+                                    <li>• AI Salesman</li>
+                                    <li>• Android App</li>
+                                    <li>• Advanced SEO</li>
+                                </ul>
+                                <div class="mt-8 text-[9px] font-black uppercase tracking-widest text-royal opacity-0 group-data-[selected=true]:opacity-100 transition-opacity">Selected</div>
+                            </div>
+                        </div>
+
+                        <button onclick="proceedToPayment()" class="w-full btn-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px]">Authorize & Pay</button>
+                        <button onclick="setWizardStep(1)" class="w-full text-slate-400 font-bold uppercase text-[10px] mt-4">Back to Details</button>
+                    </div>
+
+                    <!-- Step 3: Success -->
+                    <div id="auth-step-3" class="wizard-step hidden text-center">
+                        <div class="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg"><i class="fa-solid fa-check text-white text-4xl"></i></div>
+                        <h2 class="text-2xl font-black uppercase tracking-tightest mb-4">Identity Confirmed</h2>
+                        <p id="res-seller-url" class="text-royal font-black text-lg mb-8">URL Pending...</p>
+                        <button onclick="location.reload()" class="w-full btn-black py-6 rounded-3xl font-black uppercase tracking-widest text-[11px]">Return to Hub</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW -->
+        <section id="developer-view" class="view-section min-h-screen bg-slate-50 py-32">
+            <div class="container-fluid">
+                <div class="flex justify-between items-center mb-12">
+                    <h2 class="text-4xl font-black uppercase tracking-tightest">Architect Console</h2>
+                    <div class="flex gap-2">
+                        <button onclick="switchAdminTab('registry')" id="admin-tab-registry" class="bg-black text-white text-[10px] font-black px-6 py-3 rounded-full uppercase tracking-widest shadow-lg">Registry</button>
+                        <button onclick="switchAdminTab('analytics')" id="admin-tab-analytics" class="bg-white text-slate-400 text-[10px] font-black px-6 py-3 rounded-full uppercase tracking-widest border border-slate-100">Analytics</button>
+                    </div>
+                </div>
+
+                <!-- Registry Tab -->
+                <div id="admin-panel-registry" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 glass-card rounded-[3rem] bg-white overflow-hidden p-10">
+                        <h4 class="font-black text-black uppercase tracking-widest text-xs mb-8">Merchant Registry</h4>
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                                <tr><th class="px-10 py-6">Identity</th><th class="px-10 py-6">Brand</th><th class="px-10 py-6 text-center">Tier</th><th class="px-10 py-6 text-right">Revenue</th><th class="px-10 py-6 text-center">Actions</th></tr>
+                            </thead>
+                            <tbody id="dev-merchants-list"></tbody>
+                        </table>
+                    </div>
+                    <div class="space-y-8">
+                        <div class="glass-card p-8 rounded-[3rem] bg-white">
+                            <h4 class="font-black text-black uppercase tracking-widest text-xs mb-8">Pending Protocols</h4>
+                            <div id="dev-requests-list" class="space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="admin-panel-analytics" class="hidden space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="glass-card p-8 rounded-3xl bg-white text-center">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Visitors</p>
+                            <p id="stats-total-visitors" class="text-4xl font-black text-black">0</p>
+                        </div>
+                        <div class="glass-card p-8 rounded-3xl bg-white text-center">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Unique Visitors</p>
+                            <p id="stats-unique-visitors" class="text-4xl font-black text-black">0</p>
+                        </div>
+                        <div class="glass-card p-8 rounded-3xl bg-white text-center">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Revenue</p>
+                            <p id="stats-total-revenue" class="text-4xl font-black text-royal">₹0</p>
+                        </div>
+                        <div class="glass-card p-8 rounded-3xl bg-white text-center">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Conv. Rate</p>
+                            <p id="stats-conversion-rate" class="text-4xl font-black text-emerald-500">0%</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="glass-card p-10 rounded-[3rem] bg-white">
+                            <h4 class="font-black text-black uppercase tracking-widest text-xs mb-8">Registration Funnel</h4>
+                            <div id="funnel-container" class="space-y-4">
+                                <!-- Funnel bars will be injected here -->
+                            </div>
+                        </div>
+                        <div class="glass-card p-10 rounded-[3rem] bg-white overflow-hidden">
+                            <h4 class="font-black text-black uppercase tracking-widest text-xs mb-8">Recent User Activity</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                                        <tr><th class="px-6 py-4">Visitor</th><th class="px-6 py-4">Action</th><th class="px-6 py-4">Page</th><th class="px-6 py-4">Time</th></tr>
+                                    </thead>
+                                    <tbody id="analytics-activity-list" class="text-[10px] font-bold"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+            </div>
+        </section>
+
+        <!-- Virtual AI Cursor -->
+        <div id="ai-cursor" class="fixed pointer-events-none z-[10000] hidden">
+            <div class="relative">
+                <i class="fa-solid fa-arrow-pointer text-royal text-2xl drop-shadow-lg animate-bounce"></i>
+                <div class="absolute top-8 left-4 bg-royal text-white px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest whitespace-nowrap shadow-xl" id="ai-status-bubble">
+                    AI is thinking...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Modals -->
+    <div id="onboarding-overlay" class="hidden"></div>
+
+    <div id="share-profile-modal" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
+        <div class="glass-card w-full max-w-sm rounded-[3rem] p-10 bg-white relative text-center">
+            <button onclick="closeShareProfile()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-share-nodes text-2xl"></i></div>
+            <h3 class="text-2xl font-black text-black uppercase tracking-tightest mb-2">Share Node</h3>
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button onclick="shareProfileTo('whatsapp')" class="flex flex-col items-center gap-2 p-4 rounded-3xl bg-slate-50 hover:bg-slate-100 transition"><i class="fa-brands fa-whatsapp text-2xl text-emerald-500"></i><span class="text-[9px] font-black uppercase text-slate-400">WhatsApp</span></button>
+                <button onclick="shareProfileTo('copy')" class="flex flex-col items-center gap-2 p-4 rounded-3xl bg-slate-50 hover:bg-slate-100 transition"><i class="fa-solid fa-link text-2xl text-royal"></i><span class="text-[9px] font-black uppercase text-slate-400">Copy Link</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="node-settings-modal" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
+        <div class="glass-card w-full max-w-md rounded-[3rem] p-10 bg-white relative">
+            <button onclick="closeNodeSettings()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-shield-halved text-2xl"></i></div>
+                <h3 class="text-2xl font-black text-black uppercase tracking-tightest">Node Protocol</h3>
+                <div class="flex justify-center gap-2 mt-4">
+                    <button onclick="switchSettingsTab('details')" id="tab-btn-details" class="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-black text-white">Details</button>
+                    <button onclick="switchSettingsTab('ledger')" id="tab-btn-ledger" class="text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full bg-slate-100 text-slate-400">Subscription</button>
+                </div>
+            </div>
+            <div id="settings-view-details" class="space-y-6">
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 group cursor-pointer" onclick="window.showLanguageSelection(); window.closeNodeSettings()">
+                    <p class="text-[9px] font-black text-royal uppercase tracking-widest mb-2">Platform Language</p>
+                    <p class="text-lg font-black text-black flex items-center justify-between">
+                        <span id="current-lang-name">English</span>
+                        <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                    </p>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 group cursor-pointer" onclick="revealCredential('id')">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Merchant Identity (ID)</p>
+                    <p id="settings-res-id" class="text-lg font-mono font-black text-black filter blur-sm transition-all duration-300">SLR-XXXXXX</p>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 group cursor-pointer" onclick="revealCredential('pass')">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Secure Access Pass</p>
+                    <p id="settings-res-pass" class="text-lg font-mono font-black text-black filter blur-sm transition-all duration-300">PASS-XXXXXX</p>
+                </div>
+            </div>
+            <div id="settings-view-ledger" class="hidden space-y-6">
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Activation Date</p><p id="settings-res-date" class="text-xs font-black uppercase">Pending</p></div>
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Remaining</p><p id="settings-res-days" class="text-xl font-black text-royal">0 Days</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-profile-modal" class="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
+        <div class="glass-card w-full max-w-lg rounded-[3rem] p-10 bg-white relative">
+            <button onclick="closeEditProfile()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <h3 class="text-2xl font-black text-black uppercase tracking-tighter mb-8">Update Identity</h3>
+            <div class="space-y-6">
+                <input type="text" id="edit-site-name" placeholder="Brand Name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                <input type="text" id="edit-site-logo" placeholder="Logo URL" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                <input type="text" id="edit-secondary-link" placeholder="Secondary Website Link" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                <textarea id="edit-services-desc" placeholder="Service Description (e.g. Expert in Web Dev, UI/UX)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium" rows="3"></textarea>
+                <textarea id="edit-product-desc" placeholder="Product Description (e.g. Premium Handloom Sarees)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium" rows="3"></textarea>
+                <button onclick="saveProfileChanges()" class="w-full btn-royal py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Logic -->
+    <div id="visitor-journey-modal" class="fixed inset-0 z-[10000] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
+        <div class="glass-card w-full max-w-2xl rounded-[3rem] p-10 bg-white relative max-h-[80vh] overflow-hidden flex flex-col">
+            <button onclick="window.closeVisitorJourney()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="mb-8">
+                <h3 class="text-2xl font-black text-black uppercase tracking-tightest">Visitor Journey</h3>
+                <p id="journey-visitor-id" class="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-2">ID: ---</p>
+            </div>
+            <div id="journey-timeline" class="flex-1 overflow-y-auto pr-4 custom-scrollbar">
+                <!-- Timeline items injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Program Intro Modal -->
+    <div id="dev-program-intro-modal" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-4">
+        <div class="background" style="position: absolute; width: 100%; height: 100%; background: #050505; z-index: -1;">
+            <div class="background-grid" id="backgroundGrid" style="position: absolute; width: 150%; height: 150%; left: -25%; top: -25%; background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px); background-size: 70px 70px; transform: perspective(900px) rotateX(58deg);"></div>
+            <div id="particles" style="position: absolute; width: 100%; height: 100%;"></div>
+        </div>
+
+        <section class="program-modal" id="developerProgram" style="position: relative; width: min(1080px, 95vw); min-height: 545px; display: grid; grid-template-columns: 42% 58%; border-radius: 38px; border: 1px solid rgba(255,255,255,.25); background: #ffffff; box-shadow: 0 50px 120px rgba(0,0,0,.72);">
+            <!-- LEFT PANEL -->
+            <div class="left-panel" style="position: relative; padding: 38px 42px 45px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #ffffff; background: radial-gradient(circle at 50% 8%, rgba(255,255,255,.085), transparent 28%), linear-gradient(150deg, #151515 0%, #080808 50%, #000000 100%); border-right: 1px solid rgba(255,255,255,.08);">
+
+                <div class="coin-stage" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; perspective: 900px; margin-bottom: 24px; position: relative; z-index: 3;">
+                    <div class="coin-shadow" style="position: absolute; width: 78px; height: 12px; bottom: 3px; border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(8px);"></div>
+                    <div class="coin" id="coin-3d" style="width: 88px; height: 88px; position: relative; transform-style: preserve-3d;">
+                        <!-- Coin faces generated by JS -->
+                        <div class="coin-face coin-front" style="position: absolute; inset: 0; width: 88px; height: 88px; border-radius: 50%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transform: translateZ(15px); background: radial-gradient(circle at 30% 24%, #444444 0%, #181818 22%, #080808 60%, #000000 100%); border: 3px solid #3a3a3a; overflow: hidden;">
+                            <div class="coin-glint" style="position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%); animation: coinGlint 3s linear infinite;"></div>
+                            <span class="coin-number" style="font-size: 30px; font-weight: 900; color: #ffffff; position: relative; z-index: 2; text-shadow: 0 1px 0 #888, 0 2px 0 #333, 0 4px 7px #000;">48</span>
+                        </div>
+                        <div class="coin-face coin-back" style="position: absolute; inset: 0; width: 88px; height: 88px; border-radius: 50%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transform: rotateY(180deg) translateZ(15px); background: radial-gradient(circle at 30% 24%, #fff2a2 0%, #ffd453 13%, #dba315 36%, #9c6b08 65%, #4d3000 100%); border: 3px solid #d0a02a; overflow: hidden;">
+                            <div class="coin-glint" style="position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%); animation: coinGlint 3s linear infinite;"></div>
+                            <span class="coin-number" style="font-size: 30px; font-weight: 900; color: #342000; position: relative; z-index: 2; text-shadow: 0 1px 0 #fff0a0, 0 2px 0 #c78c10, 0 4px 5px rgba(40,20,0,.5);">48</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h1 class="program-title" style="font-size: clamp(34px, 3.1vw, 46px); font-weight: 900; line-height: 1.02; margin-bottom: 22px;">
+                    CODEZ48 <span id="intro-modal-span" style="display: block; color: #a9a9a9; margin-top: 5px;">DEVELOPER</span> PROGRAM
+                </h1>
+
+                <p id="intro-modal-desc" style="color: #aaaaaa; font-size: 15px; line-height: 1.7; max-width: 330px;">
+                    Join our elite network of developers. Refer businesses and earn premium commissions on every successful registration.
+                </p>
+
+                <div class="left-badges" style="display: flex; gap: 9px; margin-top: 27px; flex-wrap: wrap; justify-content: center;">
+                    <div class="left-badge" id="intro-badge-1" style="padding: 8px 13px; border-radius: 50px; border: 1px solid #292929; color: #8d8d8d; background: rgba(255,255,255,.025); font-size: 10px; font-weight: 700;">DEVELOP</div>
+                    <div class="left-badge" id="intro-badge-2" style="padding: 8px 13px; border-radius: 50px; border: 1px solid #292929; color: #8d8d8d; background: rgba(255,255,255,.025); font-size: 10px; font-weight: 700;">REFER</div>
+                    <div class="left-badge" id="intro-badge-3" style="padding: 8px 13px; border-radius: 50px; border: 1px solid #292929; color: #8d8d8d; background: rgba(255,255,255,.025); font-size: 10px; font-weight: 700;">EARN</div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="right-panel" style="padding: 48px 54px 40px; color: #090909; background: linear-gradient(145deg, #ffffff, #f6f6f6); display: flex; flex-direction: column; justify-content: center;">
+                <button class="close-button" onclick="window.closeDevProgramIntro()" style="position: absolute; right: 27px; top: 23px; width: 42px; height: 42px; border: none; border-radius: 50%; cursor: pointer; background: transparent; color: #b6b6b6; font-size: 31px; font-weight: 300;">×</button>
+
+                <div class="features" style="margin-top: 5px;">
+                    <!-- FEATURE 1 -->
+                    <div class="feature" style="display: grid; grid-template-columns: 66px 1fr; gap: 18px; align-items: center; padding: 17px 0;">
+                        <div class="feature-icon" style="width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: #f1f1f1; border: 1px solid #e5e5e5; color: #111111;">
+                            <svg viewBox="0 0 24 24" style="width: 27px; height: 27px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M6 4h12M6 8h12M7 4c5 0 6 7 0 7M7 11l7 9"></path></svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 id="intro-feat-1-title" style="font-size: 17px; font-weight: 850; color: #090909; margin-bottom: 6px;">HIGH COMMISSION</h3>
+                            <p id="intro-feat-1-desc" style="color: #777777; font-size: 13.5px;">Earn up to ₹1,000 on every successful business registration.</p>
+                        </div>
+                    </div>
+                    <!-- FEATURE 2 -->
+                    <div class="feature" style="display: grid; grid-template-columns: 66px 1fr; gap: 18px; align-items: center; padding: 17px 0;">
+                        <div class="feature-icon" style="width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: #f1f1f1; border: 1px solid #e5e5e5; color: #111111;">
+                            <svg viewBox="0 0 24 24" style="width: 27px; height: 27px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M4 19V5M4 19h16M7 15l4-5 3 3 5-6"></path></svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 id="intro-feat-2-title" style="font-size: 17px; font-weight: 850; color: #090909; margin-bottom: 6px;">REAL-TIME WALLET</h3>
+                            <p id="intro-feat-2-desc" style="color: #777777; font-size: 13.5px;">Track commissions and leads through your developer dashboard.</p>
+                        </div>
+                    </div>
+                    <!-- FEATURE 3 -->
+                    <div class="feature" style="display: grid; grid-template-columns: 66px 1fr; gap: 18px; align-items: center; padding: 17px 0;">
+                        <div class="feature-icon" style="width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: #f1f1f1; border: 1px solid #e5e5e5; color: #111111;">
+                            <svg viewBox="0 0 24 24" style="width: 27px; height: 27px; stroke: currentColor; fill: none; stroke-width: 2;"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="M16 10l5-3v10l-5-3"></path></svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 id="intro-feat-3-title" style="font-size: 17px; font-weight: 850; color: #090909; margin-bottom: 6px;">WEEKLY WORKSHOPS</h3>
+                            <p id="intro-feat-3-desc" style="color: #777777; font-size: 13.5px;">Access weekly live Google Meet strategy workshops.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="join-button" id="intro-join-btn" onclick="window.location.href='developer-program.html'" style="width: 100%; height: 62px; margin-top: 26px; border: none; border-radius: 50px; cursor: pointer; background: #090909; color: #ffffff; font-size: 14px; font-weight: 850; box-shadow: 0 12px 26px rgba(0,0,0,.15);">
+                    JOIN DEVELOPER PROGRAM →
+                </button>
+
+                <button class="maybe-later" id="intro-maybe-later" onclick="window.closeDevProgramIntro()" style="border: none; background: none; margin: 18px auto 0; color: #a2a2a2; font-size: 11px; font-weight: 800; cursor: pointer; display: block;">MAYBE LATER</button>
+            </div>
+        </section>
+
+        <style>
+            @keyframes gridMove { from { transform: perspective(900px) rotateX(58deg) translateY(0px); } to { transform: perspective(900px) rotateX(58deg) translateY(70px); } }
+            @keyframes rotateCoin {
+                0% { transform: rotateX(-15deg) rotateY(0deg); }
+                25% { transform: rotateX(5deg) rotateY(90deg); }
+                50% { transform: rotateX(15deg) rotateY(180deg); }
+                75% { transform: rotateX(5deg) rotateY(270deg); }
+                100% { transform: rotateX(-15deg) rotateY(360deg); }
+            }
+            @keyframes coinFloating { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } }
+            @keyframes coinGlint { 0% { transform: translateX(-150%) skewX(-25deg); } 100% { transform: translateX(150%) skewX(-25deg); } }
+            @keyframes shadowMove { 0%, 100% { transform: scaleX(1); opacity: .55; } 50% { transform: scaleX(.75); opacity: .3; } }
+            @keyframes particleFloat { 0% { transform: translateY(100vh) scale(.6); opacity: 0; } 15% { opacity: .18; } 85% { opacity: .15; } 100% { transform: translateY(-200px) scale(1.2); opacity: 0; } }
+
+            #backgroundGrid { animation: gridMove 18s linear infinite; }
+            #coin-3d { animation: rotateCoin 5.8s linear infinite; }
+            .coin-stage { animation: coinFloating 3.3s ease-in-out infinite; }
+            .coin-shadow { animation: shadowMove 3.3s ease-in-out infinite; }
+            .particle { position: absolute; border-radius: 50%; background: #ffffff; opacity: .18; animation: particleFloat linear infinite; }
+
+            .program-modal {
+                overflow: hidden;
+                max-height: 90vh;
+            }
+
+            @media (max-width: 850px) {
+                .program-modal {
+                    grid-template-columns: 1fr !important;
+                    width: 95vw !important;
+                    max-width: 500px !important;
+                    min-height: auto !important;
+                    max-height: 85vh !important;
+                    border-radius: 24px !important;
+                    overflow-y: auto !important;
+                    margin: 20px auto !important;
+                    display: block !important;
+                }
+                .left-panel {
+                    padding: 40px 20px !important;
+                    border-right: none !important;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                }
+                .right-panel { padding: 40px 20px !important; }
+                .program-title { font-size: 28px !important; }
+                .coin-stage { width: 100px !important; height: 100px !important; margin-left: auto; margin-right: auto; }
+                .coin, .coin-depth, .coin-face { width: 70px !important; height: 70px !important; }
+                .close-button { top: 15px !important; right: 15px !important; background: rgba(0,0,0,0.05) !important; }
+            }
+        </style>
+    </div>
+
+    <script type="module" src="js/translations.js"></script>
+    <script type="module" src="js/analytics.js"></script>
+    <script type="module" src="js/onboarding.js"></script>
+    <script type="module" src="js/tracker-tool.js"></script>
+    <script type="module" src="js/init.js"></script>
+    <script type="module" src="js/admin.js"></script>
+    <script type="module" src="js/index-secure.js"></script>
+</body>
+</html>

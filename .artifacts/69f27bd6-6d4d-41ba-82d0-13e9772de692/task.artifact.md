@@ -1,0 +1,12 @@
+- `[x]` Step 1: Upgrade Node Settings UI
+    - `[x]` Add "Details" and "Subscription" tabs to `node-settings-modal`
+    - `[x]` Implement "Click to Reveal" credentials UI
+    - `[x]` Add Subscription Ledger display (Payment Date + Progress Bar)
+- `[x]` Step 2: Implement Subscription Protocol Logic
+    - `[x]` Update `openNodeSettings` to handle pending nodes
+    - `[x]` Build `calculateSubscriptionBalance` helper
+    - `[x]` Bind real-time data to modal fields
+- `[x]` Step 3: Verification & Polish
+    - `[x]` Test with Active Node
+    - `[x]` Test with Pending Node
+    - `[x]` Verify laptop layout width (1800px) consistency

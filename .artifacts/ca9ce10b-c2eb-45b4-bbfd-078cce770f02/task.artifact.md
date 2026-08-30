@@ -1,0 +1,6 @@
+- `[x]` Remove automatic registration popup from `index.html`.
+- `[x]` Move Developer Program logic to `js/dev-program.js` and obfuscate (minify/remove comments).
+- `[x]` Move Auth logic to `js/auth-secure.js` and obfuscate (minify/remove comments).
+- `[x]` Update all references to use secure JavaScript versions.
+- `[x]` Implement background referral visit tracking without intrusive UI.
+- `[x]` Ensure successful registrations show "ROCKED IT" status.

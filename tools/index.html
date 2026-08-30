@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools Hub | Codez48 AI Browser Automation</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8FAFC;
+            color: #1e293b;
+        }
+        .bg-royal { background-color: #2563EB; }
+        .text-royal { color: #2563EB; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: #2563EB;
+        }
+        .view-section { display: none; }
+        .view-active { display: block; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-black {
+            background-color: #000000;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-black:hover {
+            background-color: #1a1a1a;
+            transform: translateY(-2px);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="location.href='/index.html'">
+                <span class="text-xl font-black tracking-tighter text-black uppercase">CODEZ<span class="text-royal">48</span></span>
+                <span class="bg-royal text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ml-2">Tools</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <button onclick="location.href='/index.html'" class="text-[10px] font-black text-slate-500 hover:text-black uppercase tracking-widest">Dashboard</button>
+                <div id="user-profile-badge" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-royal border border-slate-200">
+                    <i class="fa-solid fa-user text-xs"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+
+        <!-- SECTION: TOOLS HUB -->
+        <section id="hub-view" class="view-section view-active">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+                <div>
+                    <h1 class="text-4xl font-black text-black tracking-tighter uppercase mb-2">Business Suite</h1>
+                    <p class="text-slate-500 font-medium">Empower your workflow with AI-driven intelligence.</p>
+                </div>
+                <!-- Hub Tabs -->
+                <div class="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
+                    <button onclick="switchHubTab('tools')" id="tab-tools" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all">Tools Hub</button>
+                    <button onclick="switchHubTab('history')" id="tab-history" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Mission Logs</button>
+                    <button onclick="switchHubTab('webhook')" id="tab-webhook" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Webhook Gateway</button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Tools -->
+            <div id="hub-tools-content" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Automation Card -->
+                <div onclick="showWorkspace('automation')" class="glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group">
+                    <div class="w-16 h-16 bg-blue-50 text-royal rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-robot text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-black uppercase tracking-tight mb-2">Automations</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Automate browser-based business tasks using AI.</p>
+                    <span class="text-[10px] font-black text-royal uppercase tracking-widest flex items-center gap-2">
+                        Open Workspace <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
+
+                <!-- Tracker Card -->
+                <div onclick="location.href='/index.html#tracker'" class="glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group">
+                    <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-chart-line text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-black uppercase tracking-tight mb-2">Website Tracker</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Real-time motion analysis and business intelligence.</p>
+                    <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                        Launch Tool <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
+
+                <!-- Notifications Card -->
+                <div onclick="location.href='/index.html#push'" class="glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group">
+                    <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bell text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-black uppercase tracking-tight mb-2">Push Notifications</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Keep your audience engaged with live signals.</p>
+                    <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                        Configure <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tab Content: History -->
+            <div id="hub-history-content" class="hidden space-y-6">
+                <div class="grid grid-cols-1 gap-4" id="mission-history-list">
+                    <!-- History items injected here -->
+                </div>
+            </div>
+
+            <!-- Tab Content: Webhook Gateway -->
+            <div id="hub-webhook-content" class="hidden space-y-8">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                    <div>
+                        <h3 class="text-xl font-black text-black uppercase tracking-tight">Your Personal API Endpoint</h3>
+                        <p class="text-slate-500 text-sm mt-1">Use this URL to send data back to your dashboard from any external source.</p>
+                    </div>
+
+                    <div class="relative group">
+                        <input type="text" id="webhook-url-display" readonly class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-mono text-xs text-royal pr-24" value="https://codez48.netlify.app/.netlify/functions/inbound-webhook?sid=...">
+                        <button onclick="copyWebhookURL()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all">Copy URL</button>
+                    </div>
+
+                    <div class="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                        <i class="fa-solid fa-circle-info text-royal"></i>
+                        <p class="text-[10px] text-blue-700 font-bold uppercase tracking-tight">Any POST request sent here will appear in the Live Stream below.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-8 border-b border-slate-50 flex justify-between items-center">
+                        <h4 class="text-sm font-black text-black uppercase tracking-widest">Live Data Stream</h4>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Listening...</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-400 text-[8px] font-black uppercase tracking-widest border-b border-slate-100">
+                                <tr>
+                                    <th class="px-8 py-4">Received</th>
+                                    <th class="px-8 py-4">Payload Summary</th>
+                                    <th class="px-8 py-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="webhook-stream-list" class="text-[10px] font-bold text-slate-600">
+                                <!-- Stream items injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: AUTOMATION WORKSPACE -->
+        <section id="automation-view" class="view-section">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+                <div>
+                    <button onclick="showWorkspace('hub')" class="text-[10px] font-black text-slate-400 hover:text-black transition uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Hub
+                    </button>
+                    <h1 class="text-4xl font-black text-black tracking-tighter uppercase">Automation Workspace</h1>
+                </div>
+                <div id="connection-status" class="flex items-center gap-3 px-4 py-2 bg-slate-100 rounded-full border border-slate-200">
+                    <span class="w-2 h-2 rounded-full bg-slate-400" id="status-dot"></span>
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest" id="status-text">Disconnected</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Prompt Input -->
+            <div id="step-prompt" class="max-w-3xl mx-auto space-y-8">
+                <div class="text-center space-y-4">
+                    <h2 class="text-2xl font-bold text-black uppercase tracking-tight">What would you like to automate?</h2>
+                    <p class="text-slate-500">Describe your browser-based task in plain English.</p>
+                </div>
+
+                <div class="relative glass-card p-6 rounded-[3rem] bg-white border-2 focus-within:border-royal transition-all">
+                    <textarea id="automation-prompt" class="w-full h-40 bg-transparent text-lg font-medium text-black focus:outline-none resize-none placeholder:text-slate-300" placeholder="Describe the task you want Codez48 AI to automate..."></textarea>
+
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex gap-2">
+                            <button id="btn-voice" class="w-12 h-12 rounded-full bg-slate-50 text-slate-400 hover:text-royal hover:bg-blue-50 transition flex items-center justify-center">
+                                <i class="fa-solid fa-microphone"></i>
+                            </button>
+                            <button onclick="document.getElementById('automation-prompt').value = ''" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest px-4">Clear</button>
+                        </div>
+                        <button id="btn-analyze" class="btn-black px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl">Analyze Request</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="setExamplePrompt('Create a lead campaign for my business.')" class="p-4 rounded-2xl bg-white border border-slate-100 text-left text-xs font-bold text-slate-400 hover:border-royal hover:text-royal transition-all">
+                        "Create a lead campaign for my business."
+                    </button>
+                    <button onclick="setExamplePrompt('Open my business dashboard and update my product information.')" class="p-4 rounded-2xl bg-white border border-slate-100 text-left text-xs font-bold text-slate-400 hover:border-royal hover:text-royal transition-all">
+                        "Update my product information on my dashboard."
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Analysis & Dynamic Form -->
+            <div id="step-form" class="hidden max-w-4xl mx-auto space-y-8">
+                <div class="bg-blue-50 border-l-4 border-royal p-8 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
+                    <div>
+                        <p class="text-royal text-[10px] font-black uppercase tracking-widest mb-1">AI Interpretation Detected</p>
+                        <h3 class="text-xl font-black text-slate-900 uppercase tracking-tight" id="detected-task">Meta Ads Manager</h3>
+                        <p class="text-slate-600 text-sm mt-1" id="detected-goal">Create Lead Campaign</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-royal shadow-sm">
+                        <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
+                    <h3 class="text-lg font-black text-black uppercase tracking-widest">Required Information</h3>
+
+                    <div id="dynamic-fields-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Dynamic fields injected here -->
+                    </div>
+
+                    <div class="pt-8 border-t border-slate-50 flex justify-end">
+                        <button id="btn-proceed" class="btn-black px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-100">
+                            Proceed with Automation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Execution Screen -->
+            <div id="step-running" class="hidden space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <!-- Left: Status & Controls -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-royal/10 text-royal rounded-2xl flex items-center justify-center animate-pulse">
+                                    <i class="fa-solid fa-gear text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-black text-black uppercase tracking-widest">Automation Running</h4>
+                                    <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live Signal
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 pt-6 border-t border-slate-50">
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">TASK IDENTITY</p>
+                                    <p class="text-sm font-bold text-slate-900" id="run-task-name">Meta Lead Generation</p>
+                                </div>
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">TARGET DOMAIN</p>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-xs font-mono text-royal truncate" id="run-target-url">adsmanager.facebook.com</p>
+                                        <button onclick="window.AutomationLogic.openTargetTab()" class="px-3 py-1.5 bg-royal text-white text-[8px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition flex items-center gap-1 shrink-0">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Tab
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">CURRENT ACTION</p>
+                                    <p class="text-xs font-bold text-slate-600 animate-pulse" id="run-current-action">Opening browser session...</p>
+                                </div>
+                            </div>
+
+                            <!-- 7-Stage Flow Protocol Visual Tracker -->
+                            <div class="pt-6 border-t border-slate-50 space-y-2">
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">7-STAGE PLAYWRIGHT FLOW</p>
+                                <div class="grid grid-cols-7 gap-1">
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-1" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">1</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Open</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-2" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">2</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Inspect</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-3" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">3</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Actions</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-4" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">4</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Reach</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-5" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">5</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Extract</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-6" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">6</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Validate</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div id="flow-stage-badge-7" class="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">7</div>
+                                        <span class="text-[7px] font-bold text-slate-400 mt-1 uppercase">Format</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-3 pt-4">
+                                <button id="ctrl-pause" class="w-full bg-slate-50 text-slate-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-slate-100 hover:bg-slate-100 transition">Pause Protocol</button>
+                                <button id="ctrl-stop" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-red-100 hover:bg-red-100 transition">Terminate Task</button>
+                            </div>
+                        </div>
+
+                        <!-- Manual Login Alert -->
+                        <div id="login-required-alert" class="hidden bg-amber-50 border-2 border-amber-200 p-8 rounded-[2.5rem] text-center space-y-6 animate-bounce shadow-xl shadow-amber-100">
+                            <div class="w-16 h-16 bg-white text-amber-500 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                                <i class="fa-solid fa-user-shield text-2xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-black text-amber-900 uppercase tracking-tight">Manual Login Required</h4>
+                                <p class="text-amber-700 text-xs mt-2 font-medium">A security checkpoint was encountered. Please complete authentication in the browser window.</p>
+                            </div>
+                            <button id="btn-resume" class="w-full bg-amber-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all">Resume Automation</button>
+                        </div>
+
+                        <!-- EXTRACTION RESULTS CARD WITH FORMAT SWITCHER -->
+                        <div id="extraction-results-card" class="hidden bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-sm font-black text-black uppercase tracking-widest">Extracted Results Output</h4>
+                                <span id="webhook-badge" class="hidden bg-blue-50 text-royal text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest">API Linked</span>
+                            </div>
+
+                            <!-- Multi-Format Switcher -->
+                            <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-2">Format:</span>
+                                <button onclick="window.AutomationLogic.renderFormattedData(window._lastExtractedData, 'table')" class="px-3 py-1 bg-slate-100 text-slate-700 hover:bg-black hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition">Table</button>
+                                <button onclick="window.AutomationLogic.renderFormattedData(window._lastExtractedData, 'json')" class="px-3 py-1 bg-slate-100 text-slate-700 hover:bg-black hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition">JSON</button>
+                                <button onclick="window.AutomationLogic.renderFormattedData(window._lastExtractedData, 'list')" class="px-3 py-1 bg-slate-100 text-slate-700 hover:bg-black hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition">List</button>
+                                <button onclick="window.AutomationLogic.renderFormattedData(window._lastExtractedData, 'text')" class="px-3 py-1 bg-slate-100 text-slate-700 hover:bg-black hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition">Text</button>
+                            </div>
+
+                            <div id="extracted-data-display" class="bg-slate-50 rounded-2xl p-4 font-mono text-[10px] text-slate-600 overflow-auto max-h-60 custom-scrollbar">
+                                <p class="italic text-slate-400">Awaiting data from target website...</p>
+                            </div>
+
+                            <div id="dispatch-status-area" class="hidden pt-4 border-t border-slate-50 flex items-center justify-between">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">External Dispatch</span>
+                                <div id="dispatch-status-pill" class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300" id="dispatch-dot"></span>
+                                    <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest" id="dispatch-text">Waiting</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Live Web Browser Viewport Stage & Activity Feed -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Viewport / Terminal Tab Selector -->
+                        <div class="flex items-center justify-between bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
+                            <div class="flex gap-2">
+                                <button onclick="window.AutomationLogic.switchStageTab('viewport')" id="btn-tab-viewport" class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-desktop"></i> Live Browser Viewport
+                                </button>
+                                <button onclick="window.AutomationLogic.switchStageTab('terminal')" id="btn-tab-terminal" class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-terminal"></i> Activity Terminal Log
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 pr-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Stream</span>
+                            </div>
+                        </div>
+
+                        <!-- STAGE TAB 1: LIVE BROWSER VIEWPORT CONTAINER -->
+                        <div id="stage-tab-viewport" class="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col relative h-[580px]">
+                            <!-- Browser Chrome Bar -->
+                            <div class="bg-slate-100 px-6 py-3 border-b border-slate-200 flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>
+                                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                                    <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>
+                                </div>
+                                <div class="flex-1 max-w-xl bg-white border border-slate-200 rounded-xl px-4 py-1.5 flex items-center gap-2 shadow-inner">
+                                    <i class="fa-solid fa-lock text-emerald-500 text-xs"></i>
+                                    <input type="text" id="browser-address-bar" readonly class="w-full text-xs font-mono text-slate-700 bg-transparent focus:outline-none" value="https://web.whatsapp.com">
+                                </div>
+                                <button onclick="window.AutomationLogic.openTargetTab()" class="px-3 py-1.5 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Tab
+                                </button>
+                                <button onclick="window.AutomationLogic.copyBookmarklet()" class="px-3 py-1.5 bg-royal text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-700 transition flex items-center gap-1" title="Copy Target Tab Automation Driver Bookmarklet">
+                                    <i class="fa-solid fa-plug"></i> Copy Driver
+                                </button>
+                            </div>
+
+                            <!-- Live Browser Viewport Canvas Stage -->
+                            <div id="browser-viewport-stage" class="flex-1 bg-slate-900 relative overflow-hidden flex flex-col items-center justify-center p-2 select-none">
+                                <!-- Live Streamed Playwright Page Frame Image -->
+                                <div class="w-full h-full relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+                                    <img id="automation-browser-frame-img" class="w-full h-full object-contain" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720' viewBox='0 0 1280 720'%3E%3Crect width='100%25' height='100%25' fill='%230f172a'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2338bdf8' font-family='sans-serif' font-size='18' font-weight='bold'%3EPlaywright Live Browser Session Idle%3C/text%3E%3C/svg%3E" alt="Live Browser Stream">
+
+                                    <!-- Element Target Bounding Box Highlighter -->
+                                    <div id="element-target-box" class="absolute inset-0 border-2 border-royal rounded-xl pointer-events-none opacity-0 transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                                        <span class="absolute -top-3 left-4 bg-royal text-white text-[7px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest" id="target-box-label">Target DOM Element</span>
+                                    </div>
+
+                                    <!-- Virtual Cursor Pointer Overlay inside Relative Frame -->
+                                    <div id="virtual-cursor" class="absolute pointer-events-none transition-all duration-500 ease-out z-30 opacity-0 flex items-center gap-2" style="top: 30%; left: 30%;">
+                                        <div id="cursor-ripple" class="absolute -inset-2 bg-royal/40 rounded-full animate-ping opacity-0"></div>
+                                        <svg class="w-6 h-6 text-royal drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M3 3l7 18 3-7 7-3L3 3z"/>
+                                        </svg>
+                                        <span class="bg-royal text-white text-[8px] font-black px-2.5 py-1 rounded-full shadow-xl uppercase tracking-wider border border-white/20">Playwright Agent</span>
+                                    </div>
+                                </div>
+
+                                <!-- Animated Assistant Indicator Overlay -->
+                                <div id="assistant-indicator" class="absolute bottom-6 right-6 z-30 flex items-center gap-3 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-slate-200 shadow-2xl">
+                                    <div id="assistant-avatar" class="w-9 h-9 rounded-full bg-slate-100 flex flex-col items-center justify-center border border-slate-200 shadow-inner relative">
+                                        <div id="assistant-eyes" class="flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+                                            <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+                                        </div>
+                                        <div id="assistant-mouth" class="w-3 h-0.5 bg-black rounded-full mx-auto mt-0.5"></div>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Autonomous Assistant</p>
+                                        <p id="assistant-status-bubble" class="text-[10px] font-bold text-slate-800">Ready for mission...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STAGE TAB 2: TERMINAL ACTIVITY LOG CONTAINER -->
+                        <div id="stage-tab-terminal" class="hidden bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl h-[580px] flex flex-col relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-royal/5 to-transparent h-20 w-full animate-scan pointer-events-none"></div>
+
+                            <div class="flex justify-between items-center mb-6 shrink-0 relative z-10">
+                                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Activity Log</h4>
+                                <div class="flex gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                                    <span class="w-2 h-2 rounded-full bg-slate-700"></span>
+                                </div>
+                            </div>
+
+                            <div id="automation-logs" class="flex-1 overflow-y-auto space-y-4 font-mono text-[10px] pr-4 custom-scrollbar relative z-10">
+                                <p class="text-emerald-500/60">>> [SYS] CODEZ48_AI_BROWSER v4.8 Initialization Complete</p>
+                                <p class="text-slate-500">>> [NET] Authenticating with Playwright Cluster...</p>
+                            </div>
+
+                            <!-- User Interaction Input -->
+                            <div id="ai-question-area" class="hidden mt-6 pt-6 border-t border-white/5 relative z-10 animate-in slide-in-from-bottom-4">
+                                <p class="text-royal font-black text-[9px] uppercase tracking-[0.2em] mb-3" id="ai-question-text">Information missing: What amount should I enter for Daily Budget?</p>
+                                <div class="flex gap-3">
+                                    <input type="text" id="ai-answer-input" class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-royal transition-all" placeholder="Enter your response...">
+                                    <button id="btn-answer-voice" class="w-10 h-10 rounded-xl bg-white/5 text-slate-400 hover:text-white transition flex items-center justify-center"><i class="fa-solid fa-microphone"></i></button>
+                                    <button id="btn-submit-answer" class="bg-royal text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Global Loader -->
+    <div id="global-loader" class="fixed inset-0 z-[100] bg-white flex items-center justify-center hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <p class="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Processing...</p>
+        </div>
+    </div>
+
+    <!-- MISSION DATA MODAL -->
+    <div id="mission-modal" class="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
+        <div class="glass-card w-full max-w-2xl rounded-[3rem] p-10 bg-white relative max-h-[85vh] flex flex-col">
+            <button onclick="closeMissionModal()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="mb-8">
+                <h3 class="text-2xl font-black text-black uppercase tracking-tightest" id="modal-mission-title">Mission Details</h3>
+                <p id="modal-mission-id" class="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-2">ID: ---</p>
+            </div>
+            <div id="modal-mission-content" class="flex-1 overflow-y-auto pr-4 custom-scrollbar font-mono text-xs text-slate-600 bg-slate-50 p-6 rounded-3xl">
+                <!-- Data injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL-SCREEN LIVE AGENT WORKSPACE VIEWPORT MODAL -->
+    <div id="live-agent-modal" class="fixed inset-0 z-[90] bg-slate-950/80 backdrop-blur-xl hidden flex flex-col p-4 md:p-8 animate-in fade-in duration-300">
+        <div class="w-full max-w-7xl mx-auto h-full bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col relative">
+            <!-- Modal Browser Chrome Header -->
+            <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block cursor-pointer hover:opacity-80" onclick="window.AutomationLogic.closeLiveAgentModal()"></span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block"></span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block"></span>
+                    <span class="text-xs font-black uppercase text-slate-400 tracking-wider ml-3" id="modal-app-title">PLAYWRIGHT AGENT STAGE</span>
+                </div>
+
+                <!-- HTTPS Address Bar -->
+                <div class="flex-1 max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl px-5 py-2 flex items-center gap-3 shadow-inner">
+                    <i class="fa-solid fa-lock text-emerald-400 text-xs"></i>
+                    <input type="text" id="modal-address-bar" readonly class="w-full text-xs font-mono text-emerald-400 bg-transparent focus:outline-none" value="https://web.whatsapp.com">
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="window.AutomationLogic.speakStatus('Speech Synthesis Voice Test Active')" class="p-2.5 bg-slate-800 text-slate-300 rounded-xl hover:text-white hover:bg-slate-700 transition" title="Test Voice Synthesizer">
+                        <i class="fa-solid fa-volume-high text-xs"></i>
+                    </button>
+                    <button onclick="window.AutomationLogic.openTargetTab()" class="px-4 py-2 bg-royal text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition flex items-center gap-1.5 shadow-lg shadow-blue-500/20">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open External Tab
+                    </button>
+                    <button onclick="window.AutomationLogic.closeLiveAgentModal()" class="p-2.5 bg-slate-800 text-slate-400 hover:text-white rounded-xl transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Target Site Stage Canvas Viewport -->
+            <div id="modal-stage-canvas" class="flex-1 bg-slate-950 relative overflow-hidden flex items-center justify-center p-4 select-none">
+                <!-- Live Streamed Playwright Page Frame Image in Modal -->
+                <div class="w-full h-full relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+                    <img id="modal-automation-browser-frame-img" class="w-full h-full object-contain" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720' viewBox='0 0 1280 720'%3E%3Crect width='100%25' height='100%25' fill='%230f172a'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2338bdf8' font-family='sans-serif' font-size='20' font-weight='bold'%3EPlaywright Live Browser Session Active%3C/text%3E%3C/svg%3E" alt="Live Browser Stream">
+
+                    <!-- Element Target Bounding Ring Highlighter -->
+                    <div id="modal-target-box" class="absolute inset-0 border-2 border-royal rounded-xl pointer-events-none opacity-0 transition-all duration-300 shadow-[0_0_30px_rgba(37,99,235,0.5)]">
+                        <span class="absolute -top-3 left-4 bg-royal text-white text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-widest" id="modal-target-box-label">Target DOM Element</span>
+                    </div>
+
+                    <!-- SVG Virtual Cursor Overlay inside Relative Modal Frame -->
+                    <div id="modal-virtual-cursor" class="absolute pointer-events-none transition-all duration-500 ease-out z-40 opacity-0 flex items-center gap-2" style="top: 30%; left: 30%;">
+                        <div id="modal-cursor-ripple" class="absolute -inset-3 bg-royal/40 rounded-full animate-ping opacity-0"></div>
+                        <svg class="w-7 h-7 text-royal drop-shadow-xl" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 3l7 18 3-7 7-3L3 3z"/>
+                        </svg>
+                        <span class="bg-royal text-white text-[9px] font-black px-3 py-1 rounded-full shadow-2xl uppercase tracking-wider border border-white/20">Playwright Agent</span>
+                    </div>
+                </div>
+
+                <!-- Animated Assistant Avatar Overlay with Speech Status -->
+                <div id="modal-assistant-indicator" class="absolute bottom-8 right-8 z-40 flex items-center gap-4 bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200 shadow-2xl max-w-md">
+                    <div id="modal-assistant-avatar" class="w-10 h-10 rounded-full bg-slate-100 flex flex-col items-center justify-center border border-slate-200 shadow-inner relative shrink-0">
+                        <div id="modal-assistant-eyes" class="flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+                        </div>
+                        <div id="modal-assistant-mouth" class="w-3 h-0.5 bg-black rounded-full mx-auto mt-0.5"></div>
+                    </div>
+                    <div class="text-left flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Autonomous Assistant Voice</p>
+                            <i class="fa-solid fa-volume-low text-emerald-500 text-[10px] animate-pulse"></i>
+                        </div>
+                        <p id="modal-assistant-bubble" class="text-xs font-bold text-slate-900 truncate">Initializing Playwright Session...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic Integration -->
+    <script src="../js/automation-bridge.js"></script>
+    <script type="module" src="../js/playwright-agent-core.js"></script>
+    <script type="module" src="../js/ai-automation.js"></script>
+    <script>
+        function showWorkspace(id) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('view-active'));
+            document.getElementById(`${id}-view`).classList.add('view-active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setExamplePrompt(text) {
+            const prompt = document.getElementById('automation-prompt');
+            prompt.value = text;
+            prompt.focus();
+        }
+
+        function switchHubTab(tab) {
+            const toolsContent = document.getElementById('hub-tools-content');
+            const historyContent = document.getElementById('hub-history-content');
+            const webhookContent = document.getElementById('hub-webhook-content');
+            const tabTools = document.getElementById('tab-tools');
+            const tabHistory = document.getElementById('tab-history');
+            const tabWebhook = document.getElementById('tab-webhook');
+
+            [toolsContent, historyContent, webhookContent].forEach(c => c?.classList.add('hidden'));
+            [tabTools, tabHistory, tabWebhook].forEach(t => {
+                if(t) t.className = "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all";
+            });
+
+            if (tab === 'tools') {
+                toolsContent.classList.remove('hidden');
+                tabTools.className = "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all";
+            } else if (tab === 'history') {
+                historyContent.classList.remove('hidden');
+                tabHistory.className = "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all";
+                if (window.loadAutomationHistory) window.loadAutomationHistory();
+            } else if (tab === 'webhook') {
+                webhookContent.classList.remove('hidden');
+                tabWebhook.className = "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all";
+                if (window.setupWebhookGateway) window.setupWebhookGateway();
+            }
+        }
+
+        function copyWebhookURL() {
+            const input = document.getElementById('webhook-url-display');
+            input.select();
+            document.execCommand('copy');
+            alert("API Endpoint copied to clipboard.");
+        }
+
+        function viewWebhookPayload(id) {
+            if (window.viewSingleWebhook) window.viewSingleWebhook(id);
+        }
+
+        function viewMissionResult(id) {
+            const modal = document.getElementById('mission-modal');
+            const idEl = document.getElementById('modal-mission-id');
+            const contentEl = document.getElementById('modal-mission-content');
+
+            idEl.innerText = `ID: ${id}`;
+            contentEl.innerHTML = `<p class="animate-pulse">Fetching mission payload from registry...</p>`;
+            modal.classList.remove('hidden');
+
+            // Logic handled in ai-automation.js but we can add a listener here
+            if (window.viewSingleMission) window.viewSingleMission(id);
+        }
+
+        function closeMissionModal() {
+            document.getElementById('mission-modal').classList.add('hidden');
+        }
+    </script>
+    <style>
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(600px); }
+        }
+        .animate-scan { animation: scan 3s linear infinite; }
+    </style>
+</body>
+</html>

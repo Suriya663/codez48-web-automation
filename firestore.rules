@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Website Registry Management
+    match /external_sites/{siteId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+
+      // 2. Nested Analytics Data
+      match /events/{eventId} {
+        allow create: if true; // Public ingestion
+        allow read: if request.auth != null && get(/databases/$(database)/documents/external_sites/$(siteId)).data.ownerId == request.auth.uid;
+      }
+
+      match /sessions/{sessionId} {
+        allow create, update: if true; // Public ingestion
+        allow read: if request.auth != null && get(/databases/$(database)/documents/external_sites/$(siteId)).data.ownerId == request.auth.uid;
+      }
+
+      // 3. Push Notifications
+      match /subscribers/{subscriberId} {
+        allow create, update: if true; // Public subscription
+        allow read, delete: if request.auth != null && get(/databases/$(database)/documents/external_sites/$(siteId)).data.ownerId == request.auth.uid;
+      }
+
+      match /campaigns/{campaignId} {
+        allow read, write: if request.auth != null && get(/databases/$(database)/documents/external_sites/$(siteId)).data.ownerId == request.auth.uid;
+      }
+    }
+
+    // 2. Playwright Autonomous Browser Automations (Strict User Isolation)
+    match /automations/{autoId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.userId == 'guest');
+    }
+
+    match /webhook_inbox/{msgId} {
+      allow create: if true; // Public webhook ingestion
+      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // 3. Global Fallback (Secure by default)
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

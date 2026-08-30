@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CODEZ48 - The ultimate high-performance Business Network and Merchant Directory. Connect with verified nodes, explore premium services, and grow your business identity.">
+    <meta name="keywords" content="Business Network, Merchant Directory, Digital Business Node, Premium Merchant Listing, AI-Powered Search, Business Connectivity, Network Protocol, CODEZ48, Enterprise Solutions, Verified Merchants">
+    <title>About Us | CODEZ48 - High-Performance Business Connectivity</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FFFFFF;
+            color: #1e293b;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+        .text-royal { color: #2563EB; }
+        .bg-royal { background-color: #2563EB; }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .keyword-badge {
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-black {
+            background-color: #000000;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-black:hover {
+            background-color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-header" id="main-nav">
+        <div class="max-w-[1800px] mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='index.html'">
+                <span class="text-xl font-black tracking-tighter text-black uppercase">CODEZ<span class="text-royal">48</span></span>
+            </div>
+
+            <!-- Mobile Hamburger -->
+            <button class="md:hidden text-black focus:outline-none" onclick="toggleMobileMenu()">
+                <i class="fa-solid fa-bars-staggered text-2xl"></i>
+            </button>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="index.html" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Store</a>
+                <a href="index.html#merchant-directory" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Network Hub</a>
+                <a href="mailto:codez4848@gmail.com" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Help Centre</a>
+
+                <!-- Auth UI -->
+                <button id="nav-join-btn" onclick="window.location.href='index.html#pricing'" class="bg-black text-white text-[10px] font-black px-8 py-3 rounded-full shadow-lg uppercase tracking-widest">Join Network</button>
+                <button id="nav-profile-btn" onclick="window.location.href='index.html#profile'" class="hidden text-royal hover:text-black transition text-2xl" title="My Node Profile">
+                    <i class="fa-solid fa-circle-user"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-nav-menu" class="hidden md:hidden bg-white border-t border-slate-100 flex flex-col p-6 space-y-6 shadow-xl absolute top-full left-0 w-full z-40 animate-in slide-in-from-top-4 duration-300">
+            <a href="index.html" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Store</a>
+            <a href="index.html#merchant-directory" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Network Hub</a>
+            <a href="mailto:codez4848@gmail.com" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Help Centre</a>
+            <button id="nav-join-btn-mobile" onclick="window.location.href='index.html#pricing'; toggleMobileMenu()" class="w-full btn-black text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest">Join Network</button>
+            <button id="nav-profile-btn-mobile" onclick="window.location.href='index.html#profile'; toggleMobileMenu()" class="hidden w-full bg-slate-50 text-royal text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest border border-slate-100">My Profile</button>
+        </div>
+    </nav>
+
+    <main class="pt-32 md:pt-48 pb-32">
+        <div class="max-w-5xl mx-auto px-6">
+            <!-- Hero Section -->
+            <div class="text-center mb-16 md:mb-24">
+                <h1 class="text-4xl md:text-7xl font-black text-black mb-6 tracking-tightest uppercase leading-tight md:leading-none">The Future of <br class="md:hidden"><span class="text-royal">Business Connectivity</span></h1>
+                <p class="text-slate-500 text-base md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">CODEZ48 is an elite merchant directory and digital node registry designed for high-velocity business scaling.</p>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 mb-20 md:mb-32">
+                <div class="space-y-6">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tightest">Our Mission</h2>
+                    <p class="text-slate-600 leading-loose text-sm md:text-base">We are building the world's most responsive **Business Network**. Our protocol allows merchants to deploy digital storefronts, verify their identity, and connect with global customers through our advanced **Merchant Directory**. Every node in our network is optimized for performance, trust, and scalability.</p>
+                </div>
+                <div class="space-y-6">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tightest">AI-Powered Discovery</h2>
+                    <p class="text-slate-600 leading-loose text-sm md:text-base">Discovery is at our core. Using our proprietary **AI-Powered Search** engine, users can find services and products across thousands of **Digital Business Nodes** with unprecedented precision. We analyze user intent line-by-line to ensure every search query delivers the most relevant merchant matches.</p>
+                </div>
+            </div>
+
+            <!-- Features / Keywords Area -->
+            <div class="bg-slate-50 rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 border border-slate-100">
+                <h2 class="text-2xl md:text-4xl font-black text-black text-center mb-10 md:mb-12 uppercase tracking-tightest">Core Network Protocols</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-shield-halved text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Verified Nodes</h3>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">Every merchant undergoes a rigorous verification protocol to ensure network integrity and customer safety.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-bolt text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Elite Ranking</h3>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">Premium Tier members receive priority ranking in our global registry, boosting their digital footprint by 1000%.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-magnifying-glass-chart text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-extrabold uppercase text-black">Deep Analytics</h3>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">Our real-time ledger provides merchants with deep insights into their network velocity and customer interactions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO Keywords Section -->
+            <div class="mt-20 md:mt-32 pt-12 md:pt-16 border-t border-slate-100">
+                <p class="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-6 md:mb-8 text-center">Network Taxonomy & SEO Registry</p>
+                <div class="flex flex-wrap justify-center gap-2 md:gap-3">
+                    <span class="keyword-badge">Business Network</span>
+                    <span class="keyword-badge">Merchant Directory</span>
+                    <span class="keyword-badge">Digital Business Node</span>
+                    <span class="keyword-badge">Premium Merchant Listing</span>
+                    <span class="keyword-badge">AI-Powered Search</span>
+                    <span class="keyword-badge">Business Connectivity</span>
+                    <span class="keyword-badge">Network Protocol</span>
+                    <span class="keyword-badge">Enterprise Solutions</span>
+                    <span class="keyword-badge">Verified Merchants</span>
+                    <span class="keyword-badge">Digital Storefront</span>
+                    <span class="keyword-badge">B2B Connectivity</span>
+                    <span class="keyword-badge">Node Registry</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-50 py-16 md:py-20 text-center">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">&copy; 2026 CODEZ48 PROTOCOL. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <script type="module" src="js/about.js"></script>
+</body>
+</html>

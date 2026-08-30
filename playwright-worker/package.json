@@ -1,0 +1,23 @@
+{
+  "name": "codez48-playwright-worker",
+  "version": "1.0.0",
+  "description": "Persistent Playwright Browser Worker Service for Codez48 AI Web Automation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "postinstall": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.42.1",
+    "express": "^4.18.3",
+    "ws": "^8.16.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

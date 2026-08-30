@@ -1,0 +1,9 @@
+{
+  "name": "send-notification",
+  "version": "1.0.0",
+  "description": "Secure notification sender",
+  "main": "send-notification.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
