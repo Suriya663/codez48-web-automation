@@ -19,6 +19,40 @@ class PageInspector {
                     return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && elem.offsetWidth > 0 && elem.offsetHeight > 0;
                 };
 
+                // YouTube Channel Specific Extraction
+                let ytChannelData = null;
+                if (window.location.hostname.includes('youtube.com')) {
+                    const subCountEl = document.querySelector('#subscriber-count, yt-formatted-string#subscriber-count, [aria-label*="subscribers"]');
+                    const channelNameEl = document.querySelector('yt-formatted-string#text, #channel-name, h1.ytd-channel-name');
+                    const videoCountEl = document.querySelector('#videos-count, [aria-label*="videos"]');
+                    const channelBioEl = document.querySelector('#description-container, #about-container, #channel-tagline');
+
+                    ytChannelData = {
+                        channelName: channelNameEl?.innerText?.trim() || document.title.replace(' - YouTube', ''),
+                        subscriberCount: subCountEl?.innerText?.trim() || 'N/A',
+                        videoCount: videoCountEl?.innerText?.trim() || 'N/A',
+                        bio: channelBioEl?.innerText?.substring(0, 300)?.trim() || 'N/A'
+                    };
+                }
+
+                // Layout Section Classification
+                const layoutSections = [];
+                document.querySelectorAll('header, nav, section, main, footer, div.hero, .card-grid, .features').forEach((s, idx) => {
+                    if (isVisible(s) && layoutSections.length < 10) {
+                        const tag = s.tagName.toLowerCase();
+                        const heading = s.querySelector('h1, h2, h3')?.innerText?.trim() || '';
+                        const textSnippet = s.innerText?.substring(0, 100)?.replace(/\s+/g, ' ')?.trim() || '';
+                        if (textSnippet.length > 5) {
+                            layoutSections.push({
+                                index: idx,
+                                tag,
+                                heading: heading || tag.toUpperCase(),
+                                snippet: textSnippet
+                            });
+                        }
+                    }
+                });
+
                 const headings = [];
                 document.querySelectorAll('h1, h2, h3').forEach(h => {
                     if (isVisible(h)) {
@@ -75,34 +109,25 @@ class PageInspector {
                     }
                 });
 
-                // Detect visible dialogs or modals
-                const dialogs = [];
-                document.querySelectorAll('[role="dialog"], .modal, .popup, dialog').forEach(d => {
-                    if (isVisible(d)) {
-                        dialogs.push({
-                            title: d.querySelector('h1, h2, h3, .modal-title')?.innerText?.trim() || 'Dialog',
-                            text: d.innerText?.substring(0, 150)?.trim() || ''
-                        });
-                    }
-                });
-
                 return {
-                    headings: headings.slice(0, 5),
+                    ytChannelData,
+                    layoutSections,
+                    headings: headings.slice(0, 10),
                     buttons: buttons.slice(0, 20),
                     inputs: inputs.slice(0, 15),
-                    links: links.slice(0, 10),
-                    dialogs
+                    links: links.slice(0, 10)
                 };
             });
 
             return {
                 url,
                 title,
+                ytChannelData: pageData.ytChannelData,
+                layoutSections: pageData.layoutSections,
                 headings: pageData.headings,
                 buttons: pageData.buttons,
                 inputs: pageData.inputs,
-                links: pageData.links,
-                dialogs: pageData.dialogs
+                links: pageData.links
             };
 
         } catch (err) {

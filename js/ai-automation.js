@@ -589,6 +589,29 @@ export const AutomationLogic = {
                         <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Extracted Data Metrics</p>
                         <pre class="text-emerald-600 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">${JSON.stringify(data.metrics || data, null, 2)}</pre>
                     </div>
+
+                    <!-- Section E: Interactive Ask AI About This Site / Channel -->
+                    <div id="site-qa-container" class="bg-gradient-to-br from-slate-900 to-purple-950 p-5 rounded-2xl text-white space-y-4 shadow-xl">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <span class="text-[10px] font-black text-purple-300 uppercase tracking-widest flex items-center gap-2">
+                                <i class="fa-solid fa-comments text-purple-400"></i> Ask AI Questions About This Website / Channel
+                            </span>
+                            <span class="text-[8px] font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full uppercase border border-emerald-800">Context Loaded</span>
+                        </div>
+
+                        <div id="site-qa-history" class="space-y-3 max-h-56 overflow-y-auto custom-scrollbar font-sans text-xs">
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-slate-300">
+                                💡 <strong>AI Assistant Ready:</strong> Ask any question about this channel or website (e.g. <em>"What does this channel do?"</em> or <em>"Describe the layout section by section"</em>).
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <input type="text" id="site-qa-input" onkeypress="if(event.key==='Enter') window.askAIAboutSite()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 font-medium" placeholder="Ask a question about this site or channel...">
+                            <button onclick="window.askAIAboutSite()" id="btn-ask-site-qa" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shrink-0 shadow-lg shadow-purple-900/50">
+                                <i class="fa-solid fa-paper-plane"></i> Ask AI
+                            </button>
+                        </div>
+                    </div>
                 </div>`;
         } else if (format === 'table' && Array.isArray(data) && data.length > 0) {
             const keys = Object.keys(data[0]);
@@ -740,6 +763,68 @@ export const AutomationLogic = {
         await setDoc(doc(db, "automations", AutomationLogic.currentRunId), { status: isPaused ? RunState.RUNNING : 'PAUSED', lastAction: isPaused ? 'Resuming...' : 'Paused by user' }, { merge: true });
         if (btn) btn.innerText = isPaused ? 'Pause Protocol' : 'Resume Protocol';
     },
+
+    async askAIAboutSite() {
+        const input = document.getElementById('site-qa-input');
+        const historyEl = document.getElementById('site-qa-history');
+        const btnAsk = document.getElementById('btn-ask-site-qa');
+
+        const question = input ? input.value.trim() : '';
+        if (!question) return;
+
+        if (input) input.value = '';
+
+        if (historyEl) {
+            const userMsg = document.createElement('div');
+            userMsg.className = 'bg-purple-900/60 p-3 rounded-xl border border-purple-700 text-purple-200 font-semibold';
+            userMsg.innerHTML = `<strong>You:</strong> ${question}`;
+            historyEl.appendChild(userMsg);
+            historyEl.scrollTop = historyEl.scrollHeight;
+        }
+
+        if (btnAsk) {
+            btnAsk.disabled = true;
+            btnAsk.innerText = 'Thinking...';
+        }
+
+        try {
+            const siteContext = JSON.stringify(window._lastExtractedData || AutomationLogic.analysisData || {});
+
+            const aiReply = await callAI([
+                {
+                    role: "system",
+                    content: `You are the Codez48 Site Intelligence Analyst. Use the following extracted live website & channel data context to answer the user's question clearly, thoroughly, and accurately.\n\nEXTRACTED SITE DATA CONTEXT:\n${siteContext}`
+                },
+                {
+                    role: "user",
+                    content: question
+                }
+            ]);
+
+            if (historyEl && aiReply) {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'bg-slate-800/90 p-3 rounded-xl border border-slate-700 text-slate-100 font-medium leading-relaxed whitespace-pre-wrap';
+                aiMsg.innerHTML = `<strong>Codez48 AI:</strong> ${aiReply.trim()}`;
+                historyEl.appendChild(aiMsg);
+                historyEl.scrollTop = historyEl.scrollHeight;
+            }
+        } catch (e) {
+            if (historyEl) {
+                const errMsg = document.createElement('div');
+                errMsg.className = 'bg-rose-950/60 p-3 rounded-xl border border-rose-800 text-rose-300 font-semibold';
+                errMsg.innerText = `Error generating answer: ${e.message}`;
+                historyEl.appendChild(errMsg);
+            }
+        } finally {
+            if (btnAsk) {
+                btnAsk.disabled = false;
+                btnAsk.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Ask AI`;
+            }
+        }
+    }
+};
+
+window.askAIAboutSite = () => AutomationLogic.askAIAboutSite();,
 
     async resumeAutomation() {
         if (!AutomationLogic.currentRunId) return;
