@@ -115,11 +115,45 @@ exports.handler = async (event, context) => {
                 };
             }
 
+            const testImageUrl = data.imageUrl ? String(data.imageUrl).replace(/"/g, '&quot;') : '';
+            const testImageHtml = testImageUrl ? `<div style="text-align: center; margin: 20px 0;"><img src="${testImageUrl}" style="max-width: 100%; border-radius: 16px; margin: 0 auto; display: block;" /></div>` : '';
+
             await transporter.sendMail({
                 from: smtpFrom,
                 to: targetRecipient,
-                subject: `⚡ Codez48 SMTP Test Email`,
-                html: `<div style="font-family: system-ui, sans-serif; padding: 30px; background: #faf5ff; border-radius: 16px;"><h2 style="color: #9333ea;">SMTP Transport Verified!</h2><p>Your Codez48 Mail Automation SMTP setup is working 100% correctly.</p></div>`
+                subject: `Welcome to CodezParty8`,
+                html: `
+                    <div style="font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; padding: 40px 20px;">
+                        <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; padding: 36px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <div style="width: 50px; height: 50px; background-color: #f3e8ff; color: #9333ea; border-radius: 16px; display: inline-flex; items-center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 12px;">⚡</div>
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Welcome to CODZ48</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase; letter-spacing: 0.1em;">CodezParty8 Automation Network</p>
+                            </div>
+
+                            ${testImageHtml}
+
+                            <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                                <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #581c87; line-height: 1.6;">
+                                    Welcome to CODZ48! You can create your website and Android application in just one minute.
+                                </p>
+                                <p style="margin: 0; font-size: 13px; color: #6b21a8; line-height: 1.5;">
+                                    Our platform offers powerful automation tools, website tracking, push notifications, and business growth features.
+                                </p>
+                            </div>
+
+                            <div style="text-align: center; margin-bottom: 28px;">
+                                <a href="https://codez48.netlify.app/" style="display: inline-block; background-color: #9333ea; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 32px; border-radius: 99px; text-decoration: none; box-shadow: 0 10px 20px rgba(147, 51, 234, 0.25);">
+                                    Create Website & Android App Now <i style="font-style: normal; margin-left: 6px;">→</i>
+                                </a>
+                            </div>
+
+                            <div style="border-t: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
+                                <p style="margin: 0; font-size: 11px; color: #94a3b8; font-weight: 600;">SMTP Transport Verified for CodezParty8 Mail Automation</p>
+                            </div>
+                        </div>
+                    </div>
+                `
             });
 
             return {
@@ -199,20 +233,27 @@ exports.handler = async (event, context) => {
         const safeUserEmail = escapeHtml(userEmail || 'N/A');
         const safeSiteId = escapeHtml(siteId);
 
-        const emailSubject = `⚡ New Login Notification - Codez48 Alert`;
+        const safeImageUrl = data.imageUrl ? escapeHtml(data.imageUrl) : '';
+        const imageHtml = safeImageUrl ? `<div style="text-align: center; margin: 20px 0;"><img src="${safeImageUrl}" style="max-width: 100%; border-radius: 16px; margin: 0 auto; display: block;" /></div>` : '';
+
+        const customBodyText = data.businessDescription ? escapeHtml(data.businessDescription) : 'Welcome to CODZ48! You can create your website and Android application in just one minute. Use our tools and automation suite to grow your business.';
+
+        const emailSubject = `Welcome to CodezParty8`;
         const htmlBody = `
             <div style="font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; padding: 40px 20px;">
                 <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; padding: 36px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-                        <div style="width: 44px; height: 44px; background-color: #f3e8ff; color: #9333ea; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">⚡</div>
-                        <div>
-                            <h2 style="margin: 0; font-size: 20px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: -0.02em;">Codez48 Alert</h2>
-                            <p style="margin: 2px 0 0 0; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em;">Automated Security Notification</p>
-                        </div>
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="width: 50px; height: 50px; background-color: #f3e8ff; color: #9333ea; border-radius: 16px; display: inline-flex; items-center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 12px;">⚡</div>
+                        <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Welcome to CODZ48</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase; letter-spacing: 0.1em;">CodezParty8 Automation Network</p>
                     </div>
 
-                    <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #581c87;">A merchant node successfully authenticated on your Codez48 platform.</p>
+                    ${imageHtml}
+
+                    <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                        <p style="margin: 0; font-size: 13px; color: #581c87; font-weight: 700; line-height: 1.6;">
+                            ${customBodyText}
+                        </p>
                     </div>
 
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155; margin-bottom: 28px;">
@@ -233,6 +274,12 @@ exports.handler = async (event, context) => {
                             <td style="padding: 12px 0; font-weight: 700; font-family: monospace; color: #0f172a;">${safeSiteId}</td>
                         </tr>
                     </table>
+
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <a href="https://codez48.netlify.app/" style="display: inline-block; background-color: #9333ea; color: #ffffff; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 28px; border-radius: 99px; text-decoration: none; box-shadow: 0 8px 16px rgba(147, 51, 234, 0.2);">
+                            Launch Platform & Build App →
+                        </a>
+                    </div>
 
                     <div style="border-t: 1px solid #e2e8f0; pt-20; text-align: center; margin-top: 24px;">
                         <p style="margin: 16px 0 0 0; font-size: 11px; color: #94a3b8; font-weight: 600;">Sent via Codez48 Mail Automation Service</p>

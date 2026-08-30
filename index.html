@@ -369,6 +369,9 @@
                         <button onclick="window.handleToolAction('push')" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-royal hover:bg-slate-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-bell text-xs"></i> Push Notifications
                         </button>
+                        <button onclick="window.openMailAutomationModal()" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-envelope-circle-check text-xs"></i> Email Automation
+                        </button>
                     </div>
                 </div>
 
@@ -405,6 +408,9 @@
                 </button>
                 <button onclick="window.handleToolAction('push'); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     <i class="fa-solid fa-bell text-royal"></i> Push Notifications
+                </button>
+                <button onclick="window.openMailAutomationModal(); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-600 uppercase tracking-widest">
+                    <i class="fa-solid fa-envelope-circle-check text-purple-600"></i> Email Automation
                 </button>
             </div>
 
