@@ -162,7 +162,20 @@ export const AutomationLogic = {
         if (dTask) dTask.innerText = AutomationLogic.analysisData.target;
         if (dGoal) dGoal.innerText = AutomationLogic.analysisData.task;
 
-        container.innerHTML = AutomationLogic.analysisData.fields.map(field => `
+        const fields = AutomationLogic.analysisData.fields || [];
+
+        // Auto-launch autonomous site data extraction without blocking the user on form steps
+        if (AutomationLogic.analysisData.intent === 'Extraction' || AutomationLogic.analysisData.intent === 'Analysis' || fields.length === 0 || fields.every(f => f.optional)) {
+            console.log("[AI] Autonomous Extraction/Analysis task detected. Bypassing form step and launching execution...");
+            document.getElementById('step-prompt')?.classList.add('hidden');
+            document.getElementById('step-form')?.classList.add('hidden');
+            setTimeout(() => {
+                AutomationLogic.proceedWithAutomation();
+            }, 200);
+            return;
+        }
+
+        container.innerHTML = fields.map(field => `
             <div class="space-y-2">
                 <label class="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">${field.label}</label>
                 <input type="${field.type || 'text'}" id="field-${field.key}" data-key="${field.key}" class="automation-input w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-bold" placeholder="Provide ${field.label.toLowerCase()}...">
@@ -234,8 +247,13 @@ export const AutomationLogic = {
         console.log("[Mission] Initializing Playwright Automation Session...");
         const formData = {};
         document.querySelectorAll('.automation-input').forEach(input => { formData[input.dataset.key] = input.value; });
-        const missing = AutomationLogic.analysisData.fields.filter(f => !f.optional && !formData[f.key]);
-        if (missing.length > 0) return alert("Please fill all required input fields.");
+
+        // Auto-populate default values for extraction/analysis missions so execution is 100% autonomous
+        if (AutomationLogic.analysisData.fields) {
+            AutomationLogic.analysisData.fields.forEach(f => {
+                if (!formData[f.key]) formData[f.key] = 'Auto';
+            });
+        }
 
         const runId = 'RUN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
         AutomationLogic.currentRunId = runId;
