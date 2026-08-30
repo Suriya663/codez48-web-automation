@@ -1,12 +1,14 @@
 {
   "name": "codez48-tracker",
   "version": "2.6.2",
-  "description": "Website Tracker and Push Notification System",
-  "main": "index.html",
+  "description": "Website Tracker and Playwright Browser Worker Service",
+  "main": "playwright-worker/server.js",
+  "scripts": {
+    "start": "node playwright-worker/server.js",
+    "build": "echo 'No build step required'",
+    "postinstall": "cd playwright-worker && npm install && npx playwright install chromium"
+  },
   "dependencies": {
     "firebase-admin": "^12.0.0"
-  },
-  "scripts": {
-    "build": "echo 'No build step required'"
   }
 }
