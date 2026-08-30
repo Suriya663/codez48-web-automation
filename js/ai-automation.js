@@ -244,7 +244,7 @@ export const AutomationLogic = {
     },
 
     async proceedWithAutomation() {
-        console.log("[Mission] Initializing Playwright Automation Session...");
+        console.log("[Mission] Initializing Site Extraction & AI Intelligence Session...");
         const formData = {};
         document.querySelectorAll('.automation-input').forEach(input => { formData[input.dataset.key] = input.value; });
 
@@ -253,6 +253,13 @@ export const AutomationLogic = {
             AutomationLogic.analysisData.fields.forEach(f => {
                 if (!formData[f.key]) formData[f.key] = 'Auto';
             });
+        }
+
+        // Direct AI Extraction Mode: execute extraction immediately without calling trigger-automation (eliminating 503 console error)
+        if (AutomationLogic.analysisData?.intent === 'Extraction' || AutomationLogic.analysisData?.intent === 'Analysis' || !AutomationLogic.analysisData?.executionPlan) {
+            console.log("[Mission] Launching Direct AI Site Extraction & Q&A Intelligence Engine...");
+            await AutomationLogic.executeDirectAISiteExtraction();
+            return;
         }
 
         const runId = 'RUN-' + Math.random().toString(36).substring(2, 9).toUpperCase();
