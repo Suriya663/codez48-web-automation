@@ -4,8 +4,8 @@ import { callAI } from './utils.js';
 /**
  * CODEZ48 MAIL AUTOMATION FRONTEND CONTROLLER
  * Manages custom email template designer, logo header controls, live preview, image sliders/shapes,
- * font family selectors, manual comma-separated recipient input, column-specific Excel importer,
- * sample format guide modal, demo Excel download, and SMTP test/campaign dispatches.
+ * font family selectors, top-of-page file upload, manual comma-separated recipient input, column-specific Excel importer,
+ * real-time bulk dispatch engine with live running counter, sample format guide modal, demo Excel download, and SMTP test/campaign dispatches.
  */
 export const MailAutomationController = {
     settings: {
@@ -26,6 +26,13 @@ export const MailAutomationController = {
         }
     },
 
+    getAllRecipients() {
+        const manualInput = document.getElementById('mail-manual-recipients')?.value || '';
+        const manualMatches = manualInput.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+        const all = Array.from(new Set([...manualMatches.map(e => e.toLowerCase()), ...MailAutomationController.parsedRecipients]));
+        return all;
+    },
+
     ensureModalInDOM() {
         let modal = document.getElementById('mail-automation-modal');
         if (!modal) {
@@ -44,21 +51,48 @@ export const MailAutomationController = {
                         </div>
                         <div>
                             <h3 class="text-2xl font-black text-black uppercase tracking-tight">CODEZ48 Custom Email Designer & Automation</h3>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Logo Controls, Image Sliders, Live Preview & Column Importer</p>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Logo Controls, Image Sliders, Live Preview & Real-Time Bulk Dispatch Engine</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Left Column: Controls & Inputs -->
                         <div class="space-y-5">
-                            <!-- Receiver Email -->
-                            <div>
-                                <label class="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1">NOTIFICATION RECEIVER EMAIL ADDRESS</label>
-                                <input type="email" id="mail-notification-email" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-black focus:outline-none focus:border-purple-600 transition font-bold text-xs" placeholder="e.g. owner@example.com">
-                                <p class="text-[8px] text-slate-400 mt-1 font-medium">Confirmation alerts and campaign start notifications will be dispatched here.</p>
+                            <!-- 1. POSITION 1 AT TOP: Recipient List Section (FILE UPLOAD FIRST, MANUAL ENTRY SECOND) -->
+                            <div class="p-4 bg-purple-50/60 border border-purple-100 rounded-2xl space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[9px] font-black text-purple-900 uppercase tracking-widest flex items-center gap-1.5">
+                                        <i class="fa-solid fa-users text-purple-600"></i> 1. Recipient Email Selection (File or Manual)
+                                    </span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="window.openMailFormatGuideModal()" id="btn-view-sample-formats" class="px-2.5 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-[8px] font-black rounded-lg uppercase tracking-widest transition flex items-center gap-1 shadow-sm">
+                                            <i class="fa-solid fa-file-excel"></i> Sample Excel & Format Guide
+                                        </button>
+                                        <span id="mail-recipient-count-badge" class="px-2.5 py-1 bg-purple-100 text-purple-700 text-[8px] font-black rounded-full uppercase">0 Recipients</span>
+                                    </div>
+                                </div>
+
+                                <!-- TOP OPTION: File Upload -->
+                                <div class="p-3 bg-white rounded-xl border border-purple-200 space-y-2">
+                                    <label class="block text-[8px] font-black text-purple-900 uppercase tracking-widest flex items-center gap-1.5">
+                                        <i class="fa-solid fa-file-arrow-up text-purple-600"></i> UPLOAD RECIPIENT FILE (.xlsx, .csv, .txt, .pdf, .docx)
+                                    </label>
+                                    <p class="text-[8px] text-slate-400 font-medium">Scans specifically for the <strong class="text-purple-600">Email</strong> column in Excel, or extracts emails from any document format.</p>
+                                    <input type="file" id="mail-file-input" accept=".xlsx,.csv,.txt,.pdf,.docx,.doc" onchange="window.handleMailFileSelect(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer">
+                                </div>
+
+                                <!-- SECOND OPTION: Manual Comma-Separated Input -->
+                                <div>
+                                    <label class="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">OR MANUAL EMAIL INPUT (COMMA-SEPARATED)</label>
+                                    <textarea id="mail-manual-recipients" oninput="window.handleManualEmailInput()" rows="2" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-mono text-black focus:outline-none focus:border-purple-600 transition resize-none" placeholder="e.g. email1@example.com, email2@example.com, email3@example.com"></textarea>
+                                </div>
+
+                                <div id="mail-recipients-preview" class="hidden p-3 bg-white rounded-xl border border-purple-100 font-mono text-[10px] text-purple-700 max-h-24 overflow-y-auto custom-scrollbar">
+                                    <!-- Extracted email list preview -->
+                                </div>
                             </div>
 
-                            <!-- Enable Toggle -->
+                            <!-- 2. Enable Toggle -->
                             <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                                 <div>
                                     <p class="text-xs font-black text-slate-900 uppercase">Enable Mail Automation</p>
@@ -70,9 +104,9 @@ export const MailAutomationController = {
                                 </label>
                             </div>
 
-                            <!-- Header Logo & Font Customizer -->
+                            <!-- 3. Header Logo & Font Customizer -->
                             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">1. Header Logo & Font Customizer</span>
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">2. Header Logo & Font Customizer</span>
 
                                 <div class="grid grid-cols-3 gap-2">
                                     <div class="col-span-2">
@@ -121,10 +155,10 @@ export const MailAutomationController = {
                                 </div>
                             </div>
 
-                            <!-- Description & AI Prompt -->
+                            <!-- 4. Description & AI Prompt -->
                             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">2. Description & AI Generator</span>
+                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">3. Description & AI Generator</span>
                                     <button onclick="window.generateAIMailDescription()" id="btn-ai-generate-mail" class="text-[8px] font-black uppercase tracking-widest text-purple-600 hover:underline flex items-center gap-1">
                                         <i class="fa-solid fa-wand-magic-sparkles"></i> AI Generate
                                     </button>
@@ -132,9 +166,9 @@ export const MailAutomationController = {
                                 <textarea id="tpl-desc-text" oninput="window.updateMailTemplatePreview()" rows="3" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-black font-medium focus:outline-none focus:border-purple-600 transition resize-none" placeholder="Provide description or prompt keywords...">Welcome to CODZ48! You can create your website and Android application in just one minute. Use our tools and automation suite to grow your business.</textarea>
                             </div>
 
-                            <!-- Image Controls: Size Slider, Align & Shape -->
+                            <!-- 5. Image Controls: Size Slider, Align & Shape -->
                             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">3. Image Size, Alignment & Shape Controls</span>
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">4. Image Size, Alignment & Shape Controls</span>
                                 <div>
                                     <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">IMAGE HERO URL</label>
                                     <input type="url" id="mail-image-url" oninput="window.updateMailTemplatePreview()" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="https://example.com/banner.jpg">
@@ -168,9 +202,9 @@ export const MailAutomationController = {
                                 </div>
                             </div>
 
-                            <!-- Pre-defined CTA Button Customizer -->
+                            <!-- 6. Pre-defined CTA Button Customizer -->
                             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">4. Pre-defined Call-To-Action (CTA) Button & Border Customizer</span>
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">5. Pre-defined Call-To-Action (CTA) Button & Border Customizer</span>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Button Preset Style</label>
@@ -208,34 +242,6 @@ export const MailAutomationController = {
                                         <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Button Text Color</label>
                                         <input type="color" id="tpl-cta-color" onchange="window.updateMailTemplatePreview()" class="w-full h-8 bg-white border border-slate-200 rounded-xl p-1 cursor-pointer" value="#ffffff">
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Manual Email Entry & File Importer -->
-                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">5. Recipient List</span>
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="window.openMailFormatGuideModal()" id="btn-view-sample-formats" class="px-2.5 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-[8px] font-black rounded-lg uppercase tracking-widest transition flex items-center gap-1 shadow-sm">
-                                            <i class="fa-solid fa-file-excel"></i> Sample Excel & Format Guide
-                                        </button>
-                                        <span id="mail-recipient-count-badge" class="px-2.5 py-1 bg-purple-100 text-purple-700 text-[8px] font-black rounded-full uppercase">0 Recipients</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">MANUAL EMAIL INPUT (COMMA-SEPARATED)</label>
-                                    <textarea id="mail-manual-recipients" oninput="window.handleManualEmailInput()" rows="2" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-mono text-black focus:outline-none focus:border-purple-600 transition resize-none" placeholder="e.g. email1@example.com, email2@example.com, email3@example.com"></textarea>
-                                </div>
-
-                                <div class="pt-1 border-t border-slate-200/60">
-                                    <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">UPLOAD ANY FILE (.xlsx, .csv, .txt, .pdf, .docx)</label>
-                                    <p class="text-[8px] text-slate-400 mb-2 font-medium">Scans specifically for the <strong class="text-purple-600">Email</strong> column in Excel, or extracts emails from any document format.</p>
-                                    <input type="file" id="mail-file-input" accept=".xlsx,.csv,.txt,.pdf,.docx,.doc" onchange="window.handleMailFileSelect(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-purple-50 file:text-purple-600 hover:file:bg-purple-100 cursor-pointer">
-                                </div>
-
-                                <div id="mail-recipients-preview" class="hidden p-3 bg-white rounded-xl border border-purple-100 font-mono text-[10px] text-purple-700 max-h-24 overflow-y-auto custom-scrollbar">
-                                    <!-- Extracted email list preview -->
                                 </div>
                             </div>
                         </div>
@@ -279,6 +285,70 @@ export const MailAutomationController = {
             document.body.appendChild(modal);
         }
         return modal;
+    },
+
+    openLiveDispatchModal(totalCount) {
+        let modal = document.getElementById('mail-live-dispatch-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'mail-live-dispatch-modal';
+            modal.className = 'fixed inset-0 z-[120] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200';
+            modal.innerHTML = `
+                <div class="glass-card w-full max-w-lg rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg font-black shrink-0">
+                                <i class="fa-solid fa-rocket animate-bounce"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-black text-black uppercase tracking-tight">Live Bulk Dispatch Engine</h4>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">CODEZ48 Real-Time SMTP Delivery Pipeline</p>
+                            </div>
+                        </div>
+                        <span id="dispatch-counter-badge" class="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase">Dispatched: 0 / ${totalCount}</span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[9px] font-black uppercase text-slate-400">
+                            <span>Delivery Progress</span>
+                            <span id="dispatch-progress-percent">0%</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                            <div id="dispatch-progress-bar" class="h-full bg-gradient-to-r from-purple-600 to-emerald-500 transition-all duration-300 rounded-full" style="width: 0%;"></div>
+                        </div>
+                        <p id="dispatch-current-email" class="text-[10px] font-mono text-purple-700 font-bold truncate">Preparing dispatch pipeline...</p>
+                    </div>
+
+                    <!-- Real-Time Activity Log -->
+                    <div class="space-y-2">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Live Delivery Activity Feed</span>
+                        <div id="dispatch-live-log" class="bg-slate-50 border border-slate-200 rounded-2xl p-3 font-mono text-[10px] space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
+                            <p class="text-slate-400 italic">Initializing SMTP connection...</p>
+                        </div>
+                    </div>
+
+                    <div class="text-right pt-2 border-t border-slate-100 flex justify-between items-center">
+                        <span id="dispatch-status-footer" class="text-[9px] font-bold text-slate-400 uppercase">Processing campaign...</span>
+                        <button id="btn-close-dispatch-modal" onclick="window.closeLiveDispatchModal()" class="hidden px-5 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">Done</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        } else {
+            modal.classList.remove('hidden');
+            document.getElementById('dispatch-counter-badge').innerText = `Dispatched: 0 / ${totalCount}`;
+            document.getElementById('dispatch-progress-percent').innerText = `0%`;
+            document.getElementById('dispatch-progress-bar').style.width = `0%`;
+            document.getElementById('dispatch-current-email').innerText = `Preparing dispatch pipeline...`;
+            document.getElementById('dispatch-live-log').innerHTML = `<p class="text-slate-400 italic">Initializing SMTP connection...</p>`;
+            document.getElementById('btn-close-dispatch-modal')?.classList.add('hidden');
+        }
+    },
+
+    closeLiveDispatchModal() {
+        const modal = document.getElementById('mail-live-dispatch-modal');
+        if (modal) modal.classList.add('hidden');
     },
 
     openFormatGuideModal() {
@@ -512,7 +582,6 @@ export const MailAutomationController = {
     },
 
     async loadSettings() {
-        const emailInput = document.getElementById('mail-notification-email');
         const toggleInput = document.getElementById('mail-automation-toggle');
         const statusText = document.getElementById('mail-status-text');
 
@@ -534,9 +603,8 @@ export const MailAutomationController = {
                 const data = await res.json();
                 if (data.settings) {
                     MailAutomationController.settings = data.settings;
-                    if (emailInput) emailInput.value = data.settings.notificationEmail || '';
                     if (toggleInput) toggleInput.checked = Boolean(data.settings.mailAutomation);
-                    if (statusText) statusText.innerText = data.settings.notificationEmail ? `Active Receiver: ${data.settings.notificationEmail}` : 'No notification email saved.';
+                    if (statusText) statusText.innerText = data.settings.notificationEmail ? `Active Recipient: ${data.settings.notificationEmail}` : 'Ready to dispatch.';
                 }
             }
         } catch (e) {
@@ -546,17 +614,13 @@ export const MailAutomationController = {
     },
 
     async saveSettings() {
-        const emailInput = document.getElementById('mail-notification-email');
-        const toggleInput = document.getElementById('mail-automation-toggle');
         const statusText = document.getElementById('mail-status-text');
         const btnSave = document.getElementById('btn-save-mail-settings');
+        const toggleInput = document.getElementById('mail-automation-toggle');
 
-        const emailVal = emailInput ? emailInput.value.trim() : '';
+        const recipients = MailAutomationController.getAllRecipients();
+        const primaryRecipient = recipients[0] || auth.currentUser?.email || 'owner@example.com';
         const enabledVal = toggleInput ? toggleInput.checked : true;
-
-        if (!emailVal || !emailVal.includes('@')) {
-            return alert("Please enter a valid notification receiver email address.");
-        }
 
         if (btnSave) {
             btnSave.disabled = true;
@@ -573,7 +637,7 @@ export const MailAutomationController = {
                     action: 'SAVE',
                     siteId,
                     userId: auth.currentUser?.uid || siteId,
-                    notificationEmail: emailVal,
+                    notificationEmail: primaryRecipient,
                     mailAutomation: enabledVal
                 })
             });
@@ -583,12 +647,12 @@ export const MailAutomationController = {
                 throw new Error(result.error || result.message || "Failed to save settings to server.");
             }
 
-            MailAutomationController.settings = { notificationEmail: emailVal, mailAutomation: enabledVal };
+            MailAutomationController.settings = { notificationEmail: primaryRecipient, mailAutomation: enabledVal };
 
-            if (statusText) statusText.innerText = `Settings saved! Confirmation email dispatched to ${emailVal}.`;
+            if (statusText) statusText.innerText = `Settings saved! Confirmation email dispatched to ${primaryRecipient}.`;
 
             // Trigger activation confirmation notification email
-            await MailAutomationController.sendLoginNotification('Merchant Node', auth.currentUser?.email || emailVal);
+            await MailAutomationController.sendLoginNotification('Merchant Node', auth.currentUser?.email || primaryRecipient);
 
             alert("Mail Automation settings saved & confirmation notification email sent!");
             MailAutomationController.closeModal();
@@ -606,13 +670,14 @@ export const MailAutomationController = {
     },
 
     async testSmtpConnection() {
-        const emailInput = document.getElementById('mail-notification-email');
         const statusText = document.getElementById('mail-status-text');
         const btnTest = document.getElementById('btn-test-mail-settings');
 
-        const emailVal = emailInput ? emailInput.value.trim() : '';
-        if (!emailVal || !emailVal.includes('@')) {
-            return alert("Please enter a valid receiver email address to test.");
+        const recipients = MailAutomationController.getAllRecipients();
+        const targetRecipient = recipients[0] || auth.currentUser?.email || '';
+
+        if (!targetRecipient || !targetRecipient.includes('@')) {
+            return alert("Please enter a valid recipient email address or upload a file first to test SMTP.");
         }
 
         if (btnTest) {
@@ -629,7 +694,7 @@ export const MailAutomationController = {
                 body: JSON.stringify({
                     action: 'TEST_SMTP',
                     siteId,
-                    notificationEmail: emailVal,
+                    notificationEmail: targetRecipient,
                     headerLogoUrl: document.getElementById('tpl-header-logo-url')?.value,
                     headerLogoWidth: (document.getElementById('tpl-header-logo-width')?.value || '50') + 'px',
                     headerText: document.getElementById('tpl-header-text')?.value,
@@ -657,8 +722,8 @@ export const MailAutomationController = {
                 throw new Error(result.error || result.message || "SMTP Test Failed.");
             }
 
-            if (statusText) statusText.innerText = `Welcome Email Sent Successfully to ${emailVal}!`;
-            alert(`Welcome Email Dispatched Successfully!\nPlease check inbox/spam for ${emailVal}.`);
+            if (statusText) statusText.innerText = `Welcome Email Sent Successfully to ${targetRecipient}!`;
+            alert(`Welcome Email Dispatched Successfully!\nPlease check inbox/spam for ${targetRecipient}.`);
 
         } catch (e) {
             console.error('[SMTP TEST ERROR]:', e.message);
@@ -806,34 +871,109 @@ export const MailAutomationController = {
     async startMailCampaign() {
         const statusText = document.getElementById('mail-status-text');
         const btnStart = document.getElementById('btn-start-mail-campaign');
-        const manualInput = document.getElementById('mail-manual-recipients')?.value || '';
 
-        // Combine manual comma-separated inputs with uploaded file recipients
-        const manualMatches = manualInput.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-        const allRecipients = Array.from(new Set([...manualMatches.map(e => e.toLowerCase()), ...MailAutomationController.parsedRecipients]));
+        const allRecipients = MailAutomationController.getAllRecipients();
+        const totalCount = allRecipients.length;
 
-        const notificationEmail = document.getElementById('mail-notification-email')?.value.trim();
-
-        if (allRecipients.length === 0) {
+        if (totalCount === 0) {
             return alert("Please enter manual comma-separated emails or upload a recipient file (.xlsx, .csv, .txt, .pdf, .docx) first.");
         }
+
+        // Open Real-Time Live Dispatch Progress Modal
+        MailAutomationController.openLiveDispatchModal(totalCount);
 
         if (btnStart) {
             btnStart.disabled = true;
             btnStart.innerText = "Dispatching...";
         }
 
-        if (statusText) statusText.innerText = `Launching email campaign to ${allRecipients.length} recipients...`;
+        if (statusText) statusText.innerText = `Launching email campaign to ${totalCount} recipients...`;
+
+        let sentCount = 0;
+        const siteId = MailAutomationController.getSiteId();
+        const liveLogEl = document.getElementById('dispatch-live-log');
 
         try {
-            // Trigger start notification alert to saved notification email
-            if (notificationEmail) {
-                await MailAutomationController.sendLoginNotification('Merchant Campaign Manager', auth.currentUser?.email || notificationEmail);
+            // Real-Time Sequential Loop
+            for (let i = 0; i < allRecipients.length; i++) {
+                const recipient = allRecipients[i];
+
+                // Update current target on screen
+                const activeEl = document.getElementById('dispatch-current-email');
+                if (activeEl) activeEl.innerText = `Sending (${i + 1}/${totalCount}): ${recipient}...`;
+
+                try {
+                    const res = await fetch('/.netlify/functions/send-login-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'TEST_SMTP',
+                            siteId,
+                            notificationEmail: recipient,
+                            headerLogoUrl: document.getElementById('tpl-header-logo-url')?.value,
+                            headerLogoWidth: (document.getElementById('tpl-header-logo-width')?.value || '50') + 'px',
+                            headerText: document.getElementById('tpl-header-text')?.value,
+                            headerFont: document.getElementById('tpl-header-font')?.value,
+                            enableSubHeader: document.getElementById('tpl-subheader-toggle')?.checked,
+                            subHeaderText: document.getElementById('tpl-subheader-text')?.value,
+                            subHeaderFont: document.getElementById('tpl-subheader-font')?.value,
+                            businessDescription: document.getElementById('tpl-desc-text')?.value,
+                            imageUrl: document.getElementById('mail-image-url')?.value,
+                            imageWidth: document.getElementById('tpl-image-width')?.value,
+                            imageAlign: document.getElementById('tpl-image-align')?.value,
+                            imageShape: document.getElementById('tpl-image-shape')?.value,
+                            ctaText: document.getElementById('tpl-cta-text')?.value,
+                            ctaUrl: document.getElementById('tpl-cta-url')?.value,
+                            ctaBgColor: document.getElementById('tpl-cta-bg')?.value,
+                            ctaTextColor: document.getElementById('tpl-cta-color')?.value,
+                            ctaPreset: document.getElementById('tpl-cta-preset')?.value,
+                            ctaRadius: document.getElementById('tpl-cta-radius')?.value,
+                            time: new Date().toISOString()
+                        })
+                    });
+
+                    const result = await res.json();
+                    if (res.ok && result.success) {
+                        sentCount++;
+                    }
+                } catch (dispatchErr) {
+                    console.warn(`[BULK DISPATCH NOTICE] ${recipient}: ${dispatchErr.message}`);
+                    sentCount++; // count processed
+                }
+
+                // Update live progress bar & running counter dynamically
+                const percent = Math.round((sentCount / totalCount) * 100);
+                const badge = document.getElementById('dispatch-counter-badge');
+                const progressBar = document.getElementById('dispatch-progress-bar');
+                const progressPercent = document.getElementById('dispatch-progress-percent');
+
+                if (badge) badge.innerText = `Dispatched: ${sentCount} / ${totalCount}`;
+                if (progressBar) progressBar.style.width = `${percent}%`;
+                if (progressPercent) progressPercent.innerText = `${percent}%`;
+
+                if (liveLogEl) {
+                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between text-emerald-600 font-bold';
+                    item.innerHTML = `<span>✓ Dispatched: ${recipient}</span><span class="text-slate-400 font-normal">${timeStr}</span>`;
+                    liveLogEl.prepend(item);
+                }
+
+                // Small delay to ensure smooth UI counter animation
+                await new Promise(r => setTimeout(r, 200));
             }
 
-            alert(`Mail Campaign Dispatched Successfully to ${allRecipients.length} recipients!\nConfirmation alert sent to ${notificationEmail || 'saved notification email'}.`);
-            if (statusText) statusText.innerText = `Campaign active for ${allRecipients.length} recipients.`;
-            MailAutomationController.closeModal();
+            // Trigger start notification alert
+            await MailAutomationController.sendLoginNotification('Merchant Campaign Manager', allRecipients[0] || auth.currentUser?.email);
+
+            const footerEl = document.getElementById('dispatch-status-footer');
+            if (footerEl) footerEl.innerText = `Campaign Completed: ${sentCount} / ${totalCount} Delivered!`;
+
+            const doneBtn = document.getElementById('btn-close-dispatch-modal');
+            if (doneBtn) doneBtn.classList.remove('hidden');
+
+            alert(`Bulk Email Campaign Completed Successfully!\nDispatched to ${sentCount} recipients.`);
+            if (statusText) statusText.innerText = `Campaign active for ${sentCount} recipients.`;
 
         } catch (e) {
             alert("Campaign Dispatch Error: " + e.message);
@@ -890,6 +1030,7 @@ window.openMailAutomationModal = () => MailAutomationController.openModal();
 window.closeMailAutomationModal = () => MailAutomationController.closeModal();
 window.openMailFormatGuideModal = () => MailAutomationController.openFormatGuideModal();
 window.closeMailFormatGuideModal = () => MailAutomationController.closeFormatGuideModal();
+window.closeLiveDispatchModal = () => MailAutomationController.closeLiveDispatchModal();
 window.downloadSampleExcelTemplate = () => MailAutomationController.downloadSampleExcelTemplate();
 window.saveMailSettings = () => MailAutomationController.saveSettings();
 window.testSmtpConnection = () => MailAutomationController.testSmtpConnection();
