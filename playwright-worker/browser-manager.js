@@ -32,7 +32,8 @@ class BrowserManager {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--disable-gpu'
+                    '--disable-gpu',
+                    '--single-process'
                 ]
             });
             console.log('[BROWSER MANAGER] Playwright Chromium process online.');
@@ -51,7 +52,6 @@ class BrowserManager {
         if (this.userContexts.has(userId)) {
             const existingCtx = this.userContexts.get(userId);
             try {
-                // Verify context is still active
                 if (existingCtx.pages().length >= 0) {
                     return existingCtx;
                 }
@@ -91,6 +91,7 @@ class BrowserManager {
                 version: browser.version()
             };
         } catch (e) {
+            console.error('[BROWSER HEALTHCHECK FAILURE]:', e.message);
             return {
                 status: 'offline',
                 browserConnected: false,
