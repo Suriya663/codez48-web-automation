@@ -5,8 +5,7 @@
   "main": "playwright-worker/server.js",
   "scripts": {
     "start": "node playwright-worker/server.js",
-    "build": "echo 'No build step required'",
-    "postinstall": "cd playwright-worker && npm install && npx playwright install chromium"
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
     "firebase-admin": "^12.0.0"
