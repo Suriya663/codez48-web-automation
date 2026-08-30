@@ -32,8 +32,7 @@ class BrowserManager {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--disable-gpu',
-                    '--single-process'
+                    '--disable-gpu'
                 ]
             });
             console.log('[BROWSER MANAGER] Playwright Chromium process online.');
