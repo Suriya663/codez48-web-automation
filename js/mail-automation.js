@@ -12,24 +12,72 @@ export const MailAutomationController = {
 
     init() {
         console.log("[MAIL AUTOMATION] Controller Initialized.");
-        window.MailAutomationController = MailAutomationController;
-        window.openMailAutomationModal = () => MailAutomationController.openModal();
-        window.closeMailAutomationModal = () => MailAutomationController.closeModal();
-        window.saveMailSettings = () => MailAutomationController.saveSettings();
-
-        // Auto-bind save button if present
         const btnSave = document.getElementById('btn-save-mail-settings');
         if (btnSave) {
             btnSave.onclick = () => MailAutomationController.saveSettings();
         }
     },
 
-    async openModal() {
-        const modal = document.getElementById('mail-automation-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            await MailAutomationController.loadSettings();
+    ensureModalInDOM() {
+        let modal = document.getElementById('mail-automation-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'mail-automation-modal';
+            modal.className = 'fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6 animate-in fade-in duration-200';
+            modal.innerHTML = `
+                <div class="glass-card w-full max-w-lg rounded-[3rem] p-10 bg-white relative space-y-8 shadow-2xl">
+                    <button onclick="window.closeMailAutomationModal()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-2xl font-black">
+                            <i class="fa-solid fa-envelope-circle-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-black text-black uppercase tracking-tight">Mail Automation</h3>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Configure Login Notification Recipient</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">NOTIFICATION EMAIL ADDRESS</label>
+                            <input type="email" id="mail-notification-email" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-black focus:outline-none focus:border-purple-600 transition font-bold text-sm" placeholder="e.g. owner@example.com">
+                            <p class="text-[9px] text-slate-400 mt-2 font-medium">Successful login notifications will be dispatched to this email address via secure SMTP.</p>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div>
+                                <p class="text-xs font-black text-slate-900 uppercase">Enable Mail Automation</p>
+                                <p class="text-[9px] text-slate-400 font-bold">Automatically dispatch alerts on merchant login</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="mail-automation-toggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center" id="mail-status-text">
+                            Ready to configure
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button onclick="window.closeMailAutomationModal()" class="px-6 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                        <button id="btn-save-mail-settings" onclick="window.saveMailSettings()" class="px-8 py-3 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-700 transition shadow-lg shadow-purple-200">Save Settings</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
+        return modal;
+    },
+
+    async openModal() {
+        const modal = MailAutomationController.ensureModalInDOM();
+        modal.classList.remove('hidden');
+        await MailAutomationController.loadSettings();
     },
 
     closeModal() {
@@ -170,6 +218,12 @@ export const MailAutomationController = {
         }
     }
 };
+
+// IMMEDIATELY ATTACH GLOBAL WINDOW FUNCTIONS UPON SCRIPT LOAD
+window.MailAutomationController = MailAutomationController;
+window.openMailAutomationModal = () => MailAutomationController.openModal();
+window.closeMailAutomationModal = () => MailAutomationController.closeModal();
+window.saveMailSettings = () => MailAutomationController.saveSettings();
 
 document.addEventListener('DOMContentLoaded', () => {
     MailAutomationController.init();
