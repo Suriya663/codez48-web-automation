@@ -59,6 +59,10 @@ export const MailAutomationController = {
 
     ensureModalInDOM() {
         let modal = document.getElementById('mail-automation-modal');
+        if (modal && !document.getElementById('tpl-header-text')) {
+            modal.remove();
+            modal = null;
+        }
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'mail-automation-modal';
