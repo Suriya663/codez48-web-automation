@@ -821,10 +821,7 @@ export const AutomationLogic = {
                 btnAsk.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Ask AI`;
             }
         }
-    }
-};
-
-window.askAIAboutSite = () => AutomationLogic.askAIAboutSite();,
+    },
 
     async resumeAutomation() {
         if (!AutomationLogic.currentRunId) return;
@@ -840,6 +837,7 @@ window.askAIAboutSite = () => AutomationLogic.askAIAboutSite();,
     }
 };
 
+window.askAIAboutSite = () => AutomationLogic.askAIAboutSite();
 window.AutomationLogic = AutomationLogic;
 
 document.addEventListener('DOMContentLoaded', () => { if (document.getElementById('automation-view')) AutomationLogic.init(); });
