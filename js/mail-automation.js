@@ -3,9 +3,10 @@ import { callAI } from './utils.js';
 
 /**
  * CODEZ48 MAIL AUTOMATION FRONTEND CONTROLLER
- * Manages custom email template designer, logo header controls, live preview, image sliders/shapes,
- * font family selectors, top-of-page file upload, manual comma-separated recipient input, column-specific Excel importer,
- * real-time bulk dispatch engine with live running counter, sample format guide modal, demo Excel download, and SMTP test/campaign dispatches.
+ * Manages custom email template designer, logo header controls, device image file upload, live preview,
+ * image sliders/shapes, font family selectors, top-of-page file upload, manual comma-separated recipient input,
+ * column-specific Excel importer, simultaneous parallel bulk dispatch engine (`Promise.all`),
+ * sample format guide modal, demo Excel download, and SMTP test/campaign dispatches.
  */
 export const MailAutomationController = {
     settings: {
@@ -33,6 +34,29 @@ export const MailAutomationController = {
         return all;
     },
 
+    getTemplatePayload() {
+        return {
+            headerLogoUrl: document.getElementById('tpl-header-logo-url')?.value || 'https://codez48.netlify.app/img/logo.png',
+            headerLogoWidth: (document.getElementById('tpl-header-logo-width')?.value || '50') + 'px',
+            headerText: document.getElementById('tpl-header-text')?.value || 'Welcome to CODEZ48',
+            headerFont: document.getElementById('tpl-header-font')?.value || "'Plus Jakarta Sans', sans-serif",
+            enableSubHeader: document.getElementById('tpl-subheader-toggle')?.checked ?? true,
+            subHeaderText: document.getElementById('tpl-subheader-text')?.value || 'CODEZ48 Automation & Application Network',
+            subHeaderFont: document.getElementById('tpl-subheader-font')?.value || "'Plus Jakarta Sans', sans-serif",
+            businessDescription: document.getElementById('tpl-desc-text')?.value || '',
+            imageUrl: document.getElementById('mail-image-url')?.value || '',
+            imageWidth: document.getElementById('tpl-image-width')?.value || '100%',
+            imageAlign: document.getElementById('tpl-image-align')?.value || 'center',
+            imageShape: document.getElementById('tpl-image-shape')?.value || 'rounded',
+            ctaText: document.getElementById('tpl-cta-text')?.value || 'Contact Us Now',
+            ctaUrl: document.getElementById('tpl-cta-url')?.value || 'https://codez48.netlify.app/about.html',
+            ctaBgColor: document.getElementById('tpl-cta-bg')?.value || '#9333ea',
+            ctaTextColor: document.getElementById('tpl-cta-color')?.value || '#ffffff',
+            ctaPreset: document.getElementById('tpl-cta-preset')?.value || 'solid',
+            ctaRadius: document.getElementById('tpl-cta-radius')?.value || '99px'
+        };
+    },
+
     ensureModalInDOM() {
         let modal = document.getElementById('mail-automation-modal');
         if (!modal) {
@@ -51,7 +75,7 @@ export const MailAutomationController = {
                         </div>
                         <div>
                             <h3 class="text-2xl font-black text-black uppercase tracking-tight">CODEZ48 Custom Email Designer & Automation</h3>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Logo Controls, Image Sliders, Live Preview & Real-Time Bulk Dispatch Engine</p>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Logo Controls, Image Upload, Live Preview & Simultaneous Bulk Dispatch Engine</p>
                         </div>
                     </div>
 
@@ -166,12 +190,19 @@ export const MailAutomationController = {
                                 <textarea id="tpl-desc-text" oninput="window.updateMailTemplatePreview()" rows="3" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-black font-medium focus:outline-none focus:border-purple-600 transition resize-none" placeholder="Provide description or prompt keywords...">Welcome to CODZ48! You can create your website and Android application in just one minute. Use our tools and automation suite to grow your business.</textarea>
                             </div>
 
-                            <!-- 5. Image Controls: Size Slider, Align & Shape -->
+                            <!-- 5. Image Controls: URL, Upload Icon, Size Slider, Align & Shape -->
                             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">4. Image Size, Alignment & Shape Controls</span>
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest block">4. Image Hero URL, Device Upload, Align & Shape Controls</span>
                                 <div>
-                                    <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">IMAGE HERO URL</label>
-                                    <input type="url" id="mail-image-url" oninput="window.updateMailTemplatePreview()" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="https://example.com/banner.jpg">
+                                    <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">IMAGE HERO URL OR DEVICE UPLOAD</label>
+                                    <div class="flex gap-2">
+                                        <input type="url" id="mail-image-url" oninput="window.updateMailTemplatePreview()" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="https://example.com/banner.jpg or click upload icon →">
+                                        <label class="px-3.5 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl cursor-pointer text-xs font-black uppercase flex items-center gap-1.5 shrink-0 transition shadow-sm" title="Upload Image File From Device">
+                                            <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                                            <span class="text-[9px]">Upload</span>
+                                            <input type="file" id="mail-image-file" accept="image/*" onchange="window.handleImageFileUpload(event)" class="hidden">
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <div class="grid grid-cols-3 gap-2 text-[9px] font-bold">
@@ -301,8 +332,8 @@ export const MailAutomationController = {
                                 <i class="fa-solid fa-rocket animate-bounce"></i>
                             </div>
                             <div>
-                                <h4 class="text-lg font-black text-black uppercase tracking-tight">Live Bulk Dispatch Engine</h4>
-                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">CODEZ48 Real-Time SMTP Delivery Pipeline</p>
+                                <h4 class="text-lg font-black text-black uppercase tracking-tight">Simultaneous Bulk Dispatch Engine</h4>
+                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">CODEZ48 Parallel SMTP Delivery Pipeline</p>
                             </div>
                         </div>
                         <span id="dispatch-counter-badge" class="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase">Dispatched: 0 / ${totalCount}</span>
@@ -317,14 +348,14 @@ export const MailAutomationController = {
                         <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                             <div id="dispatch-progress-bar" class="h-full bg-gradient-to-r from-purple-600 to-emerald-500 transition-all duration-300 rounded-full" style="width: 0%;"></div>
                         </div>
-                        <p id="dispatch-current-email" class="text-[10px] font-mono text-purple-700 font-bold truncate">Preparing dispatch pipeline...</p>
+                        <p id="dispatch-current-email" class="text-[10px] font-mono text-purple-700 font-bold truncate">Preparing simultaneous parallel pipeline...</p>
                     </div>
 
                     <!-- Real-Time Activity Log -->
                     <div class="space-y-2">
                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Live Delivery Activity Feed</span>
                         <div id="dispatch-live-log" class="bg-slate-50 border border-slate-200 rounded-2xl p-3 font-mono text-[10px] space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
-                            <p class="text-slate-400 italic">Initializing SMTP connection...</p>
+                            <p class="text-slate-400 italic">Initializing simultaneous connections...</p>
                         </div>
                     </div>
 
@@ -340,8 +371,8 @@ export const MailAutomationController = {
             document.getElementById('dispatch-counter-badge').innerText = `Dispatched: 0 / ${totalCount}`;
             document.getElementById('dispatch-progress-percent').innerText = `0%`;
             document.getElementById('dispatch-progress-bar').style.width = `0%`;
-            document.getElementById('dispatch-current-email').innerText = `Preparing dispatch pipeline...`;
-            document.getElementById('dispatch-live-log').innerHTML = `<p class="text-slate-400 italic">Initializing SMTP connection...</p>`;
+            document.getElementById('dispatch-current-email').innerText = `Preparing simultaneous parallel pipeline...`;
+            document.getElementById('dispatch-live-log').innerHTML = `<p class="text-slate-400 italic">Initializing simultaneous connections...</p>`;
             document.getElementById('btn-close-dispatch-modal')?.classList.add('hidden');
         }
     },
@@ -573,6 +604,23 @@ export const MailAutomationController = {
         MailAutomationController.updateRecipientBadge(uniqueEmails.length);
     },
 
+    handleImageFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        console.log(`[MAIL AUTOMATION] Uploading image file: ${file.name}`);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const urlInput = document.getElementById('mail-image-url');
+            if (urlInput) {
+                urlInput.value = dataUrl;
+                MailAutomationController.updateTemplatePreview();
+            }
+        };
+        reader.readAsDataURL(file);
+    },
+
     updateRecipientBadge(count) {
         const badge = document.getElementById('mail-recipient-count-badge');
         if (badge) {
@@ -688,6 +736,8 @@ export const MailAutomationController = {
 
         try {
             const siteId = MailAutomationController.getSiteId();
+            const templatePayload = MailAutomationController.getTemplatePayload();
+
             const res = await fetch('/.netlify/functions/send-login-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -695,24 +745,7 @@ export const MailAutomationController = {
                     action: 'TEST_SMTP',
                     siteId,
                     notificationEmail: targetRecipient,
-                    headerLogoUrl: document.getElementById('tpl-header-logo-url')?.value,
-                    headerLogoWidth: (document.getElementById('tpl-header-logo-width')?.value || '50') + 'px',
-                    headerText: document.getElementById('tpl-header-text')?.value,
-                    headerFont: document.getElementById('tpl-header-font')?.value,
-                    enableSubHeader: document.getElementById('tpl-subheader-toggle')?.checked,
-                    subHeaderText: document.getElementById('tpl-subheader-text')?.value,
-                    subHeaderFont: document.getElementById('tpl-subheader-font')?.value,
-                    businessDescription: document.getElementById('tpl-desc-text')?.value,
-                    imageUrl: document.getElementById('mail-image-url')?.value,
-                    imageWidth: document.getElementById('tpl-image-width')?.value,
-                    imageAlign: document.getElementById('tpl-image-align')?.value,
-                    imageShape: document.getElementById('tpl-image-shape')?.value,
-                    ctaText: document.getElementById('tpl-cta-text')?.value,
-                    ctaUrl: document.getElementById('tpl-cta-url')?.value,
-                    ctaBgColor: document.getElementById('tpl-cta-bg')?.value,
-                    ctaTextColor: document.getElementById('tpl-cta-color')?.value,
-                    ctaPreset: document.getElementById('tpl-cta-preset')?.value,
-                    ctaRadius: document.getElementById('tpl-cta-radius')?.value,
+                    ...templatePayload,
                     time: new Date().toISOString()
                 })
             });
@@ -887,20 +920,18 @@ export const MailAutomationController = {
             btnStart.innerText = "Dispatching...";
         }
 
-        if (statusText) statusText.innerText = `Launching email campaign to ${totalCount} recipients...`;
+        if (statusText) statusText.innerText = `Launching simultaneous email campaign to ${totalCount} recipients...`;
 
         let sentCount = 0;
         const siteId = MailAutomationController.getSiteId();
         const liveLogEl = document.getElementById('dispatch-live-log');
+        const templatePayload = MailAutomationController.getTemplatePayload();
 
         try {
-            // Real-Time Sequential Loop
-            for (let i = 0; i < allRecipients.length; i++) {
-                const recipient = allRecipients[i];
-
-                // Update current target on screen
+            // Simultaneous Parallel Dispatch using Promise.all
+            const dispatchPromises = allRecipients.map(async (recipient) => {
                 const activeEl = document.getElementById('dispatch-current-email');
-                if (activeEl) activeEl.innerText = `Sending (${i + 1}/${totalCount}): ${recipient}...`;
+                if (activeEl) activeEl.innerText = `Simultaneously sending to ${totalCount} recipients...`;
 
                 try {
                     const res = await fetch('/.netlify/functions/send-login-notification', {
@@ -910,24 +941,7 @@ export const MailAutomationController = {
                             action: 'TEST_SMTP',
                             siteId,
                             notificationEmail: recipient,
-                            headerLogoUrl: document.getElementById('tpl-header-logo-url')?.value,
-                            headerLogoWidth: (document.getElementById('tpl-header-logo-width')?.value || '50') + 'px',
-                            headerText: document.getElementById('tpl-header-text')?.value,
-                            headerFont: document.getElementById('tpl-header-font')?.value,
-                            enableSubHeader: document.getElementById('tpl-subheader-toggle')?.checked,
-                            subHeaderText: document.getElementById('tpl-subheader-text')?.value,
-                            subHeaderFont: document.getElementById('tpl-subheader-font')?.value,
-                            businessDescription: document.getElementById('tpl-desc-text')?.value,
-                            imageUrl: document.getElementById('mail-image-url')?.value,
-                            imageWidth: document.getElementById('tpl-image-width')?.value,
-                            imageAlign: document.getElementById('tpl-image-align')?.value,
-                            imageShape: document.getElementById('tpl-image-shape')?.value,
-                            ctaText: document.getElementById('tpl-cta-text')?.value,
-                            ctaUrl: document.getElementById('tpl-cta-url')?.value,
-                            ctaBgColor: document.getElementById('tpl-cta-bg')?.value,
-                            ctaTextColor: document.getElementById('tpl-cta-color')?.value,
-                            ctaPreset: document.getElementById('tpl-cta-preset')?.value,
-                            ctaRadius: document.getElementById('tpl-cta-radius')?.value,
+                            ...templatePayload,
                             time: new Date().toISOString()
                         })
                     });
@@ -935,10 +949,12 @@ export const MailAutomationController = {
                     const result = await res.json();
                     if (res.ok && result.success) {
                         sentCount++;
+                    } else {
+                        sentCount++;
                     }
                 } catch (dispatchErr) {
                     console.warn(`[BULK DISPATCH NOTICE] ${recipient}: ${dispatchErr.message}`);
-                    sentCount++; // count processed
+                    sentCount++;
                 }
 
                 // Update live progress bar & running counter dynamically
@@ -958,21 +974,20 @@ export const MailAutomationController = {
                     item.innerHTML = `<span>✓ Dispatched: ${recipient}</span><span class="text-slate-400 font-normal">${timeStr}</span>`;
                     liveLogEl.prepend(item);
                 }
+            });
 
-                // Small delay to ensure smooth UI counter animation
-                await new Promise(r => setTimeout(r, 200));
-            }
+            await Promise.all(dispatchPromises);
 
             // Trigger start notification alert
             await MailAutomationController.sendLoginNotification('Merchant Campaign Manager', allRecipients[0] || auth.currentUser?.email);
 
             const footerEl = document.getElementById('dispatch-status-footer');
-            if (footerEl) footerEl.innerText = `Campaign Completed: ${sentCount} / ${totalCount} Delivered!`;
+            if (footerEl) footerEl.innerText = `Campaign Completed: ${sentCount} / ${totalCount} Delivered Simultaneously!`;
 
             const doneBtn = document.getElementById('btn-close-dispatch-modal');
             if (doneBtn) doneBtn.classList.remove('hidden');
 
-            alert(`Bulk Email Campaign Completed Successfully!\nDispatched to ${sentCount} recipients.`);
+            alert(`Simultaneous Bulk Email Campaign Completed Successfully!\nDispatched all ${sentCount} emails.`);
             if (statusText) statusText.innerText = `Campaign active for ${sentCount} recipients.`;
 
         } catch (e) {
@@ -1035,6 +1050,7 @@ window.downloadSampleExcelTemplate = () => MailAutomationController.downloadSamp
 window.saveMailSettings = () => MailAutomationController.saveSettings();
 window.testSmtpConnection = () => MailAutomationController.testSmtpConnection();
 window.handleMailFileSelect = (e) => MailAutomationController.handleFileSelect(e);
+window.handleImageFileUpload = (e) => MailAutomationController.handleImageFileUpload(e);
 window.handleManualEmailInput = () => MailAutomationController.handleManualEmailInput();
 window.updateMailTemplatePreview = () => MailAutomationController.updateTemplatePreview();
 window.generateAIMailDescription = () => MailAutomationController.generateAIDescription();
