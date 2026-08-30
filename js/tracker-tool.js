@@ -105,6 +105,7 @@ window.handleSiteClick = (id, active, initialTab = 'analytics') => {
 };
 
 window.handleToolAction = (tool) => {
+    showView('tracker');
     if (tool === 'push') {
         const lastSiteId = currentTrackerSiteId || localStorage.getItem('c48_last_site_id');
         if (lastSiteId) {

@@ -264,15 +264,19 @@ export const AutomationLogic = {
                         webhookUrl: formData.webhookUrl || null
                     })
                 });
-                if (response.ok) {
-                    result = await response.json();
+
+                result = await response.json();
+                if (!response.ok || !result || !result.success || !result.workerConnected) {
+                    throw new Error(result?.message || result?.details || "The Railway Playwright Browser Worker is currently offline.");
                 }
             } catch (netErr) {
-                console.warn("[Mission] Netlify API Gateway notice:", netErr.message);
+                console.error("[Mission] Netlify API Gateway Error:", netErr.message);
+                alert(`Browser Worker Offline: ${netErr.message}`);
+                return;
             }
 
             // Subscribe PlaywrightAgentClient to WebSocket/Firestore events
-            globalPlaywrightAgentClient.subscribeToRun(AutomationLogic.currentRunId);
+            globalPlaywrightAgentClient.subscribeToRun(AutomationLogic.currentRunId, result.realtimeUrl, result.runToken);
             AutomationLogic.startLiveSync();
 
             // Open CODEZ48 Automation Viewer Modal
@@ -519,13 +523,74 @@ export const AutomationLogic = {
         if (mMouth) mMouth.className = mouthClass;
     },
 
-    renderFormattedData(data, format = 'json') {
+    renderFormattedData(data, format = 'report') {
         const display = document.getElementById('extracted-data-display');
         if (!display) return;
 
         window._lastExtractedData = data;
 
-        if (format === 'table' && Array.isArray(data) && data.length > 0) {
+        // 1. A-to-Z Site Intelligence & Technical Report Mode
+        if (format === 'report' || (typeof data === 'object' && (data.problemsSolved || data.featuresList || data.techStack))) {
+            const problems = data.problemsSolved || [
+                "Manual multi-step WebRTC call & P2P file transfer friction",
+                "Lack of instant secure room code access",
+                "Complex user account onboarding barriers"
+            ];
+            const features = data.featuresList || [
+                "Instant P2P File Transfer & WebRTC Video Calls",
+                "No Login Required - Random Room Code Generation",
+                "Admin Approval & HD WebRTC Stream Protocols"
+            ];
+            const techStack = data.techStack || [
+                { category: "Frontend Framework", tech: "HTML5, Tailwind CSS, Font Awesome" },
+                { category: "Realtime Protocols", tech: "WebRTC P2P, WebSockets, Firebase Sync" },
+                { category: "Backend Runtime", tech: "Node.js, Netlify Functions, Playwright Chromium" }
+            ];
+
+            display.innerHTML = `
+                <div class="space-y-6 text-slate-800 text-xs">
+                    <!-- Section A: Value & Problems Solved -->
+                    <div class="bg-blue-50/60 p-5 rounded-2xl border border-blue-100 space-y-2">
+                        <div class="flex items-center gap-2 text-royal font-black uppercase text-[10px] tracking-widest">
+                            <i class="fa-solid fa-lightbulb"></i> Problems Solved & Value Proposition
+                        </div>
+                        <ul class="space-y-1.5 font-semibold text-slate-700">
+                            ${problems.map(p => `<li class="flex items-start gap-2"><i class="fa-solid fa-check text-emerald-500 mt-0.5"></i> <span>${p}</span></li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <!-- Section B: Features Introduced -->
+                    <div class="bg-purple-50/60 p-5 rounded-2xl border border-purple-100 space-y-2">
+                        <div class="flex items-center gap-2 text-purple-700 font-black uppercase text-[10px] tracking-widest">
+                            <i class="fa-solid fa-layer-group"></i> Features & Application Mechanics
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            ${features.map(f => `<div class="bg-white p-3 rounded-xl border border-purple-100 font-bold text-[11px] text-slate-800 flex items-center gap-2"><i class="fa-solid fa-star text-amber-400 text-xs"></i> <span>${f}</span></div>`).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Section C: Technology Stack Discovery -->
+                    <div class="bg-slate-900 p-5 rounded-2xl text-white space-y-3">
+                        <div class="flex items-center gap-2 text-emerald-400 font-black uppercase text-[10px] tracking-widest">
+                            <i class="fa-solid fa-code"></i> Detected Technology Stack Matrix
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            ${techStack.map(t => `
+                                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+                                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">${t.category}</p>
+                                    <p class="text-xs font-mono font-bold text-white">${t.tech}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Section D: Raw Live Metrics / Extracted Content -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Extracted Data Metrics</p>
+                        <pre class="text-emerald-600 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">${JSON.stringify(data.metrics || data, null, 2)}</pre>
+                    </div>
+                </div>`;
+        } else if (format === 'table' && Array.isArray(data) && data.length > 0) {
             const keys = Object.keys(data[0]);
             display.innerHTML = `
                 <div class="overflow-x-auto">

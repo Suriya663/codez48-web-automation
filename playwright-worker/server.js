@@ -15,8 +15,35 @@ const watchdog = require('./watchdog');
 const cleanup = require('./cleanup');
 
 const app = express();
-app.use(cors());
+
+// CORS RESTRICTIONS (Module 7 & 18)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['https://codez48.netlify.app', 'http://localhost:8080', 'http://127.0.0.1:8080'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`[CORS REJECT] Origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
+
 app.use(express.json());
+
+// WORKER SECRET AUTH MIDDLEWARE
+const authenticateWorkerSecret = (req, res, next) => {
+    const secret = process.env.PLAYWRIGHT_WORKER_SECRET || 'codez48_secret_worker_token';
+    const provided = req.headers['x-worker-secret'] || req.query.secret;
+    if (!provided || provided !== secret) {
+        console.warn(`[AUTH REJECT] Invalid worker secret provided for ${req.path}`);
+        return res.status(401).json({ error: 'Unauthorized: Invalid worker secret token' });
+    }
+    next();
+};
 
 // SERVE STATIC PROJECT FILES FOR LOCAL DEVELOPMENT
 app.use(express.static(path.join(__dirname, '..')));
@@ -68,19 +95,18 @@ app.get('/health', async (req, res) => {
     });
 });
 
-// GET /api/runs INFORMATIONAL ROUTE
-app.get('/api/runs', async (req, res) => {
+// GET /api/runs PROTECTED INFORMATIONAL ROUTE
+app.get('/api/runs', authenticateWorkerSecret, async (req, res) => {
     const activeRuns = Array.from(RunManager.runs.values()).map(r => RunManager.getSafeRunMetadata(r));
     res.json({
         endpoint: '/api/runs',
-        usage: 'Send HTTP POST request to /api/runs with JSON payload to start a new Playwright automation run.',
         activeRunsCount: activeRuns.length,
         activeRuns: activeRuns
     });
 });
 
-// 2. CREATE & START AUTOMATION RUN
-app.post('/api/runs', async (req, res) => {
+// 2. CREATE & START AUTOMATION RUN (PROTECTED)
+app.post('/api/runs', authenticateWorkerSecret, async (req, res) => {
     try {
         const { runId, userId = 'guest', goal, targetUrl, payload } = req.body;
         if (!runId || !goal || !targetUrl) {
@@ -93,8 +119,8 @@ app.post('/api/runs', async (req, res) => {
         const run = RunManager.createRun(runId, userId, goal, targetUrl, payload);
         RunManager.updateRunStatus(runId, RunState.STARTING_BROWSER, 'Launching isolated Playwright browser context...');
 
-        // Start Background Worker Loop
-        startWorkerAgentLoop(runId).catch(err => {
+        // Start Background Worker Initialization & Loop
+        initializeAndStartRun(runId).catch(err => {
             console.error(`[WORKER LOOP ERROR] Run ${runId}:`, err.message);
         });
 
@@ -111,8 +137,8 @@ app.post('/api/runs', async (req, res) => {
     }
 });
 
-// 3. RESUME RUN AFTER USER OTP / INPUT
-app.post('/api/runs/:runId/resume', async (req, res) => {
+// 3. RESUME RUN AFTER USER INPUT (PROTECTED - DOES NOT DUPLICATE PAGE)
+app.post('/api/runs/:runId/resume', authenticateWorkerSecret, async (req, res) => {
     try {
         const { runId } = req.params;
         const { userId = 'guest', userResponse } = req.body;
@@ -125,8 +151,8 @@ app.post('/api/runs/:runId/resume', async (req, res) => {
         console.log(`[SERVER] Resuming run: ${runId} with user response...`);
         RunManager.updateRunStatus(runId, RunState.RUNNING, 'User input provided. Resuming agent loop...', userResponse);
 
-        // Resume background worker loop
-        startWorkerAgentLoop(runId).catch(err => {
+        // Resume existing active page without creating new page or re-navigating
+        resumeRunLoop(runId).catch(err => {
             console.error(`[RESUME LOOP ERROR] Run ${runId}:`, err.message);
         });
 
@@ -137,8 +163,8 @@ app.post('/api/runs/:runId/resume', async (req, res) => {
     }
 });
 
-// 4. STOP / CANCEL RUN
-app.post('/api/runs/:runId/stop', async (req, res) => {
+// 4. STOP / CANCEL RUN (PROTECTED)
+app.post('/api/runs/:runId/stop', authenticateWorkerSecret, async (req, res) => {
     try {
         const { runId } = req.params;
         const { userId = 'guest' } = req.body;
@@ -153,8 +179,8 @@ app.post('/api/runs/:runId/stop', async (req, res) => {
     }
 });
 
-// 5. LIVE SCREENSHOT FRAME ENDPOINT
-app.get('/api/runs/:runId/screenshot', async (req, res) => {
+// 5. LIVE SCREENSHOT FRAME ENDPOINT (PROTECTED)
+app.get('/api/runs/:runId/screenshot', authenticateWorkerSecret, async (req, res) => {
     try {
         const { runId } = req.params;
         const run = RunManager.getRun(runId);
@@ -174,8 +200,8 @@ app.get('/api/runs/:runId/screenshot', async (req, res) => {
     }
 });
 
-// CONTINUOUS WORKER AGENT LOOP
-async function startWorkerAgentLoop(runId) {
+// INITIALIZE RUN (ONCE ON START)
+async function initializeAndStartRun(runId) {
     const run = RunManager.getRun(runId);
     if (!run) return;
 
@@ -184,13 +210,13 @@ async function startWorkerAgentLoop(runId) {
         const context = await browserManager.getOrCreateContext(run.userId);
         run.browserContext = context;
 
-        // Register Page Listeners for popups/new tabs (Module 5)
+        // Register Page Listeners for popups/new tabs (Module 5 & 10)
         await pageManager.setupContextPageListeners(context, run, realtimeServer);
 
-        // Step 2: Create Main Target Page
+        // Step 2: Create Main Target Page (Idempotent registration)
         RunManager.updateRunStatus(runId, RunState.OPENING_PAGE, `Opening target URL: ${run.targetUrl}`);
         const page = await context.newPage();
-        await pageManager.registerPage(run, page, false, realtimeServer);
+        await pageManager.registerPage(run, page, realtimeServer);
 
         // Navigate to Target URL
         await page.goto(run.targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -198,10 +224,47 @@ async function startWorkerAgentLoop(runId) {
         RunManager.updateRunStatus(runId, RunState.RUNNING, 'Target page loaded. Starting continuous Playwright agent loop...');
         watchdog.startRunWatchdog(run, realtimeServer);
 
-        let stepCount = 0;
+        await runAgentLoop(runId);
+
+    } catch (err) {
+        console.error(`[INITIALIZE RUN ERROR] Run ${runId}:`, err.message);
+        RunManager.updateRunStatus(runId, RunState.FAILED, `Initialization error: ${err.message}`);
+        realtimeServer.emitRunEvent(runId, 'RUN_FAILED', { error: err.message });
+    }
+}
+
+// RESUME RUN LOOP (DOES NOT CREATE NEW PAGE OR NAVIGATE)
+async function resumeRunLoop(runId) {
+    const run = RunManager.getRun(runId);
+    if (!run) return;
+
+    if (!run.activePage || run.activePage.isClosed()) {
+        console.warn(`[RESUME] Active page closed or missing for run ${runId}.`);
+        RunManager.updateRunStatus(runId, RunState.FAILED, 'Active page closed or unavailable.');
+        return;
+    }
+
+    await runAgentLoop(runId);
+}
+
+// CONTINUOUS WORKER AGENT LOOP (WITH RUN LOCK)
+async function runAgentLoop(runId) {
+    const run = RunManager.getRun(runId);
+    if (!run) return;
+
+    // Prevent duplicate agent loops running concurrently on the same page (Module 14)
+    if (run.loopRunning) {
+        console.log(`[AGENT LOOP] Loop already active for run ${runId}. Skipping duplicate start.`);
+        return;
+    }
+
+    run.loopRunning = true;
+
+    try {
+        let stepCount = run.currentStep || 0;
         const maxSteps = 15;
 
-        // CONTINUOUS AGENT LOOP (Module 8)
+        // CONTINUOUS AGENT LOOP (Inspect -> Decide -> Act -> Verify -> Reinspect)
         while (run.status === RunState.RUNNING && stepCount < maxSteps) {
             stepCount++;
             run.currentStep = stepCount;
@@ -215,7 +278,7 @@ async function startWorkerAgentLoop(runId) {
             // 1. Inspect live Playwright Page (Module 7)
             const pageState = await pageInspector.inspectPage(activePage);
 
-            // Emit Screenshot Frame event to Viewer (Module 35)
+            // Emit Screenshot Frame event to Viewer (Module 30 & 31)
             try {
                 const screenshotBuf = await activePage.screenshot({ type: 'jpeg', quality: 50 });
                 const base64Img = screenshotBuf.toString('base64');
@@ -225,7 +288,7 @@ async function startWorkerAgentLoop(runId) {
             // 2. Ask AI Action Planner for ONE next step (Module 8)
             const actionPlan = await aiPlanner.planNextAction(run, pageState);
 
-            // 3. Handle USER INPUT / OTP PAUSE (Module 25)
+            // 3. Handle USER INPUT / OTP PAUSE (Module 12)
             if (actionPlan.action === 'ask_user' || actionPlan.action === 'wait_for_user') {
                 RunManager.updateRunStatus(runId, RunState.WAITING_FOR_USER, actionPlan.statusText || 'User input required...');
                 run.waitingReason = actionPlan.value || 'OTP or CAPTCHA required';
@@ -234,7 +297,7 @@ async function startWorkerAgentLoop(runId) {
                 break;
             }
 
-            // 4. Handle Task Completion (Module 44)
+            // 4. Handle Task Completion (Module 26)
             if (actionPlan.action === 'finish') {
                 RunManager.updateRunStatus(runId, RunState.COMPLETED, actionPlan.statusText || 'Task completed successfully!', actionPlan.value);
                 run.collectedData = actionPlan.value;
@@ -246,12 +309,12 @@ async function startWorkerAgentLoop(runId) {
                 break;
             }
 
-            // 5. Execute Real Playwright Action & Calculate Real Element Bounding Box (Module 10 & 11)
+            // 5. Execute Real Playwright Action & Calculate Real Element Bounding Box (Module 4 & 7)
             RunManager.updateRunStatus(runId, RunState.VERIFYING, actionPlan.statusText || `Executing ${actionPlan.action}...`);
 
             const executionResult = await actionExecutor.executeAction(activePage, actionPlan, realtimeServer, runId);
 
-            // 6. Action Verification (Module 22)
+            // 6. Action Verification (Module 6 & 25)
             const verification = await actionVerifier.verifyAction(activePage, actionPlan, executionResult);
 
             RunManager.updateRunStatus(
@@ -271,10 +334,17 @@ async function startWorkerAgentLoop(runId) {
             await new Promise(r => setTimeout(r, 1000));
         }
 
+        if (stepCount >= maxSteps && run.status === RunState.RUNNING) {
+            RunManager.updateRunStatus(runId, RunState.FAILED, 'Max steps reached without verified completion.');
+            realtimeServer.emitRunEvent(runId, 'RUN_FAILED', { error: 'MAX_STEPS_REACHED' });
+        }
+
     } catch (err) {
         console.error(`[WORKER AGENT LOOP CRITICAL ERROR] Run ${runId}:`, err.message);
         RunManager.updateRunStatus(runId, RunState.FAILED, `Execution error: ${err.message}`);
         realtimeServer.emitRunEvent(runId, 'RUN_FAILED', { error: err.message });
+    } finally {
+        run.loopRunning = false;
     }
 }
 

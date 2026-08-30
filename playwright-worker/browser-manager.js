@@ -66,7 +66,7 @@ class BrowserManager {
             deviceScaleFactor: 1,
             hasTouch: false,
             isMobile: false,
-            permissions: ['geolocation', 'notifications']
+            permissions: [] // Sensitive permissions requested on-demand only (Module 21)
         });
 
         this.userContexts.set(userId, context);

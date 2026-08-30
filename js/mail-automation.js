@@ -2,7 +2,7 @@ import { auth } from './firebase-config.js';
 
 /**
  * CODEZ48 MAIL AUTOMATION FRONTEND CONTROLLER
- * Manages notification email settings, toggle state, and triggers login notifications via Netlify Functions.
+ * Manages notification email settings, toggle state, SMTP testing, and triggers login notifications via Netlify Functions.
  */
 export const MailAutomationController = {
     settings: {
@@ -15,6 +15,10 @@ export const MailAutomationController = {
         const btnSave = document.getElementById('btn-save-mail-settings');
         if (btnSave) {
             btnSave.onclick = () => MailAutomationController.saveSettings();
+        }
+        const btnTest = document.getElementById('btn-test-mail-settings');
+        if (btnTest) {
+            btnTest.onclick = () => MailAutomationController.testSmtpConnection();
         }
     },
 
@@ -63,9 +67,14 @@ export const MailAutomationController = {
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                        <button onclick="window.closeMailAutomationModal()" class="px-6 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition">Cancel</button>
-                        <button id="btn-save-mail-settings" onclick="window.saveMailSettings()" class="px-8 py-3 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-700 transition shadow-lg shadow-purple-200">Save Settings</button>
+                    <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                        <button id="btn-test-mail-settings" onclick="window.testSmtpConnection()" class="px-5 py-3 bg-purple-50 text-purple-600 hover:bg-purple-100 text-[10px] font-black uppercase tracking-widest rounded-xl transition flex items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Test SMTP
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.closeMailAutomationModal()" class="px-5 py-3 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 transition">Cancel</button>
+                            <button id="btn-save-mail-settings" onclick="window.saveMailSettings()" class="px-6 py-3 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-700 transition shadow-lg shadow-purple-200">Save Settings</button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -158,9 +167,11 @@ export const MailAutomationController = {
                 })
             });
 
-            if (!res.ok) throw new Error("Failed to save settings to server.");
-
             const result = await res.json();
+            if (!res.ok || !result.success) {
+                throw new Error(result.error || result.message || "Failed to save settings to server.");
+            }
+
             MailAutomationController.settings = { notificationEmail: emailVal, mailAutomation: enabledVal };
 
             if (statusText) statusText.innerText = `Settings saved successfully for ${emailVal}!`;
@@ -179,21 +190,70 @@ export const MailAutomationController = {
         }
     },
 
+    async testSmtpConnection() {
+        const emailInput = document.getElementById('mail-notification-email');
+        const statusText = document.getElementById('mail-status-text');
+        const btnTest = document.getElementById('btn-test-mail-settings');
+
+        const emailVal = emailInput ? emailInput.value.trim() : '';
+        if (!emailVal || !emailVal.includes('@')) {
+            return alert("Please enter a valid receiver email address to test.");
+        }
+
+        if (btnTest) {
+            btnTest.disabled = true;
+            btnTest.innerText = 'Testing...';
+        }
+        if (statusText) statusText.innerText = 'Verifying SMTP credentials & dispatching test email...';
+
+        try {
+            const siteId = MailAutomationController.getSiteId();
+            const res = await fetch('/.netlify/functions/send-login-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'TEST_SMTP',
+                    siteId,
+                    notificationEmail: emailVal,
+                    time: new Date().toISOString()
+                })
+            });
+
+            const result = await res.json();
+            if (!res.ok || !result.success) {
+                throw new Error(result.error || result.message || "SMTP Test Failed.");
+            }
+
+            if (statusText) statusText.innerText = `Test Email Sent Successfully to ${emailVal}!`;
+            alert(`Test Email Sent Successfully!\nPlease check inbox/spam for ${emailVal}.`);
+
+        } catch (e) {
+            console.error('[SMTP TEST ERROR]:', e.message);
+            alert("SMTP Test Failed: " + e.message);
+            if (statusText) statusText.innerText = 'SMTP Connection Failed: ' + e.message;
+        } finally {
+            if (btnTest) {
+                btnTest.disabled = false;
+                btnTest.innerText = 'Test SMTP';
+            }
+        }
+    },
+
     /**
      * VISITOR / LOGIN TRIGGER
-     * Triggered on actual successful login event. Uses loginEventId to prevent duplicate sends on refresh.
+     * Triggered on actual successful login event. Generates unique loginEventId per login attempt.
      */
     async sendLoginNotification(userName = 'Merchant', userEmail = '') {
         const siteId = MailAutomationController.getSiteId();
-        const loginEventId = `LOGIN_${siteId}_${new Date().toISOString().slice(0, 10)}`;
+        const loginEventId = `LOGIN_${siteId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-        // Deduplication check: Send only ONCE per login session
-        if (sessionStorage.getItem(`login_mail_sent_${loginEventId}`)) {
-            console.log("[MAIL AUTOMATION] Login notification already sent for this session. Skipping.");
+        const sessionKey = `login_mail_sent_${siteId}`;
+        if (sessionStorage.getItem(sessionKey)) {
+            console.log("[MAIL AUTOMATION] Login notification already sent for this browser session. Skipping.");
             return;
         }
 
-        console.log("[MAIL AUTOMATION] Triggering login notification email event...");
+        console.log("[MAIL AUTOMATION] Triggering login notification email event:", loginEventId);
 
         try {
             const res = await fetch('/.netlify/functions/send-login-notification', {
@@ -209,9 +269,12 @@ export const MailAutomationController = {
                 })
             });
 
-            if (res.ok) {
-                sessionStorage.setItem(`login_mail_sent_${loginEventId}`, 'true');
-                console.log("[MAIL AUTOMATION] Login notification event dispatched successfully.");
+            const result = await res.json();
+            if (res.ok && result.success) {
+                sessionStorage.setItem(sessionKey, 'true');
+                console.log("[MAIL AUTOMATION] Login notification email sent successfully to:", result.recipient);
+            } else {
+                console.warn("[MAIL AUTOMATION] Login notification notice:", result.message || result.error);
             }
         } catch (e) {
             console.warn("[MAIL AUTOMATION] Login notification dispatch warning:", e.message);
@@ -224,6 +287,7 @@ window.MailAutomationController = MailAutomationController;
 window.openMailAutomationModal = () => MailAutomationController.openModal();
 window.closeMailAutomationModal = () => MailAutomationController.closeModal();
 window.saveMailSettings = () => MailAutomationController.saveSettings();
+window.testSmtpConnection = () => MailAutomationController.testSmtpConnection();
 
 document.addEventListener('DOMContentLoaded', () => {
     MailAutomationController.init();

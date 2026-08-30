@@ -33,7 +33,7 @@ service cloud.firestore {
     // 2. Playwright Autonomous Browser Automations (Strict User Isolation)
     match /automations/{autoId} {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.userId == 'guest');
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
     match /webhook_inbox/{msgId} {
@@ -41,9 +41,9 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // 3. Global Fallback (Secure by default)
+    // 3. Global Deny Fallback (Secure by default - Module 52)
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

@@ -8,8 +8,16 @@ import { trackVisitor } from './analytics.js';
  * Global App Initialization
  */
 const initApp = () => {
-    // 1. Initial State
-    showView('landing');
+    // 1. Initial State & Hash Routing
+    const initialHash = window.location.hash.replace('#', '');
+    if (initialHash === 'push') {
+        showView('tracker');
+        setTimeout(() => { if (window.handleToolAction) window.handleToolAction('push'); }, 100);
+    } else if (initialHash === 'tracker') {
+        showView('tracker');
+    } else {
+        showView('landing');
+    }
 
     // 2. Global Referral Proxy
     window.trackReferralVisit = trackReferralVisit;
@@ -17,8 +25,8 @@ const initApp = () => {
     // 3. Referral Tracking
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
-    const hash = window.location.hash.replace('#', '');
-    const isProfileVisit = hash && !['pricing', 'merchant-directory', 'auth'].includes(hash);
+    const hash = initialHash;
+    const isProfileVisit = hash && !['pricing', 'merchant-directory', 'auth', 'push', 'tracker'].includes(hash);
 
     if (ref) {
         sessionStorage.setItem('dev_referral_code', ref);

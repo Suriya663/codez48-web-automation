@@ -86,13 +86,13 @@ OUTPUT STRICT JSON ONLY:
 
         const rawReply = await this.callAI(messages);
         if (!rawReply) {
-            console.warn('[AI PLANNER] No reply from Groq AI provider, returning fallback action step.');
+            console.warn('[AI PLANNER] AI provider unavailable, returning safe scroll discovery step.');
             return {
-                action: 'click',
-                target: { role: 'button', name: 'Submit' },
-                value: null,
-                successCondition: 'Page state change',
-                statusText: 'Executing default action step...'
+                action: 'scroll',
+                target: null,
+                value: 'down',
+                successCondition: 'New elements visible',
+                statusText: 'AI provider standby. Scrolling page to inspect additional elements...'
             };
         }
 

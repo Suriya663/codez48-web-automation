@@ -21,31 +21,32 @@ class LocatorResolver {
                 if (await loc.count() > 0) return { locator: loc, strategy: 'getByPlaceholder' };
             }
 
-            // Priority 4: ID
+            // Priority 4: Name Attribute
+            if (target.nameAttr || target.name) {
+                const nameVal = target.nameAttr || target.name;
+                const loc = page.locator(`[name="${nameVal}"]`).first();
+                if (await loc.count() > 0) return { locator: loc, strategy: 'nameAttr' };
+            }
+
+            // Priority 5: ID
             if (target.id) {
                 const loc = page.locator(`#${target.id}`).first();
                 if (await loc.count() > 0) return { locator: loc, strategy: 'id' };
             }
 
-            // Priority 5: getByText()
-            if (target.name || target.text) {
-                const textVal = target.name || target.text;
-                const loc = page.getByText(textVal, { exact: false }).first();
+            // Priority 6: getByText()
+            if (target.text) {
+                const loc = page.getByText(target.text, { exact: false }).first();
                 if (await loc.count() > 0) return { locator: loc, strategy: 'getByText' };
             }
 
-            // Priority 6: CSS Selector
+            // Priority 7: CSS Selector
             if (target.selector) {
                 const loc = page.locator(target.selector).first();
                 if (await loc.count() > 0) return { locator: loc, strategy: 'css' };
             }
 
-            // Fallback generic locator
-            const fallbackLoc = page.locator('button, input, a, [role="button"]').first();
-            if (await fallbackLoc.count() > 0) {
-                return { locator: fallbackLoc, strategy: 'fallback' };
-            }
-
+            // Target not resolved - return null so AI can replan or scroll safely
             return null;
         } catch (e) {
             console.error('[LOCATOR RESOLVER ERROR]:', e.message);

@@ -1,18 +1,35 @@
 class PageManager {
     constructor() {
         this.pageCounter = 0;
+        this.registeredPagesMap = new WeakMap();
     }
 
     async setupContextPageListeners(context, run, realtimeServer) {
         context.on('page', async (page) => {
             console.log(`[PAGE MANAGER] New page/tab detected in BrowserContext for run: ${run.runId}`);
-            await this.registerPage(run, page, true, realtimeServer);
+            await this.registerPage(run, page, realtimeServer);
         });
     }
 
-    async registerPage(run, page, isPopup = false, realtimeServer = null) {
+    async registerPage(run, page, realtimeServer = null) {
+        if (!page || page.isClosed()) return null;
+
+        // Idempotency check: if page is already registered, return existing pageId
+        if (this.registeredPagesMap.has(page)) {
+            const existingId = this.registeredPagesMap.get(page);
+            console.log(`[PAGE MANAGER] Page already registered [${existingId}], reusing.`);
+            return existingId;
+        }
+
         this.pageCounter++;
         const pageId = `page_${this.pageCounter}_${Math.random().toString(36).substring(2, 6)}`;
+        this.registeredPagesMap.set(page, pageId);
+
+        let isPopup = false;
+        try {
+            const opener = await page.opener();
+            isPopup = Boolean(opener);
+        } catch (e) {}
 
         try {
             await page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {});
@@ -43,7 +60,7 @@ class PageManager {
         run.pagesInfo.push(pageInfo);
         run.activePageInfo = pageInfo;
 
-        console.log(`[PAGE MANAGER] Registered Page [${pageId}] (${url}) as activePage for run ${run.runId}`);
+        console.log(`[PAGE MANAGER] Registered Page [${pageId}] (isPopup: ${isPopup}, url: ${url}) as activePage for run ${run.runId}`);
 
         // Page Navigation Listener
         page.on('framenavigated', async (frame) => {

@@ -50,7 +50,88 @@ exports.handler = async (event, context) => {
 
     try {
         const data = JSON.parse(event.body || '{}');
-        const { event: eventName = 'LOGIN_SUCCESS', siteId = 'site_001', userName, userEmail, time, loginEventId } = data;
+        const { action, event: eventName = 'LOGIN_SUCCESS', siteId = 'site_001', userName, userEmail, notificationEmail, time, loginEventId } = data;
+
+        // 1. Read SMTP Environment Variables
+        const smtpHost = process.env.SMTP_HOST;
+        const smtpPort = Number(process.env.SMTP_PORT) || 587;
+        const smtpUser = process.env.SMTP_USER;
+        const smtpPass = process.env.SMTP_PASS;
+        const smtpFrom = process.env.SMTP_FROM || smtpUser || 'Codez48 Alerts <no-reply@codez48.io>';
+
+        console.log(`[SMTP DIAGNOSTICS] HOST: ${Boolean(smtpHost)} | PORT: ${smtpPort} | USER: ${Boolean(smtpUser)} | PASS: ${Boolean(smtpPass)} | FROM: ${Boolean(smtpFrom)}`);
+
+        if (!smtpHost || !smtpUser || !smtpPass) {
+            console.error('[CRITICAL SMTP CONFIG ERROR] SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) are missing in Netlify Settings.');
+            return {
+                statusCode: 500,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: false,
+                    errorCode: "SMTP_CONFIG_MISSING",
+                    error: "SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) are missing in Netlify settings."
+                })
+            };
+        }
+
+        // Configure Nodemailer Transporter
+        const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
+            auth: {
+                user: smtpUser,
+                pass: smtpPass
+            }
+        });
+
+        // Verify SMTP connection
+        try {
+            await transporter.verify();
+            console.log('[SMTP TRANSPORTER VERIFIED] Credentials and connection valid.');
+        } catch (verifyErr) {
+            console.error('[SMTP VERIFY FAILURE]:', verifyErr.message);
+            return {
+                statusCode: 500,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: false,
+                    errorCode: "SMTP_CONNECTION_FAILED",
+                    error: `SMTP Authentication or Connection Failed: ${verifyErr.message}`
+                })
+            };
+        }
+
+        // Handle Direct TEST_SMTP Request
+        if (action === 'TEST_SMTP') {
+            const targetRecipient = notificationEmail || smtpUser;
+            if (!targetRecipient || !targetRecipient.includes('@')) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ success: false, error: "Valid recipient email required for test." })
+                };
+            }
+
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: targetRecipient,
+                subject: `⚡ Codez48 SMTP Test Email`,
+                html: `<div style="font-family: system-ui, sans-serif; padding: 30px; background: #faf5ff; border-radius: 16px;"><h2 style="color: #9333ea;">SMTP Transport Verified!</h2><p>Your Codez48 Mail Automation SMTP setup is working 100% correctly.</p></div>`
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Test SMTP Email dispatched successfully!",
+                    recipient: targetRecipient
+                })
+            };
+        }
 
         if (!initAdmin() || !db) {
             return {
@@ -59,7 +140,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // 1. Deduplication Protection
+        // Deduplication Protection for Login Events
         if (loginEventId) {
             const eventRef = db.collection('mail_events_processed').doc(loginEventId);
             const eventSnap = await eventRef.get();
@@ -73,7 +154,7 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // 2. Fetch saved notification email for current site/user
+        // Fetch saved notification email for current site/user
         const settingsRef = db.collection('mail_automation_settings').doc(siteId);
         const settingsSnap = await settingsRef.get();
 
@@ -107,37 +188,16 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // 3. Read SMTP Environment Variables
-        const smtpHost = process.env.SMTP_HOST;
-        const smtpPort = Number(process.env.SMTP_PORT) || 587;
-        const smtpUser = process.env.SMTP_USER;
-        const smtpPass = process.env.SMTP_PASS;
-        const smtpFrom = process.env.SMTP_FROM || smtpUser || 'Codez48 Alerts <no-reply@codez48.io>';
-
-        if (!smtpHost || !smtpUser || !smtpPass) {
-            console.error('[CRITICAL SMTP CONFIG ERROR] SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) are missing in Netlify Settings.');
-            return {
-                statusCode: 500,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    success: false,
-                    error: "SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) are missing in Netlify settings."
-                })
-            };
-        }
-
-        // 4. Configure Nodemailer Transporter
-        const transporter = nodemailer.createTransport({
-            host: smtpHost,
-            port: smtpPort,
-            secure: smtpPort === 465,
-            auth: {
-                user: smtpUser,
-                pass: smtpPass
-            }
-        });
-
         const formattedTime = time ? new Date(time).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' }) : new Date().toLocaleString();
+
+        const escapeHtml = (str) => {
+            if (!str || typeof str !== 'string') return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        };
+
+        const safeUserName = escapeHtml(userName || 'Merchant User');
+        const safeUserEmail = escapeHtml(userEmail || 'N/A');
+        const safeSiteId = escapeHtml(siteId);
 
         const emailSubject = `⚡ New Login Notification - Codez48 Alert`;
         const htmlBody = `
@@ -158,11 +218,11 @@ exports.handler = async (event, context) => {
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155; margin-bottom: 28px;">
                         <tr style="border-b: 1px solid #f1f5f9;">
                             <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px; width: 35%;">User Identity:</td>
-                            <td style="padding: 12px 0; font-weight: 700; color: #0f172a;">${userName || 'Merchant User'}</td>
+                            <td style="padding: 12px 0; font-weight: 700; color: #0f172a;">${safeUserName}</td>
                         </tr>
                         <tr style="border-b: 1px solid #f1f5f9;">
                             <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">User Email:</td>
-                            <td style="padding: 12px 0; font-weight: 700; color: #2563eb;">${userEmail || 'N/A'}</td>
+                            <td style="padding: 12px 0; font-weight: 700; color: #2563eb;">${safeUserEmail}</td>
                         </tr>
                         <tr style="border-b: 1px solid #f1f5f9;">
                             <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Login Timestamp:</td>
@@ -170,7 +230,7 @@ exports.handler = async (event, context) => {
                         </tr>
                         <tr>
                             <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Site ID:</td>
-                            <td style="padding: 12px 0; font-weight: 700; font-family: monospace; color: #0f172a;">${siteId}</td>
+                            <td style="padding: 12px 0; font-weight: 700; font-family: monospace; color: #0f172a;">${safeSiteId}</td>
                         </tr>
                     </table>
 
@@ -181,7 +241,7 @@ exports.handler = async (event, context) => {
             </div>
         `;
 
-        // 5. Dispatch Email via Nodemailer
+        // Dispatch Email via Nodemailer
         await transporter.sendMail({
             from: smtpFrom,
             to: savedReceiverEmail,
@@ -191,7 +251,7 @@ exports.handler = async (event, context) => {
 
         console.log(`[MAIL NOTIFICATION SENT] Dispatched login notification to ${savedReceiverEmail}`);
 
-        // 6. Record processed loginEventId
+        // Record processed loginEventId
         if (loginEventId) {
             await db.collection('mail_events_processed').doc(loginEventId).set({
                 siteId,

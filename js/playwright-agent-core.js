@@ -52,6 +52,7 @@ export class PlaywrightAgentClient {
 
     onEvent(callback) {
         this.onEventCallbacks.add(callback);
+        return () => this.onEventCallbacks.delete(callback);
     }
 
     emitEvent(eventType, payload) {
@@ -60,23 +61,33 @@ export class PlaywrightAgentClient {
         }
     }
 
-    async subscribeToRun(runId) {
+    async subscribeToRun(runId, realtimeUrl = null, runToken = null) {
         this.activeRunId = runId;
         localStorage.setItem('codez48_active_auto_id', runId);
 
-        // 1. Connect to Playwright Worker WebSocket if on localhost
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocal) {
-            const wsUrl = `ws://${window.location.hostname}:8080/ws`;
+        // 1. Connect to Playwright Worker WebSocket (Production WSS or Local WS)
+        let wsUrl = realtimeUrl;
+        if (!wsUrl) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocal) {
+                wsUrl = `ws://${window.location.hostname}:8080/ws`;
+            }
+        }
+
+        if (wsUrl) {
+            if (wsUrl.startsWith('https://')) wsUrl = wsUrl.replace(/^https:/, 'wss:');
+            else if (wsUrl.startsWith('http://')) wsUrl = wsUrl.replace(/^http:/, 'ws:');
+
             try {
                 if (this.ws) { try { this.ws.close(); } catch (e) {} }
                 this.ws = new WebSocket(wsUrl);
 
                 this.ws.onopen = () => {
-                    console.log('[PLAYWRIGHT CLIENT] WebSocket connected to worker. Subscribing to run:', runId);
+                    console.log('[PLAYWRIGHT CLIENT] Realtime WebSocket connected to worker:', wsUrl);
                     this.ws.send(JSON.stringify({
                         type: 'SUBSCRIBE',
                         runId,
+                        token: runToken,
                         userId: auth.currentUser?.uid || 'guest'
                     }));
                 };
