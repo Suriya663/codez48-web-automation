@@ -936,4 +936,49 @@ export const AutomationLogic = {
 window.askAIAboutSite = () => AutomationLogic.askAIAboutSite();
 window.AutomationLogic = AutomationLogic;
 
-document.addEventListener('DOMContentLoaded', () => { if (document.getElementById('automation-view')) AutomationLogic.init(); });
+export const initExtractedDataResizer = () => {
+    const resizer = document.getElementById('extracted-data-resizer');
+    const display = document.getElementById('extracted-data-display');
+    if (!resizer || !display) return;
+
+    let startY = 0;
+    let startHeight = 0;
+
+    const onMouseMove = (e) => {
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const dy = clientY - startY;
+        const newHeight = Math.max(200, Math.min(window.innerHeight * 0.85, startHeight + dy));
+        display.style.height = `${newHeight}px`;
+    };
+
+    const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('touchmove', onMouseMove);
+        document.removeEventListener('touchend', onMouseUp);
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+    };
+
+    const onMouseDown = (e) => {
+        e.preventDefault();
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        startHeight = parseInt(document.defaultView.getComputedStyle(display).height, 10);
+
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('touchmove', onMouseMove);
+        document.addEventListener('touchend', onMouseUp);
+    };
+
+    resizer.addEventListener('mousedown', onMouseDown);
+    resizer.addEventListener('touchstart', onMouseDown);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('automation-view')) AutomationLogic.init();
+    initExtractedDataResizer();
+});
