@@ -99,6 +99,7 @@ const executeAutonomousAgentMission = async (autoId, userId, target, task, paylo
                 stageName: stageName,
                 lastAction: actionMsg,
                 status: 'RUNNING',
+                lastEventType: 'STATUS_UPDATE',
                 assistantState: { expression: expr, text: actionMsg },
                 cursorState: cursor,
                 logs: [...existingLogs, { time: new Date().toISOString(), msg: `[FLOW Stage ${stage}] ${actionMsg}` }],

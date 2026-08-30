@@ -105,9 +105,8 @@ export class PlaywrightAgentClient {
             if (!snapshot.exists()) return;
             const data = snapshot.data();
 
-            if (data.lastEventType) {
-                this.emitEvent(data.lastEventType, data);
-            }
+            const eventType = data.lastEventType || 'STATUS_UPDATE';
+            this.emitEvent(eventType, data);
         });
     }
 
@@ -130,6 +129,7 @@ export class PlaywrightAgentClient {
                 waitingForUser: false,
                 lastAction: 'User response provided. Resuming Playwright agent...',
                 lastActionResult: userResponse,
+                lastEventType: 'STATUS_UPDATE',
                 updatedAt: serverTimestamp()
             }), { merge: true });
 
@@ -154,6 +154,7 @@ export class PlaywrightAgentClient {
             await setDoc(autoRef, sanitizeFirestoreObject({
                 status: RunState.CANCELLED,
                 lastAction: 'Session terminated by user',
+                lastEventType: 'STATUS_UPDATE',
                 updatedAt: serverTimestamp()
             }), { merge: true });
 
