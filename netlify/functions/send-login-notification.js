@@ -80,14 +80,28 @@ exports.handler = async (event, context) => {
             imageShape = 'rounded'
         } = data;
 
-        // Read SMTP Environment Variables
-        const smtpHost = process.env.SMTP_HOST;
-        const smtpPort = Number(process.env.SMTP_PORT) || 587;
-        const smtpUser = process.env.SMTP_USER;
-        const smtpPass = process.env.SMTP_PASS;
-        const smtpFrom = process.env.SMTP_FROM || smtpUser || 'CODEZ48 Alerts <no-reply@codez48.io>';
+        // Read Default SMTP Environment Variables
+        let smtpHost = process.env.SMTP_HOST;
+        let smtpPort = Number(process.env.SMTP_PORT) || 587;
+        let smtpUser = process.env.SMTP_USER;
+        let smtpPass = process.env.SMTP_PASS;
 
-        console.log(`[SMTP DIAGNOSTICS] HOST: ${Boolean(smtpHost)} | PORT: ${smtpPort} | USER: ${Boolean(smtpUser)} | PASS: ${Boolean(smtpPass)}`);
+        // Check if custom Pro SMTP credentials exist for this user/siteId
+        if (initAdmin() && db && siteId) {
+            try {
+                const customSnap = await db.collection('user_custom_smtp').doc(siteId).get();
+                if (customSnap.exists) {
+                    const cData = customSnap.data();
+                    if (cData.customSmtpUser && cData.customSmtpPass) {
+                        smtpUser = cData.customSmtpUser;
+                        smtpPass = cData.customSmtpPass;
+                        console.log(`[PRO CUSTOM SMTP ACTIVE] Using custom verified SMTP for ${siteId}: ${smtpUser}`);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        const smtpFrom = process.env.SMTP_FROM || smtpUser || 'CODEZ48 Alerts <no-reply@codez48.io>';
 
         if (!smtpHost || !smtpUser || !smtpPass) {
             console.error('[CRITICAL SMTP CONFIG ERROR] SMTP environment variables are missing in Netlify Settings.');
@@ -132,6 +146,118 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle Security OTP Email Generation for Custom Pro SMTP Setup
+        if (action === 'SEND_OTP') {
+            const targetRecipient = notificationEmail;
+            if (!targetRecipient || !targetRecipient.includes('@')) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ success: false, error: "Valid email address required to receive OTP." })
+                };
+            }
+
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            if (initAdmin() && db) {
+                await db.collection('mail_otp_codes').doc(targetRecipient.toLowerCase()).set({
+                    otpCode,
+                    siteId,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: targetRecipient,
+                subject: `🔒 Security Verification OTP Code - CODEZ48 Pro API`,
+                html: `
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #faf5ff; border-radius: 20px; border: 1px solid #e9d5ff;">
+                        <h2 style="color: #9333ea; margin: 0 0 10px 0;">Pro API Credentials Verification</h2>
+                        <p style="color: #4c1d95; font-size: 14px;">Your 6-digit security OTP code for configuring custom Pro email credentials on CODEZ48 is:</p>
+                        <div style="font-size: 28px; font-weight: 900; color: #9333ea; letter-spacing: 8px; background: #ffffff; padding: 15px 25px; border-radius: 12px; display: inline-block; margin: 15px 0;">${otpCode}</div>
+                        <p style="color: #6b21a8; font-size: 12px;">This OTP code expires in 15 minutes. Do not share it with anyone.</p>
+                    </div>
+                `
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Security OTP Code dispatched successfully!",
+                    recipient: targetRecipient
+                })
+            };
+        }
+
+        // Handle Security OTP Code Verification
+        if (action === 'VERIFY_OTP') {
+            const targetRecipient = notificationEmail;
+            const inputOtp = data.otpCode ? String(data.otpCode).trim() : '';
+
+            if (!targetRecipient || !inputOtp) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ success: false, error: "Recipient email and OTP code required." })
+                };
+            }
+
+            if (!initAdmin() || !db) {
+                return { statusCode: 500, body: JSON.stringify({ error: "Database unavailable" }) };
+            }
+
+            const otpDoc = await db.collection('mail_otp_codes').doc(targetRecipient.toLowerCase()).get();
+            if (!otpDoc.exists || otpDoc.data().otpCode !== inputOtp) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ success: false, error: "Invalid or expired security OTP code." })
+                };
+            }
+
+            // Save verified custom Pro SMTP credentials
+            if (data.customSmtpUser && data.customSmtpPass) {
+                await db.collection('user_custom_smtp').doc(siteId).set({
+                    siteId,
+                    customSmtpUser: data.customSmtpUser,
+                    customSmtpPass: data.customSmtpPass,
+                    verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Pro API credentials verified and saved successfully!"
+                })
+            };
+        }
+
+        // Handle Base64 Data URL Image Attachments for 100% Gmail/Outlook rendering
+        const attachments = [];
+        let finalLogoUrl = data.headerLogoUrl || 'https://codez48.netlify.app/img/logo.png';
+        let finalImageUrl = imageUrl || '';
+
+        if (finalLogoUrl.startsWith('data:image/')) {
+            attachments.push({
+                filename: 'logo.png',
+                path: finalLogoUrl,
+                cid: 'headerLogo'
+            });
+            finalLogoUrl = 'cid:headerLogo';
+        }
+
+        if (finalImageUrl.startsWith('data:image/')) {
+            attachments.push({
+                filename: 'hero.png',
+                path: finalImageUrl,
+                cid: 'heroImage'
+            });
+            finalImageUrl = 'cid:heroImage';
+        }
+
         // Helper to construct full-width HTML template
         const buildEmailHtml = (recipientEmail) => {
             const safeHeader = escapeHtml(headerText);
@@ -143,18 +269,18 @@ exports.handler = async (event, context) => {
             const borderRadius = imageShape === 'circle' ? '50%' : imageShape === 'square' ? '0px' : '20px';
             const imgAlignStyle = imageAlign === 'left' ? 'text-align: left;' : imageAlign === 'right' ? 'text-align: right;' : 'text-align: center;';
 
-            const safeImageUrl = imageUrl ? escapeHtml(imageUrl) : '';
+            const safeImageUrl = finalImageUrl.startsWith('cid:') ? finalImageUrl : escapeHtml(finalImageUrl);
             const imageHtml = safeImageUrl ? `
                 <div style="${imgAlignStyle} margin: 24px 0;">
-                    <img src="${safeImageUrl}" style="max-width: ${imageWidth}; height: auto; border-radius: ${borderRadius}; display: inline-block; box-shadow: 0 10px 20px rgba(0,0,0,0.08);" />
+                    <img src="${safeImageUrl}" style="max-width: ${imageWidth}; width: 100%; height: auto; border-radius: ${borderRadius}; display: inline-block; border: 0; box-shadow: 0 10px 20px rgba(0,0,0,0.08);" alt="Hero Banner" />
                 </div>` : '';
 
-            const safeLogoUrl = data.headerLogoUrl ? escapeHtml(data.headerLogoUrl) : 'https://codez48.netlify.app/img/logo.png';
+            const safeLogoUrl = finalLogoUrl.startsWith('cid:') ? finalLogoUrl : escapeHtml(finalLogoUrl);
             const safeLogoWidth = data.headerLogoWidth ? escapeHtml(data.headerLogoWidth) : '50px';
 
             const logoHtml = safeLogoUrl ? `
                 <div style="text-align: center; margin-bottom: 12px;">
-                    <img src="${safeLogoUrl}" style="width: ${safeLogoWidth}; height: auto; display: inline-block; object-fit: contain; border-radius: 12px;" alt="Logo" />
+                    <img src="${safeLogoUrl}" style="width: ${safeLogoWidth}; max-width: 150px; height: auto; display: inline-block; object-fit: contain; border-radius: 12px; border: 0;" alt="Logo" />
                 </div>` : `
                 <div style="width: 52px; height: 52px; background-color: #f3e8ff; color: #9333ea; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚡</div>`;
 
@@ -175,7 +301,7 @@ exports.handler = async (event, context) => {
                         ${imageHtml}
 
                         <!-- Description Body (Borderless, 100% full width) -->
-                        <div style="width: 100%; background-color: #faf5ff; padding: 24px; border-radius: 20px; margin-bottom: 28px; box-sizing: border-border-box;">
+                        <div style="width: 100%; background-color: #faf5ff; padding: 24px; border-radius: 20px; margin-bottom: 28px; box-sizing: border-box;">
                             <p style="margin: 0; font-size: 14px; color: #4c1d95; font-weight: 600; line-height: 1.7; font-family: 'Plus Jakarta Sans', sans-serif;">
                                 ${safeDesc}
                             </p>
@@ -213,7 +339,8 @@ exports.handler = async (event, context) => {
                 from: smtpFrom,
                 to: targetRecipient,
                 subject: `Welcome to CODEZ48`,
-                html: buildEmailHtml(targetRecipient)
+                html: buildEmailHtml(targetRecipient),
+                attachments
             });
 
             return {
@@ -282,7 +409,8 @@ exports.handler = async (event, context) => {
             from: smtpFrom,
             to: savedReceiverEmail,
             subject: `Welcome to CODEZ48`,
-            html: buildEmailHtml(savedReceiverEmail)
+            html: buildEmailHtml(savedReceiverEmail),
+            attachments
         });
 
         // Record processed loginEventId

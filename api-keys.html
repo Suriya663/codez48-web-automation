@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Keys & Billing Portal | CODEZ48</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FFFFFF;
+            color: #0f172a;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+        .text-royal { color: #2563EB; }
+        .bg-royal { background-color: #2563EB; }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="glass-header fixed top-0 left-0 w-full z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="location.href='index.html'">
+                <div>
+                    <h1 class="text-lg font-black text-black uppercase tracking-tight">CODEZ48</h1>
+                    <p class="text-[9px] font-extrabold text-purple-600 uppercase tracking-widest">API Keys & Billing Portal</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="location.href='index.html'" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2 border border-slate-200">
+                    <i class="fa-solid fa-house"></i> Home
+                </button>
+                <button onclick="location.href='tools/index.html'" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2 shadow-lg shadow-purple-200">
+                    <i class="fa-solid fa-robot"></i> Tools & Automation
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto w-full px-6 pt-28 pb-16 space-y-8 flex-1">
+        <!-- Dynamic API Key & Token Management Container -->
+        <div id="api-key-management-container">
+            <div class="p-12 text-center text-slate-400 font-mono animate-pulse">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-purple-600 mb-3 block"></i>
+                Loading your Firebase secured API keys...
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-slate-50 py-6 px-6 text-center">
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            CODEZ48 Official Platform — <a href="https://codez48.netlify.app/about.html" class="text-purple-600 font-black hover:underline">Contact Us Now →</a>
+        </p>
+    </footer>
+
+    <!-- Firebase & Logic Integration -->
+    <script type="module" src="js/translations.js"></script>
+    <script type="module" src="js/analytics.js"></script>
+    <script type="module" src="js/api-key-manager.js"></script>
+</body>
+</html>

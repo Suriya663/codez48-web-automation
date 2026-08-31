@@ -5,7 +5,7 @@ import { callAI } from './utils.js';
  * CODEZ48 MAIL AUTOMATION FRONTEND CONTROLLER
  * Manages custom email template designer, logo header controls, device image file upload, live preview,
  * image sliders/shapes, font family selectors, top-of-page file upload, manual comma-separated recipient input,
- * column-specific Excel importer, simultaneous parallel bulk dispatch engine (`Promise.all`),
+ * column-specific Excel importer, active API key selector, simultaneous parallel bulk dispatch engine (`Promise.all`),
  * sample format guide modal, demo Excel download, and SMTP test/campaign dispatches.
  */
 export const MailAutomationController = {
@@ -279,6 +279,27 @@ export const MailAutomationController = {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- 7. Active API Key Selector & Credit Balance Badge -->
+                            <div class="p-4 bg-purple-50/70 border border-purple-100 rounded-2xl space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <label class="block text-[8px] font-black text-purple-900 uppercase tracking-widest flex items-center gap-1.5">
+                                        <i class="fa-solid fa-key text-purple-600"></i> Active API Key Authorization
+                                    </label>
+                                    <button onclick="location.href='api-keys.html'" class="text-[8px] font-black text-purple-700 hover:underline uppercase tracking-widest flex items-center gap-1">
+                                        <i class="fa-solid fa-gear"></i> Manage Keys & Billing →
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <select id="mail-active-key-select" onchange="window.handleActiveKeySelectChange()" class="col-span-2 bg-white border border-purple-200 rounded-xl p-2 text-xs font-mono font-bold text-purple-900">
+                                        <!-- Populated dynamically by ApiKeyManager -->
+                                    </select>
+                                    <div id="mail-active-key-balance" class="bg-purple-100/80 rounded-xl p-2 text-center flex flex-col justify-center border border-purple-200">
+                                        <span class="text-[8px] font-black text-purple-800 uppercase">Quota Balance</span>
+                                        <span id="mail-active-balance-text" class="text-xs font-black text-purple-900">20 Emails</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Right Column: Interactive Real-Time Email Template Previewer -->
@@ -505,6 +526,9 @@ export const MailAutomationController = {
         modal.classList.remove('hidden');
         await MailAutomationController.loadSettings();
         MailAutomationController.updateTemplatePreview();
+        if (window.ApiKeyManager) {
+            await window.ApiKeyManager.populateKeySelector();
+        }
     },
 
     closeModal() {
@@ -909,22 +933,43 @@ export const MailAutomationController = {
         const statusText = document.getElementById('mail-status-text');
         const btnStart = document.getElementById('btn-start-mail-campaign');
 
-        const allRecipients = MailAutomationController.getAllRecipients();
+        let allRecipients = MailAutomationController.getAllRecipients();
         const totalCount = allRecipients.length;
 
         if (totalCount === 0) {
             return alert("Please enter manual comma-separated emails or upload a recipient file (.xlsx, .csv, .txt, .pdf, .docx) first.");
         }
 
+        // Quota Validation via ApiKeyManager using selected API Key
+        if (window.ApiKeyManager) {
+            const selectEl = document.getElementById('mail-active-key-select');
+            const activeKey = selectEl ? selectEl.value : '';
+
+            if (!activeKey) {
+                alert("Please select or generate an active API key before launching the campaign. Click 'Manage Keys & Billing →' to generate a key on the API page.");
+                return;
+            }
+
+            const quotaCheck = await window.ApiKeyManager.validateAndDeductQuota(activeKey, totalCount);
+            if (!quotaCheck.allowed) {
+                alert(`API Quota Limit Reached for Key ${activeKey}:\n${quotaCheck.message}\n\nPlease upgrade to Pro Subscription on 'API Keys & Billing' page for 60 emails/day.`);
+                return;
+            }
+            if (quotaCheck.allowedCount < totalCount) {
+                alert(`API Quota Limit Warning:\n${quotaCheck.message}\nSending first ${quotaCheck.allowedCount} emails out of ${totalCount}.`);
+                allRecipients = allRecipients.slice(0, quotaCheck.allowedCount);
+            }
+        }
+
         // Open Real-Time Live Dispatch Progress Modal
-        MailAutomationController.openLiveDispatchModal(totalCount);
+        MailAutomationController.openLiveDispatchModal(allRecipients.length);
 
         if (btnStart) {
             btnStart.disabled = true;
             btnStart.innerText = "Dispatching...";
         }
 
-        if (statusText) statusText.innerText = `Launching simultaneous email campaign to ${totalCount} recipients...`;
+        if (statusText) statusText.innerText = `Launching simultaneous email campaign to ${allRecipients.length} recipients...`;
 
         let sentCount = 0;
         const siteId = MailAutomationController.getSiteId();
@@ -935,7 +980,7 @@ export const MailAutomationController = {
             // Simultaneous Parallel Dispatch using Promise.all
             const dispatchPromises = allRecipients.map(async (recipient) => {
                 const activeEl = document.getElementById('dispatch-current-email');
-                if (activeEl) activeEl.innerText = `Simultaneously sending to ${totalCount} recipients...`;
+                if (activeEl) activeEl.innerText = `Simultaneously sending to ${allRecipients.length} recipients...`;
 
                 try {
                     const res = await fetch('/.netlify/functions/send-login-notification', {
@@ -962,12 +1007,12 @@ export const MailAutomationController = {
                 }
 
                 // Update live progress bar & running counter dynamically
-                const percent = Math.round((sentCount / totalCount) * 100);
+                const percent = Math.round((sentCount / allRecipients.length) * 100);
                 const badge = document.getElementById('dispatch-counter-badge');
                 const progressBar = document.getElementById('dispatch-progress-bar');
                 const progressPercent = document.getElementById('dispatch-progress-percent');
 
-                if (badge) badge.innerText = `Dispatched: ${sentCount} / ${totalCount}`;
+                if (badge) badge.innerText = `Dispatched: ${sentCount} / ${allRecipients.length}`;
                 if (progressBar) progressBar.style.width = `${percent}%`;
                 if (progressPercent) progressPercent.innerText = `${percent}%`;
 
@@ -986,7 +1031,7 @@ export const MailAutomationController = {
             await MailAutomationController.sendLoginNotification('Merchant Campaign Manager', allRecipients[0] || auth.currentUser?.email);
 
             const footerEl = document.getElementById('dispatch-status-footer');
-            if (footerEl) footerEl.innerText = `Campaign Completed: ${sentCount} / ${totalCount} Delivered Simultaneously!`;
+            if (footerEl) footerEl.innerText = `Campaign Completed: ${sentCount} / ${allRecipients.length} Delivered Simultaneously!`;
 
             const doneBtn = document.getElementById('btn-close-dispatch-modal');
             if (doneBtn) doneBtn.classList.remove('hidden');

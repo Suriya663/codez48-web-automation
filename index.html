@@ -372,6 +372,9 @@
                         <button onclick="window.openMailAutomationModal()" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-envelope-circle-check text-xs"></i> Email Automation
                         </button>
+                        <button onclick="location.href='api-keys.html'" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-key text-xs"></i> API Keys & Billing
+                        </button>
                     </div>
                 </div>
 
@@ -411,6 +414,9 @@
                 </button>
                 <button onclick="window.openMailAutomationModal(); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-600 uppercase tracking-widest">
                     <i class="fa-solid fa-envelope-circle-check text-purple-600"></i> Email Automation
+                </button>
+                <button onclick="location.href='api-keys.html'; toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                    <i class="fa-solid fa-key text-emerald-600"></i> API Keys & Billing
                 </button>
             </div>
 
@@ -1315,5 +1321,6 @@
     <script type="module" src="js/admin.js"></script>
     <script type="module" src="js/index-secure.js"></script>
     <script type="module" src="js/mail-automation.js"></script>
+    <script type="module" src="js/api-key-manager.js"></script>
 </body>
 </html>

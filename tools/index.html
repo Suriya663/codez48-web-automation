@@ -60,6 +60,9 @@
             </div>
             <div class="flex items-center gap-6">
                 <button onclick="location.href='/index.html'" class="text-[10px] font-black text-slate-500 hover:text-black uppercase tracking-widest">Dashboard</button>
+                <button onclick="location.href='../api-keys.html'" class="text-[10px] font-black text-purple-600 hover:text-purple-800 uppercase tracking-widest flex items-center gap-1.5">
+                    <i class="fa-solid fa-key"></i> API Keys & Billing
+                </button>
                 <div id="user-profile-badge" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-royal border border-slate-200">
                     <i class="fa-solid fa-user text-xs"></i>
                 </div>
@@ -616,6 +619,7 @@
     <script type="module" src="../js/playwright-agent-core.js"></script>
     <script type="module" src="../js/ai-automation.js"></script>
     <script type="module" src="../js/mail-automation.js"></script>
+    <script type="module" src="../js/api-key-manager.js"></script>
     <script>
         function showWorkspace(id) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('view-active'));
