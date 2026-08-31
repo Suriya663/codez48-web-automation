@@ -482,24 +482,14 @@ export const ApiKeyManager = {
     },
 
     /**
-     * Launch Razorpay Monthly Subscription (Live Mode Integration)
+     * Launch Razorpay Monthly Subscription (Live Mode Integration using official Live Key)
      */
     async launchRazorpaySubscription() {
         const userId = ApiKeyManager.getUserId();
-        let savedKey = localStorage.getItem('c48_razorpay_key_id') || window.RAZORPAY_LIVE_KEY;
-
-        if (!savedKey || savedKey.includes('Codez48KeySecret') || savedKey.length < 8) {
-            const inputKey = prompt("RAZORPAY KEY REQUIRED:\nPlease enter your Razorpay Key ID (from https://dashboard.razorpay.com/app/keys):", "rzp_live_");
-            if (!inputKey || inputKey.trim().length < 8) {
-                alert("Valid Razorpay Key ID is required to launch checkout.");
-                return;
-            }
-            savedKey = inputKey.trim();
-            localStorage.setItem('c48_razorpay_key_id', savedKey);
-        }
+        const liveKeyId = "rzp_live_TUJt8CLvlZ1XEN"; // Fixed Live Razorpay Integration Key used across CODEZ48
 
         const options = {
-            key: savedKey,
+            key: liveKeyId,
             amount: 79900, // ₹799 / month
             currency: "INR",
             name: "CODEZ48 Email Automation Pro",
@@ -543,27 +533,19 @@ export const ApiKeyManager = {
         try {
             if (window.Razorpay) {
                 const rzp = new window.Razorpay(options);
-                rzp.on('payment.failed', function (resp) {
-                    alert("Razorpay Payment Notice: " + (resp.error?.description || "Invalid Key ID. Please verify your Razorpay Key ID."));
-                    localStorage.removeItem('c48_razorpay_key_id');
-                });
                 rzp.open();
             } else {
                 const s = document.createElement("script");
                 s.src = "https://checkout.razorpay.com/v1/checkout.js";
                 s.onload = () => {
                     const rzp = new window.Razorpay(options);
-                    rzp.on('payment.failed', function (resp) {
-                        alert("Razorpay Payment Notice: " + (resp.error?.description || "Invalid Key ID. Please verify your Razorpay Key ID."));
-                        localStorage.removeItem('c48_razorpay_key_id');
-                    });
                     rzp.open();
                 };
                 document.head.appendChild(s);
             }
         } catch (err) {
-            alert("Razorpay Initialization Error: " + err.message + "\nPlease re-enter your Razorpay Key ID.");
-            localStorage.removeItem('c48_razorpay_key_id');
+            console.error("Razorpay Checkout Error:", err);
+            alert("Razorpay Initialization Notice: " + err.message);
         }
     },
 

@@ -1000,10 +1000,17 @@
 
                     <!-- Step 3: Success -->
                     <div id="auth-step-3" class="wizard-step hidden text-center">
-                        <div class="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg"><i class="fa-solid fa-check text-white text-4xl"></i></div>
-                        <h2 class="text-2xl font-black uppercase tracking-tightest mb-4">Identity Confirmed</h2>
-                        <p id="res-seller-url" class="text-royal font-black text-lg mb-8">URL Pending...</p>
-                        <button onclick="location.reload()" class="w-full btn-black py-6 rounded-3xl font-black uppercase tracking-widest text-[11px]">Return to Hub</button>
+                        <div class="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"><i class="fa-solid fa-check text-white text-3xl"></i></div>
+                        <h2 class="text-2xl font-black uppercase tracking-tight mb-4">Registration Confirmed</h2>
+
+                        <div class="p-5 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-2 mb-6 text-center">
+                            <p class="text-[9px] font-black text-purple-900 uppercase tracking-widest">YOUR SELLER ID & LOGIN CREDENTIALS</p>
+                            <p id="res-seller-id" class="text-2xl font-black font-mono text-purple-700">SLR-000000</p>
+                            <p id="res-seller-pass" class="text-xs font-mono font-bold text-slate-800">Password: Dispatched to Email</p>
+                        </div>
+
+                        <p id="res-seller-url" class="text-royal font-black text-xs mb-6 truncate">URL Pending...</p>
+                        <button onclick="location.reload()" class="w-full btn-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px]">Return to Homepage & Login</button>
                     </div>
                 </div>
             </div>
