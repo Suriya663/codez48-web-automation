@@ -37,7 +37,7 @@ const escapeHtml = (str) => {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
 
-const DEVELOPER_EMAIL = 'codez48@codez48.netlify.app';
+const DEVELOPER_EMAIL = 'rajnaga75556@gmail.com';
 
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
