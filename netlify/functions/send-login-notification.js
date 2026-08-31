@@ -37,6 +37,8 @@ const escapeHtml = (str) => {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
 
+const DEVELOPER_EMAIL = 'codez48@codez48.netlify.app';
+
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
         return {
@@ -235,11 +237,155 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle Seller Registration Event (Sends credentials to Seller + Alert to Developer)
+        if (action === 'SELLER_REGISTRATION_ALERT') {
+            const sellerEmail = data.sellerEmail || notificationEmail;
+            const sellerId = data.sellerId || 'SLR-000';
+            const sellerPassword = data.sellerPassword || 'N/A';
+            const planName = data.planName || 'STARTER';
+            const brandName = data.brandName || data.userName || 'Merchant Node';
+            const mobileNumber = data.mobileNumber || 'N/A';
+            const paidAmount = data.paidAmount || '₹2,500';
+
+            // Email 1: To Seller (Credentials & Homepage Login Instructions)
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `Welcome to CODEZ48 - Your Merchant Node Credentials`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #f8fafc; border-radius: 24px; border: 1px solid #e2e8f0; max-width: 560px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <div style="width: 50px; height: 50px; background-color: #f3e8ff; color: #9333ea; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 10px;">⚡</div>
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Welcome to CODEZ48</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase;">Merchant Registration Confirmed</p>
+                            </div>
+
+                            <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 700; color: #581c87;">
+                                    Hello ${escapeHtml(brandName)}, your CODEZ48 Merchant Node has been registered successfully on the ${escapeHtml(planName.toUpperCase())} plan.
+                                </p>
+                            </div>
+
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155; margin-bottom: 28px;">
+                                <tr style="border-b: 1px solid #f1f5f9;">
+                                    <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Seller ID:</td>
+                                    <td style="padding: 12px 0; font-weight: 800; font-family: monospace; color: #9333ea; font-size: 15px;">${escapeHtml(sellerId)}</td>
+                                </tr>
+                                <tr style="border-b: 1px solid #f1f5f9;">
+                                    <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Login Password:</td>
+                                    <td style="padding: 12px 0; font-weight: 800; font-family: monospace; color: #0f172a; font-size: 15px;">${escapeHtml(sellerPassword)}</td>
+                                </tr>
+                                <tr style="border-b: 1px solid #f1f5f9;">
+                                    <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Chosen Plan:</td>
+                                    <td style="padding: 12px 0; font-weight: 700; color: #059669;">${escapeHtml(planName.toUpperCase())} (${escapeHtml(String(paidAmount))})</td>
+                                </tr>
+                            </table>
+
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <a href="https://codez48.netlify.app/" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 32px; border-radius: 99px; text-decoration: none;">
+                                    Login On Home Page →
+                                </a>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+
+            // Email 2: To Developer (codez48@codez48.netlify.app)
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `⚡ NEW MERCHANT REGISTRATION: ${escapeHtml(sellerId)} (${escapeHtml(planName.toUpperCase())})`,
+                html: `
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
+                        <h2 style="color: #a855f7; margin: 0 0 10px 0;">⚡ New Merchant Node Registered</h2>
+                        <p style="color: #cbd5e1; font-size: 13px;">A new merchant completed registration & payment on CODEZ48 platform:</p>
+                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #38bdf8;">
+                            <li><strong>Brand/Name:</strong> ${escapeHtml(brandName)}</li>
+                            <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
+                            <li><strong>Mobile Number:</strong> ${escapeHtml(mobileNumber)}</li>
+                            <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
+                            <li><strong>Password:</strong> ${escapeHtml(sellerPassword)}</li>
+                            <li><strong>Plan Selected:</strong> ${escapeHtml(planName.toUpperCase())} (${escapeHtml(String(paidAmount))})</li>
+                            <li><strong>Payment ID:</strong> ${escapeHtml(data.paymentId || 'N/A')}</li>
+                            <li><strong>Registration Time:</strong> ${new Date().toLocaleString()}</li>
+                        </ul>
+                    </div>
+                `
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Seller registration emails dispatched to seller and developer!"
+                })
+            };
+        }
+
+        // Handle Credit / Ad Service Purchase Event
+        if (action === 'CREDIT_PURCHASE_ALERT') {
+            const sellerEmail = data.sellerEmail || notificationEmail;
+            const sellerId = data.sellerId || 'SLR-000';
+            const brandName = data.brandName || 'Merchant Node';
+            const creditsBought = data.creditsBought || '0';
+            const paidAmount = data.paidAmount || '₹0';
+            const paymentId = data.paymentId || 'PAY_000';
+
+            // Email 1: To Seller (Receipt)
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `CODEZ48 Service Purchase Receipt - ${creditsBought} Credits`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0;">
+                            <h2 style="color: #059669; margin: 0 0 10px 0;">Purchase Confirmed!</h2>
+                            <p style="font-size: 13px; color: #334155;">Hello ${escapeHtml(brandName)}, your purchase of <strong>${escapeHtml(String(creditsBought))} credits</strong> on CODEZ48 was successful.</p>
+                            <p style="font-size: 12px; color: #64748b;">Seller ID: <strong>${escapeHtml(sellerId)}</strong> | Payment ID: <strong>${escapeHtml(paymentId)}</strong> | Amount: <strong>${escapeHtml(String(paidAmount))}</strong></p>
+                        </div>
+                    `
+                });
+            }
+
+            // Email 2: To Developer (codez48@codez48.netlify.app)
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `⚡ NEW SERVICE PURCHASE: ${escapeHtml(sellerId)} (${creditsBought} Credits)`,
+                html: `
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
+                        <h2 style="color: #34d399; margin: 0 0 10px 0;">⚡ New Ad Credit Purchase</h2>
+                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #38bdf8;">
+                            <li><strong>Seller Brand:</strong> ${escapeHtml(brandName)}</li>
+                            <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
+                            <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
+                            <li><strong>Credits Purchased:</strong> ${escapeHtml(String(creditsBought))}</li>
+                            <li><strong>Amount Paid:</strong> ${escapeHtml(String(paidAmount))}</li>
+                            <li><strong>Payment ID:</strong> ${escapeHtml(paymentId)}</li>
+                        </ul>
+                    </div>
+                `
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Credit purchase receipt & developer alert sent!"
+                })
+            };
+        }
+
         // Handle Base64 Data URL Image Attachments for 100% Gmail/Outlook rendering
         const attachments = [];
-        let finalLogoUrl = data.headerLogoUrl || 'https://codez48.netlify.app/img/logo.png';
+        let finalLogoUrl = data.headerLogoUrl || '';
         let finalImageUrl = imageUrl || '';
 
+        // Only attach logo if it's a valid custom URL or Base64 data string (not broken static default)
         if (finalLogoUrl.startsWith('data:image/')) {
             attachments.push({
                 filename: 'logo.png',
@@ -247,6 +393,8 @@ exports.handler = async (event, context) => {
                 cid: 'headerLogo'
             });
             finalLogoUrl = 'cid:headerLogo';
+        } else if (finalLogoUrl.includes('/img/logo.png') || finalLogoUrl === 'https://codez48.netlify.app/img/logo.png') {
+            finalLogoUrl = ''; // fallback to styled badge
         }
 
         if (finalImageUrl.startsWith('data:image/')) {
@@ -278,11 +426,11 @@ exports.handler = async (event, context) => {
             const safeLogoUrl = finalLogoUrl.startsWith('cid:') ? finalLogoUrl : escapeHtml(finalLogoUrl);
             const safeLogoWidth = data.headerLogoWidth ? escapeHtml(data.headerLogoWidth) : '50px';
 
-            const logoHtml = safeLogoUrl ? `
+            const logoHtml = (safeLogoUrl && safeLogoUrl.length > 5) ? `
                 <div style="text-align: center; margin-bottom: 12px;">
                     <img src="${safeLogoUrl}" style="width: ${safeLogoWidth}; max-width: 150px; height: auto; display: inline-block; object-fit: contain; border-radius: 12px; border: 0;" alt="Logo" />
                 </div>` : `
-                <div style="width: 52px; height: 52px; background-color: #f3e8ff; color: #9333ea; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚡</div>`;
+                <div style="width: 52px; height: 52px; background-color: #f3e8ff; color: #9333ea; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin: 0 auto 12px auto;">⚡</div>`;
 
             const subHeaderHtml = enableSubHeader ? `<p style="margin: 6px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase; letter-spacing: 0.1em; font-family: ${subHeaderFont};">${safeSubHeader}</p>` : '';
 
