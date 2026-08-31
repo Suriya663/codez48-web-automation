@@ -490,10 +490,10 @@ export const ApiKeyManager = {
 
         const options = {
             key: liveKeyId,
-            amount: 79900, // ₹799 / month
+            amount: 9900, // ₹99 / month (9900 paise)
             currency: "INR",
             name: "CODEZ48 Email Automation Pro",
-            description: "Monthly Pro Subscription (60 Emails / Day)",
+            description: "Monthly Pro Subscription - ₹99 (60 Emails / Day)",
             image: "https://codez48.netlify.app/img/logo.png",
             handler: async function (response) {
                 const subKeyId = 'c48_sub_' + Math.random().toString(36).substring(2, 10);
@@ -628,7 +628,7 @@ export const ApiKeyManager = {
                             <i class="fa-solid fa-plus"></i> Generate Free Key (10 Tokens)
                         </button>
                         <button onclick="window.launchRazorpaySubscription()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-md shadow-emerald-200">
-                            <i class="fa-solid fa-crown"></i> Buy Pro Plan (60 Emails/Day)
+                            <i class="fa-solid fa-crown"></i> Buy Pro Plan (₹99/Mo - 60 Emails/Day)
                         </button>
                     </div>
                 </div>
