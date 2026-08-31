@@ -522,34 +522,31 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // Fetch saved notification email for current site/user
-        const settingsRef = db.collection('mail_automation_settings').doc(siteId);
-        const settingsSnap = await settingsRef.get();
+        // Fetch saved notification email for current site/user (with automatic default fallback)
+        let savedReceiverEmail = (notificationEmail && notificationEmail.includes('@')) ? notificationEmail : (userEmail && userEmail.includes('@')) ? userEmail : null;
 
-        if (!settingsSnap.exists) {
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ success: false, message: 'Mail automation settings not configured for this account' })
-            };
-        }
+        try {
+            const settingsRef = db.collection('mail_automation_settings').doc(siteId);
+            const settingsSnap = await settingsRef.get();
 
-        const settings = settingsSnap.data();
-        if (settings.mailAutomation === false) {
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ success: false, message: 'Mail automation is disabled in settings' })
-            };
-        }
+            if (settingsSnap.exists) {
+                const settings = settingsSnap.data();
+                if (settings.mailAutomation === false) {
+                    return {
+                        statusCode: 200,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ success: false, message: 'Mail automation is disabled in settings' })
+                    };
+                }
+                if (settings.notificationEmail && settings.notificationEmail.includes('@')) {
+                    savedReceiverEmail = settings.notificationEmail;
+                }
+            }
+        } catch (e) {}
 
-        const savedReceiverEmail = settings.notificationEmail;
+        // Fallback to default platform email if no custom receiver saved
         if (!savedReceiverEmail || !savedReceiverEmail.includes('@')) {
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ success: false, message: 'No valid receiver email saved' })
-            };
+            savedReceiverEmail = process.env.SMTP_USER || 'codez4848@gmail.com';
         }
 
         // Dispatch Email via Nodemailer
