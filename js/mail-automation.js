@@ -35,12 +35,12 @@ export const MailAutomationController = {
     },
 
     getTemplatePayload() {
-        let logoUrl = document.getElementById('tpl-header-logo-url')?.value || 'https://codez48.netlify.app/img/logo.png';
+        let logoUrl = document.getElementById('tpl-header-logo-url')?.value || 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
         let imageUrl = document.getElementById('mail-image-url')?.value || '';
 
         // Payload Safety: Truncate excessively huge Base64 strings if over 500KB to guarantee HTTP payload < 6MB limit
         if (logoUrl.startsWith('data:image/') && logoUrl.length > 500000) {
-            logoUrl = 'https://codez48.netlify.app/img/logo.png';
+            logoUrl = 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
         }
         if (imageUrl.startsWith('data:image/') && imageUrl.length > 800000) {
             console.warn("[MAIL PAYLOAD NOTICE] Truncating oversized image string for Netlify network transmission safety.");
@@ -166,7 +166,7 @@ export const MailAutomationController = {
                                 <div class="grid grid-cols-3 gap-2">
                                     <div class="col-span-2">
                                         <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Header Logo Image URL</label>
-                                        <input type="url" id="tpl-header-logo-url" oninput="window.updateMailTemplatePreview()" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-purple-700 font-bold" value="https://codez48.netlify.app/img/logo.png">
+                                        <input type="url" id="tpl-header-logo-url" oninput="window.updateMailTemplatePreview()" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-purple-700 font-bold" value="https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg">
                                     </div>
                                     <div>
                                         <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Logo Size (px)</label>

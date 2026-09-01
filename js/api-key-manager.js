@@ -300,7 +300,33 @@ export const ApiKeyManager = {
                             <label class="block text-[8px] font-black text-purple-700 uppercase tracking-widest">ENTER 6-DIGIT OTP DISPATCHED TO SENDER EMAIL</label>
                             <input type="text" id="smtp-otp-code" class="w-full bg-purple-50 border border-purple-200 rounded-xl p-3 text-sm font-mono font-bold text-purple-900 text-center tracking-widest" placeholder="123456" maxlength="6">
                             <button id="btn-verify-smtp-otp" onclick="window.verifySmtpOTP()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-md shadow-emerald-200">
-                                <i class="fa-solid fa-check-double mr-1"></i> Verify & Save Pro Credentials
+                                <i class="fa-solid fa-check-double mr-1"></i> Connect & Save Pro Credentials
+                            </button>
+                        </div>
+
+                        <!-- Direct Test Email Tool Section -->
+                        <div id="smtp-test-email-section" class="pt-4 border-t border-slate-100 space-y-3">
+                            <span class="text-[9px] font-black text-purple-700 uppercase tracking-widest block flex items-center gap-1.5">
+                                <i class="fa-solid fa-paper-plane"></i> Send Live Test Email via Connected Account
+                            </span>
+
+                            <div>
+                                <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">RECIPIENT EMAIL</label>
+                                <input type="email" id="test-mail-recipient" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-black" placeholder="e.g. recipient@example.com">
+                            </div>
+
+                            <div>
+                                <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">EMAIL SUBJECT</label>
+                                <input type="text" id="test-mail-subject" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-black" value="Test Email from Connected CODEZ48 Account">
+                            </div>
+
+                            <div>
+                                <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">EMAIL CONTENT</label>
+                                <textarea id="test-mail-content" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-black font-medium resize-none">Hello! This is a test email sent directly through your connected email account on CODEZ48.</textarea>
+                            </div>
+
+                            <button id="btn-send-custom-test-email" onclick="window.sendCustomSmtpTestMail()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-md">
+                                <i class="fa-solid fa-rocket mr-1"></i> Send Test Email
                             </button>
                         </div>
                     </div>
@@ -402,7 +428,58 @@ export const ApiKeyManager = {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-check-double mr-1"></i> Verify & Save Pro Credentials`;
+                btn.innerHTML = `<i class="fa-solid fa-check-double mr-1"></i> Connect & Save Pro Credentials`;
+            }
+        }
+    },
+
+    async sendCustomSmtpTestMail() {
+        const recipient = document.getElementById('test-mail-recipient')?.value.trim();
+        const subject = document.getElementById('test-mail-subject')?.value.trim() || 'Test Email';
+        const content = document.getElementById('test-mail-content')?.value.trim() || 'Test content';
+        const btn = document.getElementById('btn-send-custom-test-email');
+
+        if (!recipient || !recipient.includes('@')) {
+            return alert("Please enter a valid recipient email address for testing.");
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Sending Test Email...";
+        }
+
+        try {
+            const siteId = ApiKeyManager.getUserId();
+            const res = await fetch('/.netlify/functions/send-login-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'TEST_SMTP',
+                    siteId,
+                    notificationEmail: recipient,
+                    headerText: subject,
+                    businessDescription: content,
+                    headerLogoUrl: 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg',
+                    time: new Date().toISOString()
+                })
+            });
+
+            let result = {};
+            try {
+                result = await res.json();
+            } catch (pErr) {}
+
+            if (res.ok && (result.success || res.status === 200)) {
+                alert(`Test Email Dispatched Successfully to ${recipient}!\nPlease check inbox/spam.`);
+            } else {
+                throw new Error(result.error || result.message || "Failed to send test email.");
+            }
+        } catch (e) {
+            alert("Test Email Error: " + e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-rocket mr-1"></i> Send Test Email`;
             }
         }
     },
@@ -746,6 +823,7 @@ window.openCustomSmtpModal = (id) => ApiKeyManager.openCustomSmtpModal(id);
 window.closeCustomSmtpModal = () => ApiKeyManager.closeCustomSmtpModal();
 window.sendSmtpOTP = () => ApiKeyManager.sendSmtpOTP();
 window.verifySmtpOTP = () => ApiKeyManager.verifySmtpOTP();
+window.sendCustomSmtpTestMail = () => ApiKeyManager.sendCustomSmtpTestMail();
 window.launchRazorpaySubscription = () => ApiKeyManager.launchRazorpaySubscription();
 window.handleActiveKeySelectChange = () => ApiKeyManager.handleActiveKeySelectChange();
 

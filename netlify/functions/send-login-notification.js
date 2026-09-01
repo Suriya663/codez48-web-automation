@@ -415,7 +415,7 @@ exports.handler = async (event, context) => {
 
         // Handle Base64 Data URL Image Attachments for 100% Gmail/Outlook rendering
         const attachments = [];
-        let finalLogoUrl = data.headerLogoUrl || '';
+        let finalLogoUrl = data.headerLogoUrl || 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
         let finalImageUrl = imageUrl || '';
 
         // Only attach logo if it's a valid custom URL or Base64 data string (not broken static default)
@@ -427,7 +427,7 @@ exports.handler = async (event, context) => {
             });
             finalLogoUrl = 'cid:headerLogo';
         } else if (finalLogoUrl.includes('/img/logo.png') || finalLogoUrl === 'https://codez48.netlify.app/img/logo.png') {
-            finalLogoUrl = ''; // fallback to styled badge
+            finalLogoUrl = 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
         }
 
         if (finalImageUrl.startsWith('data:image/')) {
