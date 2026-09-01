@@ -132,16 +132,31 @@ export const MailAutomationController = {
                                 </div>
                             </div>
 
-                            <!-- 2. Enable Toggle -->
-                            <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div>
-                                    <p class="text-xs font-black text-slate-900 uppercase">Enable Mail Automation</p>
-                                    <p class="text-[9px] text-slate-400 font-bold">Dispatch alerts on merchant login & site visit</p>
+                            <!-- 2. Enable Toggles (Site Alerts & Daily Automatic Emails) -->
+                            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-black text-slate-900 uppercase">Enable Mail Automation</p>
+                                        <p class="text-[9px] text-slate-400 font-bold">Dispatch alerts on merchant login & site visit</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="mail-automation-toggle" class="sr-only peer" checked>
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    </label>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="mail-automation-toggle" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                                </label>
+
+                                <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-black text-purple-900 uppercase flex items-center gap-1.5">
+                                            <i class="fa-solid fa-clock-rotate-left text-purple-600"></i> Send Daily Automatic Emails
+                                        </p>
+                                        <p class="text-[9px] text-slate-400 font-bold">Dispatches saved campaign automatically every 24h (No Login Required)</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="mail-daily-cron-toggle" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                                    </label>
+                                </div>
                             </div>
 
                             <!-- 3. Header Logo & Font Customizer -->
@@ -697,6 +712,7 @@ export const MailAutomationController = {
 
     async loadSettings() {
         const toggleInput = document.getElementById('mail-automation-toggle');
+        const cronInput = document.getElementById('mail-daily-cron-toggle');
         const statusText = document.getElementById('mail-status-text');
 
         if (statusText) statusText.innerText = 'Loading saved settings...';
@@ -718,7 +734,8 @@ export const MailAutomationController = {
                 if (data.settings) {
                     MailAutomationController.settings = data.settings;
                     if (toggleInput) toggleInput.checked = Boolean(data.settings.mailAutomation);
-                    if (statusText) statusText.innerText = data.settings.notificationEmail ? `Active Recipient: ${data.settings.notificationEmail}` : 'Ready to dispatch.';
+                    if (cronInput) cronInput.checked = Boolean(data.settings.enableDailyCron);
+                    if (statusText) statusText.innerText = data.settings.enableDailyCron ? '🟢 Daily Automatic Email Schedule Active (24h Background Cron)' : (data.settings.notificationEmail ? `Active Recipient: ${data.settings.notificationEmail}` : 'Ready to dispatch.');
                 }
             }
         } catch (e) {
@@ -731,16 +748,21 @@ export const MailAutomationController = {
         const statusText = document.getElementById('mail-status-text');
         const btnSave = document.getElementById('btn-save-mail-settings');
         const toggleInput = document.getElementById('mail-automation-toggle');
+        const cronInput = document.getElementById('mail-daily-cron-toggle');
+        const selectKeyEl = document.getElementById('mail-active-key-select');
 
         const recipients = MailAutomationController.getAllRecipients();
         const primaryRecipient = recipients[0] || auth.currentUser?.email || 'owner@example.com';
         const enabledVal = toggleInput ? toggleInput.checked : true;
+        const cronVal = cronInput ? cronInput.checked : false;
+        const activeKey = selectKeyEl ? selectKeyEl.value : '';
+        const templatePayload = MailAutomationController.getTemplatePayload();
 
         if (btnSave) {
             btnSave.disabled = true;
             btnSave.innerText = 'Saving...';
         }
-        if (statusText) statusText.innerText = 'Saving email configuration to database...';
+        if (statusText) statusText.innerText = 'Saving email configuration & daily schedule to database...';
 
         try {
             const siteId = MailAutomationController.getSiteId();
@@ -752,7 +774,11 @@ export const MailAutomationController = {
                     siteId,
                     userId: auth.currentUser?.uid || siteId,
                     notificationEmail: primaryRecipient,
-                    mailAutomation: enabledVal
+                    mailAutomation: enabledVal,
+                    enableDailyCron: cronVal,
+                    recipients: recipients,
+                    templatePayload: templatePayload,
+                    activeApiKey: activeKey
                 })
             });
 
@@ -761,7 +787,13 @@ export const MailAutomationController = {
                 throw new Error(result.error || result.message || "Failed to save settings to server.");
             }
 
-            MailAutomationController.settings = { notificationEmail: primaryRecipient, mailAutomation: enabledVal };
+            MailAutomationController.settings = { notificationEmail: primaryRecipient, mailAutomation: enabledVal, enableDailyCron: cronVal };
+
+            const scheduleStatusMsg = cronVal ? "Daily Automatic Email Schedule Active (24h Background Cron)!" : "Settings saved successfully.";
+            if (statusText) statusText.innerText = `Settings saved! ${scheduleStatusMsg}`;
+
+            alert(`Mail Automation & Daily Schedule saved successfully!\n${cronVal ? "Daily Background Dispatches are ACTIVE (No login required)." : ""}`);
+            MailAutomationController.closeModal();
 
             if (statusText) statusText.innerText = `Settings saved! Confirmation email dispatched to ${primaryRecipient}.`;
 

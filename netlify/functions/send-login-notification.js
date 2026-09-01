@@ -380,6 +380,39 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle User Logout Event (Sends quiet notification to Developer)
+        if (action === 'USER_LOGOUT_ALERT') {
+            const sellerId = data.sellerId || siteId || 'SLR-000';
+            const brandName = data.brandName || userName || 'Merchant Node';
+            const sellerEmail = userEmail || notificationEmail || 'N/A';
+
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `🔒 USER LOGOUT EVENT: ${escapeHtml(sellerId)} (${escapeHtml(brandName)})`,
+                html: `
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
+                        <h2 style="color: #38bdf8; margin: 0 0 10px 0;">🔒 User Logout Activity Alert</h2>
+                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #cbd5e1;">
+                            <li><strong>Seller Brand:</strong> ${escapeHtml(brandName)}</li>
+                            <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
+                            <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
+                            <li><strong>Logout Timestamp:</strong> ${new Date().toLocaleString()}</li>
+                        </ul>
+                    </div>
+                `
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "User logout notification sent to developer!"
+                })
+            };
+        }
+
         // Handle Base64 Data URL Image Attachments for 100% Gmail/Outlook rendering
         const attachments = [];
         let finalLogoUrl = data.headerLogoUrl || '';

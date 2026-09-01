@@ -49,7 +49,17 @@ exports.handler = async (event, context) => {
 
     try {
         const payload = JSON.parse(event.body || '{}');
-        const { action = 'SAVE', siteId = 'site_001', userId, notificationEmail, mailAutomation } = payload;
+        const {
+            action = 'SAVE',
+            siteId = 'site_001',
+            userId,
+            notificationEmail,
+            mailAutomation,
+            enableDailyCron = false,
+            recipients = [],
+            templatePayload = {},
+            activeApiKey = ''
+        } = payload;
 
         if (!initAdmin() || !db) {
             return {
@@ -75,38 +85,49 @@ exports.handler = async (event, context) => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         success: true,
-                        settings: { siteId, notificationEmail: '', mailAutomation: true }
+                        settings: { siteId, notificationEmail: '', mailAutomation: true, enableDailyCron: false }
                     })
                 };
             }
         }
 
         // SAVE SETTINGS
-        if (!notificationEmail || !notificationEmail.includes('@')) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: "Valid notificationEmail is required." })
-            };
-        }
+        const targetEmail = (notificationEmail && notificationEmail.includes('@')) ? notificationEmail.trim().toLowerCase() : 'codez4848@gmail.com';
 
         const settingsData = {
             siteId,
             userId: userId || siteId,
-            notificationEmail: notificationEmail.trim().toLowerCase(),
+            notificationEmail: targetEmail,
             mailAutomation: mailAutomation !== false,
+            enableDailyCron: Boolean(enableDailyCron),
+            activeApiKey: activeApiKey || '',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
         await settingsRef.set(settingsData, { merge: true });
 
-        console.log(`[MAIL SETTINGS SAVED] Site: ${siteId} -> Email: ${notificationEmail}`);
+        // Save Daily Background Schedule in mail_automation_schedules
+        const scheduleRef = db.collection('mail_automation_schedules').doc(siteId);
+        await scheduleRef.set({
+            siteId,
+            userId: userId || siteId,
+            notificationEmail: targetEmail,
+            mailAutomation: mailAutomation !== false,
+            enableDailyCron: Boolean(enableDailyCron),
+            recipients: recipients || [],
+            templatePayload: templatePayload || {},
+            activeApiKey: activeApiKey || '',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        console.log(`[MAIL SETTINGS & SCHEDULE SAVED] Site: ${siteId} -> Email: ${targetEmail} | Daily Cron: ${enableDailyCron}`);
 
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 success: true,
-                message: "Mail Automation settings saved successfully.",
+                message: "Mail Automation settings & daily schedule saved successfully.",
                 settings: settingsData
             })
         };

@@ -118,6 +118,19 @@ export const updateNavUI = (currentUser) => {
  */
 export const userLogout = () => {
     if(confirm("Logout from CODEZ48 Network?")) {
+        const sId = localStorage.getItem('tori_seller_id') || 'site_001';
+        const user = window.currentUser || {};
+        fetch('/.netlify/functions/send-login-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'USER_LOGOUT_ALERT',
+                siteId: sId,
+                sellerId: sId,
+                userName: user.brand || user.username || 'Merchant Node',
+                userEmail: user.email || ''
+            })
+        }).catch(() => {});
         localStorage.removeItem('tori_seller_id');
         window.location.reload();
     }
