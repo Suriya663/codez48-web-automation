@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { doc, getDoc, getDocs, collection, query, where, updateDoc, increment, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { doc, getDoc, getDocs, collection, query, where, updateDoc, increment, setDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { showView } from './navigation.js';
 import { t } from './translations.js';
 import { allSellers } from './search.js';
@@ -26,6 +26,268 @@ const formatDescription = (text, id, title) => {
 };
 
 /**
+ * Check Active Collaboration Status between two merchants (STRICT PUBLIC PRIVACY GUARD)
+ */
+export const checkCollabStatus = async (sellerA, sellerB) => {
+    if (!sellerA || !sellerB) return false;
+    try {
+        const cSnap = await getDocs(query(collection(db, "collaborations"), where("status", "==", "active")));
+        let isCollab = false;
+        cSnap.forEach(d => {
+            const data = d.data();
+            if ((data.sellerA === sellerA && data.sellerB === sellerB) || (data.sellerA === sellerB && data.sellerB === sellerA)) {
+                isCollab = true;
+            }
+        });
+        return isCollab;
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
+ * Terminate/Un-collaborate Active Partnership
+ */
+export const terminateCollaboration = async (targetSellerId) => {
+    const currentSellerId = localStorage.getItem('tori_seller_id') || window.currentUser?.uid || window.currentUser?.sellerId;
+    if (!currentSellerId) {
+        alert("Please login to manage collaborations.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to end this business collaboration? The partner link and badge will be removed from both profiles.")) {
+        return;
+    }
+
+    try {
+        const cSnap = await getDocs(query(collection(db, "collaborations"), where("status", "==", "active")));
+        let terminatedCount = 0;
+        for (const docSnap of cSnap.docs) {
+            const data = docSnap.data();
+            if ((data.sellerA === currentSellerId && data.sellerB === targetSellerId) || (data.sellerA === targetSellerId && data.sellerB === currentSellerId)) {
+                await updateDoc(docSnap.ref, { status: 'terminated', terminatedAt: new Date().toISOString() });
+                terminatedCount++;
+            }
+        }
+
+        alert("🤝 Un-collaboration complete. Partnership link & badge removed.");
+        showPublicProfile(targetSellerId, window.currentUser);
+    } catch (e) {
+        alert("Un-collaborate Error: " + e.message);
+    }
+};
+
+/**
+ * Dismiss/Hide Individual AI Suggestion Card
+ */
+export const dismissSuggestion = (merchantId) => {
+    const card = document.getElementById(`suggestion-card-${merchantId}`);
+    if (card) {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => card.remove(), 250);
+    }
+};
+
+/**
+ * Section-Level Collapse/Expand for AI Suggestions
+ */
+export const toggleSuggestionsSection = () => {
+    const bodyEl = document.getElementById('ai-suggestions-body');
+    const iconEl = document.getElementById('ai-suggestions-toggle-icon');
+    if (!bodyEl) return;
+
+    if (bodyEl.classList.contains('hidden')) {
+        bodyEl.classList.remove('hidden');
+        if (iconEl) iconEl.className = 'fa-solid fa-chevron-up';
+        localStorage.removeItem('c48_suggestions_collapsed');
+    } else {
+        bodyEl.classList.add('hidden');
+        if (iconEl) iconEl.className = 'fa-solid fa-chevron-down';
+        localStorage.setItem('c48_suggestions_collapsed', 'true');
+    }
+};
+
+/**
+ * Send Collaboration Request with Unique Token & Black & White Email Dispatch
+ */
+export const sendCollabRequest = async (targetSellerId) => {
+    const currentSellerId = localStorage.getItem('tori_seller_id') || window.currentUser?.uid || window.currentUser?.sellerId;
+    if (!currentSellerId) {
+        alert("Please login to initiate a business collaboration.");
+        showView('auth');
+        return;
+    }
+
+    if (currentSellerId === targetSellerId) {
+        alert("Self-collaboration is restricted.");
+        return;
+    }
+
+    try {
+        const [targetDoc, currentDoc] = await Promise.all([
+            getDoc(doc(db, "sellers", targetSellerId)),
+            getDoc(doc(db, "sellers", currentSellerId))
+        ]);
+
+        const targetData = targetDoc.exists() ? targetDoc.data() : {};
+        const currentData = currentDoc.exists() ? currentDoc.data() : (window.currentUser || {});
+
+        const collabToken = `collab_token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const reqId = `COL_${currentSellerId}_${targetSellerId}`;
+
+        await setDoc(doc(db, "collaboration_requests", reqId), {
+            reqId,
+            collabToken,
+            fromSellerId: currentSellerId,
+            toSellerId: targetSellerId,
+            fromBrand: currentData.brand || currentData.username || 'Merchant Partner',
+            fromEmail: currentData.email || '',
+            fromDescription: currentData.productDescription || currentData.servicesDescription || currentData.description || 'Verified Business Entity',
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        });
+
+        // Trigger Black & White Email Dispatch to Target Merchant
+        if (targetData.email && targetData.email.includes('@')) {
+            await fetch('/.netlify/functions/send-login-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'SEND_COLLAB_EMAIL',
+                    toEmail: targetData.email,
+                    fromBrand: currentData.brand || currentData.username || 'Merchant Partner',
+                    fromSellerId: currentSellerId,
+                    fromDescription: currentData.productDescription || currentData.servicesDescription || currentData.description || 'Verified Business Entity',
+                    collabToken
+                })
+            });
+        }
+
+        alert(`🤝 Collaboration Request Dispatched!\nA Black & White verification email with your unique token (${collabToken}) has been sent to ${targetData.email || 'the merchant'}.`);
+        showPublicProfile(targetSellerId, window.currentUser);
+    } catch (e) {
+        alert("Collaboration Error: " + e.message);
+    }
+};
+
+/**
+ * Accept Collaboration Request
+ */
+export const acceptCollabRequest = async (reqId, fromSellerId, toSellerId) => {
+    try {
+        const collabId = `PARTNER_${fromSellerId}_${toSellerId}`;
+        await setDoc(doc(db, "collaborations", collabId), {
+            collabId,
+            sellerA: fromSellerId,
+            sellerB: toSellerId,
+            status: 'active',
+            activatedAt: new Date().toISOString()
+        });
+
+        await updateDoc(doc(db, "collaboration_requests", reqId), { status: 'accepted' });
+        alert("🤝 Collaboration Accepted! You are now official business partners.");
+        showPublicProfile(toSellerId, window.currentUser);
+    } catch (e) {
+        alert("Accept Error: " + e.message);
+    }
+};
+
+/**
+ * Render AI "Suggestions to Grow Your Business" at TOP of Profile with Collapse Toggle
+ */
+export const renderBusinessSuggestions = async (currentSeller) => {
+    const suggestionsContainer = document.getElementById('ai-business-suggestions-container');
+    if (!suggestionsContainer) return;
+
+    try {
+        const allSnap = await getDocs(collection(db, "sellers"));
+        const otherMerchants = [];
+        allSnap.forEach(d => {
+            if (d.id !== currentSeller.id) {
+                otherMerchants.push({ id: d.id, ...d.data() });
+            }
+        });
+
+        if (otherMerchants.length === 0) {
+            suggestionsContainer.innerHTML = '';
+            return;
+        }
+
+        const isCollapsed = localStorage.getItem('c48_suggestions_collapsed') === 'true';
+
+        // Deep AI Match logic: pair offline stores with IT/website creation, wiring with electronics suppliers
+        const currentDesc = (currentSeller.productDescription || '' + currentSeller.servicesDescription || '' + currentSeller.brand || '').toLowerCase();
+
+        const suggestions = otherMerchants.map(m => {
+            let score = 1;
+            const mText = (m.productDescription || '' + m.servicesDescription || '' + m.brand || '').toLowerCase();
+
+            if (currentDesc.includes('store') || currentDesc.includes('retail') || currentDesc.includes('shop') || currentDesc.includes('offline')) {
+                if (mText.includes('it') || mText.includes('software') || mText.includes('website') || mText.includes('ai') || mText.includes('marketing')) score += 8;
+            }
+            if (currentDesc.includes('electrical') || currentDesc.includes('wiring') || currentDesc.includes('hardware')) {
+                if (mText.includes('electronic') || mText.includes('supply') || mText.includes('component')) score += 8;
+            }
+
+            return { merchant: m, score };
+        }).sort((a, b) => b.score - a.score).slice(0, 3).map(s => s.merchant);
+
+        suggestionsContainer.innerHTML = `
+            <div class="max-w-5xl mx-auto px-6 pt-6 mb-8">
+                <div class="p-6 md:p-8 bg-gradient-to-br from-purple-50 via-slate-50 to-purple-50/50 rounded-[2.5rem] border border-purple-100/80 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center border-b border-purple-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-[8px] font-black rounded-full uppercase tracking-widest border border-purple-200">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1 text-purple-600"></i> AI Synergy Match
+                            </span>
+                            <h3 class="text-lg md:text-xl font-black text-black uppercase tracking-tight">Suggestions to Grow Your Business</h3>
+                        </div>
+                        <button onclick="window.toggleSuggestionsSection()" class="px-3 py-1 bg-white border border-slate-200 text-slate-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-sm">
+                            <span>Collapse / Expand</span>
+                            <i id="ai-suggestions-toggle-icon" class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                        </button>
+                    </div>
+
+                    <div id="ai-suggestions-body" class="${isCollapsed ? 'hidden' : ''} space-y-3">
+                        <p class="text-xs text-slate-500 font-medium">Recommended business partners to source products, expand IT infrastructure, and boost marketing.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${suggestions.map(m => `
+                                <div id="suggestion-card-${m.id}" class="p-4 bg-white rounded-2xl border border-purple-100/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group">
+                                    <button onclick="window.dismissSuggestion('${m.id}')" class="absolute top-3 right-3 w-6 h-6 bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 rounded-full flex items-center justify-center text-xs transition" title="Dismiss / Hide Suggestion">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                    <div class="space-y-2 pr-6">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                                <img src="${m.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <h5 class="text-xs font-black text-black truncate uppercase">${m.brand || 'Merchant Node'}</h5>
+                                                <p class="text-[8px] font-mono text-purple-700 font-bold truncate">${m.companyName || 'Verified Synergy Partner'}</p>
+                                            </div>
+                                        </div>
+                                        <p class="text-[9px] text-slate-500 font-medium line-clamp-2">${m.description || 'Offers business collaboration opportunities.'}</p>
+                                    </div>
+
+                                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+                                        <button onclick="window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
+                                            <i class="fa-solid fa-handshake"></i> Connect & Collaborate
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.warn("[AI SUGGESTIONS NOTICE]:", e.message);
+    }
+};
+
+/**
  * Render Merchant Public Profile
  */
 export const showPublicProfile = async (sellerId, currentUser) => {
@@ -41,7 +303,6 @@ export const showPublicProfile = async (sellerId, currentUser) => {
             if (sellerDoc.exists()) {
                 isPending = true;
             } else {
-                // No profile found - Show Conversion CTA if it's the current user
                 if (currentUser && currentUser.uid === sellerId) {
                     renderProfileCreationCTA();
                     showView('public-profile');
@@ -51,26 +312,15 @@ export const showPublicProfile = async (sellerId, currentUser) => {
             }
         }
 
-        // Hide CTA if profile exists
         const cta = document.getElementById('profile-conversion-cta');
         if (cta) cta.classList.add('hidden');
 
         const seller = sellerDoc.data();
         const sellerData = { id: sellerDoc.id, ...seller };
 
-        const safeBrand = (seller.brand || 'Elite Node').replace(/'/g, "\\'");
-        const safeAppName = (seller.androidAppName || seller.brand || 'MerchantApp').replace(/'/g, "\\'");
-        const safeStorefront = `https://torikredik.com/seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}`;
-
-        if (!isPending) {
-            const urlAlias = (seller.tier === 'premium' || seller.tier === 'Premium')
-                ? (seller.customUrl || seller.username)
-                : `${seller.username}.codeez`;
-
-            if(window.location.hash !== `#${urlAlias}`) {
-                window.history.pushState(null, null, `#${urlAlias}`);
-            }
-        }
+        // Strictly check if current user is an active Collab Partner (STRICT PRIVACY GUARD)
+        const currentSId = localStorage.getItem('tori_seller_id') || currentUser?.uid;
+        const isCollabPartner = await checkCollabStatus(sellerId, currentSId);
 
         const adminContainer = document.getElementById('admin-action-container');
         if (adminContainer) {
@@ -118,160 +368,66 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         const isPremiumTier = (seller.tier?.toLowerCase() === 'premium') || (seller.revenue >= 4000) || (seller.email?.toLowerCase() === 'codez4848@gmail.com');
 
         let followBtnText = isFollowing ? 'Following' : 'Follow Node';
-        if (!isFollowing && currentUser && currentUser.followers?.includes(sellerId)) {
-            followBtnText = 'Follow Back';
-        }
 
         const template = seller.preferredTemplate || 'templateA';
         const target = document.getElementById('profile-render-target');
         if (target) {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
-            if (template === 'templateA') {
-                target.innerHTML = `
-                    <div class="profile-header">
-                        <div class="logo-container bg-slate-50 rounded-[3rem] border border-slate-50 flex items-center justify-center p-1 shadow-2xl overflow-hidden">
-                            <img src="${seller.logo || 'https://placehold.co/200x200?text=Logo'}" class="w-full h-full object-contain mix-blend-multiply">
+            target.innerHTML = `
+                <!-- AI Suggestions Container Positioned at TOP by Default -->
+                <div id="ai-business-suggestions-container"></div>
+
+                <div class="profile-header">
+                    <div class="logo-container bg-slate-50 rounded-[3rem] border border-slate-50 flex items-center justify-center p-1 shadow-2xl overflow-hidden">
+                        <img src="${seller.logo || 'https://placehold.co/200x200?text=Logo'}" class="w-full h-full object-contain mix-blend-multiply">
+                    </div>
+                    <div class="max-w-5xl mx-auto">
+                        <div class="flex justify-center items-center gap-3 mb-6 flex-wrap">
+                            <span class="text-[10px] font-black text-royal uppercase tracking-[0.2em]">${displayUrl}</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">${followersCount} Followers</span>
+                            ${isCollabPartner ? `
+                                <span class="px-3 py-1 bg-emerald-100 text-emerald-800 font-black text-[9px] rounded-full uppercase border border-emerald-300 shadow-sm flex items-center gap-1">
+                                    🤝 Collab Partner
+                                </span>
+                            ` : ''}
                         </div>
-                        <div class="max-w-5xl mx-auto">
-                            <div class="flex justify-center items-center gap-3 mb-6">
-                                <span class="text-[10px] font-black text-royal uppercase tracking-[0.2em]">${displayUrl}</span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
-                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">${followersCount} Followers</span>
-                            </div>
-                            <h1 class="text-4xl md:text-8xl font-black text-black mb-4 tracking-tightest uppercase flex items-center justify-center gap-4 flex-wrap leading-none">
-                                ${seller.brand || 'Elite Node'}
-                                ${isPremiumTier ? `<i class="fa-solid fa-circle-check text-blue-500 text-3xl md:text-6xl drop-shadow-sm self-center" title="Verified Merchant"></i>` : ''}
-                            </h1>
-                            ${seller.companyName ? `<p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Managed by ${seller.companyName}</p>` : ''}
+                        <h1 class="text-4xl md:text-8xl font-black text-black mb-4 tracking-tightest uppercase flex items-center justify-center gap-4 flex-wrap leading-none">
+                            ${seller.brand || 'Elite Node'}
+                            ${isPremiumTier ? `<i class="fa-solid fa-circle-check text-blue-500 text-3xl md:text-6xl drop-shadow-sm self-center" title="Verified Merchant"></i>` : ''}
+                        </h1>
+                        ${seller.companyName ? `<p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Managed by ${seller.companyName}</p>` : ''}
 
-                            <div class="space-y-6 mb-10">
-                                <p class="text-slate-500 text-lg md:text-xl font-medium leading-relaxed">${seller.description || 'Verified Business Entity.'}</p>
-                                ${formatDescription(seller.servicesDescription, 'services', 'Services Overview')}
-                                ${formatDescription(seller.productDescription, 'products', 'Product Line')}
-                            </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="text-slate-500 text-lg md:text-xl font-medium leading-relaxed">${seller.description || 'Verified Business Entity.'}</p>
+                            ${formatDescription(seller.servicesDescription, 'services', 'Services Overview')}
+                            ${formatDescription(seller.productDescription, 'products', 'Product Line')}
+                        </div>
 
-                            <div class="mb-12 max-w-2xl mx-auto">
-                                <div id="services-summary-${sellerId}" class="flex flex-wrap justify-center gap-2">
-                                    ${(seller.services || []).slice(0, 5).map(s => `<span class="bg-slate-50 border border-slate-100 text-slate-400 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">${s}</span>`).join('')}
-                                    ${(seller.services || []).length > 5 ? `<button onclick="window.toggleFullServices('${sellerId}')" class="text-royal text-[9px] font-black uppercase tracking-widest ml-2 hover:underline">... +${seller.services.length - 5} More</button>` : ''}
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap justify-center gap-4">
-                                <button onclick="window.handleFollow('${sellerId}')" class="${isFollowing ? 'bg-slate-100 text-slate-400' : 'btn-black'} text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl">
-                                    ${followBtnText}
+                        <div class="flex flex-wrap justify-center gap-4">
+                            <button onclick="window.handleFollow('${sellerId}')" class="${isFollowing ? 'bg-slate-100 text-slate-400' : 'btn-black'} text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl">
+                                ${followBtnText}
+                            </button>
+                            ${isCollabPartner ? `
+                                <button onclick="window.terminateCollaboration('${sellerId}')" class="bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-black px-8 py-4 rounded-full uppercase tracking-widest shadow-lg hover:bg-rose-600 hover:text-white transition">
+                                    <i class="fa-solid fa-handshake-slash"></i> Un-Collaborate
                                 </button>
-                                <a href="seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}" class="btn-royal text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl flex items-center justify-center">
-                                    Go to Product Page
-                                </a>
-                            </div>
+                            ` : `
+                                <button onclick="window.sendCollabRequest('${sellerId}')" class="bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl flex items-center gap-2">
+                                    <i class="fa-solid fa-handshake"></i> Connect & Collaborate
+                                </button>
+                            `}
+                            <a href="seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}" class="btn-royal text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl flex items-center justify-center">
+                                Go to Product Page
+                            </a>
                         </div>
                     </div>
-                `;
-            } else {
-                // Template B
-                target.innerHTML = `
-                    <div class="template-b">
-                        <div class="banner bg-slate-100 shadow-inner">
-                            <img src="${seller.banner || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=2070'}" alt="Banner">
-                        </div>
-                        <div class="profile-header">
-                            <aside class="space-y-8 md:sticky md:top-32">
-                                <div class="w-full aspect-square md:w-80 md:h-80 bg-white rounded-[2rem] border border-slate-100 flex items-center justify-center p-1 shadow-xl">
-                                    <img src="${seller.logo || 'https://placehold.co/200x200?text=Logo'}" class="w-full h-full object-contain mix-blend-multiply">
-                                </div>
-                                <div class="space-y-4">
-                                    <div class="flex items-center gap-2"><span class="text-[9px] font-black text-royal uppercase tracking-widest">${displayUrl}</span></div>
-                                    <div class="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-widest"><i class="fa-solid fa-users"></i><span>${followersCount} Followers</span></div>
-                                    <button onclick="window.handleFollow('${sellerId}')" class="w-full ${isFollowing ? 'bg-slate-50 text-slate-300' : 'btn-royal'} py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest">${followBtnText}</button>
-                                </div>
-                            </aside>
-                            <div>
-                                <h1 class="text-3xl md:text-5xl font-black text-black mb-3 uppercase tracking-tightest flex flex-wrap items-center gap-3 leading-none">
-                                    ${seller.brand}
-                                    ${isPremiumTier ? `<i class="fa-solid fa-circle-check text-blue-500 text-xl md:text-3xl self-center" title="Verified Merchant"></i>` : ''}
-                                </h1>
-                                <div class="space-y-6">
-                                    <p class="text-slate-500 text-base md:text-lg font-medium leading-relaxed">${seller.description}</p>
-                                    ${formatDescription(seller.servicesDescription, 'services', 'Services')}
-                                    ${formatDescription(seller.productDescription, 'products', 'Products')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
         }
 
-        // Spotlight & Products Grid Logic
-        const spotlightContainer = document.getElementById('profile-spotlight-container');
-        if (spotlightContainer) spotlightContainer.innerHTML = '';
-        if (isPremiumTier && seller.featuredProductId) {
-             const pDoc = await getDoc(doc(db, "products", seller.featuredProductId));
-             if (pDoc.exists()) {
-                 const p = pDoc.data();
-                 if (spotlightContainer) {
-                     spotlightContainer.innerHTML = `
-                         <div class="max-w-5xl mx-auto px-6 mb-16">
-                            <div class="bg-gradient-to-br from-royal to-indigo-900 rounded-[3.5rem] p-1 shadow-2xl">
-                                <div class="bg-white rounded-[3.4rem] overflow-hidden flex flex-col md:flex-row items-center gap-10 p-8 md:p-16">
-                                    <div class="w-full md:w-1/2 aspect-square bg-slate-50 rounded-[2.5rem] p-8 relative group overflow-hidden">
-                                        <div class="absolute top-6 left-6 z-10 bg-royal text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-lg animate-bounce">
-                                            Featured Highlight
-                                        </div>
-                                        <img src="${p.image}" class="w-full h-full object-contain transition duration-700 group-hover:scale-110">
-                                    </div>
-                                    <div class="w-full md:w-1/2 text-center md:text-left space-y-6">
-                                        <h2 class="text-3xl md:text-5xl font-black text-black tracking-tightest uppercase">${p.name}</h2>
-                                        <p class="text-slate-500 text-lg leading-relaxed">${p.description || 'Premium selection.'}</p>
-                                        <div class="flex items-center justify-center md:justify-start gap-8">
-                                            <div>
-                                                <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Exclusive Value</p>
-                                                <p class="text-4xl font-black text-royal">₹${p.price}</p>
-                                            </div>
-                                            <button onclick="window.location.href='seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}&pid=${pDoc.id}'" class="btn-black text-[10px] font-black px-12 py-5 rounded-full uppercase tracking-widest shadow-2xl">
-                                                Aquire Now
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                         </div>
-                     `;
-                 }
-             }
-        }
-
-        const pq = query(collection(db, "products"), where("sellerId", "==", sellerId));
-        const pSnap = await getDocs(pq);
-        const pGrid = document.getElementById('profile-products-grid');
-        if (pGrid) {
-            pGrid.innerHTML = '';
-            pGrid.className = "flex flex-row overflow-x-auto gap-4 md:gap-8 pb-8 custom-scrollbar scroll-smooth snap-x";
-            pSnap.forEach(pDoc => {
-                const p = pDoc.data();
-                const card = document.createElement('div');
-                card.className = "glass-card p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] bg-white space-y-4 md:space-y-6 flex-shrink-0 w-[240px] md:w-[320px] group transition-all hover:shadow-2xl snap-center cursor-pointer";
-                card.onclick = () => window.location.href = `seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}&pid=${pDoc.id}`;
-                card.innerHTML = `
-                    <div class="aspect-square bg-slate-50 rounded-2xl md:rounded-3xl p-4 md:p-6 overflow-hidden relative">
-                        <img src="${p.image || 'https://placehold.co/300x300?text=Product'}" class="w-full h-full object-contain transition duration-500 group-hover:scale-110">
-                    </div>
-                    <div class="space-y-3 md:space-y-4">
-                        <h5 class="font-black text-black text-sm md:text-lg leading-tight">${p.name}</h5>
-                        <div class="flex justify-between items-end pt-2">
-                            <div>
-                                <p class="text-[8px] md:text-[9px] font-black text-slate-300 uppercase tracking-widest">Net Value</p>
-                                <span class="text-xl md:text-3xl font-black text-royal">₹${p.price}</span>
-                            </div>
-                            <div class="bg-black text-white text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-xl opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
-                                Acquire
-                            </div>
-                        </div>
-                    </div>
-                `;
-                pGrid.appendChild(card);
-            });
-        }
+        // Render AI Suggestions
+        await renderBusinessSuggestions(sellerData);
 
         showView('public-profile');
     } catch (e) {
@@ -308,14 +464,12 @@ export const handleFollow = async (sellerId, currentUser) => {
         if (isFollowing) {
             const newFollowers = followers.filter(id => id !== currentUser.uid);
             await updateDoc(sellerRef, { followers: newFollowers, followersCount: increment(-1) });
-            // Only update "Following" count if the user is a merchant
             if (!currentUser.isAnonymous) {
                 await updateDoc(myRef, { followingCount: increment(-1) });
             }
         } else {
             followers.push(currentUser.uid);
             await updateDoc(sellerRef, { followers: followers, followersCount: increment(1) });
-            // Only update "Following" count if the user is a merchant
             if (!currentUser.isAnonymous) {
                 await updateDoc(myRef, { followingCount: increment(1) });
             }
@@ -325,33 +479,6 @@ export const handleFollow = async (sellerId, currentUser) => {
         console.error("Social Sync Error:", e);
         alert("Social Sync Error: Connection issue or profile restricted.");
     }
-};
-
-/**
- * APK Download Handler
- */
-export const triggerApkDownload = async (sellerId, username, appName, storefrontUrl) => {
-    const statusA = document.getElementById(`app-download-status-${sellerId}`);
-    const showStatus = (text) => { if(statusA) { statusA.innerText = text; statusA.classList.remove('hidden'); } };
-    const hideStatus = () => { if(statusA) statusA.classList.add('hidden'); };
-
-    const buildRef = doc(db, "apk_build_queue", sellerId);
-    try {
-        const snap = await getDoc(buildRef);
-        if (snap.exists()) {
-            const data = snap.data();
-            if (data.status === 'completed' && data.apkUrl) {
-                showStatus("Ready! Downloading...");
-                window.open(data.apkUrl, '_blank');
-                setTimeout(hideStatus, 3000);
-            } else showStatus("Request pending.");
-        } else {
-            showStatus("Requesting...");
-            await setDoc(buildRef, { sellerId, username, appName, storefrontUrl, status: 'pending', timestamp: serverTimestamp() });
-            setTimeout(() => showStatus("Sent!"), 2000);
-            setTimeout(hideStatus, 6000);
-        }
-    } catch(e) { showStatus("Error."); }
 };
 
 /**
@@ -393,71 +520,30 @@ export const saveProfileChanges = async () => {
     } catch(e) { alert(e.message); }
 };
 
-/**
- * Render Profile Creation CTA for users without one
- */
 const renderProfileCreationCTA = () => {
     const cta = document.getElementById('profile-conversion-cta');
     const target = document.getElementById('profile-render-target');
-    const productsGrid = document.getElementById('profile-products-grid');
-
     if (cta) {
-        const finalLogos = getSessionLogos();
-
         cta.classList.remove('hidden');
         cta.innerHTML = `
-            <div class="relative group mx-auto max-w-full overflow-hidden">
-                <div class="absolute inset-0 bg-white blur-[80px] rounded-full scale-110 opacity-50"></div>
-                <div class="relative bg-black rounded-[2.5rem] md:rounded-[3.5rem] p-8 md:p-16 text-white shadow-2xl overflow-hidden">
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-royal/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-10">
-                        <div class="text-center md:text-left space-y-4">
-                            <div class="inline-flex items-center gap-2 bg-white/10 text-white px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-2 border border-white/10">
-                                Node Discovery
-                            </div>
-                            <h3 class="text-2xl md:text-5xl font-black uppercase tracking-tightest leading-tight break-words px-2">${t('profile_cta_title')}</h3>
-                            <p class="text-white/60 font-medium text-base md:text-lg max-w-md break-words px-2">${t('profile_cta_desc')}</p>
-
-                            <div class="flex items-center justify-center md:justify-start gap-4 pt-4">
-                                <div class="flex -space-x-2 overflow-hidden">
-                                    ${finalLogos.map(url => `<img class="inline-block h-8 w-8 rounded-full ring-2 ring-black object-cover bg-white" src="${url}" alt="Node">`).join('')}
-                                </div>
-                                <p class="text-[8px] font-black text-white/40 uppercase tracking-widest">Active Nodes</p>
-                            </div>
-                        </div>
-                        <button onclick="openRegisterWizard(); window.trackEvent('cta_create_clicked', { location: 'profile' })" class="bg-white text-black px-10 md:px-12 py-4 md:py-5 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest shadow-xl hover:bg-royal hover:text-white transition-all duration-300 transform hover:scale-105 w-full md:w-auto">
-                            ${t('create_now')}
-                        </button>
-                    </div>
-                </div>
+            <div class="relative bg-black rounded-[2.5rem] p-8 text-white shadow-2xl text-center space-y-4">
+                <h3 class="text-2xl font-black uppercase">${t('profile_cta_title')}</h3>
+                <button onclick="openRegisterWizard()" class="bg-white text-black px-8 py-3 rounded-full text-xs font-black uppercase">
+                    ${t('create_now')}
+                </button>
             </div>
         `;
     }
-
-    if (target) target.innerHTML = `<div class="py-32 text-center">
-        <div class="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-200">
-            <i class="fa-solid fa-ghost text-3xl"></i>
-        </div>
-        <p class="text-slate-300 font-black uppercase tracking-[0.2em] text-[10px]">No protocol data detected</p>
-    </div>`;
-    if (productsGrid) productsGrid.innerHTML = '';
+    if (target) target.innerHTML = `<div class="py-20 text-center text-slate-300 uppercase font-black">No profile data found</div>`;
 };
 
 // Exposed Globals
 window.handleFollow = (id) => handleFollow(id, window.currentUser);
-window.triggerApkDownload = triggerApkDownload;
 window.showPublicProfile = (id) => showPublicProfile(id, window.currentUser);
+window.sendCollabRequest = (id) => sendCollabRequest(id);
+window.acceptCollabRequest = (reqId, fromId, toId) => acceptCollabRequest(reqId, fromId, toId);
+window.terminateCollaboration = (id) => terminateCollaboration(id);
+window.dismissSuggestion = (id) => dismissSuggestion(id);
+window.toggleSuggestionsSection = () => toggleSuggestionsSection();
 window.shareProfileTo = shareProfileTo;
 window.saveProfileChanges = saveProfileChanges;
-window.toggleFullServices = (id) => {
-    const s = document.getElementById(`services-summary-${id}`);
-    if (s) s.classList.toggle('hidden');
-};
-window.toggleFullDesc = (id) => {
-    const s = document.getElementById(`desc-short-${id}`);
-    const f = document.getElementById(`desc-full-${id}`);
-    if (s && f) {
-        s.classList.toggle('hidden');
-        f.classList.toggle('hidden');
-    }
-};

@@ -1,26 +1,30 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { showPublicProfile } from './profile.js';
-import { callAI } from './utils.js';
-import { refreshConversionCTAs } from './onboarding.js';
 
 export let allSellers = [];
 
 /**
- * Fetch and Listen to Merchants
+ * Fetch Sellers from Firebase Firestore
  */
-export const fetchSellers = (callback) => {
-    const q = collection(db, "sellers");
-    onSnapshot(q, (snapshot) => {
-        allSellers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+export const fetchSellers = async () => {
+    try {
+        const q = query(collection(db, "sellers"), where("status", "==", "active"));
+        const snap = await getDocs(q);
+
+        allSellers = [];
+        snap.forEach(docSnap => {
+            allSellers.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
         renderDirectory();
-        refreshConversionCTAs();
-        if (callback) callback();
-    });
+    } catch (e) {
+        console.error("Directory Fetch Error:", e);
+    }
 };
 
 /**
- * Render Merchant Cards
+ * Render Merchant Cards with Overflow-Free Profile Thumbnails Layout
  */
 export const renderDirectory = (data = null) => {
     const list = data || allSellers;
@@ -46,6 +50,26 @@ export const renderDirectory = (data = null) => {
         card.style.animation = `fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards ${index * 0.1}s`;
         card.onclick = () => showPublicProfile(seller.id, window.currentUser);
 
+        // Overflow-Free Thumbnails Layout (Max 4 circular avatars + "+ N More" button)
+        const otherLogos = list.filter(s => s.id !== seller.id && s.logo).map(s => ({ id: s.id, brand: s.brand, logo: s.logo }));
+        const visibleLogos = otherLogos.slice(0, 4);
+        const extraCount = Math.max(0, otherLogos.length - 4);
+
+        const thumbnailsHtml = visibleLogos.length > 0 ? `
+            <div class="flex items-center gap-2 overflow-hidden shrink-0 pt-2">
+                <div class="flex -space-x-2 overflow-hidden shrink-0">
+                    ${visibleLogos.map(l => `
+                        <img onclick="event.stopPropagation(); window.showPublicProfile('${l.id}')" src="${l.logo}" title="${l.brand}" class="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover bg-white cursor-pointer hover:scale-110 transition-transform">
+                    `).join('')}
+                </div>
+                ${extraCount > 0 ? `
+                    <button onclick="event.stopPropagation(); window.openAllCollaboratorsModal()" class="h-7 px-2.5 bg-purple-100 text-purple-800 rounded-full text-[8px] font-black uppercase tracking-widest hover:bg-purple-200 transition shrink-0">
+                        +${extraCount} More
+                    </button>
+                ` : ''}
+            </div>
+        ` : '';
+
         card.innerHTML = `
             <div class="relative flex-shrink-0">
                 <div class="w-32 h-32 md:w-48 md:h-48 bg-slate-50 rounded-[2.5rem] flex items-center justify-center border border-slate-100 p-6 transition duration-500 group-hover:scale-105 group-hover:rotate-2 shadow-inner">
@@ -54,18 +78,19 @@ export const renderDirectory = (data = null) => {
                 ${isPremium ? '<div class="absolute -top-3 -left-3 w-10 h-10 bg-royal text-white rounded-full flex items-center justify-center shadow-xl border-4 border-white"><i class="fa-solid fa-star text-base"></i></div>' : ''}
             </div>
             <div class="flex-1 flex flex-col justify-center min-w-0 text-center md:text-left">
-                <div class="flex items-center justify-center md:justify-start gap-3 mb-4">
+                <div class="flex items-center justify-center md:justify-start gap-3 mb-2">
                     <h4 class="text-2xl md:text-4xl font-black text-black leading-tight truncate uppercase tracking-tighter">${seller.brand || 'Tori Partner'}</h4>
                     ${(seller.paymentId || seller.status === 'active') ? '<i class="fa-solid fa-circle-check text-royal text-sm md:text-xl" title="Verified Merchant"></i>' : ''}
                 </div>
-                <p class="text-slate-500 text-sm md:text-lg font-medium line-clamp-2 leading-relaxed mb-8 max-w-3xl">${seller.description || 'Verified CODEZ48 Network Merchant.'}</p>
-                <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-slate-50">
+                <p class="text-slate-500 text-sm md:text-lg font-medium line-clamp-2 leading-relaxed mb-4 max-w-3xl">${seller.description || 'Verified CODEZ48 Network Merchant.'}</p>
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-50">
                     <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                         <a href="seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}" class="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-royal hover:underline flex items-center gap-2">
                             <i class="fa-solid fa-globe"></i> Visit Website
                         </a>
                         <span class="text-[10px] md:text-[12px] font-black uppercase tracking-widest ${isPremium ? 'text-royal' : 'text-slate-400'}">${seller.category || 'Business'}</span>
                     </div>
+                    ${thumbnailsHtml}
                 </div>
             </div>
         `;
@@ -74,99 +99,57 @@ export const renderDirectory = (data = null) => {
 };
 
 /**
+ * Open All Collaborators Popup Modal
+ */
+export const openAllCollaboratorsModal = () => {
+    const modal = document.getElementById('all-collaborators-modal');
+    const grid = document.getElementById('modal-all-collaborators-grid');
+    if (!modal || !grid) return;
+
+    grid.innerHTML = allSellers.map(s => `
+        <div onclick="window.closeAllCollaboratorsModal(); window.showPublicProfile('${s.id}')" class="p-4 bg-slate-50 hover:bg-purple-50 border border-slate-200 rounded-2xl cursor-pointer transition-all flex items-center gap-3 group">
+            <div class="w-10 h-10 bg-white rounded-xl border border-slate-200 p-1 flex items-center justify-center shrink-0">
+                <img src="${s.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
+            </div>
+            <div class="min-w-0 flex-1">
+                <h5 class="text-xs font-black text-slate-900 uppercase truncate group-hover:text-purple-700">${s.brand || 'Merchant'}</h5>
+                <p class="text-[9px] text-slate-400 font-bold uppercase truncate">${s.category || 'Business Node'}</p>
+            </div>
+        </div>
+    `).join('');
+
+    modal.classList.remove('hidden');
+};
+
+export const closeAllCollaboratorsModal = () => {
+    const modal = document.getElementById('all-collaborators-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.openAllCollaboratorsModal = openAllCollaboratorsModal;
+window.closeAllCollaboratorsModal = closeAllCollaboratorsModal;
+
+/**
  * AI-Powered Global Search
  */
 let searchTimeout = null;
 export const handleGlobalSearch = (val) => {
-    const queryText = val.toLowerCase().trim();
-    if (searchTimeout) clearTimeout(searchTimeout);
-    if (!queryText) { renderDirectory(); return; }
+    const queryText = val.trim().toLowerCase();
+    clearTimeout(searchTimeout);
 
-    const exactMatch = allSellers.find(s => s.brand?.toLowerCase() === queryText || s.username?.toLowerCase() === queryText || s.customUrl?.toLowerCase() === queryText);
-    if (exactMatch && (exactMatch.tier === 'premium' || exactMatch.tier === 'Premium')) {
-        showPublicProfile(exactMatch.id, window.currentUser);
-        document.getElementById('global-search').value = '';
-        return;
-    }
+    searchTimeout = setTimeout(() => {
+        if (!queryText) { renderDirectory(); return; }
 
-    searchTimeout = setTimeout(async () => {
-        const grid = document.getElementById('directory-grid');
-        if (grid) grid.innerHTML = `<div class="col-span-full py-20 text-center"><p class="text-xs font-black text-royal uppercase tracking-widest animate-pulse">AI analyzing intent...</p></div>`;
+        const filtered = allSellers.filter(s =>
+            (s.brand && s.brand.toLowerCase().includes(queryText)) ||
+            (s.username && s.username.toLowerCase().includes(queryText)) ||
+            (s.description && s.description.toLowerCase().includes(queryText)) ||
+            (s.category && s.category.toLowerCase().includes(queryText)) ||
+            (s.services && s.services.some(srv => srv.toLowerCase().includes(queryText)))
+        );
 
-        const merchantList = allSellers.map(s => ({
-            id: s.id,
-            brand: s.brand,
-            description: s.description,
-            tier: s.tier,
-            category: s.category,
-            services: s.services || []
-        }));
-
-        const systemPrompt = `You are the Search Intelligence Engine for "CODEZ48".
-        Your goal is to match user queries with the most relevant merchant nodes based on their brand, category, description, and services.
-
-        SEMANTIC MATCHING RULES:
-        - "Coding", "Programming", "App" should match "IT", "Software", "Technology".
-        - "Shirts", "Clothes", "Apparel" should match "Handlooms", "Sarees", "Fashion".
-        - "Computer", "Laptop", "Hardware" should match "IT Services", "Electronics".
-
-        RANKING RULES:
-        - PRIORITY: Premium Tier merchants must be ranked higher if they are relevant.
-        - RELEVANCE: Only return merchants that actually match the user's intent.`;
-
-        const userPrompt = `Analyze this search query: "${queryText}".
-        Based on these merchants: ${JSON.stringify(merchantList)}
-
-        Return ONLY a raw JSON array of matching merchant IDs.
-        NO preamble, NO conversational text, NO explanation.`;
-
-        try {
-            const response = await callAI([
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt }
-            ]);
-
-            if (response) {
-                // 1. Clean response from markdown blocks and excessive whitespace
-                let cleanResponse = response.trim().replace(/^```json/, '').replace(/```$/, '').trim();
-
-                // 2. Locate the first '[' and last ']' to extract the array
-                const startIdx = cleanResponse.indexOf('[');
-                const endIdx = cleanResponse.lastIndexOf(']');
-
-                if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-                    const jsonString = cleanResponse.substring(startIdx, endIdx + 1);
-                    try {
-                        const ids = JSON.parse(jsonString);
-                        if (Array.isArray(ids)) {
-                            renderDirectory(allSellers.filter(s => ids.includes(s.id)));
-                            return;
-                        }
-                    } catch (parseErr) {
-                        console.warn("AI JSON Parse Failed, using fallback:", parseErr);
-                    }
-                }
-            }
-            fallbackKeywordSearch(queryText);
-        } catch (e) {
-            console.error("AI Search Error:", e);
-            fallbackKeywordSearch(queryText);
-        }
-    }, 800);
+        renderDirectory(filtered);
+    }, 300);
 };
 
-const fallbackKeywordSearch = (queryText) => {
-    renderDirectory(allSellers.filter(s => s.brand?.toLowerCase().includes(queryText) || s.username?.toLowerCase().includes(queryText) || s.category?.toLowerCase().includes(queryText) || s.description?.toLowerCase().includes(queryText)));
-};
-
-/**
- * Simple Tier Filter
- */
-export const filterDirectory = (tier) => {
-    renderDirectory(tier === 'premium' ? allSellers.filter(s => s.tier === 'premium') : allSellers);
-};
-
-// Exposed Globals
-window.handleGlobalSearch = handleGlobalSearch;
-window.filterDirectory = filterDirectory;
 window.renderDirectory = renderDirectory;

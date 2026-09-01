@@ -10,6 +10,40 @@ import { trackVisitor } from './analytics.js';
 const initApp = () => {
     // 1. Initial State & Hash Routing
     const initialHash = window.location.hash.replace('#', '');
+
+    // Parse 1-Click Email Collaboration Token Action URL
+    if (initialHash.startsWith('collab-action')) {
+        const queryStr = initialHash.includes('?') ? initialHash.split('?')[1] : '';
+        const urlParams = new URLSearchParams(queryStr);
+        const token = urlParams.get('token');
+        const collabAction = urlParams.get('action') || 'accept';
+
+        if (token) {
+            fetch('/.netlify/functions/send-login-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'PROCESS_COLLAB_TOKEN',
+                    collabToken: token,
+                    collabAction: collabAction
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`🤝 CODEZ48 Collaboration Notice:\n${data.message}`);
+                    window.location.hash = '';
+                    if (data.sellerB) window.showPublicProfile(data.sellerB);
+                } else {
+                    alert("Collaboration Token Notice: " + (data.error || "Token invalid or expired."));
+                }
+            })
+            .catch(err => {
+                console.warn("[COLLAB TOKEN PROCESS NOTICE]:", err.message);
+            });
+        }
+    }
+
     if (initialHash === 'push') {
         showView('tracker');
         setTimeout(() => { if (window.handleToolAction) window.handleToolAction('push'); }, 100);

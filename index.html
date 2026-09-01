@@ -1320,6 +1320,29 @@
         </style>
     </div>
 
+    <!-- ALL COLLABORATORS MODAL -->
+    <div id="all-collaborators-modal" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div class="glass-card w-full max-w-3xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
+            <button onclick="window.closeAllCollaboratorsModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg font-black shrink-0">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <div>
+                    <h4 class="text-xl font-black text-black uppercase tracking-tight">Registered Merchant Directory Nodes</h4>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Click any profile card to view full business details</p>
+                </div>
+            </div>
+
+            <div id="modal-all-collaborators-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/translations.js"></script>
     <script type="module" src="js/analytics.js"></script>
     <script type="module" src="js/onboarding.js"></script>

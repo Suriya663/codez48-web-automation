@@ -148,6 +148,139 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle Black & White Email Dispatch for Collaboration Token Approval
+        if (action === 'SEND_COLLAB_EMAIL') {
+            const targetRecipient = data.toEmail || notificationEmail;
+            const fromBrand = data.fromBrand || 'Merchant Partner';
+            const fromSellerId = data.fromSellerId || 'SLR-000';
+            const fromDescription = data.fromDescription || 'Business Network Partner';
+            const collabToken = data.collabToken || `collab_${Date.now()}`;
+
+            if (!targetRecipient || !targetRecipient.includes('@')) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ success: false, error: "Valid recipient email required." })
+                };
+            }
+
+            const acceptUrl = `https://codez48.netlify.app/#collab-action?token=${collabToken}&action=accept`;
+            const declineUrl = `https://codez48.netlify.app/#collab-action?token=${collabToken}&action=decline`;
+
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: targetRecipient,
+                subject: `🤝 Business Collaboration Request - ${fromBrand} (${fromSellerId})`,
+                html: `
+                    <div style="font-family: monospace, system-ui, sans-serif; padding: 40px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
+                        <div style="text-align: center; border-b: 2px solid #000000; padding-bottom: 20px; margin-bottom: 24px;">
+                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">CODEZ48 BUSINESS COLLABORATION REQUEST</h2>
+                            <p style="margin: 6px 0 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #000000;">Token ID: ${collabToken}</p>
+                        </div>
+
+                        <div style="border: 1px solid #000000; padding: 20px; margin-bottom: 24px;">
+                            <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold; text-transform: uppercase;">REQUESTER DETAILS:</p>
+                            <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 900;">Username / Brand: ${escapeHtml(fromBrand)}</p>
+                            <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: bold;">Seller ID: ${escapeHtml(fromSellerId)}</p>
+                            <p style="margin: 0; font-size: 12px; font-weight: 500; line-height: 1.6;">Nature of Business / Description: ${escapeHtml(fromDescription)}</p>
+                        </div>
+
+                        <p style="font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; text-align: center;">
+                            Click below to accept or decline this business collaboration request:
+                        </p>
+
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <a href="${acceptUrl}" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 8px; text-decoration: none; margin-right: 10px; border: 2px solid #000000;">
+                                [ ACCEPT COLLABORATION ]
+                            </a>
+                            <a href="${declineUrl}" style="display: inline-block; background-color: #ffffff; color: #000000; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 14px 30px; border-radius: 8px; text-decoration: none; border: 2px solid #000000;">
+                                [ DECLINE / CANCEL ]
+                            </a>
+                        </div>
+
+                        <div style="border-t: 1px solid #000000; padding-top: 16px; text-align: center; font-size: 10px; font-weight: bold;">
+                            CODEZ48 OFFICIAL NETWORK — VERIFIED TOKEN AUTHORIZATION
+                        </div>
+                    </div>
+                `
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Black & White collaboration request email sent successfully!",
+                    recipient: targetRecipient
+                })
+            };
+        }
+
+        // Handle Collaboration Token Acceptance / Decline via Email Click
+        if (action === 'PROCESS_COLLAB_TOKEN') {
+            const token = data.collabToken;
+            const userAction = data.collabAction; // 'accept' or 'decline'
+
+            if (!token) {
+                return { statusCode: 400, body: JSON.stringify({ success: false, error: "Token required." }) };
+            }
+
+            if (!initAdmin() || !db) {
+                return { statusCode: 500, body: JSON.stringify({ error: "Database unavailable" }) };
+            }
+
+            // Find collaboration request by token
+            const q = db.collection('collaboration_requests').where('collabToken', '==', token);
+            const snap = await q.get();
+
+            if (snap.empty) {
+                return {
+                    statusCode: 404,
+                    body: JSON.stringify({ success: false, error: "Invalid or expired collaboration token." })
+                };
+            }
+
+            const reqDoc = snap.docs[0];
+            const reqData = reqDoc.data();
+
+            if (userAction === 'accept') {
+                // Activate Collaboration
+                await reqDoc.ref.update({ status: 'accepted', activatedAt: admin.firestore.FieldValue.serverTimestamp() });
+
+                const collabId = `PARTNER_${reqData.fromSellerId}_${reqData.toSellerId}`;
+                await db.collection('collaborations').doc(collabId).set({
+                    collabId,
+                    sellerA: reqData.fromSellerId,
+                    sellerB: reqData.toSellerId,
+                    status: 'active',
+                    collabToken: token,
+                    activatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+                return {
+                    statusCode: 200,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        success: true,
+                        status: 'accepted',
+                        sellerA: reqData.fromSellerId,
+                        sellerB: reqData.toSellerId,
+                        message: "🤝 Business Collaboration Accepted & Activated Successfully!"
+                    })
+                };
+            } else {
+                await reqDoc.ref.update({ status: 'declined', declinedAt: admin.firestore.FieldValue.serverTimestamp() });
+                return {
+                    statusCode: 200,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        success: true,
+                        status: 'declined',
+                        message: "Collaboration request declined."
+                    })
+                };
+            }
+        }
+
         // Handle Security OTP Email Generation for Custom Pro SMTP Setup
         if (action === 'SEND_OTP') {
             const targetRecipient = notificationEmail;
@@ -321,6 +454,56 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({
                     success: true,
                     message: "Seller registration emails dispatched to seller and developer!"
+                })
+            };
+        }
+
+        // Handle Merchant Login Event (Sends confirmation to User + Alert to Developer)
+        if (action === 'LOGIN_CONFIRMATION_ALERT') {
+            const sellerEmail = userEmail || notificationEmail;
+            const sellerId = data.sellerId || siteId || 'SLR-000';
+            const brandName = data.brandName || userName || 'Merchant Node';
+
+            // Email 1: To User (Login Confirmation)
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `Welcome Back to CODEZ48 - Login Confirmed`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; max-width: 540px; margin: 0 auto;">
+                            <h2 style="color: #9333ea; margin: 0 0 10px 0;">Welcome Back, ${escapeHtml(brandName)}!</h2>
+                            <p style="font-size: 13px; color: #334155;">Your login to CODEZ48 Merchant Platform was successful.</p>
+                            <p style="font-size: 12px; color: #64748b; font-family: monospace;">Seller ID: <strong>${escapeHtml(sellerId)}</strong> | Login Time: <strong>${new Date().toLocaleString()}</strong></p>
+                        </div>
+                    `
+                });
+            }
+
+            // Email 2: To Developer (rajnaga75556@gmail.com)
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `⚡ MERCHANT LOGIN EVENT: ${escapeHtml(sellerId)} (${escapeHtml(brandName)})`,
+                html: `
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
+                        <h2 style="color: #38bdf8; margin: 0 0 10px 0;">⚡ Merchant Login Activity Alert</h2>
+                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #cbd5e1;">
+                            <li><strong>Seller Brand:</strong> ${escapeHtml(brandName)}</li>
+                            <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
+                            <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
+                            <li><strong>Login Timestamp:</strong> ${new Date().toLocaleString()}</li>
+                        </ul>
+                    </div>
+                `
+            });
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Login confirmation dispatched to seller and developer!"
                 })
             };
         }
