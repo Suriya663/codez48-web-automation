@@ -808,8 +808,56 @@ export const ApiKeyManager = {
                         </div>
                     </div>
                 ` : ''}
+
+                <!-- Active Business Collaborations Section -->
+                <div class="pt-4 border-t border-slate-100 space-y-3">
+                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block flex items-center gap-1.5">
+                        <i class="fa-solid fa-handshake text-emerald-600"></i> My Active Business Collaborations
+                    </span>
+                    <div id="active-collaborations-list" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs font-mono space-y-2">
+                        <p class="text-slate-400 italic text-[10px]">Loading active business partner nodes...</p>
+                    </div>
+                </div>
             </div>
         `;
+
+        // Populate Active Collaborations List
+        const collabListEl = document.getElementById('active-collaborations-list');
+        if (collabListEl) {
+            try {
+                const currentUid = ApiKeyManager.getUserId();
+                const cSnap = await getDocs(query(collection(db, "collaborations"), where("status", "==", "active")));
+                const activePartners = [];
+                cSnap.forEach(d => {
+                    const data = d.data();
+                    if (data.sellerA === currentUid) activePartners.push({ partnerId: data.sellerB, collabId: d.id });
+                    else if (data.sellerB === currentUid) activePartners.push({ partnerId: data.sellerA, collabId: d.id });
+                });
+
+                if (activePartners.length === 0) {
+                    collabListEl.innerHTML = `<p class="text-slate-400 italic text-[10px]">No active business collaborations connected. Click 'Connect & Collaborate' on any merchant profile to partner!</p>`;
+                } else {
+                    collabListEl.innerHTML = activePartners.map(p => `
+                        <div class="p-3 bg-white rounded-xl border border-slate-200 flex justify-between items-center flex-wrap gap-2">
+                            <div>
+                                <span class="text-emerald-700 font-bold font-mono">🤝 Collab Partner: ${p.partnerId}</span>
+                                <span class="text-slate-400 text-[9px] block">Status: Active Business Partner</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="window.showPublicProfile('${p.partnerId}')" class="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-[8px] font-black uppercase hover:bg-purple-200 transition">
+                                    View Partner
+                                </button>
+                                <button onclick="window.terminateCollaboration('${p.partnerId}')" class="px-3 py-1 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg text-[8px] font-black uppercase border border-rose-200 transition">
+                                    Un-Collaborate
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                collabListEl.innerHTML = `<p class="text-slate-400 italic text-[10px]">No active collaborations.</p>`;
+            }
+        }
     }
 };
 

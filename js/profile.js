@@ -90,25 +90,6 @@ export const dismissSuggestion = (merchantId) => {
 };
 
 /**
- * Section-Level Collapse/Expand for AI Suggestions
- */
-export const toggleSuggestionsSection = () => {
-    const bodyEl = document.getElementById('ai-suggestions-body');
-    const iconEl = document.getElementById('ai-suggestions-toggle-icon');
-    if (!bodyEl) return;
-
-    if (bodyEl.classList.contains('hidden')) {
-        bodyEl.classList.remove('hidden');
-        if (iconEl) iconEl.className = 'fa-solid fa-chevron-up';
-        localStorage.removeItem('c48_suggestions_collapsed');
-    } else {
-        bodyEl.classList.add('hidden');
-        if (iconEl) iconEl.className = 'fa-solid fa-chevron-down';
-        localStorage.setItem('c48_suggestions_collapsed', 'true');
-    }
-};
-
-/**
  * Send Collaboration Request with Unique Token & Black & White Email Dispatch
  */
 export const sendCollabRequest = async (targetSellerId) => {
@@ -194,11 +175,45 @@ export const acceptCollabRequest = async (reqId, fromSellerId, toSellerId) => {
 };
 
 /**
- * Render AI "Suggestions to Grow Your Business" at TOP of Profile with Collapse Toggle
+ * Section-Level Permanent Dismissal & Collapse for AI Suggestions
+ */
+export const permanentlyDismissSuggestions = () => {
+    localStorage.setItem('c48_suggestions_permanently_dismissed', 'true');
+    const suggestionsContainer = document.getElementById('ai-business-suggestions-container');
+    if (suggestionsContainer) {
+        suggestionsContainer.style.opacity = '0';
+        suggestionsContainer.style.transform = 'translateY(-10px)';
+        setTimeout(() => { suggestionsContainer.innerHTML = ''; }, 250);
+    }
+};
+
+export const toggleSuggestionsSection = () => {
+    const bodyEl = document.getElementById('ai-suggestions-body');
+    const iconEl = document.getElementById('ai-suggestions-toggle-icon');
+    if (!bodyEl) return;
+
+    if (bodyEl.classList.contains('hidden')) {
+        bodyEl.classList.remove('hidden');
+        if (iconEl) iconEl.className = 'fa-solid fa-chevron-up';
+        localStorage.removeItem('c48_suggestions_collapsed');
+    } else {
+        bodyEl.classList.add('hidden');
+        if (iconEl) iconEl.className = 'fa-solid fa-chevron-down';
+        localStorage.setItem('c48_suggestions_collapsed', 'true');
+    }
+};
+
+/**
+ * Render AI "Suggestions to Grow Your Business" at TOP of Profile with Collapse & 1-Click Permanent Hide
  */
 export const renderBusinessSuggestions = async (currentSeller) => {
     const suggestionsContainer = document.getElementById('ai-business-suggestions-container');
     if (!suggestionsContainer) return;
+
+    if (localStorage.getItem('c48_suggestions_permanently_dismissed') === 'true') {
+        suggestionsContainer.innerHTML = '';
+        return;
+    }
 
     try {
         const allSnap = await getDocs(collection(db, "sellers"));
@@ -234,19 +249,24 @@ export const renderBusinessSuggestions = async (currentSeller) => {
         }).sort((a, b) => b.score - a.score).slice(0, 3).map(s => s.merchant);
 
         suggestionsContainer.innerHTML = `
-            <div class="max-w-5xl mx-auto px-6 pt-6 mb-8">
+            <div class="max-w-5xl mx-auto px-6 pt-6 mb-8 transition-all duration-300">
                 <div class="p-6 md:p-8 bg-gradient-to-br from-purple-50 via-slate-50 to-purple-50/50 rounded-[2.5rem] border border-purple-100/80 shadow-xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-purple-100 pb-3">
+                    <div class="flex justify-between items-center border-b border-purple-100 pb-3 flex-wrap gap-2">
                         <div class="flex items-center gap-2">
                             <span class="px-3 py-1 bg-purple-100 text-purple-800 text-[8px] font-black rounded-full uppercase tracking-widest border border-purple-200">
                                 <i class="fa-solid fa-wand-magic-sparkles mr-1 text-purple-600"></i> AI Synergy Match
                             </span>
                             <h3 class="text-lg md:text-xl font-black text-black uppercase tracking-tight">Suggestions to Grow Your Business</h3>
                         </div>
-                        <button onclick="window.toggleSuggestionsSection()" class="px-3 py-1 bg-white border border-slate-200 text-slate-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-sm">
-                            <span>Collapse / Expand</span>
-                            <i id="ai-suggestions-toggle-icon" class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.toggleSuggestionsSection()" class="px-3 py-1 bg-white border border-slate-200 text-slate-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-sm">
+                                <span>Collapse / Expand</span>
+                                <i id="ai-suggestions-toggle-icon" class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                            </button>
+                            <button onclick="window.permanentlyDismissSuggestions()" class="px-3 py-1 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1 shadow-sm" title="Permanently Hide Suggestions Section">
+                                <i class="fa-solid fa-xmark"></i> Hide Section
+                            </button>
+                        </div>
                     </div>
 
                     <div id="ai-suggestions-body" class="${isCollapsed ? 'hidden' : ''} space-y-3">
@@ -544,6 +564,7 @@ window.sendCollabRequest = (id) => sendCollabRequest(id);
 window.acceptCollabRequest = (reqId, fromId, toId) => acceptCollabRequest(reqId, fromId, toId);
 window.terminateCollaboration = (id) => terminateCollaboration(id);
 window.dismissSuggestion = (id) => dismissSuggestion(id);
+window.permanentlyDismissSuggestions = () => permanentlyDismissSuggestions();
 window.toggleSuggestionsSection = () => toggleSuggestionsSection();
 window.shareProfileTo = shareProfileTo;
 window.saveProfileChanges = saveProfileChanges;
