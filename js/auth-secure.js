@@ -379,6 +379,31 @@ export const trackReferralVisit = async (rC, isProfile = false) => {
     } catch (err) {}
 };
 
+export const trackPotentialLead = async () => {
+    const rC = sessionStorage.getItem('dev_referral_code');
+    if (!rC) return;
+    try {
+        const q = query(collection(db, "dev_prog_users"), where("referralCode", "==", rC));
+        const sn = await getDocs(q);
+        if (!sn.empty) {
+            const dv = sn.docs[0].data();
+            const e = document.getElementById('auth-email')?.value.trim() || '';
+            const b = document.getElementById('auth-brand')?.value.trim() || '';
+            const u = document.getElementById('auth-username')?.value.trim() || '';
+            const lI = 'LEAD_START-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+            await setDoc(doc(db, "dev_prog_leads", lI), {
+                name: b || u || 'Unknown',
+                mobile: 'Form Filled',
+                email: e,
+                paidAmount: 0,
+                developerEmail: dv.email,
+                status: 'form_filled',
+                registeredAt: new Date().toISOString()
+            });
+        }
+    } catch (err) {}
+};
+
 window.handleAuth = handleAuth;
 window.toggleAuthMode = toggleAuthMode;
 window.openRegisterWizard = openRegisterWizard;
@@ -388,6 +413,7 @@ window.toggleBillingCycle = toggleBillingCycle;
 window.toggleWizardBillingCycle = toggleWizardBillingCycle;
 window.proceedToPayment = proceedToPayment;
 window.trackReferralVisit = trackReferralVisit;
+window.trackPotentialLead = trackPotentialLead;
 window.handleAuthPhoto = (i) => {
     if (i.files && i.files[0]) {
         const reader = new FileReader();

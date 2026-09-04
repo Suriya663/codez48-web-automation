@@ -386,8 +386,8 @@
 
                 <!-- Dynamic Auth UI -->
                 <div class="flex items-center gap-4">
-                    <button id="nav-register-btn" onclick="openRegisterWizard()" class="btn-black text-[10px] font-black px-8 py-3 rounded-full shadow-lg uppercase tracking-widest">Register Now</button>
-                    <button id="nav-profile-btn" onclick="goToMyProfile()" class="hidden w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden flex items-center justify-center hover:border-royal transition-all" title="My Node Profile">
+                    <button id="nav-register-btn" onclick="window.openRegisterWizard && window.openRegisterWizard()" class="btn-black text-[10px] font-black px-8 py-3 rounded-full shadow-lg uppercase tracking-widest">Register Now</button>
+                    <button id="nav-profile-btn" onclick="window.goToMyProfile && window.goToMyProfile()" class="hidden w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden flex items-center justify-center hover:border-royal transition-all" title="My Node Profile">
                         <i class="fa-solid fa-circle-user text-2xl text-royal"></i>
                     </button>
                 </div>
@@ -396,37 +396,37 @@
 
         <!-- Mobile Menu Dropdown -->
         <div id="mobile-nav-menu" class="hidden md:hidden bg-white border-t border-slate-100 flex flex-col p-6 space-y-6 shadow-xl absolute top-full left-0 w-full z-40 animate-in slide-in-from-top-4 duration-300 max-h-[85vh] overflow-y-auto">
-            <button onclick="window.showLanguageSelection(); toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest flex items-center gap-2">
+            <button onclick="window.showLanguageSelection && window.showLanguageSelection(); window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest flex items-center gap-2">
                 <i class="fa-solid fa-globe"></i> Change Language
             </button>
 
             <!-- Mobile Tools -->
             <div class="space-y-4">
                 <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">Available Tools</p>
-                <button onclick="location.href='tools/index.html'; toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <button onclick="location.href='tools/index.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     <i class="fa-solid fa-robot text-royal"></i> AI Automations
                 </button>
-                <button onclick="showView('tracker'); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <button onclick="showView('tracker'); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     <i class="fa-solid fa-chart-line text-royal"></i> Website Tracker
                 </button>
-                <button onclick="window.handleToolAction('push'); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <button onclick="window.handleToolAction('push'); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     <i class="fa-solid fa-bell text-royal"></i> Push Notifications
                 </button>
-                <button onclick="window.openMailAutomationModal(); toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-600 uppercase tracking-widest">
+                <button onclick="window.openMailAutomationModal(); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-600 uppercase tracking-widest">
                     <i class="fa-solid fa-envelope-circle-check text-purple-600"></i> Email Automation
                 </button>
-                <button onclick="location.href='api-keys.html'; toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                <button onclick="location.href='api-keys.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
                     <i class="fa-solid fa-key text-emerald-600"></i> API Keys & Billing
                 </button>
             </div>
 
-            <a href="#merchant-directory" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Network</a>
-            <button onclick="window.openDevProgramIntro(); toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest text-left">Dev Program</button>
-            <a href="about.html" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">About</a>
-            <a href="#pricing" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pricing</a>
-            <a href="mailto:codez4848@gmail.com" onclick="toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Help Centre</a>
-            <button id="nav-register-btn-mobile" onclick="openRegisterWizard(); toggleMobileMenu()" class="w-full btn-black text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest">Register Now</button>
-            <button id="nav-profile-btn-mobile" onclick="goToMyProfile(); toggleMobileMenu()" class="hidden w-full bg-slate-50 text-royal text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest border border-slate-100 flex items-center justify-center gap-3">
+            <a href="#merchant-directory" onclick="window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Network</a>
+            <button onclick="window.openDevProgramIntro(); window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest text-left">Dev Program</button>
+            <a href="about.html" onclick="window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">About</a>
+            <a href="#pricing" onclick="window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pricing</a>
+            <a href="mailto:codez4848@gmail.com" onclick="window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Help Centre</a>
+            <button id="nav-register-btn-mobile" onclick="window.openRegisterWizard && window.openRegisterWizard(); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full btn-black text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest">Register Now</button>
+            <button id="nav-profile-btn-mobile" onclick="window.goToMyProfile && window.goToMyProfile(); window.toggleMobileMenu && window.toggleMobileMenu()" class="hidden w-full bg-slate-50 text-royal text-[10px] font-black py-4 rounded-2xl uppercase tracking-widest border border-slate-100 flex items-center justify-center gap-3">
                 <i class="fa-solid fa-circle-user text-lg"></i>
                 <span>My Profile</span>
             </button>
