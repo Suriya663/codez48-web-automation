@@ -52,8 +52,8 @@ export const confirmTopUpWallet = async (sellerId) => {
     const inputEl = document.getElementById('wallet-topup-amount');
     const amount = Number(inputEl ? inputEl.value : 0);
 
-    if (!amount || isNaN(amount) || amount < 10) {
-        alert("Please enter a valid recharge amount (minimum ₹10).");
+    if (!amount || isNaN(amount) || amount < 1) {
+        alert("Please enter a valid recharge amount (minimum ₹1).");
         return;
     }
 
@@ -209,7 +209,7 @@ export const openMerchantWalletModal = async (sellerId) => {
                     <div>
                         <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">ENTER RECHARGE AMOUNT (₹)</label>
                         <div class="flex gap-2">
-                            <input type="number" id="wallet-topup-amount" min="10" value="200" class="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-black text-purple-950 focus:outline-none focus:border-purple-600">
+                            <input type="number" id="wallet-topup-amount" min="1" value="200" class="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-black text-purple-950 focus:outline-none focus:border-purple-600">
                             <button onclick="window.confirmTopUpWallet('${sellerId}')" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 shrink-0 flex items-center gap-1.5">
                                 <i class="fa-solid fa-bolt"></i> Pay Now →
                             </button>
