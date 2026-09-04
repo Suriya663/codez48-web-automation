@@ -441,7 +441,7 @@
             <div id="merchant-directory" class="pt-48 pb-32 bg-white">
                 <div class="container-fluid">
                     <!-- Home Conversion CTA -->
-                    <div id="home-conversion-cta" class="mb-24">
+                    <div id="home-conversion-cta" class="mb-16">
                         <div class="glass-card p-10 rounded-[3rem] bg-royal text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-royal/20">
                             <div class="flex items-center gap-6">
                                 <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-3xl">
@@ -477,17 +477,29 @@
             <!-- Pricing -->
             <div id="pricing" class="py-32 bg-white">
                 <div class="container-fluid">
-                    <div class="text-center mb-20">
-                        <h2 class="text-4xl md:text-5xl font-extrabold text-black mb-6 uppercase tracking-tighter">Scale Your Protocol</h2>
-                        <p class="text-slate-500 font-medium max-w-xl mx-auto">Choose the tier that matches your network velocity.</p>
+                    <div class="text-center mb-16">
+                        <h2 class="text-4xl md:text-5xl font-extrabold text-black mb-4 uppercase tracking-tighter">Scale Your Business</h2>
+                        <p class="text-slate-500 font-medium max-w-xl mx-auto mb-6">Choose the plan that matches your business velocity.</p>
+
+                        <!-- Daily Pay-As-You-Go vs Monthly Toggle -->
+                        <div class="inline-flex items-center gap-3 bg-slate-50 p-2 rounded-full border border-slate-200/80 shadow-sm">
+                            <span id="label-billing-monthly" class="text-xs font-black uppercase text-slate-800 ml-3">Monthly Plan</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="billing-cycle-toggle" onchange="window.toggleBillingCycle()" class="sr-only peer">
+                                <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                            <span id="label-billing-daily" class="text-xs font-black uppercase text-purple-700 bg-purple-100 px-3 py-1 rounded-full border border-purple-200 flex items-center gap-1">
+                                ⚡ Daily Pay-As-You-Go (₹83/Day)
+                            </span>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
                         <div onclick="selectRegPlan('starter')" id="plan-starter" class="glass-card p-12 rounded-[3rem] flex flex-col cursor-pointer border-2 border-transparent transition-all">
                             <div class="mb-10">
-                                <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Business Plan</h3>
+                                <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Starter Business Plan</h3>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-5xl font-black text-black">₹2,500</span>
-                                    <span class="text-slate-400 font-bold text-sm">/Month</span>
+                                    <span id="price-starter-val" class="text-5xl font-black text-black">₹2,500</span>
+                                    <span id="price-starter-unit" class="text-slate-400 font-bold text-sm">/Month</span>
                                 </div>
                             </div>
                             <ul class="space-y-3 mb-12 flex-1">
@@ -515,8 +527,8 @@
                             <div class="mb-10">
                                 <h3 class="text-sm font-black text-royal uppercase tracking-widest mb-3">Premium Business Plan</h3>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-5xl font-black text-royal">₹4,000</span>
-                                    <span class="text-slate-400 font-bold text-sm">/Month</span>
+                                    <span id="price-premium-val" class="text-5xl font-black text-royal">₹4,000</span>
+                                    <span id="price-premium-unit" class="text-slate-400 font-bold text-sm">/Month</span>
                                 </div>
                             </div>
                             <ul class="space-y-3 mb-12 flex-1">
@@ -962,14 +974,26 @@
 
                     <!-- Step 2: Plan Selection -->
                     <div id="auth-step-2" class="wizard-step hidden text-center">
-                        <h2 class="text-3xl font-black text-black mb-12">Select your subscription method</h2>
+                        <h2 class="text-3xl font-black text-black mb-4">Select your business plan & billing cycle</h2>
+
+                        <!-- Daily Pay-As-You-Go vs Monthly Billing Toggle -->
+                        <div class="inline-flex items-center justify-center gap-3 bg-slate-50 p-2 rounded-full border border-slate-200 shadow-sm mb-8">
+                            <span class="text-xs font-black uppercase text-slate-800 ml-3">Monthly Billing</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="wizard-billing-cycle-toggle" onchange="window.toggleWizardBillingCycle()" class="sr-only peer">
+                                <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                            <span class="text-xs font-black uppercase text-purple-700 bg-purple-100 px-3 py-1 rounded-full border border-purple-200 flex items-center gap-1">
+                                ⚡ Daily Pay-As-You-Go (₹83/Day)
+                            </span>
+                        </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                             <div onclick="selectRegPlan('starter')" id="plan-starter-wizard" class="glass-card p-8 rounded-[2.5rem] border-2 border-transparent hover:border-royal cursor-pointer transition-all relative group data-[selected=true]:border-royal data-[selected=true]:bg-blue-50/50">
-                                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Business Plan</h3>
+                                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Starter Business Plan</h3>
                                 <div class="flex items-baseline justify-center gap-1 mb-6">
-                                    <span class="text-4xl font-black text-black">₹2,500</span>
-                                    <span class="text-slate-400 font-bold text-xs">/Month</span>
+                                    <span id="wizard-price-starter-val" class="text-4xl font-black text-black">₹2,500</span>
+                                    <span id="wizard-price-starter-unit" class="text-slate-400 font-bold text-xs">/Month</span>
                                 </div>
                                 <ul class="text-[10px] text-slate-500 font-bold uppercase tracking-tight space-y-2 text-left px-4">
                                     <li>• Standard Profile</li>
@@ -980,10 +1004,10 @@
                             </div>
 
                             <div onclick="selectRegPlan('premium')" id="plan-premium-wizard" class="premium-card p-8 rounded-[2.5rem] border-2 border-transparent hover:border-royal cursor-pointer transition-all relative group data-[selected=true]:border-royal data-[selected=true]:bg-blue-50/50">
-                                <h3 class="text-[10px] font-black text-royal uppercase tracking-widest mb-4">Premium Plan</h3>
+                                <h3 class="text-[10px] font-black text-royal uppercase tracking-widest mb-4">Premium Business Plan</h3>
                                 <div class="flex items-baseline justify-center gap-1 mb-6">
-                                    <span class="text-4xl font-black text-royal">₹4,000</span>
-                                    <span class="text-slate-400 font-bold text-xs">/Month</span>
+                                    <span id="wizard-price-premium-val" class="text-4xl font-black text-royal">₹4,000</span>
+                                    <span id="wizard-price-premium-unit" class="text-slate-400 font-bold text-xs">/Month</span>
                                 </div>
                                 <ul class="text-[10px] text-slate-700 font-bold uppercase tracking-tight space-y-2 text-left px-4">
                                     <li>• AI Salesman</li>
@@ -1160,7 +1184,14 @@
             <h3 class="text-2xl font-black text-black uppercase tracking-tighter mb-8">Update Identity</h3>
             <div class="space-y-6">
                 <input type="text" id="edit-site-name" placeholder="Brand Name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
-                <input type="text" id="edit-site-logo" placeholder="Logo URL" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                <div class="flex gap-2">
+                    <input type="text" id="edit-site-logo" placeholder="Logo URL or click upload →" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
+                    <label class="px-5 py-4 bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-2xl cursor-pointer text-xs font-black uppercase flex items-center justify-center gap-2 shrink-0 transition shadow-sm" title="Upload Logo Image File From Device">
+                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                        <span>Upload</span>
+                        <input type="file" accept="image/*" onchange="window.handleEditLogoUpload(event)" class="hidden">
+                    </label>
+                </div>
                 <input type="text" id="edit-secondary-link" placeholder="Secondary Website Link" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
                 <textarea id="edit-services-desc" placeholder="Service Description (e.g. Expert in Web Dev, UI/UX)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium" rows="3"></textarea>
                 <textarea id="edit-product-desc" placeholder="Product Description (e.g. Premium Handloom Sarees)" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium" rows="3"></textarea>

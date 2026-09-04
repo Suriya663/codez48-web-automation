@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { doc, getDoc, getDocs, collection, query, where, updateDoc, increment, setDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { doc, getDoc, getDocs, collection, query, where, updateDoc, increment, setDoc, serverTimestamp, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { showView } from './navigation.js';
 import { t } from './translations.js';
 import { allSellers } from './search.js';
@@ -46,6 +46,317 @@ export const checkCollabStatus = async (sellerA, sellerB) => {
 };
 
 /**
+ * Confirm Wallet Recharge via In-Modal Amount Input
+ */
+export const confirmTopUpWallet = async (sellerId) => {
+    const inputEl = document.getElementById('wallet-topup-amount');
+    const amount = Number(inputEl ? inputEl.value : 0);
+
+    if (!amount || isNaN(amount) || amount < 10) {
+        alert("Please enter a valid recharge amount (minimum ₹10).");
+        return;
+    }
+
+    const options = {
+        key: "rzp_live_TUJt8CLvlZ1XEN",
+        amount: amount * 100,
+        currency: "INR",
+        name: "CODEZ48 Wallet Recharge",
+        description: `Wallet Top-Up: ₹${amount}`,
+        image: "https://codez48.netlify.app/img/logo.png",
+        handler: async function (response) {
+            try {
+                const sRef = doc(db, "sellers", sellerId);
+                const sSnap = await getDoc(sRef);
+                const currentBalance = sSnap.exists() ? (Number(sSnap.data().walletBalance) || 0) : 0;
+                const newBalance = currentBalance + amount;
+
+                // Credit wallet and reactivate site status
+                await updateDoc(sRef, {
+                    walletBalance: newBalance,
+                    status: 'active',
+                    lastActivatedAt: new Date().toISOString()
+                });
+
+                // Record transaction
+                await addDoc(collection(db, "wallet_transactions"), {
+                    sellerId,
+                    type: 'RECHARGE_TOP_UP',
+                    amount: amount,
+                    remainingBalance: newBalance,
+                    paymentId: response.razorpay_payment_id || 'PAY_' + Date.now(),
+                    description: `Wallet Top-Up via Razorpay`,
+                    timestamp: new Date().toISOString()
+                });
+
+                alert(`⚡ Wallet Recharged Successfully!\nAdded ₹${amount}. New Wallet Balance: ₹${newBalance}\nWebsite is ACTIVE.`);
+                openMerchantWalletModal(sellerId);
+            } catch (err) {
+                alert("Wallet Update Notice: " + err.message);
+            }
+        },
+        prefill: {
+            email: window.currentUser?.email || '',
+            contact: ''
+        },
+        theme: { color: "#2563EB" }
+    };
+
+    if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    } else {
+        const s = document.createElement("script");
+        s.src = "https://checkout.razorpay.com/v1/checkout.js";
+        s.onload = () => {
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        };
+        document.head.appendChild(s);
+    }
+};
+
+/**
+ * Open Professional FinTech Merchant Wallet Modal
+ */
+export const openMerchantWalletModal = async (sellerId) => {
+    let modal = document.getElementById('merchant-wallet-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'merchant-wallet-modal';
+        modal.className = 'fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200';
+        document.body.appendChild(modal);
+    }
+
+    try {
+        const sRef = doc(db, "sellers", sellerId);
+        const sSnap = await getDoc(sRef);
+        const sellerData = sSnap.exists() ? sSnap.data() : (window.currentUser || {});
+
+        const walletBalance = Number(sellerData.walletBalance) || 0;
+        const dailyFee = sellerData.dailyFee || (sellerData.tier === 'premium' ? 133 : 83);
+        const isInactive = sellerData.status === 'deactivated_insufficient_funds';
+
+        let historyRows = [];
+        try {
+            const q = query(collection(db, "wallet_transactions"), where("sellerId", "==", sellerId));
+            const snap = await getDocs(q);
+            snap.forEach(d => historyRows.push(d.data()));
+            historyRows.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        } catch (e) {}
+
+        modal.innerHTML = `
+            <div class="glass-card w-full max-w-xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <button onclick="window.closeMerchantWalletModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-black text-slate-900 uppercase tracking-tight">Merchant Wallet</h4>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">24-Hour Cycle Fee: ₹${dailyFee} / Day</p>
+                    </div>
+                </div>
+
+                <!-- Metallic FinTech Balance Card -->
+                <div class="p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white shadow-xl relative overflow-hidden space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[9px] font-black uppercase text-purple-300 tracking-widest block">Available Balance</span>
+                            <span class="text-3xl md:text-4xl font-black tracking-tight text-white mt-1 block">₹${walletBalance.toFixed(2)}</span>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isInactive ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                            ${isInactive ? '⚠️ Paused' : '🟢 Website Active'}
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-3 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+                        <span>Daily Rate: ₹${dailyFee}/Day</span>
+                        <span class="text-[9px] font-bold text-purple-300">24-Hour Cycle</span>
+                    </div>
+                </div>
+
+                <!-- In-Modal Wallet Recharge Form Container -->
+                <div id="wallet-recharge-form-container" class="p-5 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase text-purple-900 tracking-widest flex items-center gap-1.5">
+                            <i class="fa-solid fa-credit-card text-purple-600"></i> Recharge Wallet Balance
+                        </span>
+                        <span class="text-[9px] font-bold text-slate-500 uppercase">Enter Amount Below</span>
+                    </div>
+                    <div>
+                        <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">ENTER RECHARGE AMOUNT (₹)</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="wallet-topup-amount" min="10" value="200" class="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-black text-purple-950 focus:outline-none focus:border-purple-600">
+                            <button onclick="window.confirmTopUpWallet('${sellerId}')" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 shrink-0 flex items-center gap-1.5">
+                                <i class="fa-solid fa-bolt"></i> Pay Now →
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-1 flex-wrap">
+                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest mr-1">Quick Presets:</span>
+                        <button onclick="document.getElementById('wallet-topup-amount').value = 100" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹100</button>
+                        <button onclick="document.getElementById('wallet-topup-amount').value = 200" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹200</button>
+                        <button onclick="document.getElementById('wallet-topup-amount').value = 500" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹500</button>
+                        <button onclick="document.getElementById('wallet-topup-amount').value = 1000" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹1000</button>
+                    </div>
+                </div>
+
+                ${isInactive ? `
+                    <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-900 text-xs font-bold flex items-center justify-between">
+                        <span>⚠️ Website is currently paused due to insufficient wallet balance. Please add at least ₹${dailyFee} to reactivate.</span>
+                    </div>
+                ` : ''}
+
+                <!-- Transaction History -->
+                <div class="space-y-3">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Billing & Transaction History</span>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 max-h-48 overflow-y-auto custom-scrollbar font-mono text-[10px]">
+                        ${historyRows.length === 0 ? `
+                            <p class="text-slate-400 italic text-center py-6">No wallet transactions recorded yet.</p>
+                        ` : `
+                            <div class="space-y-2">
+                                ${historyRows.map(h => `
+                                    <div class="flex justify-between items-center border-b border-slate-200/60 pb-2">
+                                        <div>
+                                            <span class="font-bold text-slate-900 block">${h.description || h.type}</span>
+                                            <span class="text-slate-400 text-[8px]">${new Date(h.timestamp).toLocaleString()}</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="${h.amount > 0 ? 'text-emerald-600 font-bold' : 'text-slate-700 font-bold'}">${h.amount > 0 ? '+' : ''}₹${h.amount}</span>
+                                            <span class="text-slate-400 text-[8px] block">Bal: ₹${h.remainingBalance}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+
+                <div class="text-right pt-2 border-t border-slate-100">
+                    <button onclick="window.closeMerchantWalletModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    } catch (err) {
+        alert("Wallet Modal Error: " + err.message);
+    }
+};
+
+export const closeMerchantWalletModal = () => {
+    const modal = document.getElementById('merchant-wallet-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+/**
+ * Open Dedicated AI Business Suggestions Modal (Triggered by Bell Icon for Owner Only)
+ */
+export const openAiSuggestionsModal = async (sellerId) => {
+    let modal = document.getElementById('ai-suggestions-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'ai-suggestions-modal';
+        modal.className = 'fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200';
+        document.body.appendChild(modal);
+    }
+
+    try {
+        const sRef = doc(db, "sellers", sellerId);
+        const sSnap = await getDoc(sRef);
+        const sellerData = sSnap.exists() ? sSnap.data() : (window.currentUser || {});
+
+        const allSnap = await getDocs(collection(db, "sellers"));
+        const otherMerchants = [];
+        allSnap.forEach(d => {
+            if (d.id !== sellerId) {
+                otherMerchants.push({ id: d.id, ...d.data() });
+            }
+        });
+
+        const currentDesc = (sellerData.productDescription || '' + sellerData.servicesDescription || '' + sellerData.brand || '').toLowerCase();
+
+        const suggestions = otherMerchants.map(m => {
+            let score = 1;
+            const mText = (m.productDescription || '' + m.servicesDescription || '' + m.brand || '').toLowerCase();
+
+            if (currentDesc.includes('store') || currentDesc.includes('retail') || currentDesc.includes('shop') || currentDesc.includes('offline')) {
+                if (mText.includes('it') || mText.includes('software') || mText.includes('website') || mText.includes('ai') || mText.includes('marketing')) score += 8;
+            }
+            if (currentDesc.includes('electrical') || currentDesc.includes('wiring') || currentDesc.includes('hardware')) {
+                if (mText.includes('electronic') || mText.includes('supply') || mText.includes('component')) score += 8;
+            }
+
+            return { merchant: m, score };
+        }).sort((a, b) => b.score - a.score).slice(0, 3).map(s => s.merchant);
+
+        modal.innerHTML = `
+            <div class="glass-card w-full max-w-2xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <button onclick="window.closeAiSuggestionsModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+
+                <div class="flex items-center gap-3 border-b border-purple-100 pb-3">
+                    <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-black text-black uppercase tracking-tight">AI Synergy Business Match</h4>
+                        <p class="text-xs text-slate-500 font-medium">Recommended business partners to source products, expand IT infrastructure, and boost marketing.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${suggestions.map(m => `
+                        <div id="modal-suggestion-card-${m.id}" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                        <img src="${m.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h5 class="text-xs font-black text-black truncate uppercase">${m.brand || 'Merchant Node'}</h5>
+                                        <p class="text-[8px] font-mono text-purple-700 font-bold truncate">${m.companyName || 'Verified Synergy Partner'}</p>
+                                    </div>
+                                </div>
+                                <p class="text-[9px] text-slate-500 font-medium line-clamp-2">${m.description || 'Offers business collaboration opportunities.'}</p>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
+                                <button onclick="window.closeAiSuggestionsModal(); window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-handshake"></i> Connect & Collaborate
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="text-right pt-2 border-t border-slate-100">
+                    <button onclick="window.closeAiSuggestionsModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    } catch (err) {
+        alert("Suggestions Error: " + err.message);
+    }
+};
+
+export const closeAiSuggestionsModal = () => {
+    const modal = document.getElementById('ai-suggestions-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+/**
  * Terminate/Un-collaborate Active Partnership
  */
 export const terminateCollaboration = async (targetSellerId) => {
@@ -61,12 +372,10 @@ export const terminateCollaboration = async (targetSellerId) => {
 
     try {
         const cSnap = await getDocs(query(collection(db, "collaborations"), where("status", "==", "active")));
-        let terminatedCount = 0;
         for (const docSnap of cSnap.docs) {
             const data = docSnap.data();
             if ((data.sellerA === currentSellerId && data.sellerB === targetSellerId) || (data.sellerA === targetSellerId && data.sellerB === currentSellerId)) {
                 await updateDoc(docSnap.ref, { status: 'terminated', terminatedAt: new Date().toISOString() });
-                terminatedCount++;
             }
         }
 
@@ -74,18 +383,6 @@ export const terminateCollaboration = async (targetSellerId) => {
         showPublicProfile(targetSellerId, window.currentUser);
     } catch (e) {
         alert("Un-collaborate Error: " + e.message);
-    }
-};
-
-/**
- * Dismiss/Hide Individual AI Suggestion Card
- */
-export const dismissSuggestion = (merchantId) => {
-    const card = document.getElementById(`suggestion-card-${merchantId}`);
-    if (card) {
-        card.style.opacity = '0';
-        card.style.transform = 'scale(0.9)';
-        setTimeout(() => card.remove(), 250);
     }
 };
 
@@ -153,161 +450,6 @@ export const sendCollabRequest = async (targetSellerId) => {
 };
 
 /**
- * Accept Collaboration Request
- */
-export const acceptCollabRequest = async (reqId, fromSellerId, toSellerId) => {
-    try {
-        const collabId = `PARTNER_${fromSellerId}_${toSellerId}`;
-        await setDoc(doc(db, "collaborations", collabId), {
-            collabId,
-            sellerA: fromSellerId,
-            sellerB: toSellerId,
-            status: 'active',
-            activatedAt: new Date().toISOString()
-        });
-
-        await updateDoc(doc(db, "collaboration_requests", reqId), { status: 'accepted' });
-        alert("🤝 Collaboration Accepted! You are now official business partners.");
-        showPublicProfile(toSellerId, window.currentUser);
-    } catch (e) {
-        alert("Accept Error: " + e.message);
-    }
-};
-
-/**
- * Section-Level Permanent Dismissal & Collapse for AI Suggestions
- */
-export const permanentlyDismissSuggestions = () => {
-    localStorage.setItem('c48_suggestions_permanently_dismissed', 'true');
-    const suggestionsContainer = document.getElementById('ai-business-suggestions-container');
-    if (suggestionsContainer) {
-        suggestionsContainer.style.opacity = '0';
-        suggestionsContainer.style.transform = 'translateY(-10px)';
-        setTimeout(() => { suggestionsContainer.innerHTML = ''; }, 250);
-    }
-};
-
-export const toggleSuggestionsSection = () => {
-    const bodyEl = document.getElementById('ai-suggestions-body');
-    const iconEl = document.getElementById('ai-suggestions-toggle-icon');
-    if (!bodyEl) return;
-
-    if (bodyEl.classList.contains('hidden')) {
-        bodyEl.classList.remove('hidden');
-        if (iconEl) iconEl.className = 'fa-solid fa-chevron-up';
-        localStorage.removeItem('c48_suggestions_collapsed');
-    } else {
-        bodyEl.classList.add('hidden');
-        if (iconEl) iconEl.className = 'fa-solid fa-chevron-down';
-        localStorage.setItem('c48_suggestions_collapsed', 'true');
-    }
-};
-
-/**
- * Render AI "Suggestions to Grow Your Business" at TOP of Profile with Collapse & 1-Click Permanent Hide
- */
-export const renderBusinessSuggestions = async (currentSeller) => {
-    const suggestionsContainer = document.getElementById('ai-business-suggestions-container');
-    if (!suggestionsContainer) return;
-
-    if (localStorage.getItem('c48_suggestions_permanently_dismissed') === 'true') {
-        suggestionsContainer.innerHTML = '';
-        return;
-    }
-
-    try {
-        const allSnap = await getDocs(collection(db, "sellers"));
-        const otherMerchants = [];
-        allSnap.forEach(d => {
-            if (d.id !== currentSeller.id) {
-                otherMerchants.push({ id: d.id, ...d.data() });
-            }
-        });
-
-        if (otherMerchants.length === 0) {
-            suggestionsContainer.innerHTML = '';
-            return;
-        }
-
-        const isCollapsed = localStorage.getItem('c48_suggestions_collapsed') === 'true';
-
-        // Deep AI Match logic: pair offline stores with IT/website creation, wiring with electronics suppliers
-        const currentDesc = (currentSeller.productDescription || '' + currentSeller.servicesDescription || '' + currentSeller.brand || '').toLowerCase();
-
-        const suggestions = otherMerchants.map(m => {
-            let score = 1;
-            const mText = (m.productDescription || '' + m.servicesDescription || '' + m.brand || '').toLowerCase();
-
-            if (currentDesc.includes('store') || currentDesc.includes('retail') || currentDesc.includes('shop') || currentDesc.includes('offline')) {
-                if (mText.includes('it') || mText.includes('software') || mText.includes('website') || mText.includes('ai') || mText.includes('marketing')) score += 8;
-            }
-            if (currentDesc.includes('electrical') || currentDesc.includes('wiring') || currentDesc.includes('hardware')) {
-                if (mText.includes('electronic') || mText.includes('supply') || mText.includes('component')) score += 8;
-            }
-
-            return { merchant: m, score };
-        }).sort((a, b) => b.score - a.score).slice(0, 3).map(s => s.merchant);
-
-        suggestionsContainer.innerHTML = `
-            <div class="max-w-5xl mx-auto px-6 pt-6 mb-8 transition-all duration-300">
-                <div class="p-6 md:p-8 bg-gradient-to-br from-purple-50 via-slate-50 to-purple-50/50 rounded-[2.5rem] border border-purple-100/80 shadow-xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-purple-100 pb-3 flex-wrap gap-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-[8px] font-black rounded-full uppercase tracking-widest border border-purple-200">
-                                <i class="fa-solid fa-wand-magic-sparkles mr-1 text-purple-600"></i> AI Synergy Match
-                            </span>
-                            <h3 class="text-lg md:text-xl font-black text-black uppercase tracking-tight">Suggestions to Grow Your Business</h3>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="window.toggleSuggestionsSection()" class="px-3 py-1 bg-white border border-slate-200 text-slate-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-sm">
-                                <span>Collapse / Expand</span>
-                                <i id="ai-suggestions-toggle-icon" class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
-                            </button>
-                            <button onclick="window.permanentlyDismissSuggestions()" class="px-3 py-1 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1 shadow-sm" title="Permanently Hide Suggestions Section">
-                                <i class="fa-solid fa-xmark"></i> Hide Section
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="ai-suggestions-body" class="${isCollapsed ? 'hidden' : ''} space-y-3">
-                        <p class="text-xs text-slate-500 font-medium">Recommended business partners to source products, expand IT infrastructure, and boost marketing.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            ${suggestions.map(m => `
-                                <div id="suggestion-card-${m.id}" class="p-4 bg-white rounded-2xl border border-purple-100/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group">
-                                    <button onclick="window.dismissSuggestion('${m.id}')" class="absolute top-3 right-3 w-6 h-6 bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 rounded-full flex items-center justify-center text-xs transition" title="Dismiss / Hide Suggestion">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                    <div class="space-y-2 pr-6">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-                                                <img src="${m.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <h5 class="text-xs font-black text-black truncate uppercase">${m.brand || 'Merchant Node'}</h5>
-                                                <p class="text-[8px] font-mono text-purple-700 font-bold truncate">${m.companyName || 'Verified Synergy Partner'}</p>
-                                            </div>
-                                        </div>
-                                        <p class="text-[9px] text-slate-500 font-medium line-clamp-2">${m.description || 'Offers business collaboration opportunities.'}</p>
-                                    </div>
-
-                                    <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
-                                        <button onclick="window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
-                                            <i class="fa-solid fa-handshake"></i> Connect & Collaborate
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    } catch (e) {
-        console.warn("[AI SUGGESTIONS NOTICE]:", e.message);
-    }
-};
-
-/**
  * Render Merchant Public Profile
  */
 export const showPublicProfile = async (sellerId, currentUser) => {
@@ -338,9 +480,13 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         const seller = sellerDoc.data();
         const sellerData = { id: sellerDoc.id, ...seller };
 
+        // Check if seller account is deactivated due to insufficient wallet balance
+        const isInactive = seller.status === 'deactivated_insufficient_funds';
+
         // Strictly check if current user is an active Collab Partner (STRICT PRIVACY GUARD)
         const currentSId = localStorage.getItem('tori_seller_id') || currentUser?.uid;
         const isCollabPartner = await checkCollabStatus(sellerId, currentSId);
+        const isOwner = currentUser && (currentUser.uid === sellerId || currentUser.sellerId === sellerId);
 
         const adminContainer = document.getElementById('admin-action-container');
         if (adminContainer) {
@@ -350,7 +496,7 @@ export const showPublicProfile = async (sellerId, currentUser) => {
                 </button>
             `;
 
-            if (currentUser && (currentUser.uid === sellerId || currentUser.sellerId === sellerId)) {
+            if (isOwner) {
                 if (isPending) {
                     adminContainer.innerHTML += `
                         <span class="bg-amber-100 text-amber-600 text-[10px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest border border-amber-200">
@@ -359,6 +505,14 @@ export const showPublicProfile = async (sellerId, currentUser) => {
                     `;
                 } else {
                     adminContainer.innerHTML += `
+                        <button onclick="window.openAiSuggestionsModal('${sellerId}')" class="relative bg-purple-100 text-purple-800 hover:bg-purple-200 text-xs font-black px-4 py-2.5 rounded-full flex items-center gap-1.5 transition shadow-sm" title="AI Business Synergy Suggestions">
+                            <i class="fa-solid fa-bell text-sm"></i>
+                            <span class="text-[9px] font-black uppercase">Suggestions</span>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-purple-600 rounded-full border-2 border-white animate-pulse"></span>
+                        </button>
+                        <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-purple-600 hover:bg-purple-700 text-white text-[9px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-purple-200 transition">
+                            <i class="fa-solid fa-wallet"></i> Wallet
+                        </button>
                         <button onclick="openNodeSettings('${sellerId}')" class="bg-black text-white text-[9px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest flex items-center gap-2 shadow-lg">
                             <i class="fa-solid fa-gear"></i> Settings
                         </button>
@@ -394,8 +548,13 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         if (target) {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
             target.innerHTML = `
-                <!-- AI Suggestions Container Positioned at TOP by Default -->
-                <div id="ai-business-suggestions-container"></div>
+                ${isInactive ? `
+                    <div class="max-w-4xl mx-auto my-8 p-8 bg-rose-50 border-2 border-rose-300 rounded-[2.5rem] text-center shadow-lg">
+                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 font-bold text-2xl">⚠️</div>
+                        <h3 class="text-2xl font-black text-rose-900 uppercase tracking-tight">Website Temporarily Paused</h3>
+                        <p class="text-xs text-rose-700 font-medium mt-2 max-w-md mx-auto">This merchant website is currently inactive due to pending daily plan fee. Please recharge wallet to bring online.</p>
+                    </div>
+                ` : ''}
 
                 <div class="profile-header">
                     <div class="logo-container bg-slate-50 rounded-[3rem] border border-slate-50 flex items-center justify-center p-1 shadow-2xl overflow-hidden">
@@ -445,9 +604,6 @@ export const showPublicProfile = async (sellerId, currentUser) => {
                 </div>
             `;
         }
-
-        // Render AI Suggestions
-        await renderBusinessSuggestions(sellerData);
 
         showView('public-profile');
     } catch (e) {
@@ -540,6 +696,19 @@ export const saveProfileChanges = async () => {
     } catch(e) { alert(e.message); }
 };
 
+export const handleEditLogoUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const compressedBase64 = await compressImage(e.target.result, 400, 400);
+        const inputEl = document.getElementById('edit-site-logo');
+        if (inputEl) inputEl.value = compressedBase64;
+    };
+    reader.readAsDataURL(file);
+};
+
 const renderProfileCreationCTA = () => {
     const cta = document.getElementById('profile-conversion-cta');
     const target = document.getElementById('profile-render-target');
@@ -563,8 +732,12 @@ window.showPublicProfile = (id) => showPublicProfile(id, window.currentUser);
 window.sendCollabRequest = (id) => sendCollabRequest(id);
 window.acceptCollabRequest = (reqId, fromId, toId) => acceptCollabRequest(reqId, fromId, toId);
 window.terminateCollaboration = (id) => terminateCollaboration(id);
-window.dismissSuggestion = (id) => dismissSuggestion(id);
-window.permanentlyDismissSuggestions = () => permanentlyDismissSuggestions();
-window.toggleSuggestionsSection = () => toggleSuggestionsSection();
+window.openAiSuggestionsModal = (id) => openAiSuggestionsModal(id);
+window.closeAiSuggestionsModal = () => closeAiSuggestionsModal();
+window.openMerchantWalletModal = (id) => openMerchantWalletModal(id);
+window.closeMerchantWalletModal = () => closeMerchantWalletModal();
+window.topUpWallet = (id) => topUpWallet(id);
+window.confirmTopUpWallet = (id) => confirmTopUpWallet(id);
+window.handleEditLogoUpload = handleEditLogoUpload;
 window.shareProfileTo = shareProfileTo;
 window.saveProfileChanges = saveProfileChanges;

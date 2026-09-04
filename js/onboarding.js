@@ -3,7 +3,7 @@ import { trackEvent } from './analytics.js';
 import { allSellers } from './search.js';
 
 let currentStep = 0;
-const totalSteps = 4; // Screen 1 to 4 (Features)
+const totalSteps = 5; // Screen 1 to 5
 
 let sessionSelectedLogos = null;
 
@@ -12,7 +12,6 @@ let sessionSelectedLogos = null;
  */
 export const getSessionLogos = () => {
     if (!sessionSelectedLogos || sessionSelectedLogos.length === 0) {
-        // Pick 3 random business logos
         const sellersWithLogos = (allSellers || []).filter(s => s.logo && s.logo.startsWith('data:image'));
         const shuffled = [...sellersWithLogos].sort(() => 0.5 - Math.random());
         const selectedLogos = shuffled.slice(0, 3).map(s => s.logo);
@@ -117,6 +116,31 @@ const renderOnboardingStep = () => {
     let content = '';
     switch(currentStep) {
         case 1:
+            // STEP 1: Dedicated #1 Industry First Feature - Black & White Minimalist Theme (Fully Translated)
+            content = `
+                <div class="max-w-xl mx-auto my-4 p-8 md:p-12 bg-black text-white rounded-[3rem] border-2 border-white shadow-2xl space-y-6 text-center relative overflow-hidden">
+                    <div class="flex justify-center items-center gap-2 flex-wrap">
+                        <span class="px-4 py-1.5 bg-white text-black font-black text-[10px] rounded-full uppercase tracking-widest border border-white flex items-center gap-2 shadow-md">
+                            <i class="fa-solid fa-crown text-black text-xs"></i> ${t('onboarding_rental_badge')}
+                        </span>
+                        <span class="text-xs font-black uppercase text-white bg-slate-800 px-3.5 py-1.5 rounded-full border border-slate-700">⚡ ₹83 / Day</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h2 class="text-2xl md:text-4xl font-black uppercase tracking-tight text-white leading-tight">${t('onboarding_rental_title')}</h2>
+                        <p class="text-xs md:text-sm text-slate-300 font-medium leading-relaxed max-w-lg mx-auto">${t('onboarding_rental_desc')}</p>
+                    </div>
+
+                    <div class="pt-2 flex justify-center">
+                        <button onclick="window.closeOnboarding(); openRegisterWizard(); selectRegPlan('starter');" class="px-8 py-4 bg-white text-black hover:bg-slate-200 font-black rounded-2xl text-[11px] uppercase tracking-widest transition shadow-xl flex items-center gap-2 transform hover:scale-105">
+                            <i class="fa-solid fa-rocket text-sm"></i> ${t('onboarding_rental_btn')}
+                        </button>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case 2:
             content = `
                 <div class="relative mb-6 md:mb-12">
                     <div class="absolute inset-0 bg-royal/20 blur-[60px] rounded-full scale-150 animate-pulse"></div>
@@ -141,36 +165,22 @@ const renderOnboardingStep = () => {
                 </div>
             `;
             break;
-        case 2:
+
+        case 3:
             content = `
                 <div class="relative mb-6 md:mb-12 py-6 md:py-10 w-full max-w-sm md:max-w-lg mx-auto">
-                    <!-- Layered Card Effect -->
                     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-full bg-slate-100 rounded-[2.5rem] md:rounded-[3rem] transform -rotate-3 scale-95 opacity-50"></div>
-
                     <div class="relative bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-1 shadow-2xl border border-slate-100 overflow-hidden">
-                        <div class="bg-slate-50 rounded-[2.4rem] md:rounded-[3.4rem] p-4 md:p-6">
-                            <div class="aspect-[4/3] bg-white rounded-[1.5rem] md:rounded-[2.5rem] mb-4 md:mb-6 overflow-hidden relative group">
-                                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1000" class="w-full h-full object-cover transition duration-1000 group-hover:scale-110">
-                                <div class="absolute top-3 right-3 md:top-6 md:right-6 bg-emerald-500 text-white text-[7px] md:text-[9px] font-black px-2 md:px-4 py-1 md:py-2 rounded-full uppercase tracking-widest shadow-lg flex items-center gap-1 md:gap-2">
-                                    <i class="fa-solid fa-circle-check"></i> Verified
-                                </div>
+                        <div class="p-6 md:p-10 space-y-4 md:space-y-6">
+                            <div class="aspect-[4/3] bg-slate-50 rounded-2xl md:rounded-3xl overflow-hidden relative group">
+                                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800" class="w-full h-full object-cover">
                             </div>
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-3">
-                                <div class="space-y-1 md:space-y-2 text-left">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                                <div class="text-left">
                                     <p class="text-[8px] md:text-[10px] font-black text-royal uppercase tracking-widest">Premium Inventory</p>
                                     <h4 class="text-lg md:text-2xl font-black text-black truncate max-w-[150px] md:max-w-none">Modern Collection</h4>
-                                    <div class="flex gap-1.5">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
-                                    </div>
                                 </div>
-                                <div class="text-left md:text-right w-full md:w-auto flex md:block justify-between items-center border-t md:border-t-0 border-slate-100 pt-2 md:pt-0">
-                                    <div class="md:block">
-                                        <p class="text-[7px] md:text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Price Point</p>
-                                        <span class="text-xl md:text-3xl font-black text-royal">₹4,000</span>
-                                    </div>
-                                </div>
+                                <span class="text-xl md:text-3xl font-black text-royal">₹4,000</span>
                             </div>
                         </div>
                     </div>
@@ -179,71 +189,17 @@ const renderOnboardingStep = () => {
                 <p class="text-slate-500 font-medium mb-6 md:mb-8 max-w-md mx-auto text-xs md:text-base">${t('onboarding_2_desc')}</p>
             `;
             break;
-        case 3:
+
+        case 4:
             content = `
                 <div class="relative mb-6 md:mb-12 pt-6 md:pt-10">
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 md:w-80 md:h-80 bg-royal/10 rounded-full blur-3xl"></div>
-
-                    <!-- iPhone Style Mockup -->
-                    <div class="relative w-[220px] h-[440px] md:w-[280px] md:h-[560px] bg-black rounded-[2.5rem] md:rounded-[3.5rem] border-[6px] md:border-[8px] border-slate-900 shadow-[0_0_80px_-20px_rgba(37,99,235,0.3)] mx-auto overflow-hidden scale-90 md:scale-100">
-                        <!-- Notch / Dynamic Island -->
+                    <div class="relative w-[220px] h-[440px] md:w-[280px] md:h-[560px] bg-black rounded-[2.5rem] md:rounded-[3.5rem] border-[6px] md:border-[8px] border-slate-900 shadow-2xl mx-auto overflow-hidden">
                         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 md:w-28 md:h-7 bg-black rounded-b-2xl md:rounded-b-3xl z-30"></div>
-
-                        <!-- Status Bar -->
-                        <div class="absolute top-0 left-0 right-0 h-8 md:h-10 px-6 md:px-8 flex justify-between items-center z-20">
-                            <span class="text-[8px] md:text-[10px] font-bold text-black">9:41</span>
-                            <div class="flex gap-1 md:gap-1.5 items-center">
-                                <i class="fa-solid fa-signal text-[6px] md:text-[8px] text-black"></i>
-                                <i class="fa-solid fa-wifi text-[6px] md:text-[8px] text-black"></i>
-                                <i class="fa-solid fa-battery-full text-[8px] md:text-[10px] text-black"></i>
-                            </div>
-                        </div>
-
-                        <!-- App Screen -->
-                        <div class="absolute inset-0 bg-white pt-10 md:pt-12 pb-8 md:pb-10 px-3 md:px-4 flex flex-col">
-                            <!-- App Header -->
-                            <div class="flex justify-between items-center mb-4 md:mb-6 px-1 md:px-2">
-                                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                    <i class="fa-solid fa-bars text-[8px] md:text-[10px]"></i>
-                                </div>
-                                <span class="text-[8px] md:text-[10px] font-black uppercase tracking-widest">Dashboard</span>
-                                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-royal flex items-center justify-center">
-                                    <i class="fa-solid fa-user text-white text-[8px] md:text-[10px]"></i>
-                                </div>
-                            </div>
-
-                            <!-- App Content -->
-                            <div class="flex-1 space-y-4 md:space-y-6 overflow-hidden">
-                                <div class="bg-slate-50 rounded-2xl md:rounded-3xl p-3 md:p-5 border border-slate-100">
-                                    <p class="text-[6px] md:text-[8px] font-black text-slate-400 uppercase mb-0.5 md:mb-1">Monthly Analytics</p>
-                                    <div class="flex justify-between items-end">
-                                        <span class="text-sm md:text-xl font-black">₹48,500</span>
-                                        <span class="text-[6px] md:text-[8px] font-black text-emerald-500">+12%</span>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 md:gap-3">
-                                    <div class="aspect-square bg-slate-50 rounded-xl md:rounded-2xl p-2 md:p-3 border border-slate-100">
-                                        <div class="w-full h-full bg-white rounded-lg md:rounded-xl shadow-sm"></div>
-                                    </div>
-                                    <div class="aspect-square bg-slate-50 rounded-xl md:rounded-2xl p-2 md:p-3 border border-slate-100">
-                                        <div class="w-full h-full bg-white rounded-lg md:rounded-xl shadow-sm"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Floating Action -->
-                            <div class="absolute bottom-20 md:bottom-24 right-4 md:right-6 w-10 h-10 md:w-12 md:h-12 bg-black rounded-xl md:rounded-2xl shadow-xl flex items-center justify-center transform rotate-12 transition hover:rotate-0">
-                                <i class="fa-solid fa-plus text-white text-xs md:text-base"></i>
-                            </div>
-
-                            <!-- Bottom Nav -->
-                            <div class="h-12 md:h-16 border-t border-slate-50 flex items-center justify-around px-2 md:px-4">
-                                <i class="fa-solid fa-house text-royal text-xs md:text-sm"></i>
-                                <i class="fa-solid fa-chart-pie text-slate-300 text-xs md:text-sm"></i>
-                                <div class="w-8 md:w-10 h-1"></div>
-                                <i class="fa-solid fa-box text-slate-300 text-xs md:text-sm"></i>
-                                <i class="fa-solid fa-gear text-slate-300 text-xs md:text-sm"></i>
-                            </div>
+                        <div class="absolute inset-0 bg-white pt-10 md:pt-12 pb-8 md:pb-10 px-3 md:px-4 flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-mobile-screen text-4xl md:text-6xl text-royal mb-4"></i>
+                            <h4 class="text-sm md:text-lg font-black text-black uppercase">Android App</h4>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Manage Business On The Go</p>
                         </div>
                     </div>
                 </div>
@@ -251,18 +207,18 @@ const renderOnboardingStep = () => {
                 <p class="text-slate-500 font-medium mb-6 md:mb-8 max-w-md mx-auto text-xs md:text-base">${t('onboarding_3_desc')}</p>
             `;
             break;
-        case 4:
+
+        case 5:
+            const featsList = Array.isArray(t('features_list')) ? t('features_list') : ["AI Salesman", "Verified Profile", "1-Day Pay-As-You-Go Plan", "Lead Management"];
             content = `
                 <div class="relative mb-8 md:mb-16 py-6 md:py-10">
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-64 md:h-80 bg-royal/5 rounded-full blur-[80px] md:blur-[100px]"></div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 max-w-lg mx-auto relative z-10 px-4">
-                        ${t('features_list').map((f, i) => `
-                            <div class="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col items-center text-center gap-2 md:gap-4 group hover:-translate-y-1 md:hover:-translate-y-2 transition-transform duration-500 overflow-hidden">
+                        ${featsList.map((f, i) => `
+                            <div class="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col items-center text-center gap-2 md:gap-4 group hover:-translate-y-1 transition-transform duration-500 overflow-hidden">
                                 <div class="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 group-hover:bg-royal group-hover:text-white transition-all duration-500">
                                     <i class="fa-solid ${['fa-robot', 'fa-shield-check', 'fa-rocket', 'fa-users-gear'][i]} text-lg md:text-2xl"></i>
                                 </div>
                                 <span class="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-800 line-clamp-1 w-full px-2">${f}</span>
-                                <div class="w-4 h-0.5 bg-slate-100 group-hover:w-8 md:group-hover:w-12 group-hover:bg-royal transition-all duration-500"></div>
                             </div>
                         `).join('')}
                     </div>
@@ -297,7 +253,7 @@ const renderOnboardingStep = () => {
 
                     <!-- Progress Dots -->
                     <div class="flex gap-2 shrink-0">
-                        ${[1,2,3,4].map(i => `<div class="w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === currentStep ? 'bg-royal w-4' : 'bg-slate-200'}"></div>`).join('')}
+                        ${[1,2,3,4,5].map(i => `<div class="w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === currentStep ? 'bg-royal w-4' : 'bg-slate-200'}"></div>`).join('')}
                     </div>
 
                     <button onclick="window.nextStep()" class="btn-black px-8 md:px-10 py-3 md:py-4 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shrink-0">
@@ -336,6 +292,13 @@ window.skipOnboarding = () => {
     finishOnboarding();
 };
 
+export const closeOnboarding = () => {
+    finishOnboarding();
+};
+window.closeOnboarding = closeOnboarding;
+window.showLanguageSelection = showLanguageSelection;
+window.startOnboarding = startOnboarding;
+
 const finishOnboarding = () => {
     localStorage.setItem('codez48_onboarding_done', 'true');
     document.body.classList.remove('overflow-hidden');
@@ -347,7 +310,7 @@ const finishOnboarding = () => {
     trackEvent('onboarding_completed');
 
     // Refresh CTAs on homepage
-    window.refreshConversionCTAs();
+    if (window.refreshConversionCTAs) window.refreshConversionCTAs();
 };
 
 export const refreshConversionCTAs = () => {
@@ -357,7 +320,6 @@ export const refreshConversionCTAs = () => {
 
         homeCta.innerHTML = `
             <div class="relative group mx-auto max-w-full overflow-hidden">
-                <!-- Clean White Background Glow -->
                 <div class="absolute inset-0 bg-white blur-[120px] rounded-full scale-150 opacity-60"></div>
                 <div class="relative bg-white rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-20 text-center border border-slate-100 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-royal/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
@@ -368,28 +330,8 @@ export const refreshConversionCTAs = () => {
                     </div>
 
                     <h3 class="text-3xl md:text-6xl font-black text-black mb-6 uppercase tracking-tightest leading-tight md:leading-none break-words px-2">${t('home_cta_title')}</h3>
-                    <p class="text-slate-500 font-medium mb-10 md:mb-12 max-w-2xl mx-auto text-base md:text-xl leading-relaxed break-words px-2">${t('home_cta_desc')}</p>
-
-                    <div class="flex flex-col md:flex-row items-center justify-center gap-8">
-                        <button onclick="openRegisterWizard(); window.trackEvent('cta_create_clicked', { location: 'home' })" class="btn-royal px-12 md:px-16 py-5 md:py-6 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_20px_50px_-15px_rgba(37,99,235,0.4)] hover:scale-105 transition-transform duration-300 w-full md:w-auto">
-                            ${t('create_now')}
-                        </button>
-                        <div class="flex flex-col items-center md:items-start gap-4">
-                            <div class="flex -space-x-3 overflow-hidden">
-                                ${finalLogos.map(url => `
-                                    <img class="inline-block h-10 w-10 md:h-12 md:w-12 rounded-full ring-4 ring-white object-cover bg-white" src="${url}" alt="Partner">
-                                `).join('')}
-                            </div>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Joined by ${allSellers.length > 10 ? allSellers.length : '500'}+ Businesses</p>
-                        </div>
-                    </div>
                 </div>
             </div>
         `;
     }
 };
-
-// Exposed Globals
-window.initOnboarding = initOnboarding;
-window.showLanguageSelection = showLanguageSelection;
-window.refreshConversionCTAs = refreshConversionCTAs;

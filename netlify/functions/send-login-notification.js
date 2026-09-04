@@ -370,6 +370,68 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle Registration Submit Request Event (Sent to Seller immediately on clicking Submit Request)
+        if (action === 'REGISTRATION_SUBMIT_REQUEST_ALERT') {
+            const sellerEmail = data.sellerEmail || notificationEmail;
+            const brandName = data.brandName || data.username || 'Merchant';
+
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `⚡ Welcome to CODEZ48 - Registration Request Submitted!`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #f8fafc; border-radius: 24px; border: 1px solid #e2e8f0; max-width: 580px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <div style="width: 52px; height: 52px; background-color: #f3e8ff; color: #9333ea; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚡</div>
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Welcome to CODEZ48</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase;">Registration Request Submitted</p>
+                            </div>
+
+                            <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                                <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 800; color: #581c87;">
+                                    Hello ${escapeHtml(brandName)}, your registration request has been submitted successfully!
+                                </p>
+                                <p style="margin: 0; font-size: 13px; color: #6b21a8; font-weight: 500; line-height: 1.6;">
+                                    You are almost done completing your business profile. Select your preferred activation option below to bring your website and Android application live:
+                                </p>
+                            </div>
+
+                            <!-- Activation Options Summary -->
+                            <div style="background-color: #ffffff; border: 1px solid #e9d5ff; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-size: 13px; color: #334155;">
+                                <p style="margin: 0 0 10px 0; font-weight: 800; color: #0f172a; text-transform: uppercase; font-size: 11px;">Selectable Activation & Payment Options:</p>
+
+                                <div style="margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                                    <strong style="color: #9333ea; font-size: 13px;">⚡ Option 1: Daily Pay-As-You-Go Rental (₹83/Day Starter | ₹133/Day Premium)</strong>
+                                    <p style="margin: 4px 0 0 0; color: #64748b; font-size: 12px;">Rent & launch your full business website for just 1 single day with zero upfront risk!</p>
+                                </div>
+
+                                <div>
+                                    <strong style="color: #059669; font-size: 13px;">💼 Option 2: Monthly Plan (₹2,500/Mo Starter | ₹4,000/Mo Premium)</strong>
+                                    <p style="margin: 4px 0 0 0; color: #64748b; font-size: 12px;">Full 30-day website activation, custom Android app, AI Salesman & SEO suite.</p>
+                                </div>
+                            </div>
+
+                            <div style="text-align: center;">
+                                <a href="https://codez48.netlify.app/#auth" style="display: inline-block; background-color: #9333ea; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: 99px; text-decoration: none; box-shadow: 0 10px 20px rgba(147, 51, 234, 0.25);">
+                                    Complete Payment & Activate Website →
+                                </a>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Registration submit request welcome email sent successfully!"
+                })
+            };
+        }
+
         // Handle Seller Registration Event (Sends credentials to Seller + Alert to Developer)
         if (action === 'SELLER_REGISTRATION_ALERT') {
             const sellerEmail = data.sellerEmail || notificationEmail;
@@ -504,6 +566,57 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({
                     success: true,
                     message: "Login confirmation dispatched to seller and developer!"
+                })
+            };
+        }
+
+        // Handle Insufficient Wallet Balance Alert Email
+        if (action === 'INSUFFICIENT_WALLET_ALERT') {
+            const sellerEmail = notificationEmail || userEmail;
+            const sellerId = data.sellerId || siteId || 'SLR-000';
+            const brandName = data.brandName || userName || 'Merchant';
+            const walletBalance = data.walletBalance || 0;
+            const dailyFee = data.dailyFee || 83;
+
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `⚠️ Action Required: Your CODEZ48 Website is Inactive (Insufficient Wallet Balance)`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #fff1f2; border-radius: 24px; border: 2px solid #f43f5e; max-width: 580px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <div style="width: 52px; height: 52px; background-color: #ffe4e6; color: #e11d48; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚠️</div>
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #881337; text-transform: uppercase;">Website Temporarily Paused</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #e11d48; text-transform: uppercase;">Insufficient Wallet Balance Notice</p>
+                            </div>
+
+                            <p style="font-size: 14px; font-weight: 600; color: #9f1239; line-height: 1.6; margin-bottom: 20px;">
+                                Hello ${escapeHtml(brandName)}, your website has been temporarily paused because your wallet balance (<strong>₹${walletBalance}</strong>) is below the required daily activation fee (<strong>₹${dailyFee}</strong>).
+                            </p>
+
+                            <div style="background-color: #ffffff; border: 1px solid #fecdd3; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #4c0519;">
+                                <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sellerId)}</strong></p>
+                                <p style="margin: 0 0 6px 0;">Current Wallet Balance: <strong>₹${walletBalance}</strong></p>
+                                <p style="margin: 0;">Daily Plan Fee: <strong>₹${dailyFee} / Day</strong></p>
+                            </div>
+
+                            <div style="text-align: center;">
+                                <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #e11d48; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; box-shadow: 0 8px 20px rgba(225, 29, 72, 0.25);">
+                                    Recharge Wallet & Activate Website Now →
+                                </a>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Insufficient wallet alert email dispatched successfully!"
                 })
             };
         }
