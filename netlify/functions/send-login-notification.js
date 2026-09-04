@@ -38,6 +38,7 @@ const escapeHtml = (str) => {
 };
 
 const DEVELOPER_EMAIL = 'rajnaga75556@gmail.com';
+const OFFICIAL_LOGO_URL = 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
 
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
@@ -148,6 +149,172 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle Developer Payout Request Email Alerts (Sent to Developer Admin + Requesting User with 24h Guarantee)
+        if (action === 'DEVELOPER_PAYOUT_REQUEST_ALERT') {
+            const targetEmail = data.email || data.userEmail || notificationEmail;
+            const name = data.name || userName || 'Developer Partner';
+            const mobileNumber = data.mobile || 'N/A';
+            const upiId = data.upiId || 'N/A';
+            const amount = data.amount || 0;
+
+            // Email 1: To Developer Admin (rajnaga75556@gmail.com)
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `⚡ DEVELOPER PAYOUT REQUEST: ${escapeHtml(name)} (₹${amount})`,
+                html: `
+                    <div style="font-family: monospace, system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
+                        <div style="text-align: center; border-b: 2px solid #000000; padding-bottom: 20px; margin-bottom: 24px;">
+                            <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                            <h2 style="margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; color: #000000;">DEVELOPER PAYOUT WITHDRAWAL REQUEST</h2>
+                        </div>
+
+                        <div style="border: 1px solid #000000; padding: 20px; margin-bottom: 24px;">
+                            <p style="margin: 0 0 8px 0;">Developer Name: <strong>${escapeHtml(name)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Developer Email: <strong>${escapeHtml(targetEmail)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Mobile Number: <strong>${escapeHtml(mobileNumber)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Payout UPI ID: <strong>${escapeHtml(upiId)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Requested Amount: <strong style="font-size: 18px; color: #000000;">₹${amount}</strong></p>
+                            <p style="margin: 0;">Status: <strong>Pending Admin Authorization</strong></p>
+                        </div>
+
+                        <div style="text-align: center; border-t: 1px solid #000000; padding-top: 16px; font-size: 10px; font-weight: bold;">
+                            CODEZ48 DEVELOPER NETWORK — PAYOUT AUTHORIZATION REQUIRED
+                        </div>
+                    </div>
+                `
+            });
+
+            // Email 2: To Requesting User (24-Hour Processing Guarantee)
+            if (targetEmail && targetEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: targetEmail,
+                    subject: `CODEZ48 Developer Payout Request Received - Processing in 24 Hours`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 580px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px; border-b: 2px solid #000000; padding-bottom: 20px;">
+                                <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">Payout Request Confirmed</h2>
+                            </div>
+
+                            <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
+                                Hello ${escapeHtml(name)}, your payout withdrawal request of <strong>₹${amount}</strong> has been received successfully!
+                            </p>
+
+                            <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
+                                <p style="margin: 0 0 6px 0;">Requested Amount: <strong>₹${amount}</strong></p>
+                                <p style="margin: 0 0 6px 0;">Target UPI ID: <strong>${escapeHtml(upiId)}</strong></p>
+                                <p style="margin: 0;">Processing Timeframe: <strong>Within 24 Hours</strong></p>
+                            </div>
+
+                            <p style="font-size: 12px; font-weight: 500; color: #000000; text-align: center; margin-bottom: 24px;">
+                                Your requested payout amount of ₹${amount} will be verified and credited to your bank/UPI account (${escapeHtml(upiId)}) within 24 hours.
+                            </p>
+
+                            <div style="text-align: center;">
+                                <a href="https://codez48.netlify.app/seller/developer.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
+                                    View Developer Console →
+                                </a>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Developer payout request emails dispatched successfully!"
+                })
+            };
+        }
+
+        // Handle Merchant Wallet Top-Up Email Notifications (Sent to Developer + Seller)
+        if (action === 'WALLET_TOPUP_ALERTS') {
+            const sellerEmail = data.sellerEmail || notificationEmail;
+            const sellerId = data.sellerId || siteId || 'SLR-000';
+            const brandName = data.brandName || userName || 'Merchant Node';
+            const mobileNumber = data.mobileNumber || 'N/A';
+            const amountPaid = data.amount || 200;
+            const paymentId = data.paymentId || 'PAY_' + Date.now();
+            const remainingBalance = data.remainingBalance || amountPaid;
+
+            // Email 1: To Developer (rajnaga75556@gmail.com)
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `⚡ WALLET RECHARGE ALERT: ${escapeHtml(sellerId)} (₹${amountPaid})`,
+                html: `
+                    <div style="font-family: monospace, system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
+                        <div style="text-align: center; border-b: 2px solid #000000; padding-bottom: 20px; margin-bottom: 24px;">
+                            <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                            <h2 style="margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; color: #000000;">DEVELOPER ALERT: MERCHANT WALLET TOP-UP</h2>
+                        </div>
+
+                        <div style="border: 1px solid #000000; padding: 20px; margin-bottom: 24px;">
+                            <p style="margin: 0 0 8px 0;">Seller ID: <strong>${escapeHtml(sellerId)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Brand Name: <strong>${escapeHtml(brandName)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Seller Email: <strong>${escapeHtml(sellerEmail)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Mobile Number: <strong>${escapeHtml(mobileNumber)}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Recharge Amount: <strong style="font-size: 16px;">₹${amountPaid}</strong></p>
+                            <p style="margin: 0 0 8px 0;">Payment ID: <strong>${escapeHtml(paymentId)}</strong></p>
+                            <p style="margin: 0;">New Wallet Balance: <strong style="font-size: 16px;">₹${remainingBalance}</strong></p>
+                        </div>
+
+                        <div style="text-align: center; border-t: 1px solid #000000; padding-top: 16px; font-size: 10px; font-weight: bold;">
+                            CODEZ48 OFFICIAL NETWORK — VERIFIED TOP-UP TRANSACTION
+                        </div>
+                    </div>
+                `
+            });
+
+            // Email 2: To Seller / User
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `CODEZ48 Wallet Recharge Confirmed - ₹${amountPaid} Credited`,
+                    html: `
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 580px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px; border-b: 2px solid #000000; padding-bottom: 20px;">
+                                <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">Wallet Recharge Confirmed</h2>
+                            </div>
+
+                            <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
+                                Hello ${escapeHtml(brandName)}, your wallet recharge of <strong>₹${amountPaid}</strong> on CODEZ48 was successful and credited to your merchant account.
+                            </p>
+
+                            <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
+                                <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sellerId)}</strong></p>
+                                <p style="margin: 0 0 6px 0;">Amount Credited: <strong>₹${amountPaid}</strong></p>
+                                <p style="margin: 0 0 6px 0;">Payment ID: <strong>${escapeHtml(paymentId)}</strong></p>
+                                <p style="margin: 0;">Updated Wallet Balance: <strong style="font-size: 16px;">₹${remainingBalance}</strong></p>
+                            </div>
+
+                            <div style="text-align: center;">
+                                <a href="https://codez48.netlify.app/#public-profile" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
+                                    View Merchant Wallet & Dashboard →
+                                </a>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    success: true,
+                    message: "Wallet top-up alert emails dispatched to seller and developer!"
+                })
+            };
+        }
+
         // Handle Black & White Email Dispatch for Collaboration Token Approval
         if (action === 'SEND_COLLAB_EMAIL') {
             const targetRecipient = data.toEmail || notificationEmail;
@@ -173,6 +340,7 @@ exports.handler = async (event, context) => {
                 html: `
                     <div style="font-family: monospace, system-ui, sans-serif; padding: 40px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
                         <div style="text-align: center; border-b: 2px solid #000000; padding-bottom: 20px; margin-bottom: 24px;">
+                            <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
                             <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">CODEZ48 BUSINESS COLLABORATION REQUEST</h2>
                             <p style="margin: 6px 0 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #000000;">Token ID: ${collabToken}</p>
                         </div>
@@ -281,95 +449,6 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // Handle Security OTP Email Generation for Custom Pro SMTP Setup
-        if (action === 'SEND_OTP') {
-            const targetRecipient = notificationEmail;
-            if (!targetRecipient || !targetRecipient.includes('@')) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ success: false, error: "Valid email address required to receive OTP." })
-                };
-            }
-
-            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-            if (initAdmin() && db) {
-                await db.collection('mail_otp_codes').doc(targetRecipient.toLowerCase()).set({
-                    otpCode,
-                    siteId,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            await transporter.sendMail({
-                from: smtpFrom,
-                to: targetRecipient,
-                subject: `🔒 Security Verification OTP Code - CODEZ48 Pro API`,
-                html: `
-                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #faf5ff; border-radius: 20px; border: 1px solid #e9d5ff;">
-                        <h2 style="color: #9333ea; margin: 0 0 10px 0;">Pro API Credentials Verification</h2>
-                        <p style="color: #4c1d95; font-size: 14px;">Your 6-digit security OTP code for configuring custom Pro email credentials on CODEZ48 is:</p>
-                        <div style="font-size: 28px; font-weight: 900; color: #9333ea; letter-spacing: 8px; background: #ffffff; padding: 15px 25px; border-radius: 12px; display: inline-block; margin: 15px 0;">${otpCode}</div>
-                        <p style="color: #6b21a8; font-size: 12px;">This OTP code expires in 15 minutes. Do not share it with anyone.</p>
-                    </div>
-                `
-            });
-
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    success: true,
-                    message: "Security OTP Code dispatched successfully!",
-                    recipient: targetRecipient
-                })
-            };
-        }
-
-        // Handle Security OTP Code Verification
-        if (action === 'VERIFY_OTP') {
-            const targetRecipient = notificationEmail;
-            const inputOtp = data.otpCode ? String(data.otpCode).trim() : '';
-
-            if (!targetRecipient || !inputOtp) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ success: false, error: "Recipient email and OTP code required." })
-                };
-            }
-
-            if (!initAdmin() || !db) {
-                return { statusCode: 500, body: JSON.stringify({ error: "Database unavailable" }) };
-            }
-
-            const otpDoc = await db.collection('mail_otp_codes').doc(targetRecipient.toLowerCase()).get();
-            if (!otpDoc.exists || otpDoc.data().otpCode !== inputOtp) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ success: false, error: "Invalid or expired security OTP code." })
-                };
-            }
-
-            // Save verified custom Pro SMTP credentials
-            if (data.customSmtpUser && data.customSmtpPass) {
-                await db.collection('user_custom_smtp').doc(siteId).set({
-                    siteId,
-                    customSmtpUser: data.customSmtpUser,
-                    customSmtpPass: data.customSmtpPass,
-                    verifiedAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    success: true,
-                    message: "Pro API credentials verified and saved successfully!"
-                })
-            };
-        }
-
         // Handle Registration Submit Request Event (Sent to Seller immediately on clicking Submit Request)
         if (action === 'REGISTRATION_SUBMIT_REQUEST_ALERT') {
             const sellerEmail = data.sellerEmail || notificationEmail;
@@ -381,39 +460,39 @@ exports.handler = async (event, context) => {
                     to: sellerEmail,
                     subject: `⚡ Welcome to CODEZ48 - Registration Request Submitted!`,
                     html: `
-                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #f8fafc; border-radius: 24px; border: 1px solid #e2e8f0; max-width: 580px; margin: 0 auto;">
-                            <div style="text-align: center; margin-bottom: 24px;">
-                                <div style="width: 52px; height: 52px; background-color: #f3e8ff; color: #9333ea; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚡</div>
-                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Welcome to CODEZ48</h2>
-                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase;">Registration Request Submitted</p>
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 580px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px; border-b: 2px solid #000000; padding-bottom: 16px;">
+                                <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #000000; text-transform: uppercase;">Welcome to CODEZ48</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #000000; text-transform: uppercase;">Registration Request Submitted</p>
                             </div>
 
-                            <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
-                                <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 800; color: #581c87;">
+                            <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                                <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 800; color: #000000;">
                                     Hello ${escapeHtml(brandName)}, your registration request has been submitted successfully!
                                 </p>
-                                <p style="margin: 0; font-size: 13px; color: #6b21a8; font-weight: 500; line-height: 1.6;">
+                                <p style="margin: 0; font-size: 13px; color: #000000; font-weight: 500; line-height: 1.6;">
                                     You are almost done completing your business profile. Select your preferred activation option below to bring your website and Android application live:
                                 </p>
                             </div>
 
                             <!-- Activation Options Summary -->
-                            <div style="background-color: #ffffff; border: 1px solid #e9d5ff; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-size: 13px; color: #334155;">
-                                <p style="margin: 0 0 10px 0; font-weight: 800; color: #0f172a; text-transform: uppercase; font-size: 11px;">Selectable Activation & Payment Options:</p>
+                            <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-size: 13px; color: #000000;">
+                                <p style="margin: 0 0 10px 0; font-weight: 800; color: #000000; text-transform: uppercase; font-size: 11px;">Selectable Activation & Payment Options:</p>
 
-                                <div style="margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-                                    <strong style="color: #9333ea; font-size: 13px;">⚡ Option 1: Daily Pay-As-You-Go Rental (₹83/Day Starter | ₹133/Day Premium)</strong>
-                                    <p style="margin: 4px 0 0 0; color: #64748b; font-size: 12px;">Rent & launch your full business website for just 1 single day with zero upfront risk!</p>
+                                <div style="margin-bottom: 14px; border-bottom: 1px solid #000000; padding-bottom: 10px;">
+                                    <strong style="color: #000000; font-size: 13px;">⚡ Option 1: Daily Pay-As-You-Go Rental (₹83/Day Starter | ₹133/Day Premium)</strong>
+                                    <p style="margin: 4px 0 0 0; color: #000000; font-size: 12px;">Rent & launch your full business website for just 1 single day with zero upfront risk!</p>
                                 </div>
 
                                 <div>
-                                    <strong style="color: #059669; font-size: 13px;">💼 Option 2: Monthly Plan (₹2,500/Mo Starter | ₹4,000/Mo Premium)</strong>
-                                    <p style="margin: 4px 0 0 0; color: #64748b; font-size: 12px;">Full 30-day website activation, custom Android app, AI Salesman & SEO suite.</p>
+                                    <strong style="color: #000000; font-size: 13px;">💼 Option 2: Monthly Plan (₹2,500/Mo Starter | ₹4,000/Mo Premium)</strong>
+                                    <p style="margin: 4px 0 0 0; color: #000000; font-size: 12px;">Full 30-day website activation, custom Android app, AI Salesman & SEO suite.</p>
                                 </div>
                             </div>
 
                             <div style="text-align: center;">
-                                <a href="https://codez48.netlify.app/#auth" style="display: inline-block; background-color: #9333ea; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: 99px; text-decoration: none; box-shadow: 0 10px 20px rgba(147, 51, 234, 0.25);">
+                                <a href="https://codez48.netlify.app/#auth" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
                                     Complete Payment & Activate Website →
                                 </a>
                             </div>
@@ -449,36 +528,36 @@ exports.handler = async (event, context) => {
                     to: sellerEmail,
                     subject: `Welcome to CODEZ48 - Your Merchant Node Credentials`,
                     html: `
-                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #f8fafc; border-radius: 24px; border: 1px solid #e2e8f0; max-width: 560px; margin: 0 auto;">
-                            <div style="text-align: center; margin-bottom: 24px;">
-                                <div style="width: 50px; height: 50px; background-color: #f3e8ff; color: #9333ea; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 10px;">⚡</div>
-                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #0f172a; text-transform: uppercase;">Welcome to CODEZ48</h2>
-                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase;">Merchant Registration Confirmed</p>
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 560px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px; border-b: 2px solid #000000; padding-bottom: 16px;">
+                                <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #000000; text-transform: uppercase;">Welcome to CODEZ48</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #000000; text-transform: uppercase;">Merchant Registration Confirmed</p>
                             </div>
 
-                            <div style="background-color: #faf5ff; border-left: 4px solid #9333ea; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
-                                <p style="margin: 0; font-size: 14px; font-weight: 700; color: #581c87;">
+                            <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 700; color: #000000;">
                                     Hello ${escapeHtml(brandName)}, your CODEZ48 Merchant Node has been registered successfully on the ${escapeHtml(planName.toUpperCase())} plan.
                                 </p>
                             </div>
 
-                            <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155; margin-bottom: 28px;">
-                                <tr style="border-b: 1px solid #f1f5f9;">
-                                    <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Seller ID:</td>
-                                    <td style="padding: 12px 0; font-weight: 800; font-family: monospace; color: #9333ea; font-size: 15px;">${escapeHtml(sellerId)}</td>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #000000; margin-bottom: 28px;">
+                                <tr style="border-b: 1px solid #000000;">
+                                    <td style="padding: 12px 0; font-weight: 800; color: #000000; text-transform: uppercase; font-size: 10px;">Seller ID:</td>
+                                    <td style="padding: 12px 0; font-weight: 800; font-family: monospace; color: #000000; font-size: 15px;">${escapeHtml(sellerId)}</td>
                                 </tr>
-                                <tr style="border-b: 1px solid #f1f5f9;">
-                                    <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Login Password:</td>
-                                    <td style="padding: 12px 0; font-weight: 800; font-family: monospace; color: #0f172a; font-size: 15px;">${escapeHtml(sellerPassword)}</td>
+                                <tr style="border-b: 1px solid #000000;">
+                                    <td style="padding: 12px 0; font-weight: 800; color: #000000; text-transform: uppercase; font-size: 10px;">Login Password:</td>
+                                    <td style="padding: 12px 0; font-weight: 800; font-family: monospace; color: #000000; font-size: 15px;">${escapeHtml(sellerPassword)}</td>
                                 </tr>
-                                <tr style="border-b: 1px solid #f1f5f9;">
-                                    <td style="padding: 12px 0; font-weight: 800; color: #64748b; text-transform: uppercase; font-size: 10px;">Chosen Plan:</td>
-                                    <td style="padding: 12px 0; font-weight: 700; color: #059669;">${escapeHtml(planName.toUpperCase())} (${escapeHtml(String(paidAmount))})</td>
+                                <tr style="border-b: 1px solid #000000;">
+                                    <td style="padding: 12px 0; font-weight: 800; color: #000000; text-transform: uppercase; font-size: 10px;">Chosen Plan:</td>
+                                    <td style="padding: 12px 0; font-weight: 700; color: #000000;">${escapeHtml(planName.toUpperCase())} (${escapeHtml(String(paidAmount))})</td>
                                 </tr>
                             </table>
 
                             <div style="text-align: center; margin-bottom: 24px;">
-                                <a href="https://codez48.netlify.app/" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 32px; border-radius: 99px; text-decoration: none;">
+                                <a href="https://codez48.netlify.app/" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 32px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
                                     Login On Home Page →
                                 </a>
                             </div>
@@ -487,16 +566,17 @@ exports.handler = async (event, context) => {
                 });
             }
 
-            // Email 2: To Developer (codez48@codez48.netlify.app)
+            // Email 2: To Developer (codez48@codez48.netlify.app / rajnaga75556@gmail.com)
             await transporter.sendMail({
                 from: smtpFrom,
                 to: DEVELOPER_EMAIL,
                 subject: `⚡ NEW MERCHANT REGISTRATION: ${escapeHtml(sellerId)} (${escapeHtml(planName.toUpperCase())})`,
                 html: `
-                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
-                        <h2 style="color: #a855f7; margin: 0 0 10px 0;">⚡ New Merchant Node Registered</h2>
-                        <p style="color: #cbd5e1; font-size: 13px;">A new merchant completed registration & payment on CODEZ48 platform:</p>
-                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #38bdf8;">
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #ffffff; color: #000000; border: 2px solid #000000; border-radius: 20px;">
+                        <img src="${OFFICIAL_LOGO_URL}" style="height: 50px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                        <h2 style="color: #000000; margin: 0 0 10px 0; text-transform: uppercase;">⚡ New Merchant Node Registered</h2>
+                        <p style="color: #000000; font-size: 13px;">A new merchant completed registration & payment on CODEZ48 platform:</p>
+                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #000000;">
                             <li><strong>Brand/Name:</strong> ${escapeHtml(brandName)}</li>
                             <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
                             <li><strong>Mobile Number:</strong> ${escapeHtml(mobileNumber)}</li>
@@ -533,10 +613,11 @@ exports.handler = async (event, context) => {
                     to: sellerEmail,
                     subject: `Welcome Back to CODEZ48 - Login Confirmed`,
                     html: `
-                        <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; max-width: 540px; margin: 0 auto;">
-                            <h2 style="color: #9333ea; margin: 0 0 10px 0;">Welcome Back, ${escapeHtml(brandName)}!</h2>
-                            <p style="font-size: 13px; color: #334155;">Your login to CODEZ48 Merchant Platform was successful.</p>
-                            <p style="font-size: 12px; color: #64748b; font-family: monospace;">Seller ID: <strong>${escapeHtml(sellerId)}</strong> | Login Time: <strong>${new Date().toLocaleString()}</strong></p>
+                        <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 540px; margin: 0 auto;">
+                            <img src="${OFFICIAL_LOGO_URL}" style="height: 50px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                            <h2 style="color: #000000; margin: 0 0 10px 0; text-transform: uppercase;">Welcome Back, ${escapeHtml(brandName)}!</h2>
+                            <p style="font-size: 13px; color: #000000;">Your login to CODEZ48 Merchant Platform was successful.</p>
+                            <p style="font-size: 12px; color: #000000; font-family: monospace;">Seller ID: <strong>${escapeHtml(sellerId)}</strong> | Login Time: <strong>${new Date().toLocaleString()}</strong></p>
                         </div>
                     `
                 });
@@ -548,9 +629,10 @@ exports.handler = async (event, context) => {
                 to: DEVELOPER_EMAIL,
                 subject: `⚡ MERCHANT LOGIN EVENT: ${escapeHtml(sellerId)} (${escapeHtml(brandName)})`,
                 html: `
-                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
-                        <h2 style="color: #38bdf8; margin: 0 0 10px 0;">⚡ Merchant Login Activity Alert</h2>
-                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #cbd5e1;">
+                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #ffffff; color: #000000; border: 2px solid #000000; border-radius: 20px;">
+                        <img src="${OFFICIAL_LOGO_URL}" style="height: 50px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                        <h2 style="color: #000000; margin: 0 0 10px 0; text-transform: uppercase;">⚡ Merchant Login Activity Alert</h2>
+                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #000000;">
                             <li><strong>Seller Brand:</strong> ${escapeHtml(brandName)}</li>
                             <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
                             <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
@@ -584,25 +666,25 @@ exports.handler = async (event, context) => {
                     to: sellerEmail,
                     subject: `⚠️ Action Required: Your CODEZ48 Website is Inactive (Insufficient Wallet Balance)`,
                     html: `
-                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #fff1f2; border-radius: 24px; border: 2px solid #f43f5e; max-width: 580px; margin: 0 auto;">
-                            <div style="text-align: center; margin-bottom: 24px;">
-                                <div style="width: 52px; height: 52px; background-color: #ffe4e6; color: #e11d48; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚠️</div>
-                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #881337; text-transform: uppercase;">Website Temporarily Paused</h2>
-                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #e11d48; text-transform: uppercase;">Insufficient Wallet Balance Notice</p>
+                        <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 580px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px; border-b: 2px solid #000000; padding-bottom: 16px;">
+                                <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                                <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #000000; text-transform: uppercase;">Website Temporarily Paused</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #000000; text-transform: uppercase;">Insufficient Wallet Balance Notice</p>
                             </div>
 
-                            <p style="font-size: 14px; font-weight: 600; color: #9f1239; line-height: 1.6; margin-bottom: 20px;">
+                            <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
                                 Hello ${escapeHtml(brandName)}, your website has been temporarily paused because your wallet balance (<strong>₹${walletBalance}</strong>) is below the required daily activation fee (<strong>₹${dailyFee}</strong>).
                             </p>
 
-                            <div style="background-color: #ffffff; border: 1px solid #fecdd3; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #4c0519;">
+                            <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
                                 <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sellerId)}</strong></p>
                                 <p style="margin: 0 0 6px 0;">Current Wallet Balance: <strong>₹${walletBalance}</strong></p>
                                 <p style="margin: 0;">Daily Plan Fee: <strong>₹${dailyFee} / Day</strong></p>
                             </div>
 
                             <div style="text-align: center;">
-                                <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #e11d48; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; box-shadow: 0 8px 20px rgba(225, 29, 72, 0.25);">
+                                <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
                                     Recharge Wallet & Activate Website Now →
                                 </a>
                             </div>
@@ -621,289 +703,10 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Handle Credit / Ad Service Purchase Event
-        if (action === 'CREDIT_PURCHASE_ALERT') {
-            const sellerEmail = data.sellerEmail || notificationEmail;
-            const sellerId = data.sellerId || 'SLR-000';
-            const brandName = data.brandName || 'Merchant Node';
-            const creditsBought = data.creditsBought || '0';
-            const paidAmount = data.paidAmount || '₹0';
-            const paymentId = data.paymentId || 'PAY_000';
-
-            // Email 1: To Seller (Receipt)
-            if (sellerEmail && sellerEmail.includes('@')) {
-                await transporter.sendMail({
-                    from: smtpFrom,
-                    to: sellerEmail,
-                    subject: `CODEZ48 Service Purchase Receipt - ${creditsBought} Credits`,
-                    html: `
-                        <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0;">
-                            <h2 style="color: #059669; margin: 0 0 10px 0;">Purchase Confirmed!</h2>
-                            <p style="font-size: 13px; color: #334155;">Hello ${escapeHtml(brandName)}, your purchase of <strong>${escapeHtml(String(creditsBought))} credits</strong> on CODEZ48 was successful.</p>
-                            <p style="font-size: 12px; color: #64748b;">Seller ID: <strong>${escapeHtml(sellerId)}</strong> | Payment ID: <strong>${escapeHtml(paymentId)}</strong> | Amount: <strong>${escapeHtml(String(paidAmount))}</strong></p>
-                        </div>
-                    `
-                });
-            }
-
-            // Email 2: To Developer (codez48@codez48.netlify.app)
-            await transporter.sendMail({
-                from: smtpFrom,
-                to: DEVELOPER_EMAIL,
-                subject: `⚡ NEW SERVICE PURCHASE: ${escapeHtml(sellerId)} (${creditsBought} Credits)`,
-                html: `
-                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
-                        <h2 style="color: #34d399; margin: 0 0 10px 0;">⚡ New Ad Credit Purchase</h2>
-                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #38bdf8;">
-                            <li><strong>Seller Brand:</strong> ${escapeHtml(brandName)}</li>
-                            <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
-                            <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
-                            <li><strong>Credits Purchased:</strong> ${escapeHtml(String(creditsBought))}</li>
-                            <li><strong>Amount Paid:</strong> ${escapeHtml(String(paidAmount))}</li>
-                            <li><strong>Payment ID:</strong> ${escapeHtml(paymentId)}</li>
-                        </ul>
-                    </div>
-                `
-            });
-
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    success: true,
-                    message: "Credit purchase receipt & developer alert sent!"
-                })
-            };
-        }
-
-        // Handle User Logout Event (Sends quiet notification to Developer)
-        if (action === 'USER_LOGOUT_ALERT') {
-            const sellerId = data.sellerId || siteId || 'SLR-000';
-            const brandName = data.brandName || userName || 'Merchant Node';
-            const sellerEmail = userEmail || notificationEmail || 'N/A';
-
-            await transporter.sendMail({
-                from: smtpFrom,
-                to: DEVELOPER_EMAIL,
-                subject: `🔒 USER LOGOUT EVENT: ${escapeHtml(sellerId)} (${escapeHtml(brandName)})`,
-                html: `
-                    <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #0f172a; color: #ffffff; border-radius: 20px;">
-                        <h2 style="color: #38bdf8; margin: 0 0 10px 0;">🔒 User Logout Activity Alert</h2>
-                        <ul style="line-height: 2; font-family: monospace; font-size: 13px; color: #cbd5e1;">
-                            <li><strong>Seller Brand:</strong> ${escapeHtml(brandName)}</li>
-                            <li><strong>Seller ID:</strong> ${escapeHtml(sellerId)}</li>
-                            <li><strong>Seller Email:</strong> ${escapeHtml(sellerEmail)}</li>
-                            <li><strong>Logout Timestamp:</strong> ${new Date().toLocaleString()}</li>
-                        </ul>
-                    </div>
-                `
-            });
-
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    success: true,
-                    message: "User logout notification sent to developer!"
-                })
-            };
-        }
-
-        // Handle Base64 Data URL Image Attachments for 100% Gmail/Outlook rendering
-        const attachments = [];
-        let finalLogoUrl = data.headerLogoUrl || 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
-        let finalImageUrl = imageUrl || '';
-
-        // Only attach logo if it's a valid custom URL or Base64 data string (not broken static default)
-        if (finalLogoUrl.startsWith('data:image/')) {
-            attachments.push({
-                filename: 'logo.png',
-                path: finalLogoUrl,
-                cid: 'headerLogo'
-            });
-            finalLogoUrl = 'cid:headerLogo';
-        } else if (finalLogoUrl.includes('/img/logo.png') || finalLogoUrl === 'https://codez48.netlify.app/img/logo.png') {
-            finalLogoUrl = 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
-        }
-
-        if (finalImageUrl.startsWith('data:image/')) {
-            attachments.push({
-                filename: 'hero.png',
-                path: finalImageUrl,
-                cid: 'heroImage'
-            });
-            finalImageUrl = 'cid:heroImage';
-        }
-
-        // Helper to construct full-width HTML template
-        const buildEmailHtml = (recipientEmail) => {
-            const safeHeader = escapeHtml(headerText);
-            const safeSubHeader = escapeHtml(subHeaderText);
-            const safeDesc = escapeHtml(businessDescription || 'Welcome to CODZ48! You can create your website and Android application in just one minute. Use our tools and automation suite to grow your business.');
-            const safeCtaText = escapeHtml(ctaText);
-            const safeCtaUrl = escapeHtml(ctaUrl);
-
-            const borderRadius = imageShape === 'circle' ? '50%' : imageShape === 'square' ? '0px' : '20px';
-            const imgAlignStyle = imageAlign === 'left' ? 'text-align: left;' : imageAlign === 'right' ? 'text-align: right;' : 'text-align: center;';
-
-            const safeImageUrl = finalImageUrl.startsWith('cid:') ? finalImageUrl : escapeHtml(finalImageUrl);
-            const imageHtml = safeImageUrl ? `
-                <div style="${imgAlignStyle} margin: 24px 0;">
-                    <img src="${safeImageUrl}" style="max-width: ${imageWidth}; width: 100%; height: auto; border-radius: ${borderRadius}; display: inline-block; border: 0; box-shadow: 0 10px 20px rgba(0,0,0,0.08);" alt="Hero Banner" />
-                </div>` : '';
-
-            const safeLogoUrl = finalLogoUrl.startsWith('cid:') ? finalLogoUrl : escapeHtml(finalLogoUrl);
-            const safeLogoWidth = data.headerLogoWidth ? escapeHtml(data.headerLogoWidth) : '50px';
-
-            const logoHtml = (safeLogoUrl && safeLogoUrl.length > 5) ? `
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <img src="${safeLogoUrl}" style="width: ${safeLogoWidth}; max-width: 150px; height: auto; display: inline-block; object-fit: contain; border-radius: 12px; border: 0;" alt="Logo" />
-                </div>` : `
-                <div style="width: 52px; height: 52px; background-color: #f3e8ff; color: #9333ea; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin: 0 auto 12px auto;">⚡</div>`;
-
-            const subHeaderHtml = enableSubHeader ? `<p style="margin: 6px 0 0 0; font-size: 11px; font-weight: 700; color: #9333ea; text-transform: uppercase; letter-spacing: 0.1em; font-family: ${subHeaderFont};">${safeSubHeader}</p>` : '';
-
-            return `
-                <div style="width: 100%; margin: 0; padding: 0; background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;">
-                    <div style="width: 100%; max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; padding: 36px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.05); box-sizing: border-box;">
-
-                        <!-- Header -->
-                        <div style="text-align: center; margin-bottom: 28px;">
-                            ${logoHtml}
-                            <h2 style="margin: 0; font-size: 24px; font-weight: 900; color: #0f172a; text-transform: uppercase; font-family: ${headerFont}; letter-spacing: -0.02em;">${safeHeader}</h2>
-                            ${subHeaderHtml}
-                        </div>
-
-                        <!-- Image -->
-                        ${imageHtml}
-
-                        <!-- Description Body (Borderless, 100% full width) -->
-                        <div style="width: 100%; background-color: #faf5ff; padding: 24px; border-radius: 20px; margin-bottom: 28px; box-sizing: border-box;">
-                            <p style="margin: 0; font-size: 14px; color: #4c1d95; font-weight: 600; line-height: 1.7; font-family: 'Plus Jakarta Sans', sans-serif;">
-                                ${safeDesc}
-                            </p>
-                        </div>
-
-                        <!-- Call To Action Button -->
-                        <div style="text-align: center; margin-bottom: 32px;">
-                            <a href="${safeCtaUrl}" style="${(data.ctaPreset === 'outlined') ? `display: inline-block; background-color: transparent; color: ${ctaBgColor}; border: 2px solid ${ctaBgColor}; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 34px; border-radius: ${data.ctaRadius || '99px'}; text-decoration: none;` : `display: inline-block; background-color: ${ctaBgColor}; color: ${ctaTextColor}; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 36px; border-radius: ${data.ctaRadius || '99px'}; text-decoration: none; box-shadow: 0 10px 20px rgba(147, 51, 234, 0.25);`}">
-                                ${safeCtaText} <i style="font-style: normal; margin-left: 6px;">→</i>
-                            </a>
-                        </div>
-
-                        <!-- Official Footer -->
-                        <div style="border-t: 1px solid #e2e8f0; padding-top: 24px; text-align: center; margin-top: 28px;">
-                            <p style="margin: 0; font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
-                                CODEZ48 Official Platform — <a href="https://codez48.netlify.app/about.html" style="color: #9333ea; font-weight: 900; text-decoration: none;">Contact Us Now →</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Handle Direct TEST_SMTP Request
-        if (action === 'TEST_SMTP') {
-            const targetRecipient = notificationEmail || smtpUser;
-            if (!targetRecipient || !targetRecipient.includes('@')) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ success: false, error: "Valid recipient email required for test." })
-                };
-            }
-
-            await transporter.sendMail({
-                from: smtpFrom,
-                to: targetRecipient,
-                subject: `Welcome to CODEZ48`,
-                html: buildEmailHtml(targetRecipient),
-                attachments
-            });
-
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    success: true,
-                    message: "Welcome email dispatched successfully!",
-                    recipient: targetRecipient
-                })
-            };
-        }
-
-        if (!initAdmin() || !db) {
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ error: "Database Connection Failed" })
-            };
-        }
-
-        // Deduplication Protection for Login Events
-        if (loginEventId) {
-            const eventRef = db.collection('mail_events_processed').doc(loginEventId);
-            const eventSnap = await eventRef.get();
-            if (eventSnap.exists) {
-                return {
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ success: true, message: 'Event already processed' })
-                };
-            }
-        }
-
-        // Fetch saved notification email for current site/user (with automatic default fallback)
-        let savedReceiverEmail = (notificationEmail && notificationEmail.includes('@')) ? notificationEmail : (userEmail && userEmail.includes('@')) ? userEmail : null;
-
-        try {
-            const settingsRef = db.collection('mail_automation_settings').doc(siteId);
-            const settingsSnap = await settingsRef.get();
-
-            if (settingsSnap.exists) {
-                const settings = settingsSnap.data();
-                if (settings.mailAutomation === false) {
-                    return {
-                        statusCode: 200,
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ success: false, message: 'Mail automation is disabled in settings' })
-                    };
-                }
-                if (settings.notificationEmail && settings.notificationEmail.includes('@')) {
-                    savedReceiverEmail = settings.notificationEmail;
-                }
-            }
-        } catch (e) {}
-
-        // Fallback to default platform email if no custom receiver saved
-        if (!savedReceiverEmail || !savedReceiverEmail.includes('@')) {
-            savedReceiverEmail = process.env.SMTP_USER || 'codez4848@gmail.com';
-        }
-
-        // Dispatch Email via Nodemailer
-        await transporter.sendMail({
-            from: smtpFrom,
-            to: savedReceiverEmail,
-            subject: `Welcome to CODEZ48`,
-            html: buildEmailHtml(savedReceiverEmail),
-            attachments
-        });
-
-        // Record processed loginEventId
-        if (loginEventId) {
-            await db.collection('mail_events_processed').doc(loginEventId).set({
-                siteId,
-                receiverEmail: savedReceiverEmail,
-                processedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-        }
-
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                success: true,
-                message: 'Notification email sent successfully',
-                recipient: savedReceiverEmail
-            })
+            body: JSON.stringify({ success: true, message: 'Event processed' })
         };
 
     } catch (error) {

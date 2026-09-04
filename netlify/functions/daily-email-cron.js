@@ -40,7 +40,8 @@ const escapeHtml = (str) => {
 /**
  * NETLIFY SCHEDULED BACKGROUND CRON FUNCTION (0 9 * * *)
  * 1. Automatically dispatches active daily email schedules every 24 hours without requiring user login.
- * 2. Automatically processes 24-hour merchant wallet daily fee deductions (₹83 / ₹133) and sends email alerts if wallet is empty.
+ * 2. Automatically processes 24-hour merchant wallet daily fee deductions (₹83 / ₹133).
+ * 3. Automatically credits pro-rata daily developer commissions (₹16.67/day) to referring developers.
  */
 exports.handler = async (event, context) => {
     console.log("[DAILY CRON ENGINE] Starting 24-hour background execution...");
@@ -172,11 +173,12 @@ exports.handler = async (event, context) => {
         }
 
         // ----------------------------------------------------
-        // 2. PROCESS MERCHANT WALLET DAILY DEDUCTIONS (24h)
+        // 2. PROCESS MERCHANT WALLET DAILY DEDUCTIONS & DEVELOPER PRO-RATA COMMISSIONS
         // ----------------------------------------------------
         const sellersSnap = await db.collection('sellers').get();
         let walletDeductedCount = 0;
         let pausedCount = 0;
+        let devCommissionsCredited = 0;
 
         for (const sDoc of sellersSnap.docs) {
             const seller = sDoc.data();
@@ -207,6 +209,42 @@ exports.handler = async (event, context) => {
 
                     walletDeductedCount++;
 
+                    // ----------------------------------------------------
+                    // 3. PRO-RATA DEVELOPER DAILY COMMISSION (₹16.67/DAY)
+                    // ----------------------------------------------------
+                    if (seller.referredBy) {
+                        try {
+                            const devQuery = db.collection('dev_prog_users').where('referralCode', '==', seller.referredBy);
+                            const devSnap = await devQuery.get();
+
+                            if (!devSnap.empty) {
+                                const devDoc = devSnap.docs[0];
+                                const devData = devDoc.data();
+                                const dailyCommissionShare = 16.67; // Pro-rata share of ₹500 over 30 days
+
+                                await devDoc.ref.update({
+                                    walletBalance: admin.firestore.FieldValue.increment(dailyCommissionShare),
+                                    totalEarned: admin.firestore.FieldValue.increment(dailyCommissionShare)
+                                });
+
+                                await db.collection('dev_prog_earnings_log').add({
+                                    developerEmail: devData.email,
+                                    referralCode: seller.referredBy,
+                                    sellerId: sId,
+                                    sellerBrand: seller.brand || seller.username || 'Merchant',
+                                    type: 'PRO_RATA_DAILY_COMMISSION',
+                                    amount: dailyCommissionShare,
+                                    description: `Daily Pro-Rata Commission for Referred Seller ${sId} (₹83/Day Plan)`,
+                                    timestamp: admin.firestore.FieldValue.serverTimestamp()
+                                });
+
+                                devCommissionsCredited++;
+                            }
+                        } catch (devErr) {
+                            console.warn(`[DEV COMMISSION NOTICE] Seller ${sId}:`, devErr.message);
+                        }
+                    }
+
                     // Check if wallet balance is low (< 2 days remaining) and dispatch low balance warning email
                     if (newBalance < (dailyFee * 2) && seller.email && seller.email.includes('@')) {
                         try {
@@ -215,26 +253,26 @@ exports.handler = async (event, context) => {
                                 to: seller.email,
                                 subject: `⚠️ Warning: Your CODEZ48 Wallet Balance is Very Low`,
                                 html: `
-                                    <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #fffbe3; border-radius: 24px; border: 2px solid #f59e0b; max-width: 580px; margin: 0 auto;">
-                                        <div style="text-align: center; margin-bottom: 20px;">
-                                            <div style="width: 50px; height: 50px; background-color: #fef3c7; color: #d97706; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 10px;">⚠️</div>
-                                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #78350f; text-transform: uppercase;">Low Wallet Balance Notice</h2>
-                                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #d97706; text-transform: uppercase;">Recharge Required Soon</p>
+                                    <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; border-radius: 24px; border: 2px solid #000000; max-width: 580px; margin: 0 auto; color: #000000;">
+                                        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000000; padding-bottom: 16px;">
+                                            <img src="https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg" style="height: 50px; width: auto; margin-bottom: 10px;" alt="CODEZ48 Logo" />
+                                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">Low Wallet Balance Notice</h2>
+                                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #000000;">Recharge Required Soon</p>
                                         </div>
 
-                                        <p style="font-size: 14px; font-weight: 600; color: #92400e; line-height: 1.6; margin-bottom: 20px;">
+                                        <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
                                             Hello ${escapeHtml(seller.brand || seller.username || 'Merchant')}, your CODEZ48 wallet balance is very low (<strong>₹${newBalance.toFixed(2)}</strong>).
                                             Please recharge your wallet now to keep your website and profile active without interruption.
                                         </p>
 
-                                        <div style="background-color: #ffffff; border: 1px solid #fde68a; padding: 18px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #78350f;">
+                                        <div style="background-color: #ffffff; border: 1px solid #000000; padding: 18px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
                                             <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sId)}</strong></p>
                                             <p style="margin: 0 0 6px 0;">Remaining Balance: <strong>₹${newBalance.toFixed(2)}</strong></p>
                                             <p style="margin: 0;">Daily Plan Fee: <strong>₹${dailyFee} / Day</strong></p>
                                         </div>
 
                                         <div style="text-align: center;">
-                                            <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #d97706; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 14px 32px; border-radius: 99px; text-decoration: none;">
+                                            <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 14px 32px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
                                                 Recharge Wallet Now →
                                             </a>
                                         </div>
@@ -255,25 +293,25 @@ exports.handler = async (event, context) => {
                                 to: seller.email,
                                 subject: `⚠️ Action Required: Your CODEZ48 Website is Inactive (Insufficient Wallet Balance)`,
                                 html: `
-                                    <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #fff1f2; border-radius: 24px; border: 2px solid #f43f5e; max-width: 580px; margin: 0 auto;">
-                                        <div style="text-align: center; margin-bottom: 24px;">
-                                            <div style="width: 52px; height: 52px; background-color: #ffe4e6; color: #e11d48; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 26px; margin-bottom: 12px;">⚠️</div>
-                                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #881337; text-transform: uppercase;">Website Temporarily Paused</h2>
-                                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #e11d48; text-transform: uppercase;">Insufficient Wallet Balance Notice</p>
+                                    <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; border-radius: 24px; border: 2px solid #000000; max-width: 580px; margin: 0 auto; color: #000000;">
+                                        <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #000000; padding-bottom: 16px;">
+                                            <img src="https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg" style="height: 50px; width: auto; margin-bottom: 10px;" alt="CODEZ48 Logo" />
+                                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">Website Temporarily Paused</h2>
+                                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #000000;">Insufficient Wallet Balance Notice</p>
                                         </div>
 
-                                        <p style="font-size: 14px; font-weight: 600; color: #9f1239; line-height: 1.6; margin-bottom: 20px;">
+                                        <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
                                             Hello ${escapeHtml(seller.brand || seller.username || 'Merchant')}, your website has been temporarily paused because your wallet balance (<strong>₹${currentWallet}</strong>) is below the required daily activation fee (<strong>₹${dailyFee}</strong>).
                                         </p>
 
-                                        <div style="background-color: #ffffff; border: 1px solid #fecdd3; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #4c0519;">
+                                        <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
                                             <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sId)}</strong></p>
                                             <p style="margin: 0 0 6px 0;">Current Wallet Balance: <strong>₹${currentWallet}</strong></p>
                                             <p style="margin: 0;">Daily Plan Fee: <strong>₹${dailyFee} / Day</strong></p>
                                         </div>
 
                                         <div style="text-align: center;">
-                                            <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #e11d48; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; box-shadow: 0 8px 20px rgba(225, 29, 72, 0.25);">
+                                            <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
                                                 Recharge Wallet & Activate Website Now →
                                             </a>
                                         </div>
@@ -286,7 +324,7 @@ exports.handler = async (event, context) => {
             }
         }
 
-        console.log(`[DAILY CRON COMPLETED] Schedules: ${processedSchedules}, Emails: ${totalEmailsDispatched}, Wallet Deductions: ${walletDeductedCount}, Paused Sites: ${pausedCount}`);
+        console.log(`[DAILY CRON COMPLETED] Schedules: ${processedSchedules}, Emails: ${totalEmailsDispatched}, Wallet Deductions: ${walletDeductedCount}, Dev Commissions: ${devCommissionsCredited}, Paused Sites: ${pausedCount}`);
 
         return {
             statusCode: 200,
@@ -296,6 +334,7 @@ exports.handler = async (event, context) => {
                 processedSchedules,
                 totalEmailsDispatched,
                 walletDeductedCount,
+                devCommissionsCredited,
                 pausedCount,
                 message: `Daily background cron executed successfully.`
             })

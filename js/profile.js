@@ -89,6 +89,25 @@ export const confirmTopUpWallet = async (sellerId) => {
                     timestamp: new Date().toISOString()
                 });
 
+                // Trigger Wallet Top-Up Alert Emails (Developer + Seller)
+                try {
+                    await fetch('/.netlify/functions/send-login-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'WALLET_TOPUP_ALERTS',
+                            siteId: sellerId,
+                            sellerId: sellerId,
+                            sellerEmail: window.currentUser?.email || '',
+                            brandName: window.currentUser?.brand || window.currentUser?.username || 'Merchant',
+                            mobileNumber: window.currentUser?.mobile || 'N/A',
+                            amount: amount,
+                            paymentId: response.razorpay_payment_id || 'PAY_' + Date.now(),
+                            remainingBalance: newBalance
+                        })
+                    });
+                } catch (mErr) {}
+
                 alert(`⚡ Wallet Recharged Successfully!\nAdded ₹${amount}. New Wallet Balance: ₹${newBalance}\nWebsite is ACTIVE.`);
                 openMerchantWalletModal(sellerId);
             } catch (err) {
@@ -256,6 +275,153 @@ export const closeMerchantWalletModal = () => {
 };
 
 /**
+ * Open Merchant Monthly Spending Calendar Modal (Triggered by Calendar Button for Owner Only)
+ */
+export const openMerchantCalendarModal = async (sellerId) => {
+    let modal = document.getElementById('merchant-calendar-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'merchant-calendar-modal';
+        modal.className = 'fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200';
+        document.body.appendChild(modal);
+    }
+
+    try {
+        const sRef = doc(db, "sellers", sellerId);
+        const sSnap = await getDoc(sRef);
+        const sellerData = sSnap.exists() ? sSnap.data() : (window.currentUser || {});
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); // Calculates 28, 29, 30, or 31 days
+        const todayNum = now.getDate();
+
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const monthName = monthNames[currentMonth];
+
+        // Fetch daily auto-deductions for current seller
+        let dailyDeductionsMap = {};
+        try {
+            const q = query(collection(db, "wallet_transactions"), where("sellerId", "==", sellerId));
+            const snap = await getDocs(q);
+            snap.forEach(d => {
+                const data = d.data();
+                if (data.type === 'DAILY_AUTO_DEDUCTION' || data.amount < 0) {
+                    const txDate = new Date(data.timestamp);
+                    if (txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth) {
+                        const day = txDate.getDate();
+                        if (!dailyDeductionsMap[day]) dailyDeductionsMap[day] = [];
+                        dailyDeductionsMap[day].push(data);
+                    }
+                }
+            });
+        } catch (e) {}
+
+        window.currentDailyDeductionsMap = dailyDeductionsMap;
+
+        let calendarDaysHtml = '';
+        for (let d = 1; d <= daysInMonth; d++) {
+            const isToday = d === todayNum;
+            const txList = dailyDeductionsMap[d] || [];
+            const hasSpent = txList.length > 0;
+            const spentAmt = hasSpent ? Math.abs(txList[0].amount) : 0;
+
+            calendarDaysHtml += `
+                <div onclick="window.selectCalendarDay(${d})" class="p-2 md:p-3 rounded-2xl border text-center transition cursor-pointer flex flex-col justify-between items-center h-16 md:h-20 hover:scale-105 shadow-sm ${isToday ? 'border-2 border-purple-600 bg-purple-50/80 font-black' : hasSpent ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-bold' : 'bg-slate-50 border-slate-200 text-slate-700'}">
+                    <span class="text-[10px] md:text-xs font-black">${d}</span>
+                    ${hasSpent ? `<span class="text-[8px] font-black uppercase bg-emerald-600 text-white px-1.5 py-0.5 rounded-full shadow-sm">₹${spentAmt}</span>` : `<span class="text-[7px] text-slate-400 uppercase font-medium">${isToday ? 'Today' : '-'}</span>`}
+                </div>
+            `;
+        }
+
+        modal.innerHTML = `
+            <div class="glass-card w-full max-w-3xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <button onclick="window.closeMerchantCalendarModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+
+                <div class="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-black text-slate-900 uppercase tracking-tight">${monthName} ${currentYear} Activation Calendar</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Grid (Days 1 to ${daysInMonth}) -->
+                <div class="grid grid-cols-7 gap-2 md:gap-3">
+                    ${calendarDaysHtml}
+                </div>
+
+                <!-- Interactive Day Click Details div -->
+                <div id="calendar-day-detail-card" class="p-5 bg-slate-50 border border-slate-200 rounded-2xl hidden fade-in space-y-2 text-xs font-mono">
+                    <!-- Injected via selectCalendarDay() -->
+                </div>
+
+                <div class="text-right pt-2 border-t border-slate-100">
+                    <button onclick="window.closeMerchantCalendarModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    } catch (err) {
+        alert("Calendar Modal Error: " + err.message);
+    }
+};
+
+export const closeMerchantCalendarModal = () => {
+    const modal = document.getElementById('merchant-calendar-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+/**
+ * Select Calendar Day & Expand Detail div
+ */
+export const selectCalendarDay = (dayNum) => {
+    const detailCard = document.getElementById('calendar-day-detail-card');
+    if (!detailCard) return;
+
+    const now = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthName = monthNames[now.getMonth()];
+    const year = now.getFullYear();
+
+    const txList = (window.currentDailyDeductionsMap && window.currentDailyDeductionsMap[dayNum]) ? window.currentDailyDeductionsMap[dayNum] : [];
+
+    if (txList.length === 0) {
+        detailCard.innerHTML = `
+            <div class="flex justify-between items-center text-slate-700">
+                <span><strong>Date:</strong> ${monthName} ${dayNum}, ${year}</span>
+                <span class="text-slate-400 font-bold uppercase text-[10px]">No Daily Fee Deducted</span>
+            </div>
+            <p class="text-[10px] text-slate-500">Website ran under monthly subscription or wallet had no active deduction on this date.</p>
+        `;
+    } else {
+        const tx = txList[0];
+        detailCard.innerHTML = `
+            <div class="flex justify-between items-center text-slate-900 border-b border-slate-200 pb-2">
+                <span><strong>Date:</strong> ${monthName} ${dayNum}, ${year}</span>
+                <span class="text-emerald-700 font-black uppercase text-[10px] bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">🟢 24h Website Active</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 text-[10px]">
+                <div><span class="text-slate-400 block">Deduction Fee:</span><strong class="text-emerald-600 text-sm">₹${Math.abs(tx.amount)}</strong></div>
+                <div><span class="text-slate-400 block">Remaining Balance:</span><strong class="text-slate-900">₹${tx.remainingBalance}</strong></div>
+                <div class="col-span-2"><span class="text-slate-400 block">Timestamp:</span><strong class="text-slate-700">${new Date(tx.timestamp).toLocaleString()}</strong></div>
+            </div>
+        `;
+    }
+
+    detailCard.classList.remove('hidden');
+};
+
+/**
  * Open Dedicated AI Business Suggestions Modal (Triggered by Bell Icon for Owner Only)
  */
 export const openAiSuggestionsModal = async (sellerId) => {
@@ -308,20 +474,19 @@ export const openAiSuggestionsModal = async (sellerId) => {
                     </div>
                     <div>
                         <h4 class="text-xl font-black text-black uppercase tracking-tight">AI Synergy Business Match</h4>
-                        <p class="text-xs text-slate-500 font-medium">Recommended business partners to source products, expand IT infrastructure, and boost marketing.</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     ${suggestions.map(m => `
-                        <div id="modal-suggestion-card-${m.id}" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group">
+                        <div id="modal-suggestion-card-${m.id}" onclick="window.closeAiSuggestionsModal(); window.showPublicProfile('${m.id}')" class="p-4 bg-slate-50 hover:bg-purple-50/60 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group cursor-pointer">
                             <div class="space-y-2">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
                                         <img src="${m.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <h5 class="text-xs font-black text-black truncate uppercase">${m.brand || 'Merchant Node'}</h5>
+                                        <h5 class="text-xs font-black text-black truncate uppercase group-hover:text-purple-700">${m.brand || 'Merchant Node'}</h5>
                                         <p class="text-[8px] font-mono text-purple-700 font-bold truncate">${m.companyName || 'Verified Synergy Partner'}</p>
                                     </div>
                                 </div>
@@ -329,7 +494,7 @@ export const openAiSuggestionsModal = async (sellerId) => {
                             </div>
 
                             <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
-                                <button onclick="window.closeAiSuggestionsModal(); window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
+                                <button onclick="event.stopPropagation(); window.closeAiSuggestionsModal(); window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
                                     <i class="fa-solid fa-handshake"></i> Connect & Collaborate
                                 </button>
                             </div>
@@ -512,6 +677,9 @@ export const showPublicProfile = async (sellerId, currentUser) => {
                         </button>
                         <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-purple-600 hover:bg-purple-700 text-white text-[9px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-purple-200 transition">
                             <i class="fa-solid fa-wallet"></i> Wallet
+                        </button>
+                        <button onclick="window.openMerchantCalendarModal('${sellerId}')" class="bg-purple-50 border border-purple-200 text-purple-800 hover:bg-purple-100 text-[9px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest flex items-center gap-2 transition shadow-sm">
+                            <i class="fa-solid fa-calendar-days text-purple-600"></i> Calendar
                         </button>
                         <button onclick="openNodeSettings('${sellerId}')" class="bg-black text-white text-[9px] font-black px-6 py-2.5 rounded-full uppercase tracking-widest flex items-center gap-2 shadow-lg">
                             <i class="fa-solid fa-gear"></i> Settings
@@ -736,6 +904,9 @@ window.openAiSuggestionsModal = (id) => openAiSuggestionsModal(id);
 window.closeAiSuggestionsModal = () => closeAiSuggestionsModal();
 window.openMerchantWalletModal = (id) => openMerchantWalletModal(id);
 window.closeMerchantWalletModal = () => closeMerchantWalletModal();
+window.openMerchantCalendarModal = (id) => openMerchantCalendarModal(id);
+window.closeMerchantCalendarModal = () => closeMerchantCalendarModal();
+window.selectCalendarDay = (dayNum) => selectCalendarDay(dayNum);
 window.topUpWallet = (id) => topUpWallet(id);
 window.confirmTopUpWallet = (id) => confirmTopUpWallet(id);
 window.handleEditLogoUpload = handleEditLogoUpload;
