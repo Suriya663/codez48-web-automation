@@ -552,13 +552,49 @@ export const terminateCollaboration = async (targetSellerId) => {
 };
 
 /**
- * Send Collaboration Request with Unique Token & Black & White Email Dispatch
+ * Show Unregistered User Modal for Connect & Collaborate
+ */
+export const showUnregisteredCollabModal = () => {
+    let modal = document.getElementById('unregistered-collab-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'unregistered-collab-modal';
+        modal.className = 'fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200';
+        modal.innerHTML = `
+            <div class="bg-black border border-white/20 text-white w-full max-w-md rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative">
+                <button onclick="document.getElementById('unregistered-collab-modal').classList.add('hidden')" class="absolute top-6 right-6 text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-handshake text-white"></i>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-black uppercase tracking-tight">Collaboration Notice</h3>
+                    <p class="text-xs text-slate-300 font-medium leading-relaxed">Create your profile to connect and collaborate.</p>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="document.getElementById('unregistered-collab-modal').classList.add('hidden')" class="flex-1 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition">
+                        Close
+                    </button>
+                    <button onclick="document.getElementById('unregistered-collab-modal').classList.add('hidden'); if(window.openRegisterWizard) window.openRegisterWizard();" class="flex-1 py-3.5 bg-white hover:bg-slate-200 text-black rounded-xl text-[10px] font-black uppercase tracking-widest transition">
+                        Register
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    modal.classList.remove('hidden');
+};
+window.showUnregisteredCollabModal = showUnregisteredCollabModal;
+
+/**
+ * Send Collaboration Request with Unique Token & Separate Email Modules
  */
 export const sendCollabRequest = async (targetSellerId) => {
     const currentSellerId = localStorage.getItem('tori_seller_id') || window.currentUser?.uid || window.currentUser?.sellerId;
     if (!currentSellerId) {
-        alert("Please login to initiate a business collaboration.");
-        showView('auth');
+        showUnregisteredCollabModal();
         return;
     }
 
@@ -568,6 +604,19 @@ export const sendCollabRequest = async (targetSellerId) => {
     }
 
     try {
+        const reqId = `COL_${currentSellerId}_${targetSellerId}`;
+        const existingReqSnap = await getDoc(doc(db, "collaboration_requests", reqId));
+        if (existingReqSnap.exists() && existingReqSnap.data().status === 'pending') {
+            alert("A collaboration request is already pending with this profile.");
+            return;
+        }
+
+        const isAlreadyCollab = await checkCollabStatus(currentSellerId, targetSellerId);
+        if (isAlreadyCollab) {
+            alert("You are already actively collaborating with this profile.");
+            return;
+        }
+
         const [targetDoc, currentDoc] = await Promise.all([
             getDoc(doc(db, "sellers", targetSellerId)),
             getDoc(doc(db, "sellers", currentSellerId))
@@ -577,37 +626,52 @@ export const sendCollabRequest = async (targetSellerId) => {
         const currentData = currentDoc.exists() ? currentDoc.data() : (window.currentUser || {});
 
         const collabToken = `collab_token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        const reqId = `COL_${currentSellerId}_${targetSellerId}`;
 
-        await setDoc(doc(db, "collaboration_requests", reqId), {
-            reqId,
-            collabToken,
-            fromSellerId: currentSellerId,
-            toSellerId: targetSellerId,
-            fromBrand: currentData.brand || currentData.username || 'Merchant Partner',
-            fromEmail: currentData.email || '',
-            fromDescription: currentData.productDescription || currentData.servicesDescription || currentData.description || 'Verified Business Entity',
+        const requestPayload = {
+            requestId: reqId,
+            senderUserId: currentSellerId,
+            senderProfileId: currentSellerId,
+            receiverUserId: targetSellerId,
+            receiverProfileId: targetSellerId,
             status: 'pending',
+            collabToken: collabToken,
             createdAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, "collaboration_requests", reqId), requestPayload);
+
+        const host = window.location.host;
+        const protocol = window.location.protocol;
+
+        // Trigger Email A: COLLAB_REQUEST_SENT_SENDER
+        await fetch(`${protocol}//${host}/.netlify/functions/collabRequestSentSender`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event: 'COLLAB_REQUEST_SENT_SENDER',
+                senderEmail: currentData.email,
+                senderBrand: currentData.brand || currentData.username || 'Partner',
+                receiverBrand: targetData.brand || targetData.username || 'Target Profile'
+            })
         });
 
-        // Trigger Black & White Email Dispatch to Target Merchant
+        // Trigger Email B: COLLAB_REQUEST_RECEIVED
         if (targetData.email && targetData.email.includes('@')) {
-            await fetch('/.netlify/functions/send-login-notification', {
+            await fetch(`${protocol}//${host}/.netlify/functions/collabRequestReceived`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'SEND_COLLAB_EMAIL',
-                    toEmail: targetData.email,
-                    fromBrand: currentData.brand || currentData.username || 'Merchant Partner',
-                    fromSellerId: currentSellerId,
-                    fromDescription: currentData.productDescription || currentData.servicesDescription || currentData.description || 'Verified Business Entity',
-                    collabToken
+                    event: 'COLLAB_REQUEST_RECEIVED',
+                    receiverEmail: targetData.email,
+                    receiverBrand: targetData.brand || targetData.username || 'Partner',
+                    senderBrand: currentData.brand || currentData.username || 'Partner',
+                    senderDescription: currentData.productDescription || currentData.servicesDescription || currentData.description || 'Verified Business Entity',
+                    collabToken: collabToken
                 })
             });
         }
 
-        alert(`🤝 Collaboration Request Dispatched!\nA Black & White verification email with your unique token (${collabToken}) has been sent to ${targetData.email || 'the merchant'}.`);
+        alert(`🤝 Collaboration Request Successfully Sent to ${targetData.brand || 'the target profile'}!`);
         showPublicProfile(targetSellerId, window.currentUser);
     } catch (e) {
         alert("Collaboration Error: " + e.message);
@@ -767,8 +831,12 @@ export const showPublicProfile = async (sellerId, currentUser) => {
                             <a href="seller/index.html?s=${(seller.tier === 'premium' || seller.tier === 'Premium') ? (seller.customUrl || seller.username) : (seller.username + '.codeez')}" class="btn-royal text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl flex items-center justify-center">
                                 Go to Product Page
                             </a>
+                            ${seller.apkUrl ? `
+                                <a href="${seller.apkUrl}" target="_blank" class="bg-black hover:bg-royal text-white text-[10px] font-black px-10 py-4 rounded-full uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
+                                    <i class="fa-brands fa-android text-base text-emerald-400"></i> Android App
+                                </a>
+                            ` : ''}
                         </div>
-                    </div>
                 </div>
             `;
         }

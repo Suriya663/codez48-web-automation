@@ -1,0 +1,6 @@
+- [x] Create `netlify/functions/apkApprovedTemplate.js` with Black & White design for Seller approval email
+- [x] Create `netlify/functions/apkApproved.js` to handle `APK_APPROVED` event
+- [x] Update `approveApkRequest` in `seller/developer.html` to update `sellers` and `apk_build_queue` with `apkUrl`, `status = 'APPROVED'`, `approvedAt`, `approvedBy`, and trigger the new endpoint
+- [x] Update `showPublicProfile` in `js/profile.js` to render the dynamic public "Android App" button when `seller.apkUrl` is present
+- [x] Verify code with `analyze_file`
+- [x] Create `walkthrough.artifact.md`

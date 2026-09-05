@@ -1691,7 +1691,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy, where, getDocs, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy, where, getDocs, increment, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
@@ -1907,6 +1907,52 @@
                     localStorage.setItem('sellerAuth', JSON.stringify({ id: encodeSecret(sellerId), pass: encodeSecret(pass) }));
                     currentSeller = { ...docSnap.data(), sellerId: sellerId };
                     isCoder = false;
+
+                    // Trigger isolated USER_LOGIN_SUCCESS email module
+                    fetch('/.netlify/functions/loginNotification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'USER_LOGIN_SUCCESS',
+                            userId: sellerId,
+                            sellerId: sellerId,
+                            brandName: currentSeller.brand || currentSeller.name || 'Developer/Merchant',
+                            email: currentSeller.email || idInput,
+                            role: 'Merchant Node',
+                            userAgent: navigator.userAgent || 'Standard Browser',
+                            timestamp: new Date().toISOString()
+                        })
+                    }).catch(() => {});
+
+                    // Check and set SELLER_FIRST_ADMIN_LOGIN transactionally
+                    try {
+                        const sellerRef = doc(db, "sellers", sellerId);
+                        await runTransaction(db, async (transaction) => {
+                            const sfDoc = await transaction.get(sellerRef);
+                            if (!sfDoc.exists()) return;
+                            const sfData = sfDoc.data();
+                            if (!sfData.firstSellerAdminLoginCompletedAt) {
+                                const nowIso = new Date().toISOString();
+                                transaction.update(sellerRef, { firstSellerAdminLoginCompletedAt: nowIso });
+
+                                // Trigger SELLER_FIRST_ADMIN_LOGIN email endpoint
+                                fetch('/.netlify/functions/sellerFirstAdminLogin', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        event: 'SELLER_FIRST_ADMIN_LOGIN',
+                                        sellerId: sellerId,
+                                        brandName: sfData.brand || sfData.name || 'Merchant',
+                                        email: sfData.email || idInput,
+                                        timestamp: nowIso
+                                    })
+                                }).catch(() => {});
+                            }
+                        });
+                    } catch (txErr) {
+                        console.warn("[FIRST ADMIN LOGIN TX NOTICE]:", txErr.message);
+                    }
+
                     enterConsole();
                 } else {
                     // Check requests if not found in active sellers
@@ -2148,7 +2194,7 @@
             if(!title || !img) return alert("Fill Title and Image URL");
 
             try {
-                await addDoc(collection(db, "ads"), {
+                const adDocRef = await addDoc(collection(db, "ads"), {
                     title: title || 'Untitled Ad',
                     targetUrl: url || null,
                     imageUrl: img || '',
@@ -2156,6 +2202,29 @@
                     sellerId: isCoder ? 'admin' : (currentSeller ? currentSeller.sellerId : 'unknown'),
                     createdAt: new Date().toISOString()
                 });
+
+                // Trigger SELLER_AD_CREATED email endpoint
+                try {
+                    const sellerId = isCoder ? 'admin' : (currentSeller ? currentSeller.sellerId : 'unknown');
+                    let sellerEmail = currentSeller?.email || 'codez4848@gmail.com';
+                    let sellerBrand = currentSeller?.brand || currentSeller?.name || 'Merchant';
+
+                    await fetch('/.netlify/functions/sellerAdCreated', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'SELLER_AD_CREATED',
+                            sellerId,
+                            sellerBrand,
+                            sellerEmail,
+                            adId: adDocRef.id,
+                            title: title || 'Untitled Ad',
+                            moderationStatus: 'Active',
+                            createdAt: new Date().toISOString()
+                        })
+                    });
+                } catch (e) {}
+
                 alert("Ad Published!");
                 toggleAdCreateForm();
                 loadCoderAds();
@@ -3611,14 +3680,42 @@
 
             // Handle Payment Integration Request
             if (requestPaymentInquiry && currentSeller) {
-                const adminPhone = "8248482844";
-                const msg = `*PAYMENT INTEGRATION REQUEST*\n\nSeller ID: ${currentSeller.sellerId}\nBrand: ${currentSeller.brand || currentSeller.name}\n\nMerchant is requesting Razorpay Live API integration for their node.`;
-                const waUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(msg)}`;
-                window.open(waUrl, '_blank');
-
                 try {
+                    const requestId = `PAY_REQ_${Date.now()}`;
+                    const profileUrl = `${window.location.origin}/seller/index.html?s=${currentSeller.customUrl || currentSeller.username || currentSeller.sellerId}`;
+
+                    let productCount = 0;
+                    try {
+                        const prodSnap = await getDocs(query(collection(db, "products"), where("sellerId", "==", currentSeller.sellerId)));
+                        productCount = prodSnap.size;
+                    } catch (e) {}
+
+                    const requestPayload = {
+                        requestId,
+                        sellerId: currentSeller.sellerId,
+                        sellerName: currentSeller.name || 'Merchant',
+                        sellerBrand: currentSeller.brand || currentSeller.username || 'Merchant',
+                        sellerEmail: currentSeller.email || 'N/A',
+                        sellerMobile: currentSeller.mobile || 'N/A',
+                        profileUrl,
+                        websiteUrl: profileUrl,
+                        productCount,
+                        status: 'PENDING',
+                        timestamp: new Date().toISOString()
+                    };
+
+                    await setDoc(doc(db, "payment_integration_requests", requestId), requestPayload);
                     await updateDoc(doc(db, "sellers", currentSeller.sellerId), { paymentInquiry: true });
-                } catch(e) { console.warn("Registry inquiry update failed"); }
+
+                    await fetch('/.netlify/functions/paymentIntegrationRequested', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'PAYMENT_INTEGRATION_REQUESTED',
+                            ...requestPayload
+                        })
+                    });
+                } catch(e) { console.warn("Payment integration request error:", e); }
             }
 
             // Collect Variations
@@ -3678,6 +3775,38 @@
                     variations: variations.length > 0 ? variations : null,
                     lastUpdated: new Date().toISOString()
                 });
+
+                // Trigger SELLER_PRODUCT_CREATED email endpoint
+                try {
+                    const sellerId = isCoder ? 'admin' : (currentSeller ? currentSeller.sellerId : 'unknown');
+                    let sellerEmail = currentSeller?.email || 'codez4848@gmail.com';
+                    let sellerBrand = currentSeller?.brand || currentSeller?.name || 'Merchant';
+                    let sellerMobile = currentSeller?.mobile || 'N/A';
+
+                    if (isCoder) {
+                        sellerEmail = 'codez4848@gmail.com';
+                        sellerBrand = 'Architect Admin';
+                    }
+
+                    await fetch('/.netlify/functions/productCreated', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'SELLER_PRODUCT_CREATED',
+                            sellerId,
+                            sellerBrand,
+                            sellerEmail,
+                            sellerMobile,
+                            productId: pid,
+                            productName: name,
+                            price: dp,
+                            category,
+                            createdAt: new Date().toISOString(),
+                            productUrl: `${window.location.origin}/seller/index.html?s=${currentSeller?.username || sellerId}`
+                        })
+                    });
+                } catch (e) {}
+
                 alert("Product Launched Successfully!");
                 if(loader) loader.style.display = 'none';
                 showPanel('standard-interface');
@@ -3943,6 +4072,29 @@
                     variations: variations.length > 0 ? variations : null,
                     lastUpdated: new Date().toISOString()
                 });
+
+                // Trigger SELLER_PRODUCT_UPDATED email endpoint
+                try {
+                    const sellerId = isCoder ? 'admin' : (currentSeller ? currentSeller.sellerId : 'unknown');
+                    let sellerEmail = currentSeller?.email || 'codez4848@gmail.com';
+                    let sellerBrand = currentSeller?.brand || currentSeller?.name || 'Merchant';
+
+                    await fetch('/.netlify/functions/productUpdated', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'SELLER_PRODUCT_UPDATED',
+                            sellerId,
+                            sellerBrand,
+                            sellerEmail,
+                            productId: pid,
+                            productName: name,
+                            changedFields: 'MRP, Selling Price, Stock, Description, Images',
+                            updatedAt: new Date().toISOString()
+                        })
+                    });
+                } catch (e) {}
+
                 alert("Product Updated!");
                 closeEditModal();
                 renderDashboard();
@@ -3969,8 +4121,39 @@
 
         window.deleteProduct = async (id) => {
             if(confirm('Delete product?')) {
-                await deleteDoc(doc(db, "products", id));
-                renderDashboard();
+                try {
+                    const prodSnap = await getDoc(doc(db, "products", id));
+                    const prodData = prodSnap.exists() ? prodSnap.data() : {};
+
+                    await deleteDoc(doc(db, "products", id));
+
+                    // Trigger SELLER_PRODUCT_DELETED email endpoint
+                    try {
+                        const sellerId = isCoder ? 'admin' : (currentSeller ? currentSeller.sellerId : (prodData.sellerId || 'unknown'));
+                        let sellerEmail = currentSeller?.email || 'codez4848@gmail.com';
+                        let sellerBrand = currentSeller?.brand || currentSeller?.name || 'Merchant';
+
+                        await fetch('/.netlify/functions/productDeleted', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                event: 'SELLER_PRODUCT_DELETED',
+                                sellerId,
+                                sellerBrand,
+                                sellerEmail,
+                                productId: id,
+                                productName: prodData.name || 'Unknown Product',
+                                price: prodData.price || 0,
+                                category: prodData.category || 'General',
+                                deletedAt: new Date().toISOString()
+                            })
+                        });
+                    } catch (e) {}
+
+                    renderDashboard();
+                } catch(e) {
+                    alert("Error deleting product: " + e.message);
+                }
             }
         };
 
@@ -4475,12 +4658,42 @@
             if(btn) { btn.innerText = "PROCESSING..."; btn.disabled = true; }
 
             try {
+                const buildSnap = await getDoc(doc(db, "apk_build_queue", id));
+                const buildData = buildSnap.exists() ? buildSnap.data() : {};
+                const sellerId = buildData.sellerId || id;
+                const nowIso = new Date().toISOString();
+
                 await updateDoc(doc(db, "apk_build_queue", id), {
-                    status: 'completed',
+                    status: 'APPROVED',
                     apkUrl: url,
-                    approvedAt: serverTimestamp()
+                    approvedAt: serverTimestamp(),
+                    approvedBy: isCoder ? 'coder_admin' : 'admin'
                 });
-                alert("Application link approved and synchronized!");
+
+                await updateDoc(doc(db, "sellers", sellerId), {
+                    apkUrl: url,
+                    apkStatus: 'APPROVED',
+                    lastApkApprovedAt: nowIso
+                });
+
+                try {
+                    const host = window.location.host;
+                    const protocol = window.location.protocol;
+                    await fetch(`${protocol}//${host}/.netlify/functions/apkApproved`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'APK_APPROVED',
+                            sellerId,
+                            sellerBrand: buildData.sellerBrand || buildData.username || 'Merchant',
+                            sellerEmail: buildData.sellerEmail || '',
+                            apkUrl: url,
+                            approvedAt: nowIso
+                        })
+                    });
+                } catch (e) {}
+
+                alert("Application link approved, saved to seller profile, and approval email dispatched!");
             } catch(e) {
                 alert("Approval Error: " + e.message);
                 if(btn) { btn.innerText = oldText; btn.disabled = false; }
@@ -4578,18 +4791,40 @@
 
                 await updateDoc(doc(db, "sellers", currentSeller.sellerId), updateData);
 
+                const requestId = `APK_REQ_${currentSeller.sellerId}`;
+                const profileUrl = `${window.location.origin}/seller/index.html?s=${currentSeller.customUrl || currentSeller.username || currentSeller.sellerId}`;
+
                 // Create/Update Build Request in Firebase Queue
                 const buildRequest = {
+                    requestId,
                     sellerId: currentSeller.sellerId,
+                    sellerBrand: currentSeller.brand || currentSeller.name || 'Merchant',
+                    sellerEmail: currentSeller.email || 'N/A',
+                    sellerMobile: currentSeller.mobile || 'N/A',
+                    profileUrl,
+                    websiteUrl: profileUrl,
                     username: currentSeller.username,
-                    mobile: currentSeller.mobile || 'N/A',
                     appName: appName,
                     appIcon: appIcon,
-                    storefrontUrl: `${window.location.origin}/seller/index.html?s=${currentSeller.username || currentSeller.sellerId}`,
-                    status: 'pending',
+                    storefrontUrl: profileUrl,
+                    status: 'PENDING',
+                    createdAt: new Date().toISOString(),
                     timestamp: serverTimestamp()
                 };
                 await setDoc(doc(db, "apk_build_queue", currentSeller.sellerId), buildRequest);
+
+                // Trigger APK_REQUESTED email endpoint
+                try {
+                    await fetch('/.netlify/functions/apkRequested', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'APK_REQUESTED',
+                            ...buildRequest,
+                            timestamp: undefined
+                        })
+                    });
+                } catch (e) {}
 
                 currentSeller = { ...currentSeller, ...updateData };
                 alert("Android Application Protocol Synchronized! Your app node has been queued for review by the admin.");
@@ -5074,6 +5309,30 @@
 
                 const adDocRef = await addDoc(collection(db, "ads"), adData);
                 const adId = adDocRef.id;
+
+                // Trigger SELLER_AD_CREATED email endpoint
+                try {
+                    const sellerId = isCoder ? 'admin' : (currentSeller ? currentSeller.sellerId : 'unknown');
+                    let sellerEmail = currentSeller?.email || 'codez4848@gmail.com';
+                    let sellerBrand = currentSeller?.brand || currentSeller?.name || 'Merchant';
+
+                    await fetch('/.netlify/functions/sellerAdCreated', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'SELLER_AD_CREATED',
+                            sellerId,
+                            sellerBrand,
+                            sellerEmail,
+                            adId,
+                            title,
+                            targetLocation: locationTarget,
+                            targetInterest: interestTarget,
+                            moderationStatus: 'Processing',
+                            createdAt: new Date().toISOString()
+                        })
+                    });
+                } catch (e) {}
 
                 // Deduct Credits immediately
                 if (!isCoder) {

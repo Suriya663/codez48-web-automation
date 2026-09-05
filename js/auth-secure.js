@@ -153,6 +153,25 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
     const refCode = sessionStorage.getItem('dev_referral_code');
     const dailyFee = selectedPlan === 'starter' ? 83 : 133;
 
+    let validRefCode = null;
+    let referrerEmail = null;
+    let referrerName = null;
+
+    if (refCode) {
+        try {
+            const devSnap = await getDocs(query(collection(db, "dev_prog_users"), where("referralCode", "==", refCode)));
+            if (!devSnap.empty) {
+                const devData = devSnap.docs[0].data();
+                // Prevent self-referral
+                if (devData.email.toLowerCase() !== email.toLowerCase()) {
+                    validRefCode = refCode;
+                    referrerEmail = devData.email;
+                    referrerName = devData.name || 'Developer Partner';
+                }
+            }
+        } catch (e) {}
+    }
+
     const nodeData = {
         sellerId,
         username,
@@ -175,7 +194,7 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
         followingCount: 0,
         followers: [],
         following: [],
-        referredBy: refCode || null
+        referredBy: validRefCode || null
     };
 
     try {
@@ -199,6 +218,28 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
 
         // Send Credential Email to Seller and Alert to Developer
         await sendCredentialEmail(nodeData, assignedPass, amountPaid);
+
+        // Trigger My Network Member Registered Email Workflow
+        if (validRefCode && referrerEmail) {
+            try {
+                await fetch('/.netlify/functions/myNetworkMemberRegistered', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'MY_NETWORK_MEMBER_REGISTERED',
+                        referrerEmail,
+                        referrerName,
+                        referralCode: validRefCode,
+                        referredSellerId: sellerId,
+                        referredBrand: brand,
+                        referredUsername: username,
+                        referredEmail: email,
+                        rewardInfo: 'Eligible for program commission',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            } catch (netErr) {}
+        }
 
         if (loader) loader.classList.add('hidden');
         setWizardStep(3);
@@ -259,22 +300,39 @@ export const handleAuth = async () => {
                 return alert("Username already taken.");
             }
 
-            // Dispatch Registration Request Email explaining payment options
-            fetch('/.netlify/functions/send-login-notification', {
+            // Generate Temporary Seller ID
+            const tempSellerId = 'SLR-' + Math.floor(100000 + Math.random() * 900000);
+
+            // Save Registration Data to pending_registrations collection FIRST
+            const pendingRegData = {
+                sellerId: tempSellerId,
+                username: username,
+                brandName: brand,
+                productDescription: prodDesc,
+                servicesDescription: servDesc,
+                email: loginInput,
+                mobile: document.getElementById('auth-mobile')?.value || 'N/A', // If you have a mobile input
+                timestamp: new Date().toISOString(),
+                paymentStatus: 'PENDING'
+            };
+
+            await setDoc(doc(db, "pending_registrations", tempSellerId), pendingRegData);
+
+            // Trigger the Isolated Profile Registration Payment Pending Email Module
+            fetch('/.netlify/functions/registrationPending', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'REGISTRATION_SUBMIT_REQUEST_ALERT',
-                    sellerEmail: loginInput,
-                    username: username,
-                    brandName: brand,
-                    prodDesc: prodDesc,
-                    servDesc: servDesc
+                    event: 'PROFILE_REGISTRATION_PAYMENT_PENDING',
+                    ...pendingRegData
                 })
             }).catch(() => {});
 
             if (loader) loader.classList.add('hidden');
             trackPotentialLead(); // Record accuracy data
+
+            // Pass the generated ID to the next step so it can be used during payment
+            localStorage.setItem('temp_tori_seller_id', tempSellerId);
             setWizardStep(2);
         } catch (err) {
             if (loader) loader.classList.add('hidden');
@@ -308,16 +366,19 @@ export const handleAuth = async () => {
                 window.currentUser = { ...sellerData, uid: sId, id: sId, isPending: folder === 'seller_requests' };
                 updateNavUI(window.currentUser);
 
-                // Dispatch quiet login notification email
-                fetch('/.netlify/functions/send-login-notification', {
+                // Dispatch isolated USER_LOGIN_SUCCESS email module
+                fetch('/.netlify/functions/loginNotification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'LOGIN_CONFIRMATION_ALERT',
-                        siteId: sId,
+                        event: 'USER_LOGIN_SUCCESS',
+                        userId: sId,
                         sellerId: sId,
                         brandName: sellerData.brand || sellerData.username || 'Merchant',
-                        userEmail: sellerData.email || loginInput
+                        email: sellerData.email || loginInput,
+                        role: 'Merchant Node',
+                        userAgent: navigator.userAgent || 'Standard Browser',
+                        timestamp: new Date().toISOString()
                     })
                 }).catch(() => {});
 

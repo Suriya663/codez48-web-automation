@@ -175,39 +175,67 @@ exports.handler = async (event, context) => {
         // ----------------------------------------------------
         // 2. PROCESS MERCHANT WALLET DAILY DEDUCTIONS & DEVELOPER PRO-RATA COMMISSIONS
         // ----------------------------------------------------
-        const sellersSnap = await db.collection('sellers').get();
+        const sellersSnap = await db.collection('sellers').where('status', '==', 'active').get();
         let walletDeductedCount = 0;
         let pausedCount = 0;
         let devCommissionsCredited = 0;
 
+        // Using YYYY-MM-DD for daily idempotency string
+        const todayDateStr = now.toISOString().split('T')[0];
+
         for (const sDoc of sellersSnap.docs) {
             const seller = sDoc.data();
             const sId = sDoc.id;
-            const lastActive = seller.lastActivatedAt ? new Date(seller.lastActivatedAt.toDate ? seller.lastActivatedAt.toDate() : seller.lastActivatedAt) : new Date(0);
-            const hoursSinceActive = (now - lastActive) / (1000 * 60 * 60);
 
-            if (hoursSinceActive >= 20) {
-                const dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
-                const currentWallet = Number(seller.walletBalance) || 0;
+            const dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
+            const currentWallet = Number(seller.walletBalance) || 0;
 
-                if (currentWallet >= dailyFee) {
-                    const newBalance = currentWallet - dailyFee;
-                    await sDoc.ref.update({
-                        walletBalance: newBalance,
-                        status: 'active',
-                        lastActivatedAt: admin.firestore.FieldValue.serverTimestamp()
+            // Strict Idempotency Check: Did we already process this seller today?
+            const idempotencyKey = `DAILY_FEE_${sId}_${todayDateStr}`;
+            const existingTxSnap = await db.collection('wallet_transactions').where('idempotencyKey', '==', idempotencyKey).get();
+
+            if (!existingTxSnap.empty) {
+                console.log(`[IDEMPOTENCY SKIP] Seller ${sId} already charged for ${todayDateStr}.`);
+                continue;
+            }
+
+            if (currentWallet >= dailyFee) {
+                const newBalance = currentWallet - dailyFee;
+                await sDoc.ref.update({
+                    walletBalance: newBalance,
+                    status: 'active',
+                    lastActivatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+                await db.collection('wallet_transactions').add({
+                    sellerId: sId,
+                    type: 'DAILY_AUTO_DEDUCTION',
+                    amount: -dailyFee,
+                    remainingBalance: newBalance,
+                    idempotencyKey: idempotencyKey,
+                    description: `24-Hour Website Activation Fee (${seller.tier || 'Starter'})`,
+                    timestamp: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+                walletDeductedCount++;
+
+                // Trigger Black & White Email Module
+                try {
+                    await fetch(`https://${event.headers.host || 'codez48.netlify.app'}/.netlify/functions/dailyAccountActive`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'DAILY_ACCOUNT_ACTIVATED',
+                            sellerId: sId,
+                            email: seller.email,
+                            brandName: seller.brand || seller.username || 'Merchant',
+                            chargeAmount: dailyFee,
+                            remainingBalance: newBalance,
+                            date: todayDateStr,
+                            alias: seller.customUrl || seller.username || sId
+                        })
                     });
-
-                    await db.collection('wallet_transactions').add({
-                        sellerId: sId,
-                        type: 'DAILY_AUTO_DEDUCTION',
-                        amount: -dailyFee,
-                        remainingBalance: newBalance,
-                        description: `24-Hour Website Activation Fee (${seller.tier || 'Starter'})`,
-                        timestamp: admin.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    walletDeductedCount++;
+                } catch(e) {}
 
                     // ----------------------------------------------------
                     // 3. PRO-RATA DEVELOPER DAILY COMMISSION (₹16.67/DAY)
@@ -282,41 +310,24 @@ exports.handler = async (event, context) => {
                         } catch (e) {}
                     }
                 } else {
-                    // Insufficient balance: Pause website & dispatch email alert
+                    // Insufficient balance: Pause website & trigger independent insufficientBalance email module
                     await sDoc.ref.update({ status: 'deactivated_insufficient_funds' });
                     pausedCount++;
 
                     if (seller.email && seller.email.includes('@')) {
                         try {
-                            await defaultTransporter.sendMail({
-                                from: process.env.SMTP_FROM || smtpUser,
-                                to: seller.email,
-                                subject: `⚠️ Action Required: Your CODEZ48 Website is Inactive (Insufficient Wallet Balance)`,
-                                html: `
-                                    <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; border-radius: 24px; border: 2px solid #000000; max-width: 580px; margin: 0 auto; color: #000000;">
-                                        <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #000000; padding-bottom: 16px;">
-                                            <img src="https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg" style="height: 50px; width: auto; margin-bottom: 10px;" alt="CODEZ48 Logo" />
-                                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">Website Temporarily Paused</h2>
-                                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #000000;">Insufficient Wallet Balance Notice</p>
-                                        </div>
-
-                                        <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
-                                            Hello ${escapeHtml(seller.brand || seller.username || 'Merchant')}, your website has been temporarily paused because your wallet balance (<strong>₹${currentWallet}</strong>) is below the required daily activation fee (<strong>₹${dailyFee}</strong>).
-                                        </p>
-
-                                        <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
-                                            <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sId)}</strong></p>
-                                            <p style="margin: 0 0 6px 0;">Current Wallet Balance: <strong>₹${currentWallet}</strong></p>
-                                            <p style="margin: 0;">Daily Plan Fee: <strong>₹${dailyFee} / Day</strong></p>
-                                        </div>
-
-                                        <div style="text-align: center;">
-                                            <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 16px 36px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
-                                                Recharge Wallet & Activate Website Now →
-                                            </a>
-                                        </div>
-                                    </div>
-                                `
+                            await fetch(`https://${event.headers.host || 'codez48.netlify.app'}/.netlify/functions/insufficientBalance`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    event: 'ACCOUNT_SUSPENDED_INSUFFICIENT_BALANCE',
+                                    sellerId: sId,
+                                    email: seller.email,
+                                    brandName: seller.brand || seller.username || 'Merchant',
+                                    walletBalance: currentWallet,
+                                    dailyFee: dailyFee,
+                                    timestamp: new Date().toISOString()
+                                })
                             });
                         } catch (e) {}
                     }

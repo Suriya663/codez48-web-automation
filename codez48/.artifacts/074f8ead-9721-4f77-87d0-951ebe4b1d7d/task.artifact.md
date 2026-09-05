@@ -1,0 +1,6 @@
+- [ ] Create `netlify/functions/productCreatedTemplate.js` and `productCreated.js`
+- [ ] Create `netlify/functions/productUpdatedTemplate.js` and `productUpdated.js`
+- [ ] Create `netlify/functions/productDeletedTemplate.js` and `productDeleted.js`
+- [ ] Update `addProduct`, `saveProductEdit`, and `deleteProduct` in `seller/developer.html` to trigger the corresponding product email endpoints after successful DB operations
+- [ ] Verify code with `analyze_file`
+- [ ] Create `walkthrough.artifact.md`
