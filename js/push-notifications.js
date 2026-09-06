@@ -1,6 +1,6 @@
 import { db, auth, messaging } from './firebase-config.js';
-import { getToken } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { getToken, deleteToken } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js";
+import { doc, setDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
 /**
@@ -8,7 +8,7 @@ import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/fi
  * Manages permission requests, token collection, and secure storage for index.html
  */
 export const PushNotificationSystem = {
-    VAPID_KEY: "BH-uH8T9_H67_ZJm3W-v8_u7-8-8-8-8-8-8-8-8", // VAPID key would normally go here
+    VAPID_KEY: "BCmqkwcfDBay0cDM4ihvgKhb8mwnKnW4Vl-aGuiK4i1gorHKB5HXHpoX0gbECTI2AVEBAV5OFpeUeY9JT1gaEU0",
 
     async init() {
         if (!("Notification" in window)) {
@@ -82,13 +82,16 @@ export const PushNotificationSystem = {
             // Wait for service worker to be active to avoid "no active Service Worker" error
             await navigator.serviceWorker.ready;
 
-            const token = await getToken(messaging, { serviceWorkerRegistration: reg });
+            const token = await getToken(messaging, {
+                serviceWorkerRegistration: reg,
+                vapidKey: this.VAPID_KEY
+            });
 
             if (token) {
                 const user = auth.currentUser;
-                const subscriberId = user ? user.uid : ('ANON_' + token.substring(0, 10));
+                const tokenPart = token.substring(0, 20);
 
-                await setDoc(doc(db, "main_site_subscribers", token.substring(0, 20)), {
+                await setDoc(doc(db, "main_site_subscribers", tokenPart), {
                     fcmToken: token,
                     uid: user ? user.uid : null,
                     platform: navigator.platform,
@@ -100,7 +103,7 @@ export const PushNotificationSystem = {
 
                 console.log("[PUSH] Token Registered Successfully.");
 
-                // Dispatch welcome notification with mandatory Authorization header to resolve 401 Unauthorized
+                // Dispatch welcome notification
                 const idToken = await user.getIdToken();
                 const response = await fetch('/.netlify/functions/send-notification', {
                     method: 'POST',
@@ -115,11 +118,21 @@ export const PushNotificationSystem = {
                     })
                 });
 
+                const result = await response.json().catch(() => ({}));
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    console.error("[PUSH] Server Error:", response.status, errorData);
+                    console.error("[PUSH] Server Error:", response.status, result);
+
+                    // AUTO-RECOVERY: If token is "NotRegistered", delete it and try once more
+                    if (result.code === 'messaging/registration-token-not-registered' || result.error?.includes('NotRegistered')) {
+                        console.warn("[PUSH] Stale token detected. Deleting and refreshing...");
+                        await deleteToken(messaging);
+                        await deleteDoc(doc(db, "main_site_subscribers", tokenPart));
+                        // Small timeout to prevent infinite loops
+                        setTimeout(() => this.registerToken(), 2000);
+                    }
                 } else {
-                    console.log("[PUSH] Welcome notification dispatched.");
+                    console.log("[PUSH] Welcome notification dispatched successfully.");
                 }
             }
         } catch (e) {
