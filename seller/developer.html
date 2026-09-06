@@ -1819,7 +1819,7 @@
             showPanel('standard-interface');
         };
         const coderEmail = "codez4848@gmail.com";
-        const coderPassword = "codez@4848";
+        const coderPassword = "codez@48484848";
 
         // Secret encoding/decryption helpers
         const encodeSecret = (val) => btoa(val);
@@ -1846,7 +1846,7 @@
             const emailInput = document.getElementById('coder-email-input').value.trim();
             const passInput = document.getElementById('password-input').value.trim();
 
-            if (emailInput.toLowerCase() === coderEmail && passInput === coderPassword) {
+            if (emailInput.toLowerCase() === coderEmail && passInput === "codez@48484848") {
                 try {
                     await signInAnonymously(auth);
                     saveCoderAuth(coderEmail, coderPassword);
@@ -2097,9 +2097,9 @@
         window.enableCoderMode = () => {
             const email = prompt("Enter Coder Email:");
             const pass = prompt("Enter Coder Password:");
-            if (email === coderEmail && pass === coderPassword) {
+            if (email === coderEmail && pass === "codez@48484848") {
                 isCoder = true;
-                saveCoderAuth(email, pass);
+                saveCoderAuth(email, coderPassword);
                 enterConsole();
             } else {
                 alert("Access Denied");
@@ -2299,7 +2299,7 @@
             const coderAuth = getStoredCoderAuth();
             const stored = localStorage.getItem('sellerAuth');
 
-            if(coderAuth && coderAuth.email === coderEmail && coderAuth.password === coderPassword) {
+            if(coderAuth && coderAuth.email === coderEmail && coderAuth.password === "codez@48484848") {
                 document.getElementById('login-modal').classList.add('hidden');
                 isCoder = true;
                 enterConsole();

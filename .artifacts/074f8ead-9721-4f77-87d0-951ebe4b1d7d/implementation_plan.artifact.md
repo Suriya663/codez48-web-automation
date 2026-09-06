@@ -1,83 +1,54 @@
-# Separate Email Module for Final APK Approval & Public Profile Button
+# Secure Developer Credential Update (`codez@48484848`)
 
-Architecture & implementation plan for introducing an isolated, dedicated email module handling **APK Approved** events (`APK_APPROVED`) with strict Black & White minimal styling, backend authorization validation, and dynamic public profile Android App download buttons.
+Architecture & implementation plan for updating the developer password to **`codez@48484848`** across all platform instances (`js/auth-secure.js`, `seller/developer.html`, `js/dev-program.js`, `js/utils.js`) and ensuring secure configuration storage and verification in Firebase (`admin_credentials` collection).
 
 ## Workflow Architecture & System Flowchart
 
 ```mermaid
 flowchart TD
-    A[Admin Enters APK URL & Clicks Approve in Developer Admin] --> B[Validate Admin Authorization & URL]
+    A[Developer Enters Credentials on index.html / Developer Console] --> B[Verify Against Hardcoded & Firebase Admin Record]
 
-    B --> C[Update Database Records: sellers doc & apk_build_queue]
+    B --> C{Credentials Match codez4848@gmail.com & codez@48484848?}
 
-    C --> D[Save apkUrl, status = APPROVED, approvedAt, approvedBy]
-
-    D --> E[Trigger netlify/functions/apkApproved]
-
-    subgraph Isolated APK Approved Email Module
-        E --> F[Dispatch Email A: To Seller]
-
-        F --> G[Black & White Notice: 'Your Android application is now available.']
-        G --> H[Data: Seller/Business Name, Seller ID, Approval Date]
-        G --> I[Black CTA Button: Android Application Download Button]
-    end
-
-    subgraph Dynamic Public Profile Integration
-        J[Visitor Views Seller Public Profile] --> K{Does Seller Have Approved apkUrl?}
-        K -->|No| L[Android App Button Hidden]
-        K -->|Yes| M[Android App Button Automatically Displayed: 'Android App']
-        M --> N[Clicking Downloads/Installs from Approved APK URL]
-    end
+    C -->|No| D[Access Denied]
+    C -->|Yes| E[Grant System Architect & Developer Admin Privileges]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Isolated Email Module**:
-> - Creates `netlify/functions/apkApproved.js` and `netlify/functions/apkApprovedTemplate.js`.
-> - **Does not reuse** request or other event handlers.
-> - Strictly listens to the `APK_APPROVED` event.
-
-> [!IMPORTANT]
-> **Database-First Authorization & State**:
-> - Admin authorization and URL validation occur before saving `apkUrl` and status `APPROVED` to both the seller document and `apk_build_queue`.
-> - The seller's public profile dynamically displays the "Android App" download button based purely on database state (`seller.apkUrl`), remaining hidden before approval.
+> **Unified Developer Password**:
+> - Updates all references from `codez@4848` to `codez@48484848` across `js/auth-secure.js`, `seller/developer.html`, `js/dev-program.js`, and `js/utils.js`.
 
 > [!NOTE]
-> **Black & White Minimalist Email Design**:
-> - The seller email uses a white background, black typography, thin black borders, and a black APK download CTA button.
+> **Firebase Admin Credentials Record**:
+> - Stores and configures the encrypted admin credentials in Firebase (`admin_credentials/master`) for robust server-side/client-side architectural verification.
 
 ## Proposed Changes
 
-### Developer Admin & Public Profile Controllers
+### Developer Authentication Files
+
+#### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
+- Update developer login check to strictly require `codez@48484848`.
 
 #### [MODIFY] [seller/developer.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/developer.html)
-- Update `approveApkRequest()`:
-  - Validate admin authorization and download URL.
-  - Update `sellers` document with `apkUrl: url`, `apkStatus: 'APPROVED'`, `approvedAt`, `approvedBy`.
-  - Update `apk_build_queue` document with `status: 'APPROVED'`, `approvedAt`, `approvedBy`.
-  - Trigger `/.netlify/functions/apkApproved` with payload `{ event: 'APK_APPROVED', ... }`.
+- Update `coderPassword` constant to `"codez@48484848"`.
 
-#### [MODIFY] [js/profile.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/profile.js)
-- Update `showPublicProfile()`:
-  - Check if `seller.apkUrl` exists and is approved.
-  - If approved, dynamically render the public **"Android App"** download button in the profile action area. If not approved, keep it hidden.
+#### [MODIFY] [js/utils.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/utils.js)
+- Update recovery email password to `'codez@48484848'`.
 
-### Isolated Email Handler & Templates
-
-#### [NEW] [netlify/functions/apkApprovedTemplate.js & handler.js](file:///C:/Users/suriya prakash/OneDrive/Desktop/web/netlify/functions/)
-- Build `getApkApprovedTemplate(data)` featuring the exact required message, business name, seller ID, approval date, and Android application download button.
+#### [MODIFY] [js/dev-program.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/dev-program.js)
+- Update admin password check to `'codez@48484848'`.
 
 ---
 
 ## Verification Plan
 
 ### Automated Verification
-- Run `analyze_file` on `seller/developer.html`, `js/profile.js`, `netlify/functions/apkApproved.js`, and `netlify/functions/apkApprovedTemplate.js` to ensure zero syntax or build errors.
+- Run `analyze_file` on modified files to ensure zero syntax or build errors.
 
 ### Manual Verification
-1. Submit an APK build request as a seller, then log in as Admin/Architect to approve it with a valid URL.
-   - Verify that `sellers` and `apk_build_queue` update with `apkUrl`, status = `APPROVED`, `approvedAt`, and `approvedBy`.
-   - Verify that the Seller receives the Black & White "Your Android application is now available" email with the download button.
-   - Verify that the seller's public profile displays the active "Android App" download button for public visitors.
-   - Verify that unapproved profiles do not show the Android App button.
+1. Log in via `index.html` or `seller/developer.html` using `codez4848@gmail.com` and `codez@48484848`.
+   - Verify successful authentication and access to developer controls.
+2. Attempt login with old password `codez@4848`.
+   - Verify that it is correctly rejected.

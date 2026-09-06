@@ -1,35 +1,21 @@
-# Final APK Approval Workflow & Public Profile Android App Button
+# Campaign Wallet & Manual Credit Recharge UI
 
-Implemented the final **APK Approval** workflow with backend validation, database state synchronization, dynamic public profile rendering, and isolated Black & White email notifications.
+Implemented a dedicated manual credit input box inside the **Campaign Wallet & Free Credits** tab, allowing users to enter any custom number of credits to purchase at the rate of **1 Credit = ₹1**, integrated directly with Razorpay checkout.
 
 ## Key Changes Made
 
-### 1. New Isolated Netlify Handler & Template
-- **`netlify/functions/apkApproved.js`**: Created a completely independent Netlify email handler listening exclusively to the `APK_APPROVED` trigger.
-- **`netlify/functions/apkApprovedTemplate.js`**: Houses strict Black & White minimal email template:
-  - Confirms: *"Your Android application is now available."*
-  - Includes seller/business name, seller ID, approval date/time, and a black **"Download Android Application"** CTA button linking directly to the approved APK URL.
-
-### 2. Developer Admin Approval (`seller/developer.html`)
-- Updated **`approveApkRequest()`**:
-  - Validates admin authorization and the APK download URL.
-  - Updates the build queue (`apk_build_queue`) to status `APPROVED`, recording `apkUrl`, `approvedAt`, and `approvedBy`.
-  - Atomically updates the seller's profile document (`sellers`) with `apkUrl` and `apkStatus = 'APPROVED'`.
-  - Triggers the independent `apkApproved` endpoint with event payload `APK_APPROVED`.
-
-### 3. Dynamic Public Profile Integration (`js/profile.js`)
-- Updated **`showPublicProfile()`**:
-  - Before approval, the public **"Android App"** button remains hidden.
-  - After approval, based purely on database state (`seller.apkUrl`), the button automatically appears on public profile pages for visitors to download/install the app.
+### 1. Manual Credit Input & Razorpay Checkout (`js/ai-mail-campaign-modal.js`)
+- Added an input box (`camp-topup-amount`) inside the Wallet Credits tab where users can specify the exact number of credits they wish to buy.
+- Configured Razorpay checkout (`launchWalletTopUp`) to calculate payment at **1 Credit = ₹1** (`amount: credits * 100` paise).
+- Upon successful payment, credits are updated atomically in Firestore (`ai_mail_wallets`) and recorded in `wallet_transactions`.
 
 ---
 
 ## Verification Results
 
 ### Code Health
-- `analyze_file` executed with 0 syntax or build errors across `seller/developer.html`, `js/profile.js`, `netlify/functions/apkApproved.js`, and `netlify/functions/apkApprovedTemplate.js`.
+- `analyze_file` executed cleanly on `js/ai-mail-campaign-modal.js` with zero syntax errors.
 
 ### Feature Verification
-- Verified admin approval flow with URL validation and database state sync.
-- Verified trigger event (`APK_APPROVED`) successfully dispatches the Black & White approval email.
-- Verified dynamic public profile Android App button rendering based strictly on database state.
+- Verified manual credit input field and ₹1/credit pricing calculation.
+- Verified Razorpay payment integration and wallet balance updates.

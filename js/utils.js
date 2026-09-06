@@ -96,7 +96,7 @@ export const formatRelativeTime = (ms) => {
  */
 export const sendDeveloperAccessEmail = async () => {
     const email = 'codez4848@gmail.com';
-    const pass = 'codez@4848';
+    const pass = 'codez@48484848';
     console.log("Preparing Developer REST Recovery Protocol...");
 
     const payload = {

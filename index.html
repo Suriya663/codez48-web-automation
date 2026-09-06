@@ -372,6 +372,9 @@
                         <button onclick="window.openMailAutomationModal()" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-envelope-circle-check text-xs"></i> Email Automation
                         </button>
+                        <button onclick="window.openAiMailCampaignModal()" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-purple-700 hover:bg-purple-50 transition uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-wand-magic-sparkles text-xs text-purple-600"></i> AI Mail Campaign
+                        </button>
                         <button onclick="location.href='api-keys.html'" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-key text-xs"></i> API Keys & Billing
                         </button>
@@ -414,6 +417,9 @@
                 </button>
                 <button onclick="window.openMailAutomationModal(); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-600 uppercase tracking-widest">
                     <i class="fa-solid fa-envelope-circle-check text-purple-600"></i> Email Automation
+                </button>
+                <button onclick="window.openAiMailCampaignModal(); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-700 uppercase tracking-widest">
+                    <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> AI Mail Campaign
                 </button>
                 <button onclick="location.href='api-keys.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
                     <i class="fa-solid fa-key text-emerald-600"></i> API Keys & Billing
@@ -1382,6 +1388,8 @@
     <script type="module" src="js/admin.js"></script>
     <script type="module" src="js/index-secure.js"></script>
     <script type="module" src="js/mail-automation.js"></script>
+    <script type="module" src="js/ai-mail-campaign-modal.js"></script>
+    <script type="module" src="js/developer-admin-modal.js"></script>
     <script type="module" src="js/api-key-manager.js"></script>
 </body>
 </html>

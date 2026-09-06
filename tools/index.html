@@ -136,6 +136,18 @@
                         Configure Mail <i class="fa-solid fa-arrow-right"></i>
                     </span>
                 </div>
+
+                <!-- AI Mail Campaign Card -->
+                <div onclick="window.openAiMailCampaignModal()" class="glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group border-2 border-purple-500/30">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg shadow-purple-900/30">
+                        <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-black uppercase tracking-tight mb-2">AI Mail Campaign</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">AI-powered email campaigns, wallet credits, and commerce automation.</p>
+                    <span class="text-[10px] font-black text-purple-700 uppercase tracking-widest flex items-center gap-2">
+                        Launch Campaign Suite <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
             </div>
 
             <!-- Tab Content: History -->
@@ -619,6 +631,7 @@
     <script type="module" src="../js/playwright-agent-core.js"></script>
     <script type="module" src="../js/ai-automation.js"></script>
     <script type="module" src="../js/mail-automation.js"></script>
+    <script type="module" src="../js/ai-mail-campaign-modal.js"></script>
     <script type="module" src="../js/api-key-manager.js"></script>
     <script>
         function showWorkspace(id) {
