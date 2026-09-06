@@ -1,6 +1,7 @@
 import { db, auth, messaging } from './firebase-config.js';
 import { getToken } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js";
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
 /**
  * CODEZ48 Push Notification System
@@ -71,6 +72,11 @@ export const PushNotificationSystem = {
     async registerToken() {
         if (!messaging) return;
         try {
+            // Ensure user is signed in (anonymously if needed) to generate a valid ID token for secure backend calls
+            if (!auth.currentUser) {
+                await signInAnonymously(auth);
+            }
+
             const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
 
             // Wait for service worker to be active to avoid "no active Service Worker" error
@@ -94,14 +100,14 @@ export const PushNotificationSystem = {
 
                 console.log("[PUSH] Token Registered Successfully.");
 
-                // Optional: Dispatch welcome notification
-                const idToken = user ? await user.getIdToken() : null;
-                const headers = { 'Content-Type': 'application/json' };
-                if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
-
+                // Dispatch welcome notification with mandatory Authorization header to resolve 401 Unauthorized
+                const idToken = await user.getIdToken();
                 fetch('/.netlify/functions/send-notification', {
                     method: 'POST',
-                    headers: headers,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + idToken
+                    },
                     body: JSON.stringify({
                         targetToken: token,
                         welcomeTitle: 'CODEZ48 Notifications Enabled!',

@@ -1,5 +1,5 @@
-- [x] Update `netlify/functions/aiMailCampaignQueue.js` to implement per-email credit deduction and sequential stopping on zero balance
-- [x] Update `js/ai-mail-campaign-modal.js` to render "Stopped" campaign status with "Add Balance" button
-- [x] Update `js/push-notifications.js` to wait for Service Worker activation before token registration
+- [x] Update `js/push-notifications.js` to ensure anonymous sign-in and include ID token in headers to resolve 401 error
+- [x] Update `js/ai-mail-campaign-modal.js` to handle Firestore index error gracefully in campaign history
+- [x] Verify `netlify/functions/send-notification.js` logic for anonymous user authentication
 - [x] Verify code with `analyze_file`
 - [x] Create `walkthrough.artifact.md`

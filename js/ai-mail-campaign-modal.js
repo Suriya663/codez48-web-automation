@@ -438,7 +438,19 @@ export const AiMailCampaignModal = {
                 container.appendChild(card);
             });
         } catch (e) {
-            container.innerHTML = `<p class="text-red-500 text-[10px] py-10 text-center">Error: ${e.message}</p>`;
+            if (e.message && e.message.includes('requires an index')) {
+                const indexUrl = e.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
+                container.innerHTML = `
+                    <div class="p-8 text-center bg-rose-50 border border-rose-200 rounded-[2rem] space-y-4">
+                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold">!</div>
+                        <h4 class="text-sm font-black text-rose-900 uppercase">Database Setup Required</h4>
+                        <p class="text-[10px] text-rose-700 font-bold max-w-md mx-auto">A Firestore index is required to display your campaign history. Please click the button below to authorize index creation in your Firebase Console.</p>
+                        <a href="${indexUrl || '#'}" target="_blank" class="inline-block bg-rose-600 text-white px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg">Create Firestore Index</a>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `<p class="text-red-500 text-[10px] py-10 text-center">Error: ${escapeHtml(e.message)}</p>`;
+            }
         }
     },
 
