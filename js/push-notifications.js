@@ -95,9 +95,13 @@ export const PushNotificationSystem = {
                 console.log("[PUSH] Token Registered Successfully.");
 
                 // Optional: Dispatch welcome notification
+                const idToken = user ? await user.getIdToken() : null;
+                const headers = { 'Content-Type': 'application/json' };
+                if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
+
                 fetch('/.netlify/functions/send-notification', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify({
                         targetToken: token,
                         welcomeTitle: 'CODEZ48 Notifications Enabled!',
