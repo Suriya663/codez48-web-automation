@@ -124,6 +124,7 @@ export const proceedToPayment = () => {
         name: "CODEZ48 Network",
         description: `Activation: ${selectedPlan.toUpperCase()} (${isDaily ? 'Pay-As-You-Go Daily' : 'Monthly'})`,
         handler: async function (response) {
+            window.location.hash = 'payment-verified-successful';
             activateNewNode(response.razorpay_payment_id, false, isDaily, amountToPay);
         },
         prefill: {
@@ -216,6 +217,20 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
             resUrlEl.innerText = `${window.location.origin}/seller/index.html?s=${alias}${selectedPlan === 'premium' ? '' : '.codeez'}`;
         }
 
+        // Show Verifying Step FIRST for Meta Pixel tracking verification
+        setWizardStep('verifying');
+
+        // Trigger Meta Pixel Purchase Event
+        if (window.fbq) {
+            window.fbq('track', 'Purchase', {
+                value: amountPaid,
+                currency: 'INR',
+                content_name: selectedPlan.toUpperCase() + ' PLAN',
+                content_ids: [sellerId],
+                content_type: 'product'
+            });
+        }
+
         // Send Credential Email to Seller and Alert to Developer
         await sendCredentialEmail(nodeData, assignedPass, amountPaid);
 
@@ -241,8 +256,11 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
             } catch (netErr) {}
         }
 
-        if (loader) loader.classList.add('hidden');
-        setWizardStep(3);
+        // Delay for 2 seconds to show the verification confirmation
+        setTimeout(() => {
+            if (loader) loader.classList.add('hidden');
+            setWizardStep(3);
+        }, 2000);
     } catch (err) {
         if (loader) loader.classList.add('hidden');
         alert("Registry Error: " + err.message);

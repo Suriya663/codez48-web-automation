@@ -49,6 +49,12 @@ const initApp = () => {
         setTimeout(() => { if (window.handleToolAction) window.handleToolAction('push'); }, 100);
     } else if (initialHash === 'tracker') {
         showView('tracker');
+    } else if (initialHash === 'order-successful') {
+        showView('landing');
+        setTimeout(() => {
+            alert("🛒 Order Placed Successfully!\nYour request has been transmitted to the merchant.");
+            window.location.hash = '';
+        }, 500);
     } else {
         showView('landing');
     }

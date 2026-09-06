@@ -82,9 +82,15 @@ export const DeveloperAdminModal = {
                     <!-- Tab 3: Global Push Notifications -->
                     <div id="dev-view-push" class="hidden space-y-6">
                         <div class="p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-xl space-y-6">
-                            <div>
-                                <h3 class="text-xl font-black uppercase tracking-tight text-white">Broadcast Global Push Alert</h3>
-                                <p class="text-slate-400 text-xs mt-1">Send a real-time message to all subscribers who granted notification permission.</p>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-xl font-black uppercase tracking-tight text-white">Broadcast Global Push Alert</h3>
+                                    <p class="text-slate-400 text-xs mt-1">Send a real-time message to all subscribers who granted notification permission.</p>
+                                </div>
+                                <div class="bg-slate-800 border border-slate-700 px-4 py-2 rounded-2xl text-center min-w-[100px]">
+                                    <p class="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">Live Subscribers</p>
+                                    <p id="dev-push-subscriber-count" class="text-xl font-black text-royal">0</p>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -157,6 +163,18 @@ export const DeveloperAdminModal = {
 
         if (tab === 'sellers') DeveloperAdminModal.loadSellers();
         if (tab === 'contacts') DeveloperAdminModal.loadContacts();
+        if (tab === 'push') DeveloperAdminModal.loadSubscriberCount();
+    },
+
+    async loadSubscriberCount() {
+        const countEl = document.getElementById('dev-push-subscriber-count');
+        if (!countEl) return;
+        try {
+            const snap = await getDocs(collection(db, "main_site_subscribers"));
+            countEl.innerText = snap.size;
+        } catch (e) {
+            console.error("Error loading subscriber count:", e);
+        }
     },
 
     async loadSellers() {

@@ -127,7 +127,8 @@ exports.handler = async (event, context) => {
 
                             <div style="margin: 20px 0; padding: 20px; background: #fafafa; border: 1px solid #eee; text-align: left;">
                                 ${campData.productImage ? `<img src="${escapeHtml(campData.productImage)}" style="width: 80px; height: 80px; object-fit: contain; background: #fff; border: 1px solid #ddd; border-radius: 8px; float: right; margin-left: 20px;">` : ''}
-                                <p style="margin: 0; font-size: 16px; font-weight: 800;">${escapeHtml(campData.productName || campData.businessName)}</p>
+                                <p style="margin: 0; font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 1px;">Seller ID: ${escapeHtml(sId || 'CODEZ48-NODE')}</p>
+                                <p style="margin: 4px 0; font-size: 16px; font-weight: 800;">${escapeHtml(campData.productName || campData.businessName)}</p>
                                 <p style="margin: 5px 0; font-size: 18px; font-weight: 900; color: #047857;">₹${escapeHtml(String(campData.price || 0))}</p>
                                 <div style="clear: both;"></div>
                                 <p style="margin-top: 15px; font-size: 13px; color: #666; line-height: 1.5;">${escapeHtml(campData.description || 'Exclusive offer from ' + campData.businessName)}</p>
@@ -260,22 +261,14 @@ exports.handler = async (event, context) => {
                 });
             }
 
+            // Redirect back to main site with success hash
             return {
-                statusCode: 200,
-                headers: { "Content-Type": "text/html" },
-                body: `
-                    <html>
-                    <body style="font-family: -apple-system, sans-serif; text-align: center; padding: 60px; background: #ffffff; color: #000000;">
-                        <div style="max-width: 480px; margin: 0 auto; border: 1px solid #000; padding: 40px; border-radius: 8px;">
-                            <h2 style="text-transform: uppercase; font-weight: 900;">Order Successful!</h2>
-                            <p style="font-size: 14px; line-height: 1.6;">Thank you. Your order has been placed successfully and transmitted to the merchant.</p>
-                            <div style="margin-top: 25px;">
-                                <a href="https://codez48.netlify.app" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 4px;">Return to CODEZ48</a>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                `
+                statusCode: 302,
+                headers: {
+                    "Location": `https://codez48.netlify.app/#order-successful`,
+                    "Cache-Control": "no-cache"
+                },
+                body: ''
             };
         }
 

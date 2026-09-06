@@ -1,0 +1,15 @@
+{
+    "short_name": "CODEZ48",
+    "name": "CODEZ48 High-Performance Network",
+    "icons": [
+        {
+            "src": "https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg",
+            "type": "image/jpg",
+            "sizes": "512x512"
+        }
+    ],
+    "start_url": "/index.html",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "theme_color": "#2563EB"
+}

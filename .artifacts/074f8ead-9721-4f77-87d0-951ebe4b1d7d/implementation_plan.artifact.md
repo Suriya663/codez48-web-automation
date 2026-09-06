@@ -1,78 +1,68 @@
-# AI Mail Campaign Wallet Fix & Sequential Credit Deduction
+# Payment Verification & Meta Pixel Tracking Implementation
 
-Architecture & implementation plan for fixing the **AI Mail Campaign Wallet System**, ensuring 1 credit (₹1) is deducted for every email sent, handling insufficient balance by stopping campaigns sequentially, and resolving the Push Notification Service Worker error.
+Architecture & implementation plan for enhancing the registration payment flow with a dedicated "Success Hashtag" in the URL (`#payment-verified-successful`), real-time verification UI, and Meta Pixel `Purchase` event tracking before transitioning to the profile backend.
 
 ## Workflow Architecture & System Flowchart
 
 ```mermaid
 flowchart TD
-    A[Queue Worker: aiMailCampaignQueue.js Starts] --> B[Fetch Campaign & User Wallet]
+    A[User Completes Payment on Razorpay] --> B[Razorpay Success Callback]
 
-    B --> C{Credits > 0?}
+    B --> C[Set URL Hash: #payment-verified-successful]
 
-    C -->|No| D[Mark Campaign: Stopped - Insufficient Balance]
-    C -->|Yes| E[Begin Recipient Loop]
+    C --> D[Show Verification UI: 'Verifying Payment & Connecting Meta Pixel...']
 
-    E --> F{Check Balance Before Each Send}
-    F -->|Balance == 0| G[Stop Batch & Notify User]
-    F -->|Balance > 0| H[Send Email via SMTP]
+    D --> E[Trigger Meta Pixel: fbq('track', 'Purchase', { ... })]
 
-    H --> I{Send Successful?}
-    I -->|Yes| J[Atomically Deduct 1 Credit from Wallet]
-    I -->|No| K[Log Failure & Move to Next Recipient]
+    E --> F[Run Backend Node Activation: activateNewNode]
 
-    J --> E
+    F --> G[Wait 2 Seconds for Visual Confirmation]
+
+    G --> H[Transition to Step 3: Registration Confirmed / Profile Backend]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Transactional Credit Deduction**:
-> - Credits are now deducted **per successful send** in the backend.
-> - If the wallet reaches zero during a campaign, the process stops immediately to prevent debt.
+> **Success Keyword in URL**:
+> - Upon successful payment, the URL will immediately update to include `#payment-verified-successful`. This allows external trackers like Meta Pixel to verify the conversion context.
 
 > [!IMPORTANT]
-> **Stop Notification & Recovery**:
-> - If a campaign stops due to balance, the UI will display: **"Your email sending has stopped"**.
-> - An **"Add Balance"** button will be provided to redirect the user to the recharge tab.
+> **Meta Pixel Integration**:
+> - The system will automatically trigger a `Purchase` event using the existing Meta Pixel ID (`1318887030322672`) with the plan amount and currency.
 
 > [!NOTE]
-> **Push Notification Fix**:
-> - The error `Subscription failed - no active Service Worker` will be resolved by ensuring the script waits for the Service Worker to reach the `activated` state before requesting a token.
+> **User Experience**:
+> - A brief "Verifying..." animation will be displayed after payment to confirm the tracking and verification steps before showing account credentials.
 
 ## Proposed Changes
 
-### Backend Queue Worker
+### Registration Controller
 
-#### [MODIFY] [netlify/functions/aiMailCampaignQueue.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/aiMailCampaignQueue.js)
-- Fetch user wallet document transactionally or using atomic increments.
-- Implement balance checks inside the recipient loop.
-- Deduct 1 credit per successful SMTP dispatch.
-- Update campaign status to `Stopped` if balance is exhausted.
+#### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
+- Update `proceedToPayment()`:
+  - In the Razorpay `handler`, set `window.location.hash = 'payment-verified-successful'`.
+- Update `activateNewNode()`:
+  - Show the intermediate verification state.
+  - Trigger `fbq('track', 'Purchase', ...)` if available.
+  - Delay the transition to Step 3 by 2 seconds for confirmation.
 
-### Campaign Workspace UI
+### Main Index UI
 
-#### [MODIFY] [js/ai-mail-campaign-modal.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/ai-mail-campaign-modal.js)
-- Update `switchTab` and `loadCampaigns` (to be implemented) to show the "Stopped" status.
-- Add "Add Balance" action to the "Stopped" campaign items.
-
-### Push Notification Logic
-
-#### [MODIFY] [js/push-notifications.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/push-notifications.js)
-- Update `registerToken` to use `await navigator.serviceWorker.ready` before calling `getToken`.
+#### [MODIFY] [index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/index.html)
+- Add `#auth-step-verifying` div to the registration wizard:
+  - Contains a success checkmark, "Payment Verified Successfully" text, and "Updating Meta Conversion..." status message.
 
 ---
 
 ## Verification Plan
 
 ### Automated Verification
-- Run `analyze_file` on updated JS files to ensure zero syntax errors.
+- Run `analyze_file` on `js/auth-secure.js` and `index.html` to ensure zero syntax or build errors.
 
 ### Manual Verification
-1. Launch a campaign with low credits (e.g., 2 credits).
-   - Verify that exactly 2 emails are sent and balance becomes 0.
-   - Verify that the campaign status changes to "Stopped".
-2. Check the "My Campaigns" tab.
-   - Verify the "Your email sending has stopped" message and "Add Balance" button.
-3. Refresh `index.html`.
-   - Verify that the Push Notification token registration error no longer appears in the console.
+1. Complete a test registration payment.
+   - Verify that the URL changes to `...#payment-verified-successful`.
+   - Verify that the "Verifying Payment & Connecting Meta Pixel..." UI appears.
+   - Verify that the final Step 3 appears after 2 seconds.
+   - (Check browser network tab) Verify that a request is sent to `facebook.com/tr` with the `Purchase` event.

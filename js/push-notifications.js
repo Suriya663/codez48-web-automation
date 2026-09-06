@@ -18,6 +18,14 @@ export const PushNotificationSystem = {
 
         if (Notification.permission === "granted") {
             this.registerToken();
+
+            // Listen for token refreshes
+            if (messaging) {
+                import("https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js").then(({ onTokenRefresh }) => {
+                    // Note: onTokenRefresh is often handled by the SDK automatically now, but we can re-trigger registerToken on focus
+                    window.addEventListener('focus', () => this.registerToken());
+                });
+            }
             return;
         }
 
@@ -89,19 +97,19 @@ export const PushNotificationSystem = {
 
             if (token) {
                 const user = auth.currentUser;
-                const tokenPart = token.substring(0, 20);
+                // Use a stable ID derived from token to prevent duplicates but allow refresh
+                const tokenPart = token.substring(0, 32).replace(/[^a-zA-Z0-9]/g, '_');
 
                 await setDoc(doc(db, "main_site_subscribers", tokenPart), {
                     fcmToken: token,
                     uid: user ? user.uid : null,
                     platform: navigator.platform,
                     browser: this.getBrowserName(),
-                    subscribedAt: serverTimestamp(),
                     lastActiveAt: serverTimestamp(),
                     status: 'active'
                 }, { merge: true });
 
-                console.log("[PUSH] Token Registered Successfully.");
+                console.log("[PUSH] Token Registered Successfully on device:", tokenPart);
 
                 // Dispatch welcome notification
                 const idToken = await user.getIdToken();
