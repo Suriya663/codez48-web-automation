@@ -102,7 +102,7 @@ export const PushNotificationSystem = {
 
                 // Dispatch welcome notification with mandatory Authorization header to resolve 401 Unauthorized
                 const idToken = await user.getIdToken();
-                fetch('/.netlify/functions/send-notification', {
+                const response = await fetch('/.netlify/functions/send-notification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -113,7 +113,14 @@ export const PushNotificationSystem = {
                         welcomeTitle: 'CODEZ48 Notifications Enabled!',
                         welcomeBody: 'You will now receive real-time business signals and updates.'
                     })
-                }).catch(() => {});
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error("[PUSH] Server Error:", response.status, errorData);
+                } else {
+                    console.log("[PUSH] Welcome notification dispatched.");
+                }
             }
         } catch (e) {
             console.error("[PUSH] Token Registration Error:", e.message);

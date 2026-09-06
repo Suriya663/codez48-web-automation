@@ -111,12 +111,26 @@ exports.handler = async (event, context) => {
         },
         data: { url: targetUrl || '/', siteId: siteId || 'unknown' }
       };
-      const response = await messaging.send(message);
-      return {
-        statusCode: 200,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ success: true, messageId: response })
-      };
+
+      try {
+        const response = await messaging.send(message);
+        return {
+          statusCode: 200,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({ success: true, messageId: response })
+        };
+      } catch (fcmError) {
+        console.error('FCM Direct Send Error:', fcmError);
+        return {
+          statusCode: 502, // Bad Gateway / FCM Down or Error
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({
+            success: false,
+            error: 'FCM Delivery Failed: ' + fcmError.message,
+            code: fcmError.code
+          })
+        };
+      }
     }
 
     // Case 2: Batch Send (Multiple Tokens - Global Broadcast)
@@ -131,16 +145,28 @@ exports.handler = async (event, context) => {
         data: { url: targetUrl || '/', siteId: siteId || 'global' }
       }));
 
-      const response = await messaging.sendEach(messages);
-      return {
-        statusCode: 200,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({
-          success: true,
-          successCount: response.successCount,
-          failureCount: response.failureCount
-        })
-      };
+      try {
+        const response = await messaging.sendEach(messages);
+        return {
+          statusCode: 200,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({
+            success: true,
+            successCount: response.successCount,
+            failureCount: response.failureCount
+          })
+        };
+      } catch (fcmError) {
+        console.error('FCM Multicast Error:', fcmError);
+        return {
+          statusCode: 502,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({
+            success: false,
+            error: 'FCM Multicast Failed: ' + fcmError.message
+          })
+        };
+      }
     }
 
     if (!siteId || !campaignId) {
@@ -266,8 +292,10 @@ exports.handler = async (event, context) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        success: false,
         error: message,
-        details: error.stack ? 'See logs' : undefined
+        stack: error.stack,
+        details: 'Function execution failed'
       })
     };
   }
