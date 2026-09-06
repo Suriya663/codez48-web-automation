@@ -4,7 +4,8 @@ import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/fi
 
 /**
  * CODEZ48 DEVELOPER ADMIN CONTROL CENTER MODAL
- * Manages seller profiles (delete, 1-month ₹4,000 premium subscription assignment) and bulk email contact imports with deduplication.
+ * Manages seller profiles (delete, 1-month ₹4,000 premium subscription assignment), bulk email contact imports,
+ * and global push notification broadcasting.
  */
 export const DeveloperAdminModal = {
     init() {
@@ -34,9 +35,10 @@ export const DeveloperAdminModal = {
                     </div>
 
                     <!-- Tabs -->
-                    <div class="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 max-w-md">
-                        <button onclick="window.switchDevAdminTab('sellers')" id="dev-tab-sellers" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all">Seller Profiles</button>
-                        <button onclick="window.switchDevAdminTab('contacts')" id="dev-tab-contacts" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Bulk Email Database</button>
+                    <div class="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 max-w-lg">
+                        <button onclick="window.switchDevAdminTab('sellers')" id="dev-tab-sellers" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all">Sellers</button>
+                        <button onclick="window.switchDevAdminTab('contacts')" id="dev-tab-contacts" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Emails</button>
+                        <button onclick="window.switchDevAdminTab('push')" id="dev-tab-push" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Global Push</button>
                     </div>
 
                     <!-- Tab 1: Seller Profiles Management -->
@@ -57,11 +59,11 @@ export const DeveloperAdminModal = {
                         <div class="flex justify-between items-center flex-wrap gap-4">
                             <div>
                                 <h3 class="text-lg font-black text-black uppercase tracking-tight">Authorized Contact Database</h3>
-                                <p class="text-xs text-slate-400 mt-1">Upload TXT, CSV, XLSX, or XLS files. Duplicates are automatically filtered out.</p>
+                                <p class="text-xs text-slate-400 mt-1">Upload files. Duplicates are filtered out.</p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <label class="px-6 py-3 bg-royal hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-md transition flex items-center gap-2">
-                                    <i class="fa-solid fa-file-arrow-up"></i> Upload Contact File (.txt, .csv, .xlsx)
+                                    <i class="fa-solid fa-file-arrow-up"></i> Upload File
                                     <input type="file" id="dev-contact-file-upload" accept=".txt,.csv,.xlsx,.xls" onchange="window.handleDevContactFileUpload(event)" class="hidden">
                                 </label>
                                 <button onclick="window.importDevBulkContactsPaste()" class="px-6 py-3 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
@@ -70,13 +72,50 @@ export const DeveloperAdminModal = {
                             </div>
                         </div>
 
-                        <!-- Import Summary Feedback -->
-                        <div id="dev-import-summary-box" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-900">
-                            <!-- Summary feedback injected here -->
-                        </div>
+                        <div id="dev-import-summary-box" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-900"></div>
 
                         <div id="dev-contacts-table-container" class="overflow-x-auto bg-slate-50 rounded-2xl border border-slate-200 p-4">
-                            <p class="text-slate-400 text-xs italic text-center py-6">Loading email contact database...</p>
+                            <p class="text-slate-400 text-xs italic text-center py-6">Loading email database...</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Global Push Notifications -->
+                    <div id="dev-view-push" class="hidden space-y-6">
+                        <div class="p-8 bg-slate-900 text-white rounded-[2.5rem] shadow-xl space-y-6">
+                            <div>
+                                <h3 class="text-xl font-black uppercase tracking-tight text-white">Broadcast Global Push Alert</h3>
+                                <p class="text-slate-400 text-xs mt-1">Send a real-time message to all subscribers who granted notification permission.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Notification Title</label>
+                                        <input type="text" id="dev-push-title" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-royal" placeholder="e.g. Platform Update">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Message Body</label>
+                                        <textarea id="dev-push-body" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-royal resize-none" placeholder="Enter broadcast message content..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Target URL (Optional)</label>
+                                        <input type="url" id="dev-push-url" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-royal" placeholder="https://codez48.netlify.app">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Hero Image URL (Optional)</label>
+                                        <input type="url" id="dev-push-image" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-royal" placeholder="https://example.com/alert.jpg">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-white/5 flex justify-between items-center">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase"><i class="fa-solid fa-circle-info mr-1 text-royal"></i> Estimated delivery to all active subscribers.</p>
+                                <button onclick="window.sendGlobalPushBroadcast()" id="btn-broadcast-push" class="px-10 py-4 bg-royal hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all active:scale-95">
+                                    Dispatch Global Push 🚀
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -98,7 +137,7 @@ export const DeveloperAdminModal = {
     },
 
     switchTab(tab) {
-        const tabs = ['sellers', 'contacts'];
+        const tabs = ['sellers', 'contacts', 'push'];
         tabs.forEach(t => {
             const view = document.getElementById(`dev-view-${t}`);
             const btn = document.getElementById(`dev-tab-${t}`);
@@ -109,7 +148,7 @@ export const DeveloperAdminModal = {
             }
         });
         const activeView = document.getElementById(`dev-view-${tab}`);
-        const activeBtn = document.getElementById(`dev-tab-${tab}`);
+        const activeBtn = document.getElementById(`camp-tab-${tab}`) || document.getElementById(`dev-tab-${tab}`);
         if (activeView) activeView.classList.remove('hidden');
         if (activeBtn) {
             activeBtn.classList.remove('text-slate-400');
@@ -289,6 +328,59 @@ export const DeveloperAdminModal = {
         if (list.length === 0) return alert("No valid emails detected.");
 
         await DeveloperAdminModal.processAndStoreContacts(list, 'bulk_paste');
+    },
+
+    async broadcastPush() {
+        const title = document.getElementById('dev-push-title')?.value.trim();
+        const body = document.getElementById('dev-push-body')?.value.trim();
+        const url = document.getElementById('dev-push-url')?.value.trim() || '/';
+        const image = document.getElementById('dev-push-image')?.value.trim() || null;
+
+        if (!title || !body) return alert("Title and Message Body are required for broadcast.");
+
+        const btn = document.getElementById('btn-broadcast-push');
+        const ogText = btn.innerText;
+        btn.innerText = "Dispatching Alerts...";
+        btn.disabled = true;
+
+        try {
+            // Fetch all main site subscribers
+            const subSnap = await getDocs(collection(db, "main_site_subscribers"));
+            if (subSnap.empty) {
+                alert("No active push subscribers found.");
+                return;
+            }
+
+            const tokens = subSnap.docs.map(d => d.data().fcmToken).filter(t => t);
+
+            // Dispatch via send-notification function
+            const idToken = await auth.currentUser?.getIdToken();
+            const response = await fetch('/.netlify/functions/send-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + idToken
+                },
+                body: JSON.stringify({
+                    targetTokens: tokens, // We need to handle plural targetTokens in the function
+                    welcomeTitle: title,
+                    welcomeBody: body,
+                    targetUrl: url,
+                    heroImage: image
+                })
+            });
+
+            if (!response.ok) throw new Error(await response.text());
+
+            alert(`Push broadcast sent to ${tokens.length} subscribers successfully!`);
+            if (document.getElementById('dev-push-title')) document.getElementById('dev-push-title').value = '';
+            if (document.getElementById('dev-push-body')) document.getElementById('dev-push-body').value = '';
+        } catch (e) {
+            alert("Broadcast Error: " + e.message);
+        } finally {
+            btn.innerText = ogText;
+            btn.disabled = false;
+        }
     }
 };
 
@@ -306,5 +398,6 @@ window.assignPremiumPlan = DeveloperAdminModal.assignPremiumPlan;
 window.deleteMerchantNode = DeveloperAdminModal.deleteMerchantNode;
 window.handleDevContactFileUpload = DeveloperAdminModal.handleFileUpload;
 window.importDevBulkContactsPaste = DeveloperAdminModal.importBulkPaste;
+window.sendGlobalPushBroadcast = DeveloperAdminModal.broadcastPush;
 
 DeveloperAdminModal.init();

@@ -1,13 +1,15 @@
 import { db, auth } from './firebase-config.js';
-import { collection, getDocs, setDoc, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { collection, getDocs, setDoc, doc, updateDoc, deleteDoc, query, where, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
 /**
  * CODEZ48 AI MAIL CAMPAIGN & EMAIL COMMERCE AUTOMATION MODAL CONTROLLER
  * Manages A-to-Z AI Mail Campaign workspace, Developer Contact Database with intelligent file import & deduplication,
- * Campaign Wizard, Wallet Credits with custom input box & Razorpay (1 Credit = ₹1), and sequential background dispatch.
+ * Campaign Wizard with Product Selection, Wallet Credits with custom input box & Razorpay (1 Credit = ₹1), and sequential background dispatch.
  */
 export const AiMailCampaignModal = {
+    selectedProduct: null,
+
     init() {
         console.log("[AI MAIL CAMPAIGN] Controller Initialized.");
         AiMailCampaignModal.ensureModalInDOM();
@@ -45,7 +47,12 @@ export const AiMailCampaignModal = {
                     <!-- Tab 1: Campaign Wizard -->
                     <div id="camp-view-wizard" class="space-y-6">
                         <div class="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
-                            <h3 class="text-lg font-black text-black uppercase tracking-tight">Step 1: Business & Product Details</h3>
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg font-black text-black uppercase tracking-tight">Step 1: Business & Product Selection</h3>
+                                <div id="camp-seller-id-badge" class="hidden px-3 py-1 bg-white border border-slate-200 rounded-full text-[9px] font-black text-royal uppercase tracking-widest">
+                                    Seller ID: <span id="camp-seller-id-val">---</span>
+                                </div>
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input type="text" id="camp-bus-name" placeholder="Business Name" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
                                 <input type="email" id="camp-bus-email" placeholder="Business Email" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
@@ -58,7 +65,21 @@ export const AiMailCampaignModal = {
                                     <option value="Special Offer">Special Offer</option>
                                 </select>
                             </div>
-                            <textarea id="camp-bus-desc" placeholder="Business / Product Description" class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal" rows="3"></textarea>
+
+                            <div class="pt-4 border-t border-slate-200 space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Select Product from Catalog</p>
+                                    <div id="camp-admin-sid-input" class="hidden flex items-center gap-2">
+                                        <input type="text" id="camp-target-sid" placeholder="Enter Seller ID" class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[9px] font-bold focus:outline-none focus:border-royal">
+                                        <button onclick="window.fetchProductsBySid()" class="px-3 py-1.5 bg-black text-white rounded-lg text-[8px] font-black uppercase">Fetch</button>
+                                    </div>
+                                </div>
+                                <div id="camp-product-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    <p class="text-slate-400 text-xs italic">Loading products...</p>
+                                </div>
+                            </div>
+
+                            <textarea id="camp-bus-desc" placeholder="Business / Product Description (Leave blank to use selected product description)" class="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal" rows="3"></textarea>
                         </div>
 
                         <div class="p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4">
@@ -71,7 +92,7 @@ export const AiMailCampaignModal = {
                                     <option value="Sales Focused">Sales Focused</option>
                                     <option value="Formal">Formal</option>
                                 </select>
-                                <input type="number" id="camp-price" placeholder="Product Price (₹ e.g. 999)" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
+                                <input type="number" id="camp-price" placeholder="Product Price (₹)" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-royal">
                             </div>
                             <button onclick="window.generateAiCampaignCopy()" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg flex items-center gap-2">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Email Copy
@@ -92,7 +113,7 @@ export const AiMailCampaignModal = {
                     <!-- Tab 2: My Campaigns History -->
                     <div id="camp-view-history" class="hidden space-y-4">
                         <h3 class="text-lg font-black text-black uppercase tracking-tight">My Campaigns (Background Dispatch Active)</h3>
-                        <div id="camp-history-list" class="space-y-3">
+                        <div id="camp-history-list" class="space-y-4">
                             <p class="text-slate-400 text-xs italic">No campaigns launched yet.</p>
                         </div>
                     </div>
@@ -138,7 +159,7 @@ export const AiMailCampaignModal = {
                         </div>
 
                         <!-- Import Summary Feedback -->
-                        <div id="import-summary-box" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-900">
+                        <div id="dev-import-summary-box" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-900">
                             <!-- Summary feedback injected here -->
                         </div>
 
@@ -163,23 +184,47 @@ export const AiMailCampaignModal = {
             const user = auth.currentUser;
             if (user) {
                 const userId = user.uid;
-                const wRef = doc(db, 'ai_mail_wallets', userId);
-                const wSnap = await getDoc(wRef);
-                let bal = 2;
-                if (wSnap.exists()) {
-                    bal = wSnap.data().credits || 2;
-                } else {
-                    await setDoc(wRef, { userId, credits: 2, createdAt: new Date().toISOString() }, { merge: true });
+                const sId = localStorage.getItem('tori_seller_id');
+
+                if (sId) {
+                    const badge = document.getElementById('camp-seller-id-badge');
+                    const val = document.getElementById('camp-seller-id-val');
+                    if (badge) badge.classList.remove('hidden');
+                    if (val) val.innerText = sId;
                 }
-                const balEl = document.getElementById('camp-wallet-balance');
-                if (balEl) balEl.innerText = `${bal} Credits`;
+
+                AiMailCampaignModal.loadSellerProducts(sId || userId);
+                AiMailCampaignModal.syncWalletBalance(userId);
 
                 if (user.email === 'codez4848@gmail.com' || localStorage.getItem('coderAuth')) {
                     const contactsTab = document.getElementById('camp-tab-contacts');
+                    const adminSidInput = document.getElementById('camp-admin-sid-input');
                     if (contactsTab) contactsTab.classList.remove('hidden');
+                    if (adminSidInput) adminSidInput.classList.remove('hidden');
                 }
             }
         } catch (e) {}
+    },
+
+    async syncWalletBalance(userId) {
+        const wRef = doc(db, 'ai_mail_wallets', userId);
+        const wSnap = await getDoc(wRef);
+        let bal = 0;
+        if (wSnap.exists()) {
+            bal = wSnap.data().credits || 0;
+        } else {
+            bal = 2;
+            await setDoc(wRef, { userId, credits: 2, createdAt: new Date().toISOString() }, { merge: true });
+        }
+        const balEl = document.getElementById('camp-wallet-balance');
+        if (balEl) balEl.innerText = `${bal} Credits`;
+        return bal;
+    },
+
+    fetchProductsBySid() {
+        const sid = document.getElementById('camp-target-sid')?.value.trim();
+        if (!sid) return alert("Please enter a valid Seller ID");
+        AiMailCampaignModal.loadSellerProducts(sid);
     },
 
     closeModal() {
@@ -207,12 +252,65 @@ export const AiMailCampaignModal = {
         }
 
         if (tab === 'contacts') AiMailCampaignModal.loadAdminEmailContacts();
+        if (tab === 'history') AiMailCampaignModal.loadCampaigns();
+        if (tab === 'wallet') {
+            const user = auth.currentUser;
+            if (user) AiMailCampaignModal.syncWalletBalance(user.uid);
+        }
+    },
+
+    async loadSellerProducts(userId) {
+        const container = document.getElementById('camp-product-list');
+        if (!container) return;
+        container.innerHTML = '<p class="text-slate-400 text-xs italic">Scanning catalog...</p>';
+
+        try {
+            const sId = localStorage.getItem('tori_seller_id') || userId;
+            const qP = query(collection(db, "products"), where("sellerId", "==", sId));
+            const snap = await getDocs(qP);
+
+            if (snap.empty) {
+                container.innerHTML = '<p class="text-slate-400 text-xs italic col-span-full">No products found. You can still create a campaign using the description box.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            snap.forEach(docSnap => {
+                const p = docSnap.data();
+                const pid = docSnap.id;
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3 rounded-2xl border border-slate-200 cursor-pointer hover:border-purple-500 transition-all text-left space-y-2 group relative';
+                card.onclick = () => AiMailCampaignModal.selectProduct(pid, p, card);
+                card.innerHTML = `
+                    <div class="w-full h-24 bg-slate-50 rounded-xl overflow-hidden mb-2">
+                        <img src="${p.image || ''}" class="w-full h-full object-contain">
+                    </div>
+                    <p class="text-[10px] font-black uppercase truncate">${escapeHtml(p.name)}</p>
+                    <p class="text-[11px] font-bold text-emerald-600">₹${p.price}</p>
+                `;
+                container.appendChild(card);
+            });
+        } catch (e) {
+            container.innerHTML = `<p class="text-red-500 text-[10px]">Error: ${e.message}</p>`;
+        }
+    },
+
+    selectProduct(pid, data, cardEl) {
+        document.querySelectorAll('#camp-product-list > div').forEach(c => c.classList.remove('ring-2', 'ring-purple-600', 'bg-purple-50/50'));
+        cardEl.classList.add('ring-2', 'ring-purple-600', 'bg-purple-50/50');
+        AiMailCampaignModal.selectedProduct = { pid, ...data };
+
+        const priceInput = document.getElementById('camp-price');
+        if (priceInput) priceInput.value = data.price || 0;
+
+        const descInput = document.getElementById('camp-bus-desc');
+        if (descInput && !descInput.value) descInput.value = data.description || '';
     },
 
     generateCopy() {
         const busName = document.getElementById('camp-bus-name').value.trim() || 'My Business';
         const goal = document.getElementById('camp-goal').value;
-        const desc = document.getElementById('camp-bus-desc').value.trim() || 'Professional product/service offering.';
+        const desc = document.getElementById('camp-bus-desc').value.trim() || (AiMailCampaignModal.selectedProduct ? AiMailCampaignModal.selectedProduct.description : 'Professional product/service offering.');
         const tone = document.getElementById('camp-tone').value;
 
         const previewBox = document.getElementById('camp-preview-box');
@@ -226,7 +324,7 @@ export const AiMailCampaignModal = {
         }
     },
 
-    async launchCampaign() {
+    async launchAiCampaign() {
         const busName = document.getElementById('camp-bus-name').value.trim();
         const email = document.getElementById('camp-bus-email').value.trim();
         if (!busName || !email) return alert("Business Name and Email are required.");
@@ -235,17 +333,29 @@ export const AiMailCampaignModal = {
             await signInAnonymously(auth);
             const user = auth.currentUser;
             const userId = user ? user.uid : 'anon';
+            const sId = localStorage.getItem('tori_seller_id') || userId;
+
+            // Check balance before launching
+            const balance = await AiMailCampaignModal.syncWalletBalance(userId);
+            if (balance <= 0) {
+                alert("Insufficient campaign balance. Please top up your wallet.");
+                AiMailCampaignModal.switchTab('wallet');
+                return;
+            }
 
             const campaignId = 'CAMP_' + Date.now();
             const campaignData = {
                 campaignId,
                 userId,
+                sellerId: sId,
                 businessName: busName,
                 businessEmail: email,
                 title: document.getElementById('camp-goal').value,
-                description: document.getElementById('camp-bus-desc').value.trim(),
+                description: document.getElementById('camp-bus-desc').value.trim() || (AiMailCampaignModal.selectedProduct?.description || ''),
                 headline: 'Special Offer from ' + busName,
                 price: parseFloat(document.getElementById('camp-price')?.value) || 0,
+                productId: AiMailCampaignModal.selectedProduct?.pid || null,
+                productImage: AiMailCampaignModal.selectedProduct?.image || null,
                 status: 'Queued',
                 sentCount: 0,
                 failedCount: 0,
@@ -254,17 +364,81 @@ export const AiMailCampaignModal = {
 
             await setDoc(doc(db, 'ai_mail_campaigns', campaignId), campaignData);
 
-            // Trigger background queue worker
             fetch('/.netlify/functions/aiMailCampaignQueue', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ campaignId, userId })
             }).catch(() => {});
 
-            alert("Campaign successfully scheduled and queued for background dispatch! 🚀");
+            alert("Campaign successfully scheduled and queued! Emails will send sequentially one-by-one.");
             AiMailCampaignModal.switchTab('history');
         } catch (e) {
             alert("Launch Error: " + e.message);
+        }
+    },
+
+    async loadCampaigns() {
+        const container = document.getElementById('camp-history-list');
+        if (!container) return;
+        container.innerHTML = '<p class="text-slate-400 text-xs italic py-10 text-center animate-pulse">Accessing archives...</p>';
+
+        try {
+            const user = auth.currentUser;
+            if (!user) return;
+            const qC = query(collection(db, 'ai_mail_campaigns'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+            const snap = await getDocs(qC);
+
+            if (snap.empty) {
+                container.innerHTML = '<p class="text-slate-400 text-xs italic py-10 text-center">No campaigns found.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            snap.forEach(d => {
+                const c = d.data();
+                const status = c.status || 'Pending';
+                const isStopped = status.includes('Stopped') || status.includes('Insufficient');
+
+                const card = document.createElement('div');
+                card.className = `p-5 rounded-3xl border ${isStopped ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-100'} shadow-sm space-y-3 transition-all`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">${c.title}</p>
+                            <h4 class="text-sm font-bold text-black">${escapeHtml(c.businessName)}</h4>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${isStopped ? 'bg-rose-500 text-white' : 'bg-slate-900 text-white'}">${status}</span>
+                    </div>
+
+                    ${isStopped ? `
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-2xl border border-rose-200">
+                            <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
+                            <div class="flex-1">
+                                <p class="text-[10px] font-black text-rose-900 uppercase">Your email sending has stopped</p>
+                                <p class="text-[8px] text-rose-600 font-bold">Insufficient wallet balance to continue dispatch.</p>
+                            </div>
+                            <button onclick="window.switchAiCampaignTab('wallet')" class="px-4 py-2 bg-rose-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-lg active:scale-95">Add Balance</button>
+                        </div>
+                    ` : ''}
+
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-50">
+                        <div class="flex gap-4">
+                            <div>
+                                <p class="text-[7px] font-black text-slate-300 uppercase">Sent</p>
+                                <p class="text-[10px] font-bold text-slate-600">${c.sentCount || 0}</p>
+                            </div>
+                            <div>
+                                <p class="text-[7px] font-black text-slate-300 uppercase">Failed</p>
+                                <p class="text-[10px] font-bold text-slate-600">${c.failedCount || 0}</p>
+                            </div>
+                        </div>
+                        <p class="text-[8px] text-slate-400 font-medium">${new Date(c.createdAt).toLocaleDateString()}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        } catch (e) {
+            container.innerHTML = `<p class="text-red-500 text-[10px] py-10 text-center">Error: ${e.message}</p>`;
         }
     },
 
@@ -320,7 +494,7 @@ export const AiMailCampaignModal = {
                 }
             }
 
-            const summaryBox = document.getElementById('import-summary-box');
+            const summaryBox = document.getElementById('dev-import-summary-box');
             if (summaryBox) {
                 summaryBox.classList.remove('hidden');
                 summaryBox.innerHTML = `
@@ -360,9 +534,9 @@ export const AiMailCampaignModal = {
 
                     const walletRef = doc(db, 'ai_mail_wallets', userId);
                     const wSnap = await getDoc(walletRef);
-                    let currentBal = 2;
+                    let currentBal = 0;
                     if (wSnap.exists()) {
-                        currentBal = wSnap.data().credits || 2;
+                        currentBal = wSnap.data().credits || 0;
                     }
                     const newBal = currentBal + amount;
 
@@ -391,7 +565,11 @@ export const AiMailCampaignModal = {
                     alert("Wallet Credit Error: " + e.message);
                 }
             },
-            theme: { color: "#2563EB" }
+            theme: { color: "#2563EB" },
+            prefill: {
+                email: auth.currentUser?.email || '',
+                contact: ''
+            }
         };
 
         if (window.Razorpay) {
@@ -418,10 +596,10 @@ export const AiMailCampaignModal = {
                 container.innerHTML = '<p class="text-slate-400 text-xs italic text-center py-6">No email contacts imported yet.</p>';
                 return;
             }
-            let html = '<table class="w-full text-left text-xs"><thead class="border-b border-slate-200"><tr><th class="py-2">Email</th><th class="py-2">Status</th><th class="py-2">Source</th></tr></thead><tbody>';
+            let html = '<table class="w-full text-left text-xs"><thead class="border-b border-slate-200 text-slate-400 font-black uppercase text-[9px]"><tr><th class="py-3 px-4">Email</th><th class="py-3 px-4">Status</th><th class="py-3 px-4">Source</th></tr></thead><tbody>';
             snap.forEach(d => {
                 const c = d.data();
-                html += `<tr class="border-b border-slate-100"><td class="py-2 font-mono">${escapeHtml(c.email)}</td><td class="py-2">${escapeHtml(c.status || 'active')}</td><td class="py-2">${escapeHtml(c.source || 'manual')}</td></tr>`;
+                html += `<tr class="border-b border-slate-100"><td class="py-3 px-4 font-mono">${escapeHtml(c.email)}</td><td class="py-3 px-4">${escapeHtml(c.status || 'active')}</td><td class="py-3 px-4">${escapeHtml(c.source || 'manual')}</td></tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -450,10 +628,11 @@ window.openAiMailCampaignModal = AiMailCampaignModal.openModal;
 window.closeAiMailCampaignModal = AiMailCampaignModal.closeModal;
 window.switchAiCampaignTab = AiMailCampaignModal.switchTab;
 window.generateAiCampaignCopy = AiMailCampaignModal.generateCopy;
-window.launchAiCampaign = AiMailCampaignModal.launchCampaign;
+window.launchAiCampaign = AiMailCampaignModal.launchAiCampaign;
 window.launchWalletTopUp = AiMailCampaignModal.launchWalletTopUp;
 window.loadAdminEmailContacts = AiMailCampaignModal.loadAdminEmailContacts;
 window.importBulkContactsPrompt = AiMailCampaignModal.importBulkContacts;
 window.handleContactFileUpload = AiMailCampaignModal.handleFileUpload;
+window.fetchProductsBySid = AiMailCampaignModal.fetchProductsBySid;
 
 AiMailCampaignModal.init();

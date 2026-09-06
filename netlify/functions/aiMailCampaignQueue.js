@@ -39,6 +39,7 @@ const escapeHtml = (str) => {
 
 /**
  * AI Mail Campaign Queue Worker & Scheduled Batch Processor
+ * Handles per-email credit deduction and sequential stopping on zero balance.
  */
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
@@ -58,7 +59,7 @@ exports.handler = async (event, context) => {
 
     try {
         const body = event.body ? JSON.parse(event.body) : {};
-        const { campaignId, userId } = body;
+        const { campaignId, userId: incomingUserId } = body;
 
         let smtpHost = process.env.SMTP_HOST;
         let smtpPort = Number(process.env.SMTP_PORT) || 587;
@@ -91,31 +92,65 @@ exports.handler = async (event, context) => {
         const batchSize = Number(process.env.SMTP_BATCH_SIZE) || 50;
         const delayMs = Number(process.env.SMTP_DELAY_MS) || 1000;
 
-        let totalSent = 0;
-        let totalFailed = 0;
+        let totalSentOverall = 0;
 
         for (const campDoc of campaignsSnap.docs) {
             const campData = campDoc.data();
             const cId = campDoc.id;
+            const userId = campData.userId;
+
+            // Fetch User Wallet
+            const walletRef = db.collection('ai_mail_wallets').doc(userId);
+            const walletSnap = await walletRef.get();
+            let credits = walletSnap.exists ? (walletSnap.data().credits || 0) : 0;
+
+            if (credits <= 0) {
+                await campDoc.ref.update({ status: 'Stopped (Insufficient Balance)', stoppedAt: new Date().toISOString() });
+                continue;
+            }
 
             await campDoc.ref.update({ status: 'Sending' });
 
-            const contactsSnap = await db.collection('email_contacts').where('suppressed', '==', false).where('unsubscribed', '==', false).where('status', '==', 'active').get();
-            const contacts = contactsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const contactsSnap = await db.collection('email_contacts')
+                .where('suppressed', '==', false)
+                .where('unsubscribed', '==', false)
+                .where('status', '==', 'active')
+                .get();
 
+            const contacts = contactsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             const processedRecipients = campData.processedRecipients || [];
-            const pendingContacts = contacts.filter(c => !processedRecipients.includes(c.email)).slice(0, batchSize);
+
+            // Get pending recipients for this batch, limited by credits and batch size
+            const maxSendable = Math.min(credits, batchSize);
+            const pendingContacts = contacts.filter(c => !processedRecipients.includes(c.email)).slice(0, maxSendable);
 
             if (pendingContacts.length === 0) {
                 await campDoc.ref.update({ status: 'Completed', completedAt: new Date().toISOString() });
                 continue;
             }
 
+            let sentInThisBatch = 0;
+            let failedInThisBatch = 0;
+
             for (const contact of pendingContacts) {
+                // Double check credits before each send
+                if (credits <= 0) {
+                    await campDoc.ref.update({ status: 'Stopped (Insufficient Balance)', stoppedAt: new Date().toISOString() });
+                    break;
+                }
+
                 try {
-                    const actionToken = Buffer.from(JSON.stringify({ cId, email: contact.email, t: Date.now() })).toString('base64');
-                    const orderUrl = `https://codez48.netlify.app/.netlify/functions/aiMailCampaignAction?token=${actionToken}&action=order`;
-                    const unsubUrl = `https://codez48.netlify.app/.netlify/functions/aiMailCampaignAction?token=${actionToken}&action=unsubscribe`;
+                    const actionToken = Buffer.from(JSON.stringify({
+                        cId,
+                        email: contact.email,
+                        sId: campData.sellerId,
+                        pId: campData.productId,
+                        t: Date.now()
+                    })).toString('base64');
+
+                    const actionUrl = `https://codez48.netlify.app/.netlify/functions/aiMailCampaignAction?token=${actionToken}`;
+                    const orderUrl = `${actionUrl}&action=order`;
+                    const unsubUrl = `${actionUrl}&action=unsubscribe`;
 
                     const emailHtml = `
                         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px; background-color: #ffffff; color: #000000; border: 1px solid #000000; max-width: 600px; margin: 0 auto; box-sizing: border-box;">
@@ -123,6 +158,8 @@ exports.handler = async (event, context) => {
                                 <h2 style="margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; color: #000000;">${escapeHtml(campData.headline || campData.title)}</h2>
                                 <p style="margin: 6px 0 0 0; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666666; letter-spacing: 1px;">Exclusive Offer from ${escapeHtml(campData.businessName)}</p>
                             </div>
+
+                            ${campData.productImage ? `<div style="text-align: center; margin-bottom: 24px;"><img src="${escapeHtml(campData.productImage)}" style="max-width: 100%; height: auto; border: 1px solid #000000; border-radius: 8px;" alt="Offer Image" /></div>` : ''}
 
                             <p style="font-size: 14px; font-weight: 400; color: #000000; line-height: 1.6; margin-bottom: 20px;">
                                 ${escapeHtml(campData.description || '')}
@@ -154,8 +191,13 @@ exports.handler = async (event, context) => {
                         html: emailHtml
                     });
 
+                    // Successfully sent - Deduct Credit & Update Stats
                     processedRecipients.push(contact.email);
-                    totalSent++;
+                    sentInThisBatch++;
+                    credits--;
+
+                    // Atomic deduction
+                    await walletRef.update({ credits: admin.firestore.FieldValue.increment(-1) });
 
                     await db.collection('ai_mail_campaign_events').add({
                         campaignId: cId,
@@ -166,7 +208,7 @@ exports.handler = async (event, context) => {
 
                     await new Promise(r => setTimeout(r, delayMs));
                 } catch (sendErr) {
-                    totalFailed++;
+                    failedInThisBatch++;
                     await db.collection('ai_mail_campaign_events').add({
                         campaignId: cId,
                         recipientEmail: contact.email,
@@ -177,22 +219,24 @@ exports.handler = async (event, context) => {
                 }
             }
 
-            const newSentCount = (campData.sentCount || 0) + totalSent;
-            const newFailedCount = (campData.failedCount || 0) + totalFailed;
+            const newSentCount = (campData.sentCount || 0) + sentInThisBatch;
+            const newFailedCount = (campData.failedCount || 0) + failedInThisBatch;
             const isFinished = processedRecipients.length >= contacts.length;
 
             await campDoc.ref.update({
                 processedRecipients,
                 sentCount: newSentCount,
                 failedCount: newFailedCount,
-                status: isFinished ? 'Completed' : 'Sending'
+                status: isFinished ? 'Completed' : (credits <= 0 ? 'Stopped (Insufficient Balance)' : 'Sending')
             });
+
+            totalSentOverall += sentInThisBatch;
         }
 
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ success: true, sent: totalSent, failed: totalFailed })
+            body: JSON.stringify({ success: true, sent: totalSentOverall })
         };
     } catch (e) {
         console.error("AI Mail Campaign Queue Error:", e);

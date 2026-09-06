@@ -1,54 +1,78 @@
-# Secure Developer Credential Update (`codez@48484848`)
+# AI Mail Campaign Wallet Fix & Sequential Credit Deduction
 
-Architecture & implementation plan for updating the developer password to **`codez@48484848`** across all platform instances (`js/auth-secure.js`, `seller/developer.html`, `js/dev-program.js`, `js/utils.js`) and ensuring secure configuration storage and verification in Firebase (`admin_credentials` collection).
+Architecture & implementation plan for fixing the **AI Mail Campaign Wallet System**, ensuring 1 credit (₹1) is deducted for every email sent, handling insufficient balance by stopping campaigns sequentially, and resolving the Push Notification Service Worker error.
 
 ## Workflow Architecture & System Flowchart
 
 ```mermaid
 flowchart TD
-    A[Developer Enters Credentials on index.html / Developer Console] --> B[Verify Against Hardcoded & Firebase Admin Record]
+    A[Queue Worker: aiMailCampaignQueue.js Starts] --> B[Fetch Campaign & User Wallet]
 
-    B --> C{Credentials Match codez4848@gmail.com & codez@48484848?}
+    B --> C{Credits > 0?}
 
-    C -->|No| D[Access Denied]
-    C -->|Yes| E[Grant System Architect & Developer Admin Privileges]
+    C -->|No| D[Mark Campaign: Stopped - Insufficient Balance]
+    C -->|Yes| E[Begin Recipient Loop]
+
+    E --> F{Check Balance Before Each Send}
+    F -->|Balance == 0| G[Stop Batch & Notify User]
+    F -->|Balance > 0| H[Send Email via SMTP]
+
+    H --> I{Send Successful?}
+    I -->|Yes| J[Atomically Deduct 1 Credit from Wallet]
+    I -->|No| K[Log Failure & Move to Next Recipient]
+
+    J --> E
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Unified Developer Password**:
-> - Updates all references from `codez@4848` to `codez@48484848` across `js/auth-secure.js`, `seller/developer.html`, `js/dev-program.js`, and `js/utils.js`.
+> **Transactional Credit Deduction**:
+> - Credits are now deducted **per successful send** in the backend.
+> - If the wallet reaches zero during a campaign, the process stops immediately to prevent debt.
+
+> [!IMPORTANT]
+> **Stop Notification & Recovery**:
+> - If a campaign stops due to balance, the UI will display: **"Your email sending has stopped"**.
+> - An **"Add Balance"** button will be provided to redirect the user to the recharge tab.
 
 > [!NOTE]
-> **Firebase Admin Credentials Record**:
-> - Stores and configures the encrypted admin credentials in Firebase (`admin_credentials/master`) for robust server-side/client-side architectural verification.
+> **Push Notification Fix**:
+> - The error `Subscription failed - no active Service Worker` will be resolved by ensuring the script waits for the Service Worker to reach the `activated` state before requesting a token.
 
 ## Proposed Changes
 
-### Developer Authentication Files
+### Backend Queue Worker
 
-#### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
-- Update developer login check to strictly require `codez@48484848`.
+#### [MODIFY] [netlify/functions/aiMailCampaignQueue.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/aiMailCampaignQueue.js)
+- Fetch user wallet document transactionally or using atomic increments.
+- Implement balance checks inside the recipient loop.
+- Deduct 1 credit per successful SMTP dispatch.
+- Update campaign status to `Stopped` if balance is exhausted.
 
-#### [MODIFY] [seller/developer.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/developer.html)
-- Update `coderPassword` constant to `"codez@48484848"`.
+### Campaign Workspace UI
 
-#### [MODIFY] [js/utils.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/utils.js)
-- Update recovery email password to `'codez@48484848'`.
+#### [MODIFY] [js/ai-mail-campaign-modal.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/ai-mail-campaign-modal.js)
+- Update `switchTab` and `loadCampaigns` (to be implemented) to show the "Stopped" status.
+- Add "Add Balance" action to the "Stopped" campaign items.
 
-#### [MODIFY] [js/dev-program.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/dev-program.js)
-- Update admin password check to `'codez@48484848'`.
+### Push Notification Logic
+
+#### [MODIFY] [js/push-notifications.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/push-notifications.js)
+- Update `registerToken` to use `await navigator.serviceWorker.ready` before calling `getToken`.
 
 ---
 
 ## Verification Plan
 
 ### Automated Verification
-- Run `analyze_file` on modified files to ensure zero syntax or build errors.
+- Run `analyze_file` on updated JS files to ensure zero syntax errors.
 
 ### Manual Verification
-1. Log in via `index.html` or `seller/developer.html` using `codez4848@gmail.com` and `codez@48484848`.
-   - Verify successful authentication and access to developer controls.
-2. Attempt login with old password `codez@4848`.
-   - Verify that it is correctly rejected.
+1. Launch a campaign with low credits (e.g., 2 credits).
+   - Verify that exactly 2 emails are sent and balance becomes 0.
+   - Verify that the campaign status changes to "Stopped".
+2. Check the "My Campaigns" tab.
+   - Verify the "Your email sending has stopped" message and "Add Balance" button.
+3. Refresh `index.html`.
+   - Verify that the Push Notification token registration error no longer appears in the console.

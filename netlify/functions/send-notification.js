@@ -98,23 +98,48 @@ exports.handler = async (event, context) => {
     const uid = decodedToken.uid;
 
     // 4. Parse request parameters
-    const { siteId, campaignId, targetToken, welcomeTitle, welcomeBody } = JSON.parse(event.body);
+    const { siteId, campaignId, targetToken, targetTokens, welcomeTitle, welcomeBody, targetUrl, heroImage } = JSON.parse(event.body);
 
-    // Case 1: Direct Send (Automatic Welcome)
+    // Case 1: Direct Send (Single Token)
     if (targetToken && welcomeTitle) {
       const message = {
         token: targetToken,
         notification: {
           title: welcomeTitle,
-          body: welcomeBody || 'Thanks for subscribing!'
+          body: welcomeBody || 'Thanks for subscribing!',
+          image: heroImage || undefined
         },
-        data: { url: '/', siteId: siteId || 'unknown' }
+        data: { url: targetUrl || '/', siteId: siteId || 'unknown' }
       };
       const response = await messaging.send(message);
       return {
         statusCode: 200,
         headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ success: true, messageId: response })
+      };
+    }
+
+    // Case 2: Batch Send (Multiple Tokens - Global Broadcast)
+    if (targetTokens && Array.isArray(targetTokens) && welcomeTitle) {
+      const messages = targetTokens.map(t => ({
+        token: t,
+        notification: {
+          title: welcomeTitle,
+          body: welcomeBody || '',
+          image: heroImage || undefined
+        },
+        data: { url: targetUrl || '/', siteId: siteId || 'global' }
+      }));
+
+      const response = await messaging.sendEach(messages);
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({
+          success: true,
+          successCount: response.successCount,
+          failureCount: response.failureCount
+        })
       };
     }
 
