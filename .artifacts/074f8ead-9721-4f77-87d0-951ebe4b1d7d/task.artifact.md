@@ -1,4 +1,5 @@
-- [ ] Update `js/auth-secure.js` for registration success hashtag, "Verifying" step, and Meta Pixel trigger
-- [ ] Update `seller/index.html` for order success hashtag, triple notification logic (Seller, Admin, Customer), and enhanced verification UI
-- [ ] Verify code with `analyze_file`
+- [ ] Optimize `js/push-notifications.js` for aggressive token refresh and laptop/mobile reliability
+- [ ] Refine `js/developer-admin-modal.js` Global Push UI for real-time subscriber tracking
+- [ ] Enhance `netlify/functions/send-notification.js` for efficient batch delivery
+- [ ] Verify implementation across all modified components
 - [ ] Create `walkthrough.artifact.md`

@@ -4,51 +4,50 @@ import { doc, setDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
 /**
- * CODEZ48 Push Notification System
- * Manages permission requests, token collection, and secure storage for index.html
+ * CODEZ48 Ultra-Reliable Global Push Notification System
+ * Handles automated enrollment, cross-device token refresh, and background delivery.
  */
 export const PushNotificationSystem = {
     VAPID_KEY: "BCmqkwcfDBay0cDM4ihvgKhb8mwnKnW4Vl-aGuiK4i1gorHKB5HXHpoX0gbECTI2AVEBAV5OFpeUeY9JT1gaEU0",
 
     async init() {
         if (!("Notification" in window)) {
-            console.warn("[PUSH] Notifications not supported by this browser.");
+            console.warn("[PUSH] Notifications not supported.");
             return;
         }
 
+        // Auto-refresh token on every visit if already granted
         if (Notification.permission === "granted") {
             this.registerToken();
 
-            // Listen for token refreshes
-            if (messaging) {
-                import("https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js").then(({ onTokenRefresh }) => {
-                    // Note: onTokenRefresh is often handled by the SDK automatically now, but we can re-trigger registerToken on focus
-                    window.addEventListener('focus', () => this.registerToken());
-                });
-            }
+            // Refresh token when tab regains focus to ensure delivery
+            window.addEventListener('focus', () => this.registerToken());
             return;
         }
 
+        // Show onboarding prompt for new visitors after 5s
         if (Notification.permission === "default" && !localStorage.getItem('c48_push_dismissed')) {
             setTimeout(() => this.showPermissionPrompt(), 5000);
         }
     },
 
     showPermissionPrompt() {
+        if (document.getElementById('push-permission-bar')) return;
+
         const prompt = document.createElement('div');
         prompt.id = 'push-permission-bar';
         prompt.className = 'fixed bottom-6 left-6 right-6 md:left-auto md:right-8 md:w-[380px] bg-white border border-black shadow-2xl rounded-2xl p-6 z-[200] animate-in slide-in-from-bottom-8 duration-500';
         prompt.innerHTML = `
-            <div class="flex items-start gap-4">
+            <div class="flex items-start gap-4 text-left">
                 <div class="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-bell-on text-xl"></i>
                 </div>
                 <div class="flex-1">
                     <h4 class="text-sm font-black text-black uppercase tracking-tight">Stay Connected</h4>
-                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Enable push notifications to receive real-time business alerts and platform updates.</p>
+                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Enable push notifications to receive real-time business alerts and platform updates directly on your device.</p>
                     <div class="flex gap-3 mt-4">
-                        <button id="btn-push-allow" class="flex-1 bg-black text-white py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition">Allow</button>
-                        <button id="btn-push-later" class="flex-1 bg-white text-slate-400 border border-slate-200 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition">Later</button>
+                        <button id="btn-push-allow" class="flex-1 bg-black text-white py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition shadow-lg">Allow Notifications</button>
+                        <button id="btn-push-later" class="flex-1 bg-white text-slate-400 border border-slate-200 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition">Not Now</button>
                     </div>
                 </div>
             </div>
@@ -73,21 +72,18 @@ export const PushNotificationSystem = {
                 document.getElementById('push-permission-bar')?.remove();
             }
         } catch (e) {
-            console.error("[PUSH] Permission Request Error:", e);
+            console.error("[PUSH] Request Error:", e);
         }
     },
 
     async registerToken() {
         if (!messaging) return;
         try {
-            // Ensure user is signed in (anonymously if needed) to generate a valid ID token for secure backend calls
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
-            }
+            // Guarantee valid session
+            if (!auth.currentUser) await signInAnonymously(auth);
 
+            // Ensure Service Worker is fully active before token request
             const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-
-            // Wait for service worker to be active to avoid "no active Service Worker" error
             await navigator.serviceWorker.ready;
 
             const token = await getToken(messaging, {
@@ -97,10 +93,10 @@ export const PushNotificationSystem = {
 
             if (token) {
                 const user = auth.currentUser;
-                // Use a stable ID derived from token to prevent duplicates but allow refresh
-                const tokenPart = token.substring(0, 32).replace(/[^a-zA-Z0-9]/g, '_');
+                const stableId = token.substring(0, 32).replace(/[^a-zA-Z0-9]/g, '_');
 
-                await setDoc(doc(db, "main_site_subscribers", tokenPart), {
+                // Update Firestore global subscriber registry
+                await setDoc(doc(db, "main_site_subscribers", stableId), {
                     fcmToken: token,
                     uid: user ? user.uid : null,
                     platform: navigator.platform,
@@ -109,9 +105,9 @@ export const PushNotificationSystem = {
                     status: 'active'
                 }, { merge: true });
 
-                console.log("[PUSH] Token Registered Successfully on device:", tokenPart);
+                console.log("[PUSH] Device Registered Successfully:", stableId);
 
-                // Dispatch welcome notification
+                // Dispatch "Welcome" test notification to confirm reliability
                 const idToken = await user.getIdToken();
                 const response = await fetch('/.netlify/functions/send-notification', {
                     method: 'POST',
@@ -121,30 +117,24 @@ export const PushNotificationSystem = {
                     },
                     body: JSON.stringify({
                         targetToken: token,
-                        welcomeTitle: 'CODEZ48 Notifications Enabled!',
-                        welcomeBody: 'You will now receive real-time business signals and updates.'
+                        welcomeTitle: 'CODEZ48: System Connected',
+                        welcomeBody: 'Push alerts are now enabled for this device. Laptop & Mobile synchronization active.'
                     })
                 });
 
-                const result = await response.json().catch(() => ({}));
-
                 if (!response.ok) {
-                    console.error("[PUSH] Server Error:", response.status, result);
-
-                    // AUTO-RECOVERY: If token is "NotRegistered", delete it and try once more
-                    if (result.code === 'messaging/registration-token-not-registered' || result.error?.includes('NotRegistered')) {
-                        console.warn("[PUSH] Stale token detected. Deleting and refreshing...");
+                    const error = await response.json().catch(() => ({}));
+                    // Self-healing for NotRegistered error
+                    if (error.code === 'messaging/registration-token-not-registered' || error.error?.includes('NotRegistered')) {
+                        console.warn("[PUSH] Stale token detected. Clearing and retrying...");
                         await deleteToken(messaging);
-                        await deleteDoc(doc(db, "main_site_subscribers", tokenPart));
-                        // Small timeout to prevent infinite loops
-                        setTimeout(() => this.registerToken(), 2000);
+                        await deleteDoc(doc(db, "main_site_subscribers", stableId));
+                        setTimeout(() => this.registerToken(), 3000);
                     }
-                } else {
-                    console.log("[PUSH] Welcome notification dispatched successfully.");
                 }
             }
         } catch (e) {
-            console.error("[PUSH] Token Registration Error:", e.message);
+            console.error("[PUSH] Token Error:", e.message);
         }
     },
 
@@ -154,7 +144,7 @@ export const PushNotificationSystem = {
         if (ua.includes("Chrome")) return "Chrome";
         if (ua.includes("Safari")) return "Safari";
         if (ua.includes("Edge")) return "Edge";
-        return "Generic Browser";
+        return "Browser";
     }
 };
 
