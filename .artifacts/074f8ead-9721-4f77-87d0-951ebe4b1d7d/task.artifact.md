@@ -1,5 +1,4 @@
-- [x] Update `js/push-notifications.js` to ensure anonymous sign-in and include ID token in headers to resolve 401 error
-- [x] Update `js/ai-mail-campaign-modal.js` to handle Firestore index error gracefully in campaign history
-- [x] Verify `netlify/functions/send-notification.js` logic for anonymous user authentication
-- [x] Verify code with `analyze_file`
-- [x] Create `walkthrough.artifact.md`
+- [ ] Update `js/auth-secure.js` for registration success hashtag, "Verifying" step, and Meta Pixel trigger
+- [ ] Update `seller/index.html` for order success hashtag, triple notification logic (Seller, Admin, Customer), and enhanced verification UI
+- [ ] Verify code with `analyze_file`
+- [ ] Create `walkthrough.artifact.md`

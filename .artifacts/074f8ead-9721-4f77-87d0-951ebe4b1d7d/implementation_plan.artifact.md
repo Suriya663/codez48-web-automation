@@ -1,68 +1,75 @@
-# Payment Verification & Meta Pixel Tracking Implementation
+# Payment Verification & Order Notification Fixes
 
-Architecture & implementation plan for enhancing the registration payment flow with a dedicated "Success Hashtag" in the URL (`#payment-verified-successful`), real-time verification UI, and Meta Pixel `Purchase` event tracking before transitioning to the profile backend.
+Architecture & implementation plan for enhancing the registration and storefront payment flows with success hashtags in the URL, real-time verification UI, Meta Pixel tracking, and comprehensive order notifications to sellers and developer admins.
 
 ## Workflow Architecture & System Flowchart
 
 ```mermaid
 flowchart TD
-    A[User Completes Payment on Razorpay] --> B[Razorpay Success Callback]
+    A[User Completes Payment: Registration or Order] --> B[Razorpay Success Callback]
 
-    B --> C[Set URL Hash: #payment-verified-successful]
+    B --> C[Set URL Hash: #payment-verified-successful OR #order-payment-successful]
 
     C --> D[Show Verification UI: 'Verifying Payment & Connecting Meta Pixel...']
 
     D --> E[Trigger Meta Pixel: fbq('track', 'Purchase', { ... })]
 
-    E --> F[Run Backend Node Activation: activateNewNode]
+    E --> F[Run Backend Logic: activateNewNode OR finalizeOrder]
 
-    F --> G[Wait 2 Seconds for Visual Confirmation]
+    F --> G[Dispatch Notifications: To Seller & Developer Admin]
 
-    G --> H[Transition to Step 3: Registration Confirmed / Profile Backend]
+    G --> H[Wait 2 Seconds for Visual Confirmation]
+
+    H --> I[Transition to Success Modal / Step 3]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Success Keyword in URL**:
-> - Upon successful payment, the URL will immediately update to include `#payment-verified-successful`. This allows external trackers like Meta Pixel to verify the conversion context.
+> **Success Keywords in URL**:
+> - Registration Success: `...#payment-verified-successful`
+> - Storefront Order Success: `...#order-payment-successful`
 
 > [!IMPORTANT]
-> **Meta Pixel Integration**:
-> - The system will automatically trigger a `Purchase` event using the existing Meta Pixel ID (`1318887030322672`) with the plan amount and currency.
+> **Consolidated Notifications**:
+> - Every successful order will now trigger a notification to BOTH the **Seller's email** and the **Developer Admin** (`rajnaga75556@gmail.com`).
 
 > [!NOTE]
-> **User Experience**:
-> - A brief "Verifying..." animation will be displayed after payment to confirm the tracking and verification steps before showing account credentials.
+> **Intermediate Verification Step**:
+> - A professional intermediate screen will appear after payment to confirm tracking and backend synchronization before showing the final success message.
 
 ## Proposed Changes
 
 ### Registration Controller
 
 #### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
-- Update `proceedToPayment()`:
-  - In the Razorpay `handler`, set `window.location.hash = 'payment-verified-successful'`.
+- Update `proceedToPayment()`: Set `window.location.hash = 'payment-verified-successful'` in Razorpay success handler.
 - Update `activateNewNode()`:
-  - Show the intermediate verification state.
-  - Trigger `fbq('track', 'Purchase', ...)` if available.
-  - Delay the transition to Step 3 by 2 seconds for confirmation.
+  - Show "Verifying" step.
+  - Trigger Meta Pixel `Purchase` event.
+  - Delay Step 3 transition by 2 seconds.
 
-### Main Index UI
+### Storefront Controller
 
-#### [MODIFY] [index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/index.html)
-- Add `#auth-step-verifying` div to the registration wizard:
-  - Contains a success checkmark, "Payment Verified Successfully" text, and "Updating Meta Conversion..." status message.
+#### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
+- Update `processRazorpay()`: Set `window.location.hash = 'order-payment-successful'` in Razorpay success handler.
+- Update `completeOrderFlow()` (COD) and `finalizeOrder()` (Online):
+  - Add triple notification logic (Seller, Developer Admin, Customer).
+  - Use `currentSellerId` and `currentSellerData` for accurate recipient mapping.
+- Update `finalizeOrder()` UI:
+  - Add intermediate "Verifying..." animation before showing the final success modal.
 
 ---
 
 ## Verification Plan
 
 ### Automated Verification
-- Run `analyze_file` on `js/auth-secure.js` and `index.html` to ensure zero syntax or build errors.
+- Run `analyze_file` on `js/auth-secure.js` and `seller/index.html` to ensure zero syntax or build errors.
 
 ### Manual Verification
 1. Complete a test registration payment.
-   - Verify that the URL changes to `...#payment-verified-successful`.
-   - Verify that the "Verifying Payment & Connecting Meta Pixel..." UI appears.
-   - Verify that the final Step 3 appears after 2 seconds.
-   - (Check browser network tab) Verify that a request is sent to `facebook.com/tr` with the `Purchase` event.
+   - Verify URL hashtag, "Verifying" UI, and Meta Pixel trigger.
+2. Place a test order (COD and Online) on a seller node.
+   - Verify that the Seller and Developer Admin receive order notification emails.
+   - Verify that the Customer receives a confirmation email.
+   - Verify product snapshots (image/desc) appear correctly in the order audit.

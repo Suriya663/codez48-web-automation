@@ -641,6 +641,68 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Handle New Order Notification (Sent to Developer + Seller)
+        if (action === 'NEW_ORDER_NOTIFICATION') {
+            const sellerEmail = data.sellerEmail;
+            const sellerId = data.sellerId || 'SLR-000';
+            const brandName = data.brandName || 'Merchant Node';
+            const orderId = data.orderId;
+            const total = data.total;
+            const customerName = data.customerName;
+            const customerEmail = data.customerEmail;
+            const customerPhone = data.customerPhone;
+            const items = data.items;
+            const method = data.paymentMethod;
+
+            const orderHtml = `
+                <div style="font-family: monospace, system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
+                    <div style="text-align: center; border-b: 2px solid #000000; padding-bottom: 20px; margin-bottom: 24px;">
+                        <img src="${OFFICIAL_LOGO_URL}" style="height: 55px; width: auto; margin-bottom: 12px;" alt="CODEZ48 Logo" />
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; color: #000000;">NEW ORDER RECEIVED</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: bold; color: #666;">Order ID: ${orderId}</p>
+                    </div>
+
+                    <div style="border: 1px solid #000000; padding: 20px; margin-bottom: 24px; line-height: 1.6;">
+                        <p style="margin: 0 0 8px 0; font-size: 13px;">Merchant: <strong>${escapeHtml(brandName)} (${sellerId})</strong></p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px;">Customer: <strong>${escapeHtml(customerName)}</strong></p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px;">Email: <strong>${escapeHtml(customerEmail)}</strong></p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px;">Phone: <strong>${escapeHtml(customerPhone)}</strong></p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px;">Items: <strong>${escapeHtml(items)}</strong></p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px;">Payment Method: <strong>${escapeHtml(method)}</strong></p>
+                        <p style="margin: 0; font-size: 18px; font-weight: 900;">Total: ₹${total}</p>
+                    </div>
+
+                    <div style="text-align: center; border-t: 1px solid #000000; padding-top: 16px; font-size: 10px; font-weight: bold;">
+                        CODEZ48 OFFICIAL NETWORK — TRANSACTIONAL ALERT
+                    </div>
+                </div>
+            `;
+
+            // Email 1: To Developer Admin (rajnaga75556@gmail.com)
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: DEVELOPER_EMAIL,
+                subject: `🛒 NEW ORDER: ${escapeHtml(sellerId)} - ₹${total}`,
+                html: orderHtml
+            });
+
+            // Email 2: To Seller
+            if (sellerEmail && sellerEmail.includes('@')) {
+                await transporter.sendMail({
+                    from: smtpFrom,
+                    to: sellerEmail,
+                    subject: `New Order Enquiry Received from Your CODEZ48 Website`,
+                    html: orderHtml
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ success: true, message: "Order notification emails dispatched to seller and developer!" })
+            };
+        }
+
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },

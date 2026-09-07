@@ -3273,8 +3273,37 @@
                 // Send SMS via Fast2SMS
                 sendFast2SMS(orderData.customer.phone, customerMsg);
 
-                // Send Order Confirmation Email
+                // --- Send Order Confirmation Email to Customer ---
                 sendOrderEmail(orderData);
+
+                // --- Dispatch Notifications to Seller and Developer Admin ---
+                try {
+                    const host = window.location.host;
+                    const protocol = window.location.protocol;
+
+                    const notificationPayload = {
+                        action: 'NEW_ORDER_NOTIFICATION',
+                        orderId: orderId,
+                        total: currentTotal,
+                        paymentMethod: finalPaymentMethod,
+                        customerName: orderData.customer.name,
+                        customerEmail: orderData.customer.email,
+                        customerPhone: orderData.customer.phone,
+                        items: cart.map(i => `${i.qty}x ${i.name} (₹${i.price})`).join(', '),
+                        sellerId: currentSellerId || 'unknown',
+                        sellerEmail: currentSellerData?.email || 'N/A',
+                        brandName: currentSellerData?.brand || currentSellerData?.username || 'Merchant'
+                    };
+
+                    fetch(`${protocol}//${host}/.netlify/functions/send-login-notification`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(notificationPayload)
+                    }).catch(e => console.warn("Order notification failed:", e));
+
+                } catch (netErr) {
+                    console.warn("Notification dispatch error:", netErr);
+                }
 
                 // --- Track Ad Purchase ---
                 trackAdPurchase(orderId);
@@ -3413,8 +3442,37 @@
 
                 sendFast2SMS(flashRequest.customer?.phone, customerSuccessMsg);
 
-                // Send Order Confirmation Email
+                // --- Send Order Confirmation Email to Customer ---
                 sendOrderEmail(flashRequest);
+
+                // --- Dispatch Notifications to Seller and Developer Admin ---
+                try {
+                    const host = window.location.host;
+                    const protocol = window.location.protocol;
+
+                    const notificationPayload = {
+                        action: 'NEW_ORDER_NOTIFICATION',
+                        orderId: orderId,
+                        total: flashRequest.total,
+                        paymentMethod: method,
+                        customerName: flashRequest.customer?.name,
+                        customerEmail: flashRequest.customer?.email,
+                        customerPhone: flashRequest.customer?.phone,
+                        items: flashRequest.items?.map(i => `${i.qty}x ${i.name} (₹${i.price})`).join(', '),
+                        sellerId: currentSellerId || 'unknown',
+                        sellerEmail: currentSellerData?.email || 'N/A',
+                        brandName: currentSellerData?.brand || currentSellerData?.username || 'Merchant'
+                    };
+
+                    fetch(`${protocol}//${host}/.netlify/functions/send-login-notification`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(notificationPayload)
+                    }).catch(e => console.warn("Order notification failed:", e));
+
+                } catch (netErr) {
+                    console.warn("Notification dispatch error:", netErr);
+                }
 
                 // --- Track Ad Purchase ---
                 trackAdPurchase(orderId);
@@ -3593,6 +3651,7 @@
                     "handler": async function (resp) {
                         // SUCCESS CALLBACK
                         console.log("Payment Success:", resp);
+                        window.location.hash = 'order-payment-successful';
 
                         const rawRequest = localStorage.getItem('request');
                         if (rawRequest) {
