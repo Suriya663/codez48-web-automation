@@ -1,5 +1,10 @@
-- [ ] Optimize `js/push-notifications.js` for aggressive token refresh and laptop/mobile reliability
-- [ ] Refine `js/developer-admin-modal.js` Global Push UI for real-time subscriber tracking
-- [ ] Enhance `netlify/functions/send-notification.js` for efficient batch delivery
-- [ ] Verify implementation across all modified components
+- [ ] Implement `netlify/functions/razorpay-create-order.js` for backend order creation
+- [ ] Implement `netlify/functions/razorpay-verify-payment.js` for server-side signature verification and capture check
+- [ ] Implement `netlify/functions/razorpay-webhook.js` for resilient payment processing
+- [ ] Update `js/auth-secure.js` to use Orders API and backend verification for registrations
+- [ ] Update `seller/index.html` to use Orders API and backend verification for storefront orders
+- [ ] Update `js/api-key-manager.js` to use Orders API and backend verification for subscriptions
+- [ ] Update `js/ai-mail-campaign-modal.js` to use Orders API and backend verification for wallet top-ups
+- [ ] Remove hardcoded Razorpay secrets from all frontend files
+- [ ] Verify implementation with `analyze_file`
 - [ ] Create `walkthrough.artifact.md`

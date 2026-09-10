@@ -37,7 +37,7 @@ const escapeHtml = (str) => {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
 
-const DEVELOPER_EMAIL = 'rajnaga75556@gmail.com';
+const DEVELOPER_EMAILS = ['rajnaga75556@gmail.com', 'codez4848@gmail.com'];
 const OFFICIAL_LOGO_URL = 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg';
 
 exports.handler = async (event, context) => {
@@ -157,10 +157,10 @@ exports.handler = async (event, context) => {
             const upiId = data.upiId || 'N/A';
             const amount = data.amount || 0;
 
-            // Email 1: To Developer Admin (rajnaga75556@gmail.com)
+            // Email 1: To Developer Admins
             await transporter.sendMail({
                 from: smtpFrom,
-                to: DEVELOPER_EMAIL,
+                to: DEVELOPER_EMAILS.join(', '),
                 subject: `⚡ DEVELOPER PAYOUT REQUEST: ${escapeHtml(name)} (₹${amount})`,
                 html: `
                     <div style="font-family: monospace, system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
@@ -242,10 +242,10 @@ exports.handler = async (event, context) => {
             const paymentId = data.paymentId || 'PAY_' + Date.now();
             const remainingBalance = data.remainingBalance || amountPaid;
 
-            // Email 1: To Developer (rajnaga75556@gmail.com)
+            // Email 1: To Developer Admins
             await transporter.sendMail({
                 from: smtpFrom,
-                to: DEVELOPER_EMAIL,
+                to: DEVELOPER_EMAILS.join(', '),
                 subject: `⚡ WALLET RECHARGE ALERT: ${escapeHtml(sellerId)} (₹${amountPaid})`,
                 html: `
                     <div style="font-family: monospace, system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 3px solid #000000; max-width: 580px; margin: 0 auto; box-sizing: border-box;">
@@ -504,10 +504,10 @@ exports.handler = async (event, context) => {
                 });
             }
 
-            // Email 2: To Developer (codez48@codez48.netlify.app / rajnaga75556@gmail.com)
+            // Email 2: To Developer Admins
             await transporter.sendMail({
                 from: smtpFrom,
-                to: DEVELOPER_EMAIL,
+                to: DEVELOPER_EMAILS.join(', '),
                 subject: `⚡ NEW MERCHANT REGISTRATION: ${escapeHtml(sellerId)} (${escapeHtml(planName.toUpperCase())})`,
                 html: `
                     <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #ffffff; color: #000000; border: 2px solid #000000; border-radius: 20px;">
@@ -561,10 +561,10 @@ exports.handler = async (event, context) => {
                 });
             }
 
-            // Email 2: To Developer (rajnaga75556@gmail.com)
+            // Email 2: To Developer Admins
             await transporter.sendMail({
                 from: smtpFrom,
-                to: DEVELOPER_EMAIL,
+                to: DEVELOPER_EMAILS.join(', '),
                 subject: `⚡ MERCHANT LOGIN EVENT: ${escapeHtml(sellerId)} (${escapeHtml(brandName)})`,
                 html: `
                     <div style="font-family: system-ui, sans-serif; padding: 30px; background-color: #ffffff; color: #000000; border: 2px solid #000000; border-radius: 20px;">
@@ -678,10 +678,10 @@ exports.handler = async (event, context) => {
                 </div>
             `;
 
-            // Email 1: To Developer Admin (rajnaga75556@gmail.com)
+            // Email 1: To Developer Admins
             await transporter.sendMail({
                 from: smtpFrom,
-                to: DEVELOPER_EMAIL,
+                to: DEVELOPER_EMAILS.join(', '),
                 subject: `🛒 NEW ORDER: ${escapeHtml(sellerId)} - ₹${total}`,
                 html: orderHtml
             });

@@ -1375,7 +1375,6 @@
 
         // Razorpay Defaults
         const DEFAULT_RAZORPAY_KEY = "rzp_live_TUJt8CLvlZ1XEN";
-        const DEFAULT_RAZORPAY_SECRET = "oaz3yYp1LqYdO2O4HhoULnnI";
 
         // Template System
         let currentHomeTemplate = localStorage.getItem('homeTemplate') || 'elite';
@@ -3612,60 +3611,82 @@
         const processRazorpay = async () => {
             const btn = document.querySelector('button[onclick="confirmOrder()"]');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Launching Razorpay...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Initializing Secure Payment...';
             btn.disabled = true;
 
             try {
-                // Get Credentials (Intelligent Routing Logic)
+                // 1. Get Merchant Identity
                 let keyId = DEFAULT_RAZORPAY_KEY;
-
-                // 1. Check Seller Node Registry (Priority)
                 if (currentSellerId) {
                     const sSnap = await getDoc(doc(db, "sellers", currentSellerId));
                     if (sSnap.exists() && sSnap.data().razorpayKeyId) {
                         keyId = sSnap.data().razorpayKeyId;
-                        console.log("Using Merchant Node Identity Keys");
                     }
                 }
 
-                // 2. Check Product Metadata (Legacy Fallback)
-                const firstItem = cart[0];
-                if (keyId === DEFAULT_RAZORPAY_KEY && firstItem && firstItem.pid) {
-                    const pSnap = await getDoc(doc(db, "products", firstItem.pid));
-                    if (pSnap.exists()) {
-                        const pData = pSnap.data();
-                        if (pData.razorpayKeyId) {
-                            keyId = pData.razorpayKeyId;
-                            console.log("Using Product Metadata Keys");
+                const amountInPaise = Math.round(currentTotal * 100);
+
+                // 2. Create Order on Backend
+                const orderResp = await fetch('/.netlify/functions/razorpay-create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: amountInPaise,
+                        currency: "INR",
+                        receipt: 'rcpt_' + Math.random().toString(36).substring(2, 10),
+                        notes: {
+                            sellerId: currentSellerId || 'unknown',
+                            type: 'storefront_order'
                         }
-                    }
-                }
+                    })
+                });
+
+                if (!orderResp.ok) throw new Error("Failed to initialize order.");
+                const razorpayOrder = await orderResp.json();
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Launching Razorpay...';
 
                 const options = {
                     "key": keyId,
-                    "amount": Math.round(currentTotal * 100),
-                    "currency": "INR",
-                    "name": "NS Handlooms",
+                    "amount": razorpayOrder.amount,
+                    "currency": razorpayOrder.currency,
+                    "name": currentSellerData?.brand || "Merchant Store",
                     "description": "Payment for " + (cart.map(i => i.name).join(', ')),
-                    "image": "https://bindueliteenterprises.com/img/logoooo.png",
+                    "order_id": razorpayOrder.id,
+                    "image": currentSellerData?.logo || "https://bindueliteenterprises.com/img/logoooo.png",
                     "handler": async function (resp) {
-                        // SUCCESS CALLBACK
-                        console.log("Payment Success:", resp);
-                        window.location.hash = 'order-payment-successful';
+                        // 3. Verify Payment on Backend
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying Payment...';
 
-                        const rawRequest = localStorage.getItem('request');
-                        if (rawRequest) {
-                            const request = JSON.parse(rawRequest);
-                            finalizeOrder(request.orderId, resp.razorpay_payment_id, 'Razorpay');
+                        const verifyResp = await fetch('/.netlify/functions/razorpay-verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                razorpay_order_id: resp.razorpay_order_id,
+                                razorpay_payment_id: resp.razorpay_payment_id,
+                                razorpay_signature: resp.razorpay_signature
+                            })
+                        });
+
+                        const verifyResult = await verifyResp.json();
+
+                        if (verifyResult.success) {
+                            window.location.hash = 'order-payment-successful';
+                            const rawRequest = localStorage.getItem('request');
+                            if (rawRequest) {
+                                const request = JSON.parse(rawRequest);
+                                finalizeOrder(request.orderId, resp.razorpay_payment_id, 'Razorpay');
+                            }
                         } else {
-                            // Fallback if request is missing but payment succeeded
-                            alert("Payment Successful! ID: " + resp.razorpay_payment_id + ". Please contact support to confirm your order.");
+                            alert("Payment Verification Failed: " + (verifyResult.error || "Please contact support."));
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
                         }
                     },
                     "prefill": {
-                        "name": document.getElementById('cust-name').value,
-                        "email": document.getElementById('cust-email').value,
-                        "contact": document.getElementById('cust-phone').value
+                        "name": document.getElementById('cust-name')?.value || "",
+                        "email": document.getElementById('cust-email')?.value || "",
+                        "contact": document.getElementById('cust-phone')?.value || ""
                     },
                     "theme": { "color": "#000000" },
                     "modal": {
@@ -3680,8 +3701,8 @@
                 rzp.open();
 
             } catch (error) {
-                console.error("Razorpay Client Error:", error);
-                alert("Payment failed to initialize. Please try again.");
+                console.error("Razorpay Error:", error);
+                alert("Payment Error: " + error.message);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }

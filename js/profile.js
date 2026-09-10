@@ -26,6 +26,18 @@ const formatDescription = (text, id, title) => {
 };
 
 /**
+ * Toggle between short and full description
+ */
+export const toggleFullDesc = (id) => {
+    const shortEl = document.getElementById(`desc-short-${id}`);
+    const fullEl = document.getElementById(`desc-full-${id}`);
+    if (shortEl && fullEl) {
+        shortEl.classList.toggle('hidden');
+        fullEl.classList.toggle('hidden');
+    }
+};
+
+/**
  * Check Active Collaboration Status between two merchants (STRICT PUBLIC PRIVACY GUARD)
  */
 export const checkCollabStatus = async (sellerA, sellerB) => {
@@ -57,81 +69,99 @@ export const confirmTopUpWallet = async (sellerId) => {
         return;
     }
 
-    const options = {
-        key: "rzp_live_TUJt8CLvlZ1XEN",
-        amount: amount * 100,
-        currency: "INR",
-        name: "CODEZ48 Wallet Recharge",
-        description: `Wallet Top-Up: ₹${amount}`,
-        image: "https://codez48.netlify.app/img/logo.png",
-        handler: async function (response) {
-            try {
-                const sRef = doc(db, "sellers", sellerId);
-                const sSnap = await getDoc(sRef);
-                const currentBalance = sSnap.exists() ? (Number(sSnap.data().walletBalance) || 0) : 0;
-                const newBalance = currentBalance + amount;
+    const loader = document.getElementById('global-loader');
+    if (loader) loader.classList.remove('hidden');
 
-                // Credit wallet and reactivate site status
-                await updateDoc(sRef, {
-                    walletBalance: newBalance,
-                    status: 'active',
-                    lastActivatedAt: new Date().toISOString()
+    try {
+        // 1. Create Order on Backend
+        const orderResp = await fetch('/.netlify/functions/razorpay-create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: amount * 100, // paise
+                currency: "INR",
+                notes: {
+                    sellerId: sellerId,
+                    type: 'wallet_recharge'
+                }
+            })
+        });
+
+        if (!orderResp.ok) throw new Error("Failed to initialize payment.");
+        const razorpayOrder = await orderResp.json();
+
+        if (loader) loader.classList.add('hidden');
+
+        const options = {
+            key: "rzp_live_TUJt8CLvlZ1XEN",
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: "CODEZ48 Wallet Recharge",
+            description: `Wallet Top-Up: ₹${amount}`,
+            order_id: razorpayOrder.id,
+            image: "https://codez48.netlify.app/img/logo.png",
+            handler: async function (response) {
+                if (loader) loader.classList.remove('hidden');
+
+                // 2. Verify Payment on Backend
+                const verifyResp = await fetch('/.netlify/functions/razorpay-verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
                 });
 
-                // Record transaction
-                await addDoc(collection(db, "wallet_transactions"), {
-                    sellerId,
-                    type: 'RECHARGE_TOP_UP',
-                    amount: amount,
-                    remainingBalance: newBalance,
-                    paymentId: response.razorpay_payment_id || 'PAY_' + Date.now(),
-                    description: `Wallet Top-Up via Razorpay`,
-                    timestamp: new Date().toISOString()
-                });
+                const verifyResult = await verifyResp.json();
 
-                // Trigger Wallet Top-Up Alert Emails (Developer + Seller)
-                try {
-                    await fetch('/.netlify/functions/send-login-notification', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'WALLET_TOPUP_ALERTS',
-                            siteId: sellerId,
-                            sellerId: sellerId,
-                            sellerEmail: window.currentUser?.email || '',
-                            brandName: window.currentUser?.brand || window.currentUser?.username || 'Merchant',
-                            mobileNumber: window.currentUser?.mobile || 'N/A',
+                if (verifyResult.success) {
+                    try {
+                        const sRef = doc(db, "sellers", sellerId);
+                        const sSnap = await getDoc(sRef);
+                        const currentBalance = sSnap.exists() ? (Number(sSnap.data().walletBalance) || 0) : 0;
+                        const newBalance = currentBalance + amount;
+
+                        await updateDoc(sRef, {
+                            walletBalance: newBalance,
+                            status: 'active',
+                            lastActivatedAt: new Date().toISOString()
+                        });
+
+                        await addDoc(collection(db, "wallet_transactions"), {
+                            sellerId,
+                            type: 'RECHARGE_TOP_UP',
                             amount: amount,
-                            paymentId: response.razorpay_payment_id || 'PAY_' + Date.now(),
-                            remainingBalance: newBalance
-                        })
-                    });
-                } catch (mErr) {}
+                            remainingBalance: newBalance,
+                            paymentId: response.razorpay_payment_id,
+                            description: `Wallet Top-Up via Razorpay`,
+                            timestamp: new Date().toISOString()
+                        });
 
-                alert(`⚡ Wallet Recharged Successfully!\nAdded ₹${amount}. New Wallet Balance: ₹${newBalance}\nWebsite is ACTIVE.`);
-                openMerchantWalletModal(sellerId);
-            } catch (err) {
-                alert("Wallet Update Notice: " + err.message);
-            }
-        },
-        prefill: {
-            email: window.currentUser?.email || '',
-            contact: ''
-        },
-        theme: { color: "#2563EB" }
-    };
+                        alert(`⚡ Wallet Recharged Successfully! New Wallet Balance: ₹${newBalance}`);
+                        openMerchantWalletModal(sellerId);
+                    } catch (dbErr) {
+                        alert("Database sync error: " + dbErr.message);
+                    }
+                } else {
+                    alert("Payment Verification Failed: " + verifyResult.error);
+                }
+                if (loader) loader.classList.add('hidden');
+            },
+            prefill: {
+                email: window.currentUser?.email || '',
+                contact: ''
+            },
+            theme: { color: "#2563EB" }
+        };
 
-    if (window.Razorpay) {
         const rzp = new window.Razorpay(options);
         rzp.open();
-    } else {
-        const s = document.createElement("script");
-        s.src = "https://checkout.razorpay.com/v1/checkout.js";
-        s.onload = () => {
-            const rzp = new window.Razorpay(options);
-            rzp.open();
-        };
-        document.head.appendChild(s);
+
+    } catch (err) {
+        if (loader) loader.classList.add('hidden');
+        alert("Payment Error: " + err.message);
     }
 };
 
@@ -980,3 +1010,4 @@ window.confirmTopUpWallet = (id) => confirmTopUpWallet(id);
 window.handleEditLogoUpload = handleEditLogoUpload;
 window.shareProfileTo = shareProfileTo;
 window.saveProfileChanges = saveProfileChanges;
+window.toggleFullDesc = (id) => toggleFullDesc(id);

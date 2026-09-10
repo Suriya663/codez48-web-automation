@@ -107,7 +107,7 @@ export const toggleWizardBillingCycle = () => {
     }
 };
 
-export const proceedToPayment = () => {
+export const proceedToPayment = async () => {
     if (!selectedPlan) return alert("Please select a business plan tier first.");
     trackEvent('checkout_started', { plan: selectedPlan });
 
@@ -116,26 +116,77 @@ export const proceedToPayment = () => {
     const isDaily = isDailyWizard || isDailyLanding;
 
     const amountToPay = isDaily ? (selectedPlan === 'starter' ? 83 : 133) : (selectedPlan === 'starter' ? 2500 : 4000);
+    const amountInPaise = amountToPay * 100;
 
-    const options = {
-        key: atob("cnpwX2xpdmVfVFVKdDhDTHZsWjFYRU4="),
-        amount: amountToPay * 100,
-        currency: "INR",
-        name: "CODEZ48 Network",
-        description: `Activation: ${selectedPlan.toUpperCase()} (${isDaily ? 'Pay-As-You-Go Daily' : 'Monthly'})`,
-        handler: async function (response) {
-            window.location.hash = 'payment-verified-successful';
-            activateNewNode(response.razorpay_payment_id, false, isDaily, amountToPay);
-        },
-        prefill: {
-            email: document.getElementById('auth-email')?.value || '',
-            contact: ''
-        },
-        theme: { color: "#2563EB" }
-    };
+    const loader = document.getElementById('global-loader');
+    if (loader) loader.classList.remove('hidden');
 
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    try {
+        // 1. Create Order on Backend
+        const orderResponse = await fetch('/.netlify/functions/razorpay-create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: amountInPaise,
+                currency: "INR",
+                notes: {
+                    plan: selectedPlan,
+                    type: 'registration',
+                    isDaily: isDaily
+                }
+            })
+        });
+
+        if (!orderResponse.ok) throw new Error("Failed to initialize payment order.");
+        const razorpayOrder = await orderResponse.json();
+
+        if (loader) loader.classList.add('hidden');
+
+        const options = {
+            key: "rzp_live_TUJt8CLvlZ1XEN", // Keep Public Key
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            name: "CODEZ48 Network",
+            description: `Activation: ${selectedPlan.toUpperCase()} (${isDaily ? 'Pay-As-You-Go Daily' : 'Monthly'})`,
+            order_id: razorpayOrder.id,
+            handler: async function (response) {
+                if (loader) loader.classList.remove('hidden');
+
+                // 2. Verify Payment on Backend
+                const verifyResponse = await fetch('/.netlify/functions/razorpay-verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                });
+
+                const verifyResult = await verifyResponse.json();
+
+                if (verifyResult.success) {
+                    window.location.hash = 'payment-verified-successful';
+                    activateNewNode(response.razorpay_payment_id, false, isDaily, amountToPay);
+                } else {
+                    if (loader) loader.classList.add('hidden');
+                    alert("Payment Verification Failed: " + (verifyResult.error || "Unknown error"));
+                }
+            },
+            prefill: {
+                email: document.getElementById('auth-email')?.value || '',
+                contact: ''
+            },
+            theme: { color: "#2563EB" }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
+    } catch (err) {
+        if (loader) loader.classList.add('hidden');
+        alert("Payment Error: " + err.message);
+    }
 };
 
 export const activateNewNode = async (paymentId, isApproved = false, isDaily = false, amountPaid = 2500) => {

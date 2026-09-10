@@ -1,31 +1,30 @@
-# Push Notification Delivery & Reliability Fixes
+# Razorpay Automatic Refund Fix Walkthrough
 
-Enhanced the push notification system to ensure reliable delivery across all devices (Desktop & Mobile) and provided a dedicated interface for independent global broadcasts.
+Upgraded the Razorpay integration from a frontend-only flow to a professional **Backend-Verified Orders Flow**. This fix prevents automatic refunds caused by uncaptured `authorized` payments and ensures all transactions are securely verified before processing.
 
 ## Key Changes Made
 
-### 1. Mobile Push Support (`manifest.json`)
-- **Web App Manifest**: Created and linked a `manifest.json` file. This is a critical requirement for mobile browsers (Android Chrome, iOS Safari) to support push notifications and treat the site as a standalone application.
-- **Icon Configuration**: Linked the official CODEZ48 logo as the application icon for notifications.
+### 1. Secure Backend Logic (`netlify/functions/`)
+- **[NEW] `razorpay-create-order.js`**: Replaces frontend amount-based checkout. It uses the Razorpay Orders API to create an official `order_id` on the server and enforces `payment_capture: 1` for immediate capture.
+- **[NEW] `razorpay-verify-payment.js`**: Performs cryptographic SHA-256 signature verification on the server using your secret key. It also double-checks the payment status with Razorpay's API to ensure the funds are actually received before fulfilling the user's request.
+- **[NEW] `razorpay-webhook.js`**: Provides a resilient backup mechanism. If a user's internet drops immediately after paying, the webhook ensures the order/wallet is still processed correctly. It includes **Idempotency** logic to prevent duplicate processing.
 
-### 2. Reliable Token Registration (`js/push-notifications.js`)
-- **Service Worker Synchronization**: Updated the registration flow to wait for the Service Worker to reach the `ready` state before requesting an FCM token. This eliminates the "no active Service Worker" registration errors.
-- **Consistent Device Tracking**: Tokens are now stored in Firestore using a stable, unique ID derived from the token itself. This prevents duplicate entries for the same device while allowing token refreshes to update existing records.
-- **Activity Refresh**: The system now refreshes the `lastActiveAt` timestamp every time a subscribed user visits the site, ensuring the subscriber list remains accurate.
+### 2. Upgraded Frontend Integration
+- **`js/auth-secure.js`**: Registration now waits for a backend `order_id` before opening the checkout and requires a `success` response from the server-side verification before activating the new node.
+- **`seller/index.html`**: Storefront payments now follow the same secure loop. Hardcoded secret keys have been removed to prevent credential theft.
+- **`js/profile.js`** & **`js/ai-mail-campaign-modal.js`**: Wallet top-ups and credit recharges are now fully verified server-side, ensuring wallet balances are accurate and fraudulent attempts are blocked.
 
-### 3. Admin Broadcast Console Enhancement (`js/developer-admin-modal.js`)
-- **Live Subscriber Counter**: Added a real-time "Live Subscribers" badge to the Global Push tab. This gives administrators instant visibility into how many devices will receive the broadcast, moving away from the "zero devices" uncertainty.
-- **Independent Messaging**: The "Global Push" tab now allows for completely manual, independent broadcasts (Title, Message, URL, Image) that reach all permitted users instantly, regardless of website posts.
+### 3. Eliminated Automatic Refunds
+- By using the **Orders API** and enabling **Auto-Capture**, payments no longer get stuck in the `authorized` state. This removes the 10-minute timeout that was previously triggering Razorpay's automatic refund mechanism for UPI and card payments.
 
 ---
 
 ## Verification Results
 
-### Code Health
-- `analyze_file` executed cleanly on all modified JS files.
-- `manifest.json` verified for PWA compliance.
+### Security & Integrity
+- [x] **Zero Exposed Secrets**: `DEFAULT_RAZORPAY_SECRET` removed from all client-side JavaScript.
+- [x] **Signature Verification**: Every success callback is now cryptographically verified on the backend.
+- [x] **State Management**: Payments are now correctly moved to `captured` status immediately, preventing stale `authorized` refunds.
 
-### Feature Verification
-- Verified Service Worker readiness guard to prevent registration crashes.
-- Verified live subscriber count updates in the Admin Console.
-- Verified token persistence and metadata collection in Firestore.
+### Code Health
+- [x] `analyze_file` executed cleanly on all modified JavaScript and Netlify function files.

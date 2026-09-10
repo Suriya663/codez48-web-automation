@@ -563,51 +563,94 @@ export const ApiKeyManager = {
      */
     async launchRazorpaySubscription() {
         const userId = ApiKeyManager.getUserId();
-        const liveKeyId = "rzp_live_TUJt8CLvlZ1XEN"; // Fixed Live Razorpay Integration Key used across CODEZ48
+        const liveKeyId = "rzp_live_TUJt8CLvlZ1XEN";
 
-        const options = {
-            key: liveKeyId,
-            amount: 9900, // ₹99 / month (9900 paise)
-            currency: "INR",
-            name: "CODEZ48 Email Automation Pro",
-            description: "Monthly Pro Subscription - ₹99 (60 Emails / Day)",
-            image: "https://codez48.netlify.app/img/logo.png",
-            handler: async function (response) {
-                const subKeyId = 'c48_sub_' + Math.random().toString(36).substring(2, 10);
-                const expiryDate = new Date();
-                expiryDate.setDate(expiryDate.getDate() + 30);
-
-                const subKeyData = {
-                    keyId: subKeyId,
-                    userId,
-                    keyName: 'Pro Subscription Key',
-                    planType: 'PRO_SUBSCRIPTION',
-                    paymentId: response.razorpay_payment_id || 'PAY_' + Date.now(),
-                    tokensTotal: 9999,
-                    tokensRemaining: 9999,
-                    emailsAllowed: 1800,
-                    emailsSent: 0,
-                    dailyQuota: 60,
-                    dailySent: 0,
-                    lastResetAt: new Date().toISOString(),
-                    expiresAt: expiryDate.toISOString(),
-                    status: 'ACTIVE',
-                    createdAt: new Date().toISOString()
-                };
-
-                await setDoc(doc(db, "api_keys", subKeyId), subKeyData);
-                ApiKeyManager.statusMessage = { type: 'success', text: `⚡ Razorpay Live Payment Successful! Payment ID: ${subKeyData.paymentId}. Pro API Key Created: ${subKeyId}` };
-                ApiKeyManager.renderApiKeyUI();
-                ApiKeyManager.populateKeySelector();
-            },
-            prefill: {
-                name: auth.currentUser?.displayName || "CODEZ48 Merchant",
-                email: auth.currentUser?.email || "owner@example.com"
-            },
-            theme: { color: "#9333ea" }
-        };
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.classList.remove('hidden');
 
         try {
+            // 1. Create Order on Backend
+            const orderResponse = await fetch('/.netlify/functions/razorpay-create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: 9900, // ₹99 in paise
+                    currency: "INR",
+                    notes: {
+                        userId: userId,
+                        type: 'api_subscription'
+                    }
+                })
+            });
+
+            if (!orderResponse.ok) throw new Error("Failed to initialize subscription.");
+            const razorpayOrder = await orderResponse.json();
+
+            if (loader) loader.classList.add('hidden');
+
+            const options = {
+                key: liveKeyId,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                name: "CODEZ48 Email Automation Pro",
+                description: "Monthly Pro Subscription - ₹99",
+                order_id: razorpayOrder.id,
+                image: "https://codez48.netlify.app/img/logo.png",
+                handler: async function (response) {
+                    if (loader) loader.classList.remove('hidden');
+
+                    // 2. Verify Payment on Backend
+                    const verifyResponse = await fetch('/.netlify/functions/razorpay-verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        })
+                    });
+
+                    const verifyResult = await verifyResponse.json();
+
+                    if (verifyResult.success) {
+                        const subKeyId = 'c48_sub_' + Math.random().toString(36).substring(2, 10);
+                        const expiryDate = new Date();
+                        expiryDate.setDate(expiryDate.getDate() + 30);
+
+                        const subKeyData = {
+                            keyId: subKeyId,
+                            userId,
+                            keyName: 'Pro Subscription Key',
+                            planType: 'PRO_SUBSCRIPTION',
+                            paymentId: response.razorpay_payment_id,
+                            tokensTotal: 9999,
+                            tokensRemaining: 9999,
+                            emailsAllowed: 1800,
+                            emailsSent: 0,
+                            dailyQuota: 60,
+                            dailySent: 0,
+                            lastResetAt: new Date().toISOString(),
+                            expiresAt: expiryDate.toISOString(),
+                            status: 'ACTIVE',
+                            createdAt: new Date().toISOString()
+                        };
+
+                        await setDoc(doc(db, "api_keys", subKeyId), subKeyData);
+                        ApiKeyManager.statusMessage = { type: 'success', text: `⚡ Subscription Successful! Payment ID: ${subKeyData.paymentId}` };
+                        ApiKeyManager.renderApiKeyUI();
+                        ApiKeyManager.populateKeySelector();
+                    } else {
+                        alert("Payment Verification Failed: " + verifyResult.error);
+                    }
+                    if (loader) loader.classList.add('hidden');
+                },
+                prefill: {
+                    name: auth.currentUser?.displayName || "CODEZ48 Merchant",
+                    email: auth.currentUser?.email || ""
+                },
+                theme: { color: "#9333ea" }
+            };
+
             if (window.Razorpay) {
                 const rzp = new window.Razorpay(options);
                 rzp.open();
@@ -621,6 +664,7 @@ export const ApiKeyManager = {
                 document.head.appendChild(s);
             }
         } catch (err) {
+            if (loader) loader.classList.add('hidden');
             console.error("Razorpay Checkout Error:", err);
             alert("Razorpay Initialization Notice: " + err.message);
         }

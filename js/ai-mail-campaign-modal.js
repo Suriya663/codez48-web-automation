@@ -528,73 +528,118 @@ export const AiMailCampaignModal = {
 
     async launchWalletTopUp() {
         const amountInput = document.getElementById('camp-topup-amount');
-        const amount = amountInput ? parseInt(amountInput.value) : 100;
-        if (isNaN(amount) || amount < 10) return alert("Minimum top-up amount is 10 credits (₹10).");
+        const creditsToAdd = amountInput ? parseInt(amountInput.value) : 100;
+        if (isNaN(creditsToAdd) || creditsToAdd < 10) return alert("Minimum top-up amount is 10 credits (₹10).");
 
-        const keyId = "rzp_live_TUJt8CLvlZ1XEN";
-        const options = {
-            key: keyId,
-            amount: amount * 100, // in paise (1 Credit = ₹1)
-            currency: "INR",
-            name: "CODEZ48 AI Mail Campaign",
-            description: `Wallet Top-Up (${amount} Email Credits)`,
-            handler: async (response) => {
-                try {
-                    await signInAnonymously(auth);
-                    const user = auth.currentUser;
-                    const userId = user ? user.uid : 'anon_user';
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.classList.remove('hidden');
 
-                    const walletRef = doc(db, 'ai_mail_wallets', userId);
-                    const wSnap = await getDoc(walletRef);
-                    let currentBal = 0;
-                    if (wSnap.exists()) {
-                        currentBal = wSnap.data().credits || 0;
+        try {
+            // 1. Create Order on Backend
+            const orderResp = await fetch('/.netlify/functions/razorpay-create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: creditsToAdd * 100, // paise
+                    currency: "INR",
+                    notes: {
+                        userId: auth.currentUser?.uid || 'anon',
+                        type: 'wallet_topup',
+                        credits: creditsToAdd
                     }
-                    const newBal = currentBal + amount;
+                })
+            });
 
-                    await setDoc(walletRef, {
-                        userId,
-                        credits: newBal,
-                        lastTopUpAt: new Date().toISOString(),
-                        lastPaymentId: response.razorpay_payment_id
-                    }, { merge: true });
+            if (!orderResp.ok) throw new Error("Failed to initialize recharge.");
+            const razorpayOrder = await orderResp.json();
 
-                    await setDoc(doc(collection(db, 'wallet_transactions'), 'TX_' + Date.now()), {
-                        userId,
-                        type: 'credit',
-                        amount,
-                        description: `Razorpay Top-Up (${amount} credits at ₹1/credit)`,
-                        paymentId: response.razorpay_payment_id,
-                        createdAt: new Date().toISOString(),
-                        status: 'success'
+            if (loader) loader.classList.add('hidden');
+
+            const options = {
+                key: "rzp_live_TUJt8CLvlZ1XEN",
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                name: "CODEZ48 AI Mail Campaign",
+                description: `Wallet Top-Up (${creditsToAdd} Email Credits)`,
+                order_id: razorpayOrder.id,
+                handler: async (response) => {
+                    if (loader) loader.classList.remove('hidden');
+
+                    // 2. Verify Payment on Backend
+                    const verifyResp = await fetch('/.netlify/functions/razorpay-verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        })
                     });
 
-                    alert(`⚡ Top-Up Successful!\nAdded ${amount} email credits (₹${amount}). New Balance: ${newBal} Credits.`);
-                    const balEl = document.getElementById('camp-wallet-balance');
-                    if (balEl) balEl.innerText = `${newBal} Credits`;
-                    if (amountInput) amountInput.value = '';
-                } catch (e) {
-                    alert("Wallet Credit Error: " + e.message);
-                }
-            },
-            theme: { color: "#2563EB" },
-            prefill: {
-                email: auth.currentUser?.email || '',
-                contact: ''
-            }
-        };
+                    const verifyResult = await verifyResp.json();
 
-        if (window.Razorpay) {
-            const rzp = new window.Razorpay(options);
-            rzp.open();
-        } else {
-            const s = document.createElement("script");
-            s.src = "https://checkout.razorpay.com/v1/checkout.js";
-            s.onload = () => {
+                    if (verifyResult.success) {
+                        try {
+                            const userId = auth.currentUser?.uid || 'anon_user';
+                            const walletRef = doc(db, 'ai_mail_wallets', userId);
+                            const wSnap = await getDoc(walletRef);
+                            let currentBal = 0;
+                            if (wSnap.exists()) {
+                                currentBal = wSnap.data().credits || 0;
+                            }
+                            const newBal = currentBal + creditsToAdd;
+
+                            await setDoc(walletRef, {
+                                userId,
+                                credits: newBal,
+                                lastTopUpAt: new Date().toISOString(),
+                                lastPaymentId: response.razorpay_payment_id
+                            }, { merge: true });
+
+                            await setDoc(doc(collection(db, 'wallet_transactions'), 'TX_' + Date.now()), {
+                                userId,
+                                type: 'credit',
+                                amount: creditsToAdd,
+                                description: `Razorpay Top-Up (${creditsToAdd} credits)`,
+                                paymentId: response.razorpay_payment_id,
+                                createdAt: new Date().toISOString(),
+                                status: 'success'
+                            });
+
+                            alert(`⚡ Top-Up Successful! New Balance: ${newBal} Credits.`);
+                            const balEl = document.getElementById('camp-wallet-balance');
+                            if (balEl) balEl.innerText = `${newBal} Credits`;
+                            if (amountInput) amountInput.value = '';
+                        } catch (dbErr) {
+                            alert("Database update failed, but payment was successful. Please contact support with ID: " + response.razorpay_payment_id);
+                        }
+                    } else {
+                        alert("Payment Verification Failed: " + verifyResult.error);
+                    }
+                    if (loader) loader.classList.add('hidden');
+                },
+                theme: { color: "#2563EB" },
+                prefill: {
+                    email: auth.currentUser?.email || '',
+                    contact: ''
+                }
+            };
+
+            if (window.Razorpay) {
                 const rzp = new window.Razorpay(options);
                 rzp.open();
-            };
-            document.head.appendChild(s);
+            } else {
+                const s = document.createElement("script");
+                s.src = "https://checkout.razorpay.com/v1/checkout.js";
+                s.onload = () => {
+                    const rzp = new window.Razorpay(options);
+                    rzp.open();
+                };
+                document.head.appendChild(s);
+            }
+        } catch (err) {
+            if (loader) loader.classList.add('hidden');
+            alert("Payment Error: " + err.message);
         }
     },
 

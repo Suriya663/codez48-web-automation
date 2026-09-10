@@ -30,7 +30,7 @@ const initAdmin = () => {
     }
 };
 
-const DEVELOPER_EMAIL = 'rajnaga75556@gmail.com';
+const DEVELOPER_EMAILS = ['rajnaga75556@gmail.com', 'codez4848@gmail.com'];
 
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
@@ -87,7 +87,7 @@ exports.handler = async (event, context) => {
         // Email B: Developer / Admin notification
         await transporter.sendMail({
             from: smtpFrom,
-            to: DEVELOPER_EMAIL,
+            to: DEVELOPER_EMAILS.join(', '),
             subject: `New Product Created: ${data.productName} (${data.sellerId})`,
             html: getAdminCreatedTemplate(data)
         });
