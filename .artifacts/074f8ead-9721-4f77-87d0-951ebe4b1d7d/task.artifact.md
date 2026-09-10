@@ -1,10 +1,8 @@
-- [ ] Implement `netlify/functions/razorpay-create-order.js` for backend order creation
-- [ ] Implement `netlify/functions/razorpay-verify-payment.js` for server-side signature verification and capture check
-- [ ] Implement `netlify/functions/razorpay-webhook.js` for resilient payment processing
-- [ ] Update `js/auth-secure.js` to use Orders API and backend verification for registrations
-- [ ] Update `seller/index.html` to use Orders API and backend verification for storefront orders
-- [ ] Update `js/api-key-manager.js` to use Orders API and backend verification for subscriptions
-- [ ] Update `js/ai-mail-campaign-modal.js` to use Orders API and backend verification for wallet top-ups
-- [ ] Remove hardcoded Razorpay secrets from all frontend files
-- [ ] Verify implementation with `analyze_file`
+- [ ] Upgrade `netlify/functions/razorpay-create-order.js` to use built-in fetch and clearer error reporting
+- [ ] Upgrade `netlify/functions/razorpay-verify-payment.js` to use built-in fetch and clearer error reporting
+- [ ] Update `js/api-key-manager.js` to catch and display detailed server error messages
+- [ ] Update `js/auth-secure.js` to catch and display detailed server error messages
+- [ ] Update `js/ai-mail-campaign-modal.js` to catch and display detailed server error messages
+- [ ] Update `seller/index.html` to catch and display detailed server error messages
+- [ ] Verify changes with `analyze_file`
 - [ ] Create `walkthrough.artifact.md`

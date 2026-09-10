@@ -583,7 +583,10 @@ export const ApiKeyManager = {
                 })
             });
 
-            if (!orderResponse.ok) throw new Error("Failed to initialize subscription.");
+            if (!orderResponse.ok) {
+                const errData = await orderResponse.json().catch(() => ({ error: "Server Error" }));
+                throw new Error(errData.error || `Initialization Failed (Status: ${orderResponse.status})`);
+            }
             const razorpayOrder = await orderResponse.json();
 
             if (loader) loader.classList.add('hidden');
@@ -609,6 +612,11 @@ export const ApiKeyManager = {
                             razorpay_signature: response.razorpay_signature
                         })
                     });
+
+                    if (!verifyResponse.ok) {
+                        const vErr = await verifyResponse.json().catch(() => ({ error: "Verification Failed" }));
+                        throw new Error(vErr.error || "Payment verification failed.");
+                    }
 
                     const verifyResult = await verifyResponse.json();
 

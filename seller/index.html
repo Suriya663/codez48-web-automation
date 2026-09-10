@@ -3641,7 +3641,10 @@
                     })
                 });
 
-                if (!orderResp.ok) throw new Error("Failed to initialize order.");
+                if (!orderResp.ok) {
+                    const errData = await orderResp.json().catch(() => ({ error: "Server Error" }));
+                    throw new Error(errData.error || `Initialization Failed (${orderResp.status})`);
+                }
                 const razorpayOrder = await orderResp.json();
 
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Launching Razorpay...';
@@ -3667,6 +3670,11 @@
                                 razorpay_signature: resp.razorpay_signature
                             })
                         });
+
+                        if (!verifyResp.ok) {
+                            const vErr = await verifyResp.json().catch(() => ({ error: "Verification Failed" }));
+                            throw new Error(vErr.error || "Payment verification failed.");
+                        }
 
                         const verifyResult = await verifyResp.json();
 

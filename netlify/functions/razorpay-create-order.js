@@ -1,12 +1,10 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
             headers: {
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
                 "Access-Control-Allow-Methods": "POST, OPTIONS"
             }
         };
@@ -22,10 +20,16 @@ exports.handler = async (event, context) => {
         const keyId = process.env.RAZORPAY_KEY_ID;
         const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
+        console.log(`[RAZORPAY_CREATE_ORDER] KeyID Present: ${!!keyId}, KeySecret Present: ${!!keySecret}`);
+
         if (!keyId || !keySecret) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({ error: "Razorpay credentials not configured in environment." })
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({
+                    success: false,
+                    error: "Razorpay credentials (RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET) are not configured in Netlify environment variables."
+                })
             };
         }
 
@@ -38,20 +42,25 @@ exports.handler = async (event, context) => {
                 'Authorization': `Basic ${auth}`
             },
             body: JSON.stringify({
-                amount: Math.round(amount), // Amount in paise
+                amount: Math.round(amount),
                 currency: currency || 'INR',
                 receipt: receipt || `receipt_${Date.now()}`,
                 notes: notes || {},
-                payment_capture: 1 // Auto-capture payments
+                payment_capture: 1
             })
         });
 
         const order = await response.json();
 
         if (!response.ok) {
+            console.error("[RAZORPAY_API_ERROR]", order);
             return {
                 statusCode: response.status,
-                body: JSON.stringify({ error: order.error || "Failed to create order" })
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({
+                    success: false,
+                    error: order.error?.description || "Failed to create order via Razorpay API"
+                })
             };
         }
 
@@ -64,10 +73,11 @@ exports.handler = async (event, context) => {
             body: JSON.stringify(order)
         };
     } catch (error) {
-        console.error("Create Order Error:", error);
+        console.error("Internal Function Error:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message })
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify({ success: false, error: "Internal Server Error: " + error.message })
         };
     }
 };

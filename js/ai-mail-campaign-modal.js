@@ -550,7 +550,10 @@ export const AiMailCampaignModal = {
                 })
             });
 
-            if (!orderResp.ok) throw new Error("Failed to initialize recharge.");
+            if (!orderResp.ok) {
+                const errData = await orderResp.json().catch(() => ({ error: "Server Error" }));
+                throw new Error(errData.error || `Initialization Failed (${orderResp.status})`);
+            }
             const razorpayOrder = await orderResp.json();
 
             if (loader) loader.classList.add('hidden');
@@ -575,6 +578,11 @@ export const AiMailCampaignModal = {
                             razorpay_signature: response.razorpay_signature
                         })
                     });
+
+                    if (!verifyResp.ok) {
+                        const vErr = await verifyResp.json().catch(() => ({ error: "Verification Failed" }));
+                        throw new Error(vErr.error || "Payment verification failed.");
+                    }
 
                     const verifyResult = await verifyResp.json();
 

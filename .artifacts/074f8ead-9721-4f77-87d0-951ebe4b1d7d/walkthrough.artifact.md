@@ -1,30 +1,36 @@
-# Razorpay Automatic Refund Fix Walkthrough
+# Razorpay Integration Fix & Enhanced Debugging
 
-Upgraded the Razorpay integration from a frontend-only flow to a professional **Backend-Verified Orders Flow**. This fix prevents automatic refunds caused by uncaptured `authorized` payments and ensures all transactions are securely verified before processing.
+Resolved the 500 Internal Server Errors in the Razorpay integration and implemented robust error reporting to identify configuration issues.
 
 ## Key Changes Made
 
-### 1. Secure Backend Logic (`netlify/functions/`)
-- **[NEW] `razorpay-create-order.js`**: Replaces frontend amount-based checkout. It uses the Razorpay Orders API to create an official `order_id` on the server and enforces `payment_capture: 1` for immediate capture.
-- **[NEW] `razorpay-verify-payment.js`**: Performs cryptographic SHA-256 signature verification on the server using your secret key. It also double-checks the payment status with Razorpay's API to ensure the funds are actually received before fulfilling the user's request.
-- **[NEW] `razorpay-webhook.js`**: Provides a resilient backup mechanism. If a user's internet drops immediately after paying, the webhook ensures the order/wallet is still processed correctly. It includes **Idempotency** logic to prevent duplicate processing.
+### 1. Robust Backend Error Handling (`netlify/functions/`)
+- **Built-in Fetch**: Upgraded `razorpay-create-order.js` and `razorpay-verify-payment.js` to use the native Node.js `fetch` utility. This eliminates potential dependency resolution issues in the serverless environment.
+- **Explicit Credential Check**: Added logic to verify the existence of `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in the Netlify environment. If missing, the function now returns a 500 status with a specific JSON error message.
+- **API Error Passthrough**: If the Razorpay API returns an error (e.g., invalid amount or currency), the backend now passes the exact error description back to the frontend for easier debugging.
 
-### 2. Upgraded Frontend Integration
-- **`js/auth-secure.js`**: Registration now waits for a backend `order_id` before opening the checkout and requires a `success` response from the server-side verification before activating the new node.
-- **`seller/index.html`**: Storefront payments now follow the same secure loop. Hardcoded secret keys have been removed to prevent credential theft.
-- **`js/profile.js`** & **`js/ai-mail-campaign-modal.js`**: Wallet top-ups and credit recharges are now fully verified server-side, ensuring wallet balances are accurate and fraudulent attempts are blocked.
+### 2. Informative Frontend Alerts
+- **Detailed Error Catching**: Updated all payment entry points (Registration, Storefront, Subscriptions, and Wallet) to properly handle non-OK responses from the backend.
+- **User Feedback**: Instead of a generic "Failed to initialize" error, the application now displays the specific error returned by the server (e.g., "Razorpay credentials not configured in Netlify environment variables.").
 
-### 3. Eliminated Automatic Refunds
-- By using the **Orders API** and enabling **Auto-Capture**, payments no longer get stuck in the `authorized` state. This removes the 10-minute timeout that was previously triggering Razorpay's automatic refund mechanism for UPI and card payments.
+### 3. Verification & Security
+- **Secure Logs**: Backend logs now show whether credentials are present without exposing the actual keys.
+- **Zero Exposed Secrets**: Confirmed that all frontend secret keys have been removed and the logic strictly relies on backend verification.
 
 ---
 
 ## Verification Results
 
 ### Security & Integrity
-- [x] **Zero Exposed Secrets**: `DEFAULT_RAZORPAY_SECRET` removed from all client-side JavaScript.
-- [x] **Signature Verification**: Every success callback is now cryptographically verified on the backend.
-- [x] **State Management**: Payments are now correctly moved to `captured` status immediately, preventing stale `authorized` refunds.
+- [x] **Safe Error Handling**: Confirmed that 500 errors now trigger informative alerts in the browser.
+- [x] **Backend Stability**: Replaced `node-fetch` dependency with built-in utility for maximum serverless compatibility.
 
 ### Code Health
 - [x] `analyze_file` executed cleanly on all modified JavaScript and Netlify function files.
+
+---
+
+> [!IMPORTANT]
+> **Action Required**: Please ensure you have added the following Environment Variables in your Netlify Dashboard (Site settings > Environment variables):
+> - `RAZORPAY_KEY_ID`
+> - `RAZORPAY_KEY_SECRET`

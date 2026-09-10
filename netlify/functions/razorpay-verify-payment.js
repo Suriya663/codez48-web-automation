@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
@@ -7,7 +6,7 @@ exports.handler = async (event, context) => {
             statusCode: 204,
             headers: {
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
                 "Access-Control-Allow-Methods": "POST, OPTIONS"
             }
         };
@@ -23,10 +22,16 @@ exports.handler = async (event, context) => {
         const keyId = process.env.RAZORPAY_KEY_ID;
         const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
+        console.log(`[RAZORPAY_VERIFY_PAYMENT] Credentials Present: ${!!keyId && !!keySecret}`);
+
         if (!keyId || !keySecret) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({ error: "Razorpay credentials not configured." })
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({
+                    success: false,
+                    error: "Razorpay credentials not configured in backend environment."
+                })
             };
         }
 
@@ -36,9 +41,11 @@ exports.handler = async (event, context) => {
         const generated_signature = hmac.digest('hex');
 
         if (generated_signature !== razorpay_signature) {
+            console.error("[SIGNATURE_MISMATCH]");
             return {
                 statusCode: 400,
-                body: JSON.stringify({ success: false, error: "Invalid payment signature" })
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({ success: false, error: "Invalid payment signature. Potential fraud attempt." })
             };
         }
 
@@ -51,20 +58,21 @@ exports.handler = async (event, context) => {
         const payment = await response.json();
 
         if (!response.ok) {
+            console.error("[RAZORPAY_PAYMENT_FETCH_ERROR]", payment);
             return {
                 statusCode: response.status,
-                body: JSON.stringify({ error: payment.error || "Failed to fetch payment details" })
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({ success: false, error: payment.error?.description || "Failed to fetch payment details from Razorpay." })
             };
         }
 
-        // We accept both 'authorized' and 'captured' here because we have payment_capture: 1
-        // Razorpay will eventually move 'authorized' to 'captured'
         if (payment.status !== 'captured' && payment.status !== 'authorized') {
             return {
                 statusCode: 400,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
                 body: JSON.stringify({
                     success: false,
-                    error: `Payment status is ${payment.status}. Verification failed.`,
+                    error: `Verification failed. Payment status is ${payment.status}.`,
                     status: payment.status
                 })
             };
@@ -79,10 +87,11 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ success: true, payment })
         };
     } catch (error) {
-        console.error("Verify Payment Error:", error);
+        console.error("Internal Verification Error:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message })
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify({ success: false, error: "Internal Verification Error: " + error.message })
         };
     }
 };
