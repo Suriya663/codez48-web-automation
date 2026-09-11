@@ -44,16 +44,32 @@ const initApp = () => {
         }
     }
 
-    if (initialHash === 'push') {
-        showView('tracker');
-        setTimeout(() => { if (window.handleToolAction) window.handleToolAction('push'); }, 100);
-    } else if (initialHash === 'tracker') {
-        showView('tracker');
     } else if (initialHash === 'order-successful') {
         showView('landing');
         setTimeout(() => {
             alert("🛒 Order Placed Successfully!\nYour request has been transmitted to the merchant.");
             window.location.hash = '';
+        }, 500);
+    } else if (initialHash === 'payment-verified-successful') {
+        showView('landing');
+        setTimeout(() => {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-black text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-8 duration-500 border border-white/10';
+            toast.innerHTML = `
+                <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-check text-white text-sm"></i>
+                </div>
+                <div class="text-left">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Security Protocol Verified</p>
+                    <p class="text-xs font-bold">Payment Verified Successfully • Connected to Meta Pixel Registry</p>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('animate-out', 'fade-out', 'slide-out-to-top-8');
+                setTimeout(() => toast.remove(), 500);
+                window.location.hash = '';
+            }, 5000);
         }, 500);
     } else {
         showView('landing');

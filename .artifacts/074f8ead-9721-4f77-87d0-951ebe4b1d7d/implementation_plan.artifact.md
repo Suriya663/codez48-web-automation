@@ -1,68 +1,45 @@
-# UI Refinement & Wallet Overflow Fix
+# Payment Success Hashtag & Meta Verification UI Integration
 
-Architecture & implementation plan for optimizing the AI Voice Assistant UI on the seller page, fixing layout overflow in the campaign wallet, and providing a final resolution for the Razorpay credential configuration.
+Architecture & implementation plan for integrating a dedicated UI response to the `#payment-verified-successful` hashtag on the main website. This ensures users see a clear confirmation message stating that their payment is verified and their Meta Pixel connection is successful.
 
 ## Workflow Architecture & System Flowchart
 
 ```mermaid
 flowchart TD
-    A[User Visits Seller Page] --> B[AI Microphone FAB: Smaller & Draggable]
-    B --> C[User Grags Microphone to Any Screen Position]
+    A[User Completes Registration Payment] --> B[Redirect/Hash Update: #payment-verified-successful]
 
-    D[User Opens Campaign Wallet] --> E[Adjusted Modal Layout: Prevent Overflow]
+    C[Website Loads with Hash] --> D{Hash is #payment-verified-successful?}
 
-    F[User Triggers Payment] --> G{Backend Credentials Configured?}
-    G -->|No| H[Display Actionable Configuration Guide]
-    G -->|Yes| I[Secure Checkout Loop: Order -> Pay -> Verify]
+    D -->|Yes| E[Display Premium Success Overlay]
+    E --> F[Show Message: 'Payment Verified Successfully • Connected to Meta Pixel Registry']
+
+    F --> G[Wait 3 Seconds]
+    G --> H[Clear Hash & Transition to Profile/Dashboard]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **AI Microphone Upgrade**:
-> - Removed all text labels from the microphone element.
-> - Reduced overall size to a standard Floating Action Button (FAB) (48x48px).
-> - Implemented full mouse and touch **Drag-and-Drop** support so users can move it anywhere.
-
-> [!IMPORTANT]
-> **Wallet Overflow Fix**:
-> - Optimized the `AI Mail Campaign` wallet tab structure to handle smaller screens and prevent vertical/horizontal overflow.
-
-> [!NOTE]
-> **Razorpay Credentials**:
-> - The current "Payment Error" is a configuration step required in your **Netlify Dashboard**. I will provide the specific values you need to enter to make payments work instantly.
+> **Success UI Integration**:
+> - A dedicated success notification will appear at the top of the screen whenever the URL contains the success hashtag.
+> - This confirmed the user's payment and Meta Pixel tracking connection as requested.
 
 ## Proposed Changes
 
-### Seller Page UI
+### Global Initialization & Routing
 
-#### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
-- Update `#voice-activation-toast` HTML: Remove text, simplify to a single icon-only button.
-- Update CSS: Adjust dimensions, background, and hover states.
-- Add JS: Implement `initDraggableMic()` using pointer events for cross-platform dragging.
-
-### Main Dashboard UI
-
-#### [MODIFY] [js/ai-mail-campaign-modal.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/ai-mail-campaign-modal.js)
-- Update `ensureModalInDOM()`:
-  - Add `overflow-x-hidden` to the modal container.
-  - Adjust padding and grid spacing in the "Wallet Credits" tab to prevent content from exceeding the viewport height.
-
-### Payment Logic Refinement
-
-#### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
-- Update error handling to include a "Configuration Guide" link when credentials are missing.
+#### [MODIFY] [js/init.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/init.js)
+- Add logic to `initApp()` to detect the `#payment-verified-successful` hash.
+- Create and inject a professional success notification bar/overlay.
+- Message: `"✅ Payment Verified Successfully • Connected to Meta Pixel Registry"`
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. Open a seller's product page.
-   - Verify the AI microphone is now just a small black icon.
-   - Test dragging it to different corners of the screen.
-2. Open the AI Mail Campaign modal on the main page.
-   - Navigate to the "Wallet" tab.
-   - Verify that all content fits correctly without breaking the modal layout.
-3. Attempt a payment.
-   - Verify that the error message is clear and provides instructions for Netlify.
+1. Manually navigate to `https://codez48.netlify.app/#payment-verified-successful`.
+   - Verify that a professional success notification appears.
+   - Verify the message matches the user's request.
+2. Complete a test registration payment.
+   - Verify the automatic appearance of the success confirmation.

@@ -1,6 +1,3 @@
-- [ ] Simplify AI Microphone UI in `seller/index.html` (remove text, reduce size)
-- [ ] Implement Draggable logic for the AI Microphone FAB in `seller/index.html`
-- [ ] Fix Wallet Tab overflow in `js/ai-mail-campaign-modal.js`
-- [ ] Enhance Razorpay error messaging to guide user through Netlify configuration
-- [ ] Verify changes with `analyze_file`
-- [ ] Create `walkthrough.artifact.md`
+- [x] Update `js/init.js` to handle `#payment-verified-successful` hash and display the success notification
+- [x] Verify the UI appearance and message accuracy
+- [x] Create `walkthrough.artifact.md`
