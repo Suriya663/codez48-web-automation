@@ -54,6 +54,17 @@ export const StudioWorkspace = {
 
             console.log("[AI WORKSPACE] Netlify Response Status:", response.status);
 
+            if (!response.ok) {
+                let msg = "Server Error";
+                try {
+                    const errData = await response.json();
+                    msg = errData.error || msg;
+                } catch (e) {
+                    msg = `Protocol Error (${response.status})`;
+                }
+                throw new Error(msg);
+            }
+
             const result = await response.json();
 
             if (result.success) {
@@ -140,6 +151,8 @@ export const StudioWorkspace = {
 
     openWorkspace(wsId) {
         console.log("[AI WORKSPACE] Accessing Context:", wsId);
+        // Persist selection
+        this.activeWorkspaceId = wsId;
         if (window.switchView) window.switchView('text-to-text');
     }
 };

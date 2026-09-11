@@ -18,76 +18,71 @@ exports.handler = async (event) => {
     if (event.httpMethod !== "POST") return { statusCode: 405 };
 
     try {
-        console.log("[AI QA] pipeline initiated...");
-        const uid = await verifyToken(event);
-        console.log("[AI QA] User authorized:", uid);
+        if (!event.body) throw new Error("Missing request body");
 
-        const { workspaceId, provider, chunk, index } = JSON.parse(event.body);
+        const uid = await verifyToken(event);
+        const body = JSON.parse(event.body);
+        const { workspaceId, provider, chunk, index } = body;
 
         const db = admin.firestore();
-        console.log("[AI QA] Fetching connection for:", provider);
 
+        // 1. Get Connection
         const connSnap = await db.collection('providerConnections').doc(`${provider}_${uid}`).get();
         if (!connSnap.exists) {
-            console.warn("[AI QA] Provider not linked.");
-            throw new Error("Provider not connected. Please link your API key in AI Providers tab.");
+            return {
+                statusCode: 400,
+                headers: { "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({ error: `Provider '${provider}' not linked. Please connect it in the AI Providers tab.` })
+            };
         }
 
         const conn = connSnap.data();
-        console.log("[AI QA] Decrypting API Key...");
         const apiKey = decrypt(conn.encryptedKey, conn.iv, conn.authTag);
 
-        console.log("[AI QA] Initializing provider adapter...");
+        // 2. Initialize Provider
         const ai = getProvider({ provider, apiKey });
 
-        const prompt = `Task: Convert this text into a Question and Answer pair for AI training.
-Requirement: Output valid JSON only: {"question": "...", "answer": "..."}
-Text to process:
+        const prompt = `Task: Generate a single Question and Answer pair from the text below.
+Requirement: JSON output only: {"question": "...", "answer": "..."}.
+Text:
 ${chunk}`;
 
-        console.log("[AI QA] Requesting inference...");
+        // 3. Inference
         const res = await ai.generateText(prompt);
-        console.log("[AI QA] Inference complete.");
 
+        // 4. Parse AI Output
         let qa;
         try {
-            const jsonMatch = res.text.match(/\{.*\}/s);
-            if (!jsonMatch) throw new Error("No JSON found in response");
-            qa = JSON.parse(jsonMatch[0]);
+            const jsonStr = res.text.match(/\{.*\}/s)[0];
+            qa = JSON.parse(jsonStr);
         } catch (e) {
-            console.error("[AI QA] JSON Parsing Error:", res.text);
-            throw new Error("AI failed to produce valid structured data. Please try again.");
+            console.error("[AI QA] Parse Failed:", res.text);
+            throw new Error("AI failed to return valid structured data. Please try a different chunk.");
         }
 
+        // 5. Persist
         const qaId = `QA_${workspaceId}_${Date.now()}_${index}`;
         const qaData = {
-            qaId,
-            workspaceId,
-            ownerId: uid,
-            question: qa.question,
-            answer: qa.answer,
-            sourceChunk: chunk,
-            provider,
-            model: res.model,
-            status: 'GENERATED',
-            createdAt: new Date().toISOString()
+            qaId, workspaceId, ownerId: uid,
+            question: qa.question, answer: qa.answer,
+            sourceChunk: chunk, provider, model: res.model,
+            status: 'GENERATED', createdAt: new Date().toISOString()
         };
 
-        console.log("[AI QA] Storing Q&A node:", qaId);
         await db.collection('qaItems').doc(qaId).set(qaData);
-        console.log("[AI QA] Node stored successfully.");
 
         return {
             statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+            headers: { "Access-Control-Allow-Origin": "*" },
             body: JSON.stringify({ success: true, qa: qaData })
         };
+
     } catch (error) {
-        console.error("[AI QA] Function Crash:", error.message);
+        console.error("[AI QA] Execution Failure:", error.message);
         return {
             statusCode: 500,
             headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: error.message || "Internal Server Error" })
         };
     }
 };

@@ -123,7 +123,7 @@ export const StudioTextToText = {
 
     async launchPipeline() {
         const source = document.getElementById('wiz-source-text').value.trim();
-        if (source.length < 50) return alert("Knowledge source too short (min 50 chars).");
+        if (source.length < 50) return alert("Knowledge source too short. Please provide at least 50 characters.");
 
         const loader = document.getElementById('global-loader');
         if (loader) loader.classList.remove('hidden');

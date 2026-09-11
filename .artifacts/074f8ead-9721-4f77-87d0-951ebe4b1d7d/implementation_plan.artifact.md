@@ -1,62 +1,56 @@
-# AI Studio Stability & Functional Restoration Plan
+# AI Studio: Backend Stabilization & Dependency Resolution
 
-Implementation plan for resolving the `500` Internal Server Errors, fixing the silent failure in workspace creation, and addressing the indexing requirements.
+Implementation plan for resolving the `500 Internal Server Error` in Netlify functions by fixing missing dependencies, improving module resolution, and adding defensive error handling.
 
 ## Workflow Architecture (Stabilization)
 
 ```mermaid
 flowchart TD
-    A[Frontend: Request] --> B{Netlify Function}
-    B -->|Import Error| C[Return 500: Shared Module Failure]
-    B -->|Logic Error| D[Return 500: Execution Failure]
+    A[Frontend: POST ai-qa-generate-item] --> B{Netlify Environment}
+    B -->|Check Dependencies| C{node-fetch available?}
+    C -->|No| D[Return 500: fetch is not defined]
+    C -->|Yes| E{Execute Adapter}
 
-    E[Fix Strategy] --> F[Switch to Native fetch]
-    F --> G[Robust Module Importing]
-    G --> H[Extended Error Reporting to UI]
-
-    I[Index Fix] --> J[Detect specific Query]
-    J --> K[Show Setup Card]
+    E --> F[Call LLM Provider]
+    F -->|Timeout/Error| G[Defensive Catch & JSON Error]
+    G --> H[Display Specific Message to User]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Firestore Indexing**:
-> - The error message you see in the console provides a link. You **MUST** click that link and create the index in the Firebase Console.
-> - I have implemented a "One-Click Fix" button in the UI that will appear whenever an index is missing.
+> **Dependency Fix**:
+> - I am explicitly adding `node-fetch` to all AI adapters. Earlier, I assumed the environment provided a global `fetch`, but in many serverless environments, `node-fetch` must be required explicitly.
+> - This is the most likely cause of your `500` errors.
 
 > [!NOTE]
-> **Environment Variables**:
-> - Please ensure `PROVIDER_KEY_ENCRYPTION_KEY` is set in Netlify (32-character string). If not set, it defaults to a development key, which might cause decryption errors if keys were saved with a different secret.
+> **Defensive Coding**:
+> - I will add checks for `event.body` and JSON parsing to prevent the functions from crashing before they even start.
+> - I will also add more logging to help you see the exact error in your browser console if it fails again.
 
 ## Proposed Changes
 
-### 1. Robust Backend Infrastructure
-#### [MODIFY] [netlify/functions/_shared/auth.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/_shared/auth.js)
-#### [MODIFY] [netlify/functions/_shared/crypto.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/_shared/crypto.js)
+### 1. Provider Adapter Fixes
 #### [MODIFY] [netlify/functions/_shared/ai-providers/openai-provider.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/_shared/ai-providers/openai-provider.js)
 #### [MODIFY] [netlify/functions/_shared/ai-providers/groq-provider.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/_shared/ai-providers/groq-provider.js)
-- Switch all `node-fetch` calls to global `fetch` (native Node.js support).
-- Add specific logging for environment variable presence.
+- Explicitly `require('node-fetch')`.
+- Add validation for API responses.
 
-### 2. Workspace Creation Reliability
+### 2. Main Function Stabilization
+#### [MODIFY] [netlify/functions/ai-qa-generate-item.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/ai-qa-generate-item.js)
+#### [MODIFY] [netlify/functions/ai-workspace-create.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/ai-workspace-create.js)
+- Add `try/catch` around JSON parsing of the request body.
+- Return detailed error descriptions in the 500 response.
+
+### 3. Frontend Resiliency
 #### [MODIFY] [ai-studio/js/workspace.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/ai-studio/js/workspace.js)
-- Add detailed `console.log` for every state change (Token fetch, Fetch call, Response parse).
-- Improve the success feedback loop.
-
-### 3. Comprehensive Error UX
-#### [MODIFY] [ai-studio/js/app.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/ai-studio/js/app.js)
-- Global `try/catch` in `switchView`.
-- Refined `renderIndexError` to handle different collection types.
+- Add explicit error handling for non-JSON responses (which happen when a server crashes).
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. Open **My Workspaces**.
-   - If blank, click the "Create Firestore Index" button.
-2. Try creating a workspace.
-   - Monitor the console for `[AI WORKSPACE] Success`.
-3. Try generating Q&A.
-   - If `500` error persists, check the console for the specific backend error message passed through the JSON body.
+1. Open the **AI Studio** and attempt to create a workspace.
+2. If it works, try the **Q&A Builder**.
+3. If it fails, check the console. You should now see a JSON error message like `{ "error": "fetch is not defined" }` or `{ "error": "Invalid API key" }` instead of a generic HTML 500 page.

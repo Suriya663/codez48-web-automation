@@ -16,12 +16,12 @@ exports.handler = async (event) => {
     if (event.httpMethod !== "POST") return { statusCode: 405 };
 
     try {
-        console.log("[AI WORKSPACE] Inbound creation request...");
-        const uid = await verifyToken(event);
-        console.log("[AI WORKSPACE] Verified UID:", uid);
+        if (!event.body) throw new Error("Missing request body.");
 
+        const uid = await verifyToken(event);
         const { name, description } = JSON.parse(event.body);
-        if (!name) return { statusCode: 400, body: JSON.stringify({ error: "Name required" }) };
+
+        if (!name) return { statusCode: 400, body: JSON.stringify({ error: "Workspace name required." }) };
 
         const db = admin.firestore();
         const wsId = 'WS-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -38,21 +38,20 @@ exports.handler = async (event) => {
             lastOpenedAt: new Date().toISOString()
         };
 
-        console.log("[AI WORKSPACE] Saving document:", wsId);
         await db.collection('ai_workspaces').doc(wsId).set(workspaceData);
-        console.log("[AI WORKSPACE] Document saved successfully.");
 
         return {
             statusCode: 200,
-            headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+            headers: { "Access-Control-Allow-Origin": "*" },
             body: JSON.stringify({ success: true, workspaceId: wsId })
         };
+
     } catch (error) {
-        console.error("[AI WORKSPACE] Function Error:", error.message);
+        console.error("[AI WORKSPACE] Registry Error:", error.message);
         return {
             statusCode: 500,
             headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: error.message || "Internal Server Error" })
         };
     }
 };

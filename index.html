@@ -361,7 +361,7 @@
                     <button onclick="location.href='tools/index.html'" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest flex items-center gap-2">
                         Tools <i class="fa-solid fa-chevron-down text-[8px] transition-transform group-hover:rotate-180"></i>
                     </button>
-                    <div class="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 shadow-2xl rounded-2xl py-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div class="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 shadow-2xl rounded-2xl py-5 hidden group-hover:block transition-all z-50 animate-in fade-in slide-in-from-top-2">
                         <button onclick="location.href='/ai-studio/index.html'" class="w-full text-left px-6 py-3 text-[10px] font-black text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 transition uppercase tracking-widest flex items-center gap-3 mb-2 border-b border-indigo-100/50">
                             <i class="fa-solid fa-brain text-sm text-indigo-600"></i> AI Model Studio
                         </button>
@@ -379,9 +379,6 @@
                         </button>
                         <button onclick="window.openAiMailCampaignModal()" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-purple-700 hover:bg-purple-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-wand-magic-sparkles text-xs text-purple-600"></i> AI Mail Campaign
-                        </button>
-                        <button onclick="location.href='/ai-studio/index.html'" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100 transition uppercase tracking-widest flex items-center gap-3">
-                            <i class="fa-solid fa-brain text-xs text-indigo-600"></i> AI Model Studio
                         </button>
                         <button onclick="location.href='api-keys.html'" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-key text-xs"></i> API Keys & Billing
@@ -429,7 +426,7 @@
                 <button onclick="window.openAiMailCampaignModal(); window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-purple-700 uppercase tracking-widest">
                     <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> AI Mail Campaign
                 </button>
-                <button onclick="location.href='/ai-studio/index.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50/50 p-2 rounded-xl">
+                <button onclick="location.href='ai-studio/index.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50/50 p-2 rounded-xl">
                     <i class="fa-solid fa-brain text-indigo-600"></i> AI Model Studio
                 </button>
                 <button onclick="location.href='api-keys.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-widest">

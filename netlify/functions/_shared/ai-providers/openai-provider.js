@@ -1,30 +1,37 @@
+const fetch = require('node-fetch');
 const BaseAIProvider = require('./base-provider');
 
 class OpenAIProvider extends BaseAIProvider {
     async generateText(prompt) {
-        console.log("[OPENAI_ADAPTER] Requesting completion...");
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: this.model || 'gpt-4o',
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.3
-            })
-        });
+        console.log("[OPENAI_ADAPTER] Dispatching Request...");
 
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.error("[OPENAI_ADAPTER] API Error:", err);
-            throw new Error(err.error?.message || `OpenAI error: ${res.status}`);
+        try {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: this.model || 'gpt-4o',
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.3
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                console.error("[OPENAI_ADAPTER] API Rejection:", data);
+                throw new Error(data.error?.message || `OpenAI error: ${res.status}`);
+            }
+
+            console.log("[OPENAI_ADAPTER] Success.");
+            return { text: data.choices[0].message.content, model: data.model };
+        } catch (e) {
+            console.error("[OPENAI_ADAPTER] Network/Runtime Error:", e.message);
+            throw e;
         }
-
-        const data = await res.json();
-        console.log("[OPENAI_ADAPTER] Response received.");
-        return { text: data.choices[0].message.content, model: data.model };
     }
 }
 module.exports = OpenAIProvider;

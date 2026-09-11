@@ -101,21 +101,31 @@ export const StudioApp = {
     },
 
     initView(viewId) {
-        try {
-            if (viewId === 'home') {
-                this.refreshDashboardStats();
-                if (window.StudioWorkspace) window.StudioWorkspace.load();
+        console.log(`[AI STUDIO] Initializing Module View: ${viewId}`);
+        const attemptInit = (retryCount = 0) => {
+            try {
+                if (viewId === 'home') {
+                    this.refreshDashboardStats();
+                    if (window.StudioWorkspace) window.StudioWorkspace.load();
+                }
+                if (viewId === 'workspaces' && window.StudioWorkspace) {
+                    window.StudioWorkspace.load();
+                } else if (viewId === 'workspaces' && retryCount < 5) {
+                    setTimeout(() => attemptInit(retryCount + 1), 200);
+                    return;
+                }
+
+                if (viewId === 'qa-builder' && window.StudioQA) window.StudioQA.loadWorkspaces();
+                if (viewId === 'datasets' && window.StudioDatasets) window.StudioDatasets.loadRegistry();
+                if (viewId === 'playground' && window.StudioPlayground) window.StudioPlayground.load();
+                if (viewId === 'models') this.loadProductionModels();
+                if (viewId === 'providers' && window.StudioProviders) window.StudioProviders.loadConnections();
+                if (viewId === 'text-to-text' && window.StudioTextToText) window.StudioTextToText.startWizard();
+            } catch (e) {
+                console.error(`[AI STUDIO] Protocol Init Failure (${viewId}):`, e);
             }
-            if (viewId === 'workspaces' && window.StudioWorkspace) window.StudioWorkspace.load();
-            if (viewId === 'qa-builder' && window.StudioQA) window.StudioQA.loadWorkspaces();
-            if (viewId === 'datasets' && window.StudioDatasets) window.StudioDatasets.loadRegistry();
-            if (viewId === 'playground' && window.StudioPlayground) window.StudioPlayground.load();
-            if (viewId === 'models') this.loadProductionModels();
-            if (viewId === 'providers' && window.StudioProviders) window.StudioProviders.loadConnections();
-            if (viewId === 'text-to-text' && window.StudioTextToText) window.StudioTextToText.startWizard();
-        } catch (e) {
-            console.error(`[AI STUDIO] Protocol Init Failure (${viewId}):`, e);
-        }
+        };
+        attemptInit();
     },
 
     async refreshDashboardStats() {
