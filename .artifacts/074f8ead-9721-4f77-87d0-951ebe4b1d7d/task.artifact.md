@@ -1,6 +1,6 @@
-- [ ] **AI Studio UX Stabilization**
-    - [ ] Add `renderIndexError` to `ai-studio/js/app.js`
-    - [ ] Update `ai-studio/js/workspace.js` with index error handling
-    - [ ] Update `ai-studio/js/qa-builder.js` with index error handling
-    - [ ] Update `ai-studio/js/datasets.js` with index error handling
-    - [ ] Verify creation feedback loop in `workspace.js`
+- [ ] **AI Studio Stability Fixes**
+    - [ ] Upgrade all Netlify functions to native `fetch` (Remove `node-fetch`)
+    - [ ] Add extended logging to shared modules (`auth.js`, `crypto.js`)
+    - [ ] Refine `workspace.js` creation flow with more descriptive state logging
+    - [ ] Update `app.js` with safer view initialization
+    - [ ] Verify non-blank state for Workspaces once index is active

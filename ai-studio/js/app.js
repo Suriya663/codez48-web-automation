@@ -11,18 +11,19 @@ export const StudioApp = {
     currentUser: null,
 
     async init() {
-        console.log("[AI STUDIO] Initializing core modules...");
+        console.log("[AI STUDIO] Initalizing Protocol...");
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                console.log("[AI STUDIO] Signal Secured:", user.uid);
                 this.currentUser = user;
                 this.handleUserAuthenticated(user);
             } else {
-                console.log("[AI STUDIO] No session. Handshaking...");
+                console.log("[AI STUDIO] No Signal. Handshaking...");
                 try {
                     await signInAnonymously(auth);
                 } catch (e) {
-                    this.showAuthError("Handshake failed. Check connection.");
+                    this.showAuthError("Handshake failure. Registry unavailable.");
                 }
             }
         });
@@ -38,23 +39,23 @@ export const StudioApp = {
     },
 
     async handleUserAuthenticated(user) {
-        console.log("[AI STUDIO] Session active:", user.uid);
         const nameEl = document.getElementById('user-display-name');
-        if (nameEl) nameEl.innerText = user.email || "Anonymous Architect";
+        if (nameEl) nameEl.innerText = user.email || "Architect Node";
 
+        // Pre-load essential registries
         this.refreshDashboardStats();
         if (window.StudioWorkspace) window.StudioWorkspace.load();
     },
 
     switchView(viewId) {
-        console.log(`[AI STUDIO] Navigating to: ${viewId}`);
+        console.log(`[AI STUDIO] Navigating to Protocol: ${viewId}`);
 
-        // 1. Sidebar UI Update
+        // 1. UI Navigation State
         document.querySelectorAll('.sidebar-item').forEach(btn => {
             btn.classList.toggle('active', btn.id === `nav-${viewId}`);
         });
 
-        // 2. View Visibility Update
+        // 2. View Portals
         const views = document.querySelectorAll('.studio-view');
         let viewFound = false;
         views.forEach(view => {
@@ -68,9 +69,9 @@ export const StudioApp = {
             }
         });
 
-        if (!viewFound) console.warn(`[AI STUDIO] View target not found: view-${viewId}`);
+        if (!viewFound) console.warn(`[AI STUDIO] View portal not found: view-${viewId}`);
 
-        // 3. Title Update
+        // 3. Command Title
         const titles = {
             'home': 'Studio Dashboard',
             'workspaces': 'My Workspaces',
@@ -87,10 +88,10 @@ export const StudioApp = {
         const titleEl = document.getElementById('view-title');
         if (titleEl) titleEl.innerText = titles[viewId] || 'AI Studio Module';
 
-        // 4. Controller Bootstrapping
+        // 4. Controller Initialization (Lazy Handshake)
         this.initView(viewId);
 
-        // 5. Mobile Close
+        // 5. Mobile Interface
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('studio-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -113,7 +114,7 @@ export const StudioApp = {
             if (viewId === 'providers' && window.StudioProviders) window.StudioProviders.loadConnections();
             if (viewId === 'text-to-text' && window.StudioTextToText) window.StudioTextToText.startWizard();
         } catch (e) {
-            console.error(`[AI STUDIO] View Init Error (${viewId}):`, e);
+            console.error(`[AI STUDIO] Protocol Init Failure (${viewId}):`, e);
         }
     },
 
@@ -122,10 +123,7 @@ export const StudioApp = {
         try {
             const userId = this.currentUser.uid;
 
-            // 1. Workspaces Count
             const wsSnap = await getDocs(query(collection(db, "ai_workspaces"), where("ownerId", "==", userId)));
-
-            // 2. Finalized Datasets (Models) Count
             const dSnap = await getDocs(query(collection(db, "ai_datasets"), where("ownerId", "==", userId)));
 
             const modelsEl = document.getElementById('stat-active-models');
@@ -134,10 +132,10 @@ export const StudioApp = {
 
             if (modelsEl) modelsEl.innerText = dSnap.size;
             if (modelsBadge) modelsBadge.innerText = `${dSnap.size} Ready`;
-            if (datasetsEl) datasetsEl.innerText = wsSnap.size; // Change stat-datasets to show Workspace count on Home
+            if (datasetsEl) datasetsEl.innerText = wsSnap.size;
 
         } catch (e) {
-            console.warn("[AI STUDIO] Stats sync notice:", e.message);
+            console.warn("[AI STUDIO] Stats sync warning:", e.message);
         }
     },
 
@@ -146,12 +144,12 @@ export const StudioApp = {
         if (!grid || !this.currentUser) return;
 
         try {
-            grid.innerHTML = '<div class="col-span-full py-10 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Scanning Production Tiers...</div>';
+            grid.innerHTML = '<div class="col-span-full py-10 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Scanning production registries...</div>';
             const q = query(collection(db, "ai_datasets"), where("ownerId", "==", this.currentUser.uid), orderBy("createdAt", "desc"));
             const snap = await getDocs(q);
 
             if (snap.empty) {
-                grid.innerHTML = '<div class="col-span-full py-20 text-center text-slate-300 font-black uppercase text-[10px]">No finalized models</div>';
+                grid.innerHTML = '<div class="col-span-full py-20 text-center text-slate-300 font-black uppercase text-[10px]">No finalized models found</div>';
                 return;
             }
 
@@ -173,7 +171,11 @@ export const StudioApp = {
             }).join('');
         } catch (e) {
             console.error("[AI STUDIO] Model Registry Error:", e);
-            grid.innerHTML = `<p class="col-span-full text-center text-rose-500 py-10 font-bold uppercase text-[9px]">Sync Error</p>`;
+            if (e.message.includes('requires an index')) {
+                this.renderIndexError(grid, e.message);
+            } else {
+                grid.innerHTML = `<p class="col-span-full text-center text-rose-500 py-10 font-bold uppercase text-[9px]">Sync Error</p>`;
+            }
         }
     },
 
@@ -210,5 +212,6 @@ window.switchView = (id) => StudioApp.switchView(id);
 
 // Initial Load Handler
 window.addEventListener('load', () => {
+    console.log("[AI STUDIO] Ready signal received.");
     StudioApp.init();
 });

@@ -1,19 +1,29 @@
-const fetch = require('node-fetch');
 const BaseAIProvider = require('./base-provider');
 
 class OpenAIProvider extends BaseAIProvider {
     async generateText(prompt) {
+        console.log("[OPENAI_ADAPTER] Requesting completion...");
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 model: this.model || 'gpt-4o',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.3
             })
         });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("[OPENAI_ADAPTER] API Error:", err);
+            throw new Error(err.error?.message || `OpenAI error: ${res.status}`);
+        }
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || "OpenAI error");
+        console.log("[OPENAI_ADAPTER] Response received.");
         return { text: data.choices[0].message.content, model: data.model };
     }
 }
