@@ -39,7 +39,10 @@ export const StudioDatasets = {
                 this.renderFinalized(finalizedList, dsSnap.docs.map(d => d.data()));
             }
         } catch (e) {
-            console.error("[AI DATASETS] Registry Error:", e);
+            console.error("[AI DATASETS] Sync Error:", e);
+            if (e.message.includes('index')) {
+                if (window.StudioApp) window.StudioApp.renderIndexError(finalizedList, e.message);
+            }
         }
     },
 

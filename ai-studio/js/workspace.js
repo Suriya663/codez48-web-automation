@@ -91,7 +91,12 @@ export const StudioWorkspace = {
             this.render(grid, this.workspaces);
             if (homeList) this.render(homeList, this.workspaces.slice(0, 4), true);
         } catch (e) {
-            grid.innerHTML = `<p class="col-span-full text-center text-rose-500 py-10 font-bold uppercase text-[9px]">Registry Error</p>`;
+            console.error("[AI WORKSPACE] Load failure:", e.message);
+            if (e.message.includes('requires an index')) {
+                if (window.StudioApp) window.StudioApp.renderIndexError(grid, e.message);
+            } else {
+                grid.innerHTML = `<p class="col-span-full text-center text-rose-500 py-10 font-bold uppercase text-[9px]">Registry Sync Failure</p>`;
+            }
         }
     },
 

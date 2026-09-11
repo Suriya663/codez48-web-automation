@@ -32,6 +32,11 @@ export const StudioQA = {
             });
         } catch (e) {
             console.error("[AI QA] Workspace registry load error:", e);
+            if (e.message.includes('index')) {
+                select.innerHTML = '<option value="">Setup Required: See Console</option>';
+                const stream = document.getElementById('qa-live-stream');
+                if (window.StudioApp) window.StudioApp.renderIndexError(stream, e.message);
+            }
         }
     },
 

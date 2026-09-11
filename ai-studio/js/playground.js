@@ -34,6 +34,10 @@ export const StudioPlayground = {
             select.onchange = (e) => this.selectModel(e.target.value);
         } catch (e) {
             console.error("[AI PLAYGROUND] Load error:", e.message);
+            if (e.message.includes('index')) {
+                const history = document.getElementById('playground-chat-history');
+                if (window.StudioApp) window.StudioApp.renderIndexError(history, e.message);
+            }
         }
     },
 
@@ -84,31 +88,52 @@ export const StudioPlayground = {
         this.renderAIThinking();
 
         try {
+            const idToken = await auth.currentUser.getIdToken();
             const startTime = Date.now();
 
-            // --- RAG SIMULATION LOGIC ---
-            // In Phase 16, this will call the Python ML Service for real retrieval.
-            // For now, we simulate finding relevant info in the dataset.
+            // --- REAL RAG INFERENCE CALL ---
+            const response = await fetch('/.netlify/functions/ai-model-predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + idToken
+                },
+                body: JSON.stringify({
+                    datasetId: this.activeDatasetId,
+                    prompt: text,
+                    temperature: 0.7
+                })
+            });
 
-            await new Promise(r => setTimeout(r, 1500)); // Simulate retrieval & inference
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || "Inference engine timeout.");
+            }
+
+            const result = await response.json();
             const latency = Date.now() - startTime;
-
-            // Mock Response based on system logic
-            const response = `[PROTOCOL_RESPONSE] I am the Codez48 AI instance for your dataset. \n\nI have retrieved contextual parameters from node ${this.activeDatasetId}. Based on your input: "${text.substring(0, 30)}...", I am processing the grounded response. \n\nNote: In Phase 15, this will be connected to your OpenAI/Groq provider with real document retrieval.`;
 
             // Update Metadata
             const meta = document.getElementById('inference-meta');
-            meta.classList.remove('hidden');
-            document.getElementById('meta-latency').innerText = `${latency} ms`;
-            document.getElementById('meta-tokens').innerText = `${Math.round(text.length/4 + response.length/4)} tokens`;
+            if (meta) {
+                meta.classList.remove('hidden');
+                document.getElementById('meta-latency').innerText = `${latency} ms`;
+                document.getElementById('meta-tokens').innerText = `Sync: ${result.provider.toUpperCase()}`;
+            }
 
-            // 3. Add AI Message
-            this.chatHistory.push({ role: 'assistant', content: response });
+            // Remove thinking bubble and add real message
+            const thinking = document.getElementById('ai-thinking-bubble');
+            if (thinking) thinking.remove();
+
+            this.chatHistory.push({ role: 'assistant', content: result.text });
             this.renderChat();
 
         } catch (e) {
             console.error("[AI PLAYGROUND] Pipeline error:", e);
-            this.chatHistory.push({ role: 'assistant', content: `[PIPELINE_ERROR] Handshake failed: ${e.message}`, isError: true });
+            const thinking = document.getElementById('ai-thinking-bubble');
+            if (thinking) thinking.remove();
+
+            this.chatHistory.push({ role: 'assistant', content: `[PIPELINE_ERROR] ${e.message}`, isError: true });
             this.renderChat();
         }
     },

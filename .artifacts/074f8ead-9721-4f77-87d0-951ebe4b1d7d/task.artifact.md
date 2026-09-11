@@ -1,8 +1,6 @@
-- [ ] **Phase 15: Real Provider Integration & RAG**
-    - [ ] Implement `netlify/functions/ai-model-predict.js` with RAG retrieval logic
-    - [ ] Update `js/playground.js` to call the real backend
-    - [ ] Implement usage tracking in `netlify/functions/ai-usage-record.js`
-    - [ ] Add "Grounded Mode" toggle to the Playground UI
-    - [ ] Verify real AI responses and token metadata
-- [ ] **Phase 16: Python ML Service Structure**
-    - [ ] Create `ml-service/` base directory and FastAPI boilerpate
+- [ ] **AI Studio UX Stabilization**
+    - [ ] Add `renderIndexError` to `ai-studio/js/app.js`
+    - [ ] Update `ai-studio/js/workspace.js` with index error handling
+    - [ ] Update `ai-studio/js/qa-builder.js` with index error handling
+    - [ ] Update `ai-studio/js/datasets.js` with index error handling
+    - [ ] Verify creation feedback loop in `workspace.js`

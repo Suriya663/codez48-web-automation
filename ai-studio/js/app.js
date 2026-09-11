@@ -178,6 +178,22 @@ export const StudioApp = {
         alert(msg);
     },
 
+    renderIndexError(container, message) {
+        if (!container) return;
+        const indexUrl = message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
+        container.innerHTML = `
+            <div class="col-span-full p-10 text-center bg-rose-50 border border-rose-200 rounded-[3rem] space-y-6">
+                <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto text-2xl font-bold">!</div>
+                <div class="max-w-md mx-auto space-y-2">
+                    <h4 class="text-sm font-black text-rose-900 uppercase tracking-widest">Database Setup Required</h4>
+                    <p class="text-[10px] text-rose-700 font-bold leading-relaxed">Firestore needs a composite index to sort your results. Click the button below to authorize creation in your Firebase Console.</p>
+                </div>
+                <a href="${indexUrl || '#'}" target="_blank" class="inline-block bg-rose-600 text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-rose-700 transition-all active:scale-95">Create Firestore Index</a>
+                <p class="text-[8px] text-rose-400 uppercase font-black tracking-tighter">Wait 2-3 minutes after clicking before refreshing</p>
+            </div>
+        `;
+    },
+
     logout() {
         if(confirm("Terminate Architect Session?")) {
             auth.signOut().then(() => location.href = '../index.html');
