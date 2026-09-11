@@ -122,7 +122,10 @@ export const StudioApp = {
         try {
             const userId = this.currentUser.uid;
 
-            // Models Count (Finalized Datasets as models for now)
+            // 1. Workspaces Count
+            const wsSnap = await getDocs(query(collection(db, "ai_workspaces"), where("ownerId", "==", userId)));
+
+            // 2. Finalized Datasets (Models) Count
             const dSnap = await getDocs(query(collection(db, "ai_datasets"), where("ownerId", "==", userId)));
 
             const modelsEl = document.getElementById('stat-active-models');
@@ -131,7 +134,7 @@ export const StudioApp = {
 
             if (modelsEl) modelsEl.innerText = dSnap.size;
             if (modelsBadge) modelsBadge.innerText = `${dSnap.size} Ready`;
-            if (datasetsEl) datasetsEl.innerText = dSnap.size;
+            if (datasetsEl) datasetsEl.innerText = wsSnap.size; // Change stat-datasets to show Workspace count on Home
 
         } catch (e) {
             console.warn("[AI STUDIO] Stats sync notice:", e.message);

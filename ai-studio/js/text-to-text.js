@@ -143,3 +143,4 @@ export const StudioTextToText = {
 };
 
 window.StudioTextToText = StudioTextToText;
+StudioTextToText.init();

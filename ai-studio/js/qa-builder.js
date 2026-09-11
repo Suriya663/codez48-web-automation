@@ -139,6 +139,10 @@ export const StudioQA = {
                     <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Grounded AI Answer</p>
                     <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-medium text-slate-600 leading-relaxed">${qa.answer.replace(/\n/g, '<br>')}</div>
                 </div>
+                <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                    <p class="text-[7px] font-black text-indigo-400 uppercase tracking-widest mb-1">Knowledge Source Node</p>
+                    <p class="text-[9px] text-indigo-600 italic line-clamp-3">${qa.sourceChunk}</p>
+                </div>
             </div>
             <div class="pt-4 border-t border-slate-50 flex justify-between items-center text-[7px] font-black text-slate-400 uppercase tracking-widest">
                 <span>Model: ${qa.model}</span>

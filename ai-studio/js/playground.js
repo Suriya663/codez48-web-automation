@@ -91,6 +91,9 @@ export const StudioPlayground = {
             const idToken = await auth.currentUser.getIdToken();
             const startTime = Date.now();
 
+            const groundedMode = document.getElementById('playground-grounded-mode')?.checked ?? true;
+            const temperature = parseFloat(document.getElementById('playground-temp')?.value ?? 0.3);
+
             // --- REAL RAG INFERENCE CALL ---
             const response = await fetch('/.netlify/functions/ai-model-predict', {
                 method: 'POST',
@@ -101,7 +104,8 @@ export const StudioPlayground = {
                 body: JSON.stringify({
                     datasetId: this.activeDatasetId,
                     prompt: text,
-                    temperature: 0.7
+                    grounded: groundedMode,
+                    temperature: temperature
                 })
             });
 

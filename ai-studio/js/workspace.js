@@ -10,7 +10,8 @@ export const StudioWorkspace = {
     workspaces: [],
 
     init() {
-        console.log("[AI WORKSPACE] Initialized.");
+        window.StudioWorkspace = StudioWorkspace;
+        console.log("[AI WORKSPACE] Initialized & Bound to Window.");
     },
 
     startWizard() {
@@ -24,10 +25,11 @@ export const StudioWorkspace = {
     },
 
     async createWorkspace() {
+        console.log("[AI WORKSPACE] Create Button Clicked");
         const name = document.getElementById('wiz-ws-name').value.trim();
         const desc = document.getElementById('wiz-ws-desc').value.trim();
 
-        if (!name) return alert("Workspace name required.");
+        if (!name) return alert("Please provide a name for your workspace.");
 
         const loader = document.getElementById('global-loader');
         if (loader) loader.classList.remove('hidden');

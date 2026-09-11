@@ -8,18 +8,16 @@ exports.handler = async (event) => {
 
     try {
         const uid = await verifyToken(event);
-        const { datasetId, prompt, temperature, max_tokens } = JSON.parse(event.body);
+        const { datasetId, prompt, temperature, max_tokens, grounded } = JSON.parse(event.body);
 
         if (!datasetId || !prompt) throw new Error("Dataset ID and Prompt required.");
 
         const db = admin.firestore();
 
-        // 1. Fetch Dataset Context (RAG Simulation for MVP)
-        // We fetch the latest curated Q&A pairs for this dataset to provide context
+        // 1. Fetch Dataset Context
         const qaSnap = await db.collection('qaItems')
             .where('datasetId', '==', datasetId)
-            .where('status', '==', 'FINALIZED')
-            .limit(5)
+            .limit(10)
             .get();
 
         let context = "";
@@ -29,7 +27,6 @@ exports.handler = async (event) => {
         });
 
         // 2. Resolve AI Provider
-        // For simplicity in MVP, we look for a connected Groq or OpenAI key for this user
         const connectionsSnap = await db.collection('providerConnections').where('ownerId', '==', uid).limit(1).get();
         if (connectionsSnap.empty) throw new Error("No AI Provider connected. Please link Groq or OpenAI first.");
 
@@ -38,12 +35,16 @@ exports.handler = async (event) => {
         const ai = getProvider({ provider: conn.provider, apiKey });
 
         // 3. Construct Augmented Prompt
-        const finalPrompt = `
-            You are a CODEZ48 AI Assistant. Use the provided context to answer the user's question.
-            If the answer is not in the context, say "I don't have enough information in my knowledge base to answer that."
+        let systemMsg = "You are a CODEZ48 AI Assistant. Provide helpful, accurate responses.";
+        if (grounded) {
+            systemMsg += `\nSTRICT REQUIREMENT: Answer the user's question ONLY using the provided context. If the answer is not in the context, say "I don't have enough information in my knowledge base to answer that." Do not use outside knowledge.`;
+        }
 
-            CONTEXT:
-            ${context || "No specific context provided."}
+        const finalPrompt = `
+            ${systemMsg}
+
+            CONTEXT FROM KNOWLEDGE BASE:
+            ${context || "No specific context available."}
 
             USER QUESTION:
             ${prompt}
