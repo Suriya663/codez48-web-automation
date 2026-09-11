@@ -44,6 +44,11 @@ const initApp = () => {
         }
     }
 
+    if (initialHash === 'push') {
+        showView('tracker');
+        setTimeout(() => { if (window.handleToolAction) window.handleToolAction('push'); }, 100);
+    } else if (initialHash === 'tracker') {
+        showView('tracker');
     } else if (initialHash === 'order-successful') {
         showView('landing');
         setTimeout(() => {
