@@ -11,11 +11,11 @@ export const StudioApp = {
     currentUser: null,
 
     async init() {
-        console.log("[AI STUDIO] Initalizing Protocol...");
+        console.log("[AI STUDIO] Protocol Active.");
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log("[AI STUDIO] Signal Secured:", user.uid);
+                console.log("[AI STUDIO] Node Linked:", user.uid);
                 this.currentUser = user;
                 this.handleUserAuthenticated(user);
             } else {
@@ -48,14 +48,14 @@ export const StudioApp = {
     },
 
     switchView(viewId) {
-        console.log(`[AI STUDIO] Navigating to Protocol: ${viewId}`);
+        console.log(`[AI STUDIO] Navigating to Module: ${viewId}`);
 
-        // 1. UI Navigation State
+        // 1. UI Sidebar Update
         document.querySelectorAll('.sidebar-item').forEach(btn => {
             btn.classList.toggle('active', btn.id === `nav-${viewId}`);
         });
 
-        // 2. View Portals
+        // 2. View Portals Update
         const views = document.querySelectorAll('.studio-view');
         let viewFound = false;
         views.forEach(view => {
@@ -71,7 +71,7 @@ export const StudioApp = {
 
         if (!viewFound) console.warn(`[AI STUDIO] View portal not found: view-${viewId}`);
 
-        // 3. Command Title
+        // 3. Command Title Update
         const titles = {
             'home': 'Studio Dashboard',
             'workspaces': 'My Workspaces',
@@ -88,10 +88,10 @@ export const StudioApp = {
         const titleEl = document.getElementById('view-title');
         if (titleEl) titleEl.innerText = titles[viewId] || 'AI Studio Module';
 
-        // 4. Controller Initialization (Lazy Handshake)
+        // 4. Lazy-Load Controller Logic
         this.initView(viewId);
 
-        // 5. Mobile Interface
+        // 5. Mobile Layout Cleanup
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('studio-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -123,7 +123,10 @@ export const StudioApp = {
         try {
             const userId = this.currentUser.uid;
 
+            // 1. Workspaces Count
             const wsSnap = await getDocs(query(collection(db, "ai_workspaces"), where("ownerId", "==", userId)));
+
+            // 2. Finalized Datasets (Models) Count
             const dSnap = await getDocs(query(collection(db, "ai_datasets"), where("ownerId", "==", userId)));
 
             const modelsEl = document.getElementById('stat-active-models');
@@ -135,7 +138,7 @@ export const StudioApp = {
             if (datasetsEl) datasetsEl.innerText = wsSnap.size;
 
         } catch (e) {
-            console.warn("[AI STUDIO] Stats sync warning:", e.message);
+            console.warn("[AI STUDIO] Stats sync notice:", e.message);
         }
     },
 
@@ -144,7 +147,7 @@ export const StudioApp = {
         if (!grid || !this.currentUser) return;
 
         try {
-            grid.innerHTML = '<div class="col-span-full py-10 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Scanning production registries...</div>';
+            grid.innerHTML = '<div class="col-span-full py-10 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Scanning production tiers...</div>';
             const q = query(collection(db, "ai_datasets"), where("ownerId", "==", this.currentUser.uid), orderBy("createdAt", "desc"));
             const snap = await getDocs(q);
 

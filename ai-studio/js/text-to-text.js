@@ -16,7 +16,8 @@ export const StudioTextToText = {
     },
 
     init() {
-        console.log("[AI TEXT-TO-TEXT] Initialized.");
+        window.StudioTextToText = StudioTextToText;
+        console.log("[AI TEXT-TO-TEXT] Protocol Initialized.");
     },
 
     async startWizard() {
@@ -46,7 +47,7 @@ export const StudioTextToText = {
                             </div>
                         `).join('')}
                     </div>
-                    ${snap.empty ? '<p class="text-center text-slate-400 text-xs">No workspaces found. Create one in Studio Home first.</p>' : ''}
+                    ${snap.empty ? '<p class="text-center text-slate-400 text-xs py-10">No workspaces found. Please create one in Studio Home.</p>' : ''}
                     <div class="pt-8 flex justify-center">
                         <button onclick="window.StudioTextToText.nextStep()" class="btn-black px-12 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest ${!this.wizardData.workspaceId ? 'opacity-50 pointer-events-none' : ''}">Continue</button>
                     </div>
@@ -122,7 +123,7 @@ export const StudioTextToText = {
 
     async launchPipeline() {
         const source = document.getElementById('wiz-source-text').value.trim();
-        if (source.length < 50) return alert("Knowledge source too short. Please provide at least 50 characters.");
+        if (source.length < 50) return alert("Knowledge source too short (min 50 chars).");
 
         const loader = document.getElementById('global-loader');
         if (loader) loader.classList.remove('hidden');
