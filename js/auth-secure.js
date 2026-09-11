@@ -139,14 +139,21 @@ export const proceedToPayment = async () => {
 
         if (!orderResponse.ok) {
             const errBody = await orderResponse.json().catch(() => ({ error: "Server Error" }));
-            throw new Error(errBody.error || `Initialization Failed (${orderResponse.status})`);
+            const msg = errBody.error || `Initialization Failed (${orderResponse.status})`;
+            if (msg.includes('credentials') || msg.includes('configured')) {
+                alert("CRITICAL ERROR: Razorpay credentials are not configured in your Netlify Dashboard.\n\nPlease go to Netlify > Site Settings > Environment Variables and add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+            } else {
+                alert("Payment Error: " + msg);
+            }
+            if (loader) loader.classList.add('hidden');
+            return;
         }
         const razorpayOrder = await orderResponse.json();
 
         if (loader) loader.classList.add('hidden');
 
         const options = {
-            key: "rzp_live_TUJt8CLvlZ1XEN", // Keep Public Key
+            key: razorpayOrder.key_id, // Use Key ID returned from server
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
             name: "CODEZ48 Network",

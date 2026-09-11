@@ -87,13 +87,23 @@ export const confirmTopUpWallet = async (sellerId) => {
             })
         });
 
-        if (!orderResp.ok) throw new Error("Failed to initialize payment.");
+        if (!orderResp.ok) {
+            const errBody = await orderResp.json().catch(() => ({ error: "Server Error" }));
+            const msg = errBody.error || `Initialization Failed (${orderResp.status})`;
+            if (msg.includes('credentials') || msg.includes('configured')) {
+                alert("CRITICAL ERROR: Razorpay credentials are not configured in your Netlify Dashboard.\n\nPlease go to Netlify > Site Settings > Environment Variables and add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+            } else {
+                alert("Payment Error: " + msg);
+            }
+            if (loader) loader.classList.add('hidden');
+            return;
+        }
         const razorpayOrder = await orderResp.json();
 
         if (loader) loader.classList.add('hidden');
 
         const options = {
-            key: "rzp_live_TUJt8CLvlZ1XEN",
+            key: "rzp_live_TaX2zuAv0lLUKf",
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
             name: "CODEZ48 Wallet Recharge",

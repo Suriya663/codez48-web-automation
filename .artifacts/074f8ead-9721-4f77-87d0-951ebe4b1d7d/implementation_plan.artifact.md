@@ -1,64 +1,68 @@
-# Razorpay 500 Error Resolution & Enhanced Debugging
+# UI Refinement & Wallet Overflow Fix
 
-Implementation plan for resolving the 500 Internal Server Error in the Razorpay integration and providing clear feedback to identify configuration issues.
+Architecture & implementation plan for optimizing the AI Voice Assistant UI on the seller page, fixing layout overflow in the campaign wallet, and providing a final resolution for the Razorpay credential configuration.
 
-## Workflow Architecture
+## Workflow Architecture & System Flowchart
 
 ```mermaid
 flowchart TD
-    A[Frontend: Request Order] --> B{Call Create Order Function}
-    B -->|500 Error| C[Catch Error & Parse JSON Body]
-    C --> D[Display Specific Alert: 'Missing Credentials' or 'FCM Error']
+    A[User Visits Seller Page] --> B[AI Microphone FAB: Smaller & Draggable]
+    B --> C[User Grags Microphone to Any Screen Position]
 
-    B -->|200 Success| E[Open Razorpay Checkout]
+    D[User Opens Campaign Wallet] --> E[Adjusted Modal Layout: Prevent Overflow]
 
-    F[Backend: Create Order] --> G{Check process.env}
-    G -->|Missing| H[Return 500 with 'Missing ENV' message]
-    G -->|Present| I[Fetch Razorpay API]
-    I -->|Error| J[Return Status from Razorpay + Error Body]
+    F[User Triggers Payment] --> G{Backend Credentials Configured?}
+    G -->|No| H[Display Actionable Configuration Guide]
+    G -->|Yes| I[Secure Checkout Loop: Order -> Pay -> Verify]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Environment Variables**:
-> - The 500 error is most likely caused by missing `RAZORPAY_KEY_ID` or `RAZORPAY_KEY_SECRET` in your Netlify site settings.
-> - I will update the code to clearly state if these are missing in the browser alert.
+> **AI Microphone Upgrade**:
+> - Removed all text labels from the microphone element.
+> - Reduced overall size to a standard Floating Action Button (FAB) (48x48px).
+> - Implemented full mouse and touch **Drag-and-Drop** support so users can move it anywhere.
+
+> [!IMPORTANT]
+> **Wallet Overflow Fix**:
+> - Optimized the `AI Mail Campaign` wallet tab structure to handle smaller screens and prevent vertical/horizontal overflow.
 
 > [!NOTE]
-> **Built-in Fetch**:
-> - I will switch from `node-fetch` to the built-in `global.fetch` (available in Node 18+) in Netlify functions to eliminate dependency resolution issues that often cause 500 errors.
+> **Razorpay Credentials**:
+> - The current "Payment Error" is a configuration step required in your **Netlify Dashboard**. I will provide the specific values you need to enter to make payments work instantly.
 
 ## Proposed Changes
 
-### 1. Robust Backend Error Handling
-#### [MODIFY] [netlify/functions/razorpay-create-order.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/razorpay-create-order.js)
-- Switch to built-in `fetch`.
-- Add detailed logging of environment variable presence (not values).
-- Ensure every `try/catch` returns a JSON body with an `error` field.
-
-#### [MODIFY] [netlify/functions/razorpay-verify-payment.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/razorpay-verify-payment.js)
-- Same improvements as above.
-
-### 2. Informative Frontend Alerts
-#### [MODIFY] [js/api-key-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/api-key-manager.js)
-- Update `launchRazorpaySubscription()`:
-  - If `orderResponse.ok` is false, try to parse `await orderResponse.json()` and show the specific `error` in the alert.
-
-#### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
-- Similar update for registration payments.
-
-#### [MODIFY] [js/ai-mail-campaign-modal.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/ai-mail-campaign-modal.js)
-- Similar update for wallet top-ups.
+### Seller Page UI
 
 #### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
-- Similar update for storefront orders.
+- Update `#voice-activation-toast` HTML: Remove text, simplify to a single icon-only button.
+- Update CSS: Adjust dimensions, background, and hover states.
+- Add JS: Implement `initDraggableMic()` using pointer events for cross-platform dragging.
+
+### Main Dashboard UI
+
+#### [MODIFY] [js/ai-mail-campaign-modal.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/ai-mail-campaign-modal.js)
+- Update `ensureModalInDOM()`:
+  - Add `overflow-x-hidden` to the modal container.
+  - Adjust padding and grid spacing in the "Wallet Credits" tab to prevent content from exceeding the viewport height.
+
+### Payment Logic Refinement
+
+#### [MODIFY] [js/auth-secure.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/auth-secure.js)
+- Update error handling to include a "Configuration Guide" link when credentials are missing.
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. Click the "Buy Pro Plan" button in API Keys.
-2. If it fails with 500, verify that the alert now says exactly **what** went wrong (e.g., "Razorpay credentials not configured").
-3. Once you set the environment variables in Netlify, verify that the 500 error disappears and the Razorpay window opens correctly.
+1. Open a seller's product page.
+   - Verify the AI microphone is now just a small black icon.
+   - Test dragging it to different corners of the screen.
+2. Open the AI Mail Campaign modal on the main page.
+   - Navigate to the "Wallet" tab.
+   - Verify that all content fits correctly without breaking the modal layout.
+3. Attempt a payment.
+   - Verify that the error message is clear and provides instructions for Netlify.

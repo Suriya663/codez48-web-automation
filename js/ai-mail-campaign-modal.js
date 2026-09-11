@@ -20,9 +20,9 @@ export const AiMailCampaignModal = {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'ai-mail-campaign-modal';
-            modal.className = 'fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-200';
+            modal.className = 'fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-md hidden flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-200';
             modal.innerHTML = `
-                <div class="glass-card w-full max-w-5xl rounded-[3rem] p-6 md:p-10 bg-white relative space-y-8 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
+                <div class="glass-card w-full max-w-5xl rounded-[3rem] p-6 md:p-10 bg-white relative space-y-8 shadow-2xl max-h-[88vh] overflow-y-auto custom-scrollbar overflow-x-hidden">
                     <button onclick="window.closeAiMailCampaignModal()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition">
                         <i class="fa-solid fa-xmark text-2xl"></i>
                     </button>
@@ -121,18 +121,26 @@ export const AiMailCampaignModal = {
                     <!-- Tab 3: Wallet Credits -->
                     <div id="camp-view-wallet" class="hidden space-y-4">
                         <h3 class="text-lg font-black text-black uppercase tracking-tight">Campaign Wallet & Free Credits</h3>
-                        <div class="p-6 bg-slate-900 text-white rounded-3xl shadow-xl space-y-4">
+                        <div class="p-5 bg-slate-900 text-white rounded-3xl shadow-xl space-y-5">
                             <div class="flex justify-between items-center">
-                                <span class="text-xs uppercase tracking-widest text-purple-300 font-bold">Available Email Credits</span>
-                                <span id="camp-wallet-balance" class="text-3xl font-black">2 Credits</span>
+                                <div>
+                                    <span class="text-[7px] uppercase tracking-widest text-purple-300 font-black block mb-1">Available Email Credits</span>
+                                    <span id="camp-wallet-balance" class="text-3xl font-black">2 Credits</span>
+                                </div>
+                                <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-xl text-purple-400">
+                                    <i class="fa-solid fa-wallet"></i>
+                                </div>
                             </div>
-                            <p class="text-[11px] text-slate-300">Each email sent costs ₹1 (1 Credit = ₹1). Every eligible new account receives 2 free email credits upon onboarding.</p>
 
-                            <div class="pt-4 border-t border-slate-800 space-y-3">
-                                <label class="block text-[9px] font-black text-purple-300 uppercase tracking-widest">Enter Credits to Add (1 Credit = ₹1)</label>
-                                <div class="flex gap-3">
-                                    <input type="number" id="camp-topup-amount" min="10" value="100" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-royal" placeholder="Enter credits (e.g. 100)">
-                                    <button onclick="window.launchWalletTopUp()" class="px-8 py-3 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition shadow-lg">
+                            <div class="p-3 bg-white/5 rounded-2xl border border-white/5">
+                                <p class="text-[9px] text-slate-300 leading-relaxed font-medium">Each email sent costs ₹1 (1 Credit = ₹1). Every eligible new account receives 2 free email credits upon onboarding.</p>
+                            </div>
+
+                            <div class="pt-1 space-y-2">
+                                <label for="camp-topup-amount" class="block text-[7px] font-black text-purple-300 uppercase tracking-widest ml-2">Enter Credits to Add (₹1 / Credit)</label>
+                                <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                                    <input type="number" id="camp-topup-amount" min="10" value="100" class="flex-1 min-w-[100px] bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-royal" placeholder="e.g. 100">
+                                    <button onclick="window.launchWalletTopUp()" class="w-full sm:w-auto px-6 py-3 bg-white text-black rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition shadow-lg active:scale-95 shrink-0">
                                         Pay & Add Credits 💳
                                     </button>
                                 </div>
@@ -552,14 +560,21 @@ export const AiMailCampaignModal = {
 
             if (!orderResp.ok) {
                 const errData = await orderResp.json().catch(() => ({ error: "Server Error" }));
-                throw new Error(errData.error || `Initialization Failed (${orderResp.status})`);
+                const msg = errData.error || `Initialization Failed (${orderResp.status})`;
+                if (msg.includes('credentials') || msg.includes('configured')) {
+                    alert("CRITICAL ERROR: Razorpay credentials are not configured in your Netlify Dashboard.\n\nPlease go to Netlify > Site Settings > Environment Variables and add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+                } else {
+                    alert("Payment Error: " + msg);
+                }
+                if (loader) loader.classList.add('hidden');
+                return;
             }
             const razorpayOrder = await orderResp.json();
 
             if (loader) loader.classList.add('hidden');
 
             const options = {
-                key: "rzp_live_TUJt8CLvlZ1XEN",
+                key: razorpayOrder.key_id, // Use Key ID from server
                 amount: razorpayOrder.amount,
                 currency: razorpayOrder.currency,
                 name: "CODEZ48 AI Mail Campaign",

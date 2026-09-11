@@ -72,7 +72,10 @@ exports.handler = async (event, context) => {
                 "Access-Control-Allow-Origin": "*",
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(order)
+            body: JSON.stringify({
+                ...order,
+                key_id: keyId // Return the public Key ID to the frontend
+            })
         };
     } catch (error) {
         console.error("Internal Function Error:", error);

@@ -563,7 +563,7 @@ export const ApiKeyManager = {
      */
     async launchRazorpaySubscription() {
         const userId = ApiKeyManager.getUserId();
-        const liveKeyId = "rzp_live_TUJt8CLvlZ1XEN";
+        const liveKeyId = "rzp_live_TaX2zuAv0lLUKf";
 
         const loader = document.getElementById('global-loader');
         if (loader) loader.classList.remove('hidden');
@@ -585,14 +585,21 @@ export const ApiKeyManager = {
 
             if (!orderResponse.ok) {
                 const errData = await orderResponse.json().catch(() => ({ error: "Server Error" }));
-                throw new Error(errData.error || `Initialization Failed (Status: ${orderResponse.status})`);
+                const msg = errData.error || `Initialization Failed (${orderResponse.status})`;
+                if (msg.includes('credentials') || msg.includes('configured')) {
+                    alert("CRITICAL ERROR: Razorpay credentials are not configured in your Netlify Dashboard.\n\nPlease go to Netlify > Site Settings > Environment Variables and add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+                } else {
+                    alert("Payment Error: " + msg);
+                }
+                if (loader) loader.classList.add('hidden');
+                return;
             }
             const razorpayOrder = await orderResponse.json();
 
             if (loader) loader.classList.add('hidden');
 
             const options = {
-                key: liveKeyId,
+                key: razorpayOrder.key_id, // Use Key ID from server
                 amount: razorpayOrder.amount,
                 currency: razorpayOrder.currency,
                 name: "CODEZ48 Email Automation Pro",

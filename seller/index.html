@@ -181,10 +181,15 @@
             transform: translateY(0);
         }
 
-        #voice-activation-toast { transition: transform 0.4s ease, opacity 0.4s ease; cursor: grab; touch-action: none; }
+        #voice-activation-toast {
+            transition: transform 0.4s ease, opacity 0.4s ease, scale 0.2s ease;
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
         #voice-activation-toast.active {
-            transform: translate(-50%, 0);
             opacity: 1;
+            pointer-events: auto;
         }
         #voice-activation-toast:active { cursor: grabbing; }
         #voice-activation-toast.dragging { transition: none !important; }
@@ -1089,15 +1094,9 @@
         </div>
     </div>
 
-    <!-- Activation Trigger (Required for Browser Audio Policy) -->
-    <div id="voice-activation-toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[550] bg-white rounded-full px-8 py-4 shadow-2xl border border-gray-100 flex items-center gap-4 cursor-pointer hover:scale-105 active:scale-95 transition-all transform translate-y-20 opacity-0" onclick="activateVoiceAssistant()">
-        <div class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center">
-            <i class="fa-solid fa-microphone"></i>
-        </div>
-        <div>
-            <p class="text-xs font-black uppercase tracking-tight">Enable Voice Shopping</p>
-            <p class="text-[9px] text-gray-400 font-bold uppercase">Talk to our AI Guide</p>
-        </div>
+    <!-- Activation Trigger (AI Microphone FAB) -->
+    <div id="voice-activation-toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[550] bg-black text-white w-10 h-10 rounded-full shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-110 transition-all opacity-0 pointer-events-none" onclick="activateVoiceAssistant()">
+        <i class="fa-solid fa-microphone text-xs"></i>
     </div>
 
     <!-- Advertisement Modal -->
@@ -1374,7 +1373,7 @@
         const GEMINI_API_KEY = "AIzaSyAbCLiq_qTnWNR3QRYi_UTuL7WSOKEJEzM"; // Paste your Google Gemini API Key here
 
         // Razorpay Defaults
-        const DEFAULT_RAZORPAY_KEY = "rzp_live_TUJt8CLvlZ1XEN";
+        const DEFAULT_RAZORPAY_KEY = "rzp_live_TaX2zuAv0lLUKf";
 
         // Template System
         let currentHomeTemplate = localStorage.getItem('homeTemplate') || 'elite';
@@ -3643,14 +3642,22 @@
 
                 if (!orderResp.ok) {
                     const errData = await orderResp.json().catch(() => ({ error: "Server Error" }));
-                    throw new Error(errData.error || `Initialization Failed (${orderResp.status})`);
+                    const msg = errData.error || `Initialization Failed (${orderResp.status})`;
+                    if (msg.includes('credentials') || msg.includes('configured')) {
+                        alert("CRITICAL ERROR: Razorpay credentials are not configured in your Netlify Dashboard.\n\nPlease go to Netlify > Site Settings > Environment Variables and add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+                    } else {
+                        alert("Payment Error: " + msg);
+                    }
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
                 }
                 const razorpayOrder = await orderResp.json();
 
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Launching Razorpay...';
 
                 const options = {
-                    "key": keyId,
+                    "key": razorpayOrder.key_id, // Use validated Key ID from server
                     "amount": razorpayOrder.amount,
                     "currency": razorpayOrder.currency,
                     "name": currentSellerData?.brand || "Merchant Store",
@@ -6652,6 +6659,74 @@
                 dropdown.classList.add('hidden');
             }
         });
+
+        // --- Draggable AI Microphone FAB Logic ---
+        const initDraggableMic = () => {
+            const el = document.getElementById('voice-activation-toast');
+            if (!el) return;
+
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            const dragStart = (e) => {
+                if (e.type === "touchstart") {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+
+                if (e.target === el || el.contains(e.target)) {
+                    isDragging = true;
+                    el.classList.add('dragging');
+                }
+            };
+
+            const dragEnd = () => {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                el.classList.remove('dragging');
+            };
+
+            const drag = (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    if (e.type === "touchmove") {
+                        currentX = e.touches[0].clientX - initialX;
+                        currentY = e.touches[0].clientY - initialY;
+                    } else {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    setTranslate(currentX, currentY, el);
+                }
+            };
+
+            const setTranslate = (xPos, yPos, target) => {
+                target.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+            };
+
+            document.addEventListener("touchstart", dragStart, false);
+            document.addEventListener("touchend", dragEnd, false);
+            document.addEventListener("touchmove", drag, false);
+
+            document.addEventListener("mousedown", dragStart, false);
+            document.addEventListener("mouseup", dragEnd, false);
+            document.addEventListener("mousemove", drag, false);
+        };
+
+        window.addEventListener('load', initDraggableMic);
 
     </script>
 </body>

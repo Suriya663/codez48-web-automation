@@ -1,8 +1,6 @@
-- [ ] Upgrade `netlify/functions/razorpay-create-order.js` to use built-in fetch and clearer error reporting
-- [ ] Upgrade `netlify/functions/razorpay-verify-payment.js` to use built-in fetch and clearer error reporting
-- [ ] Update `js/api-key-manager.js` to catch and display detailed server error messages
-- [ ] Update `js/auth-secure.js` to catch and display detailed server error messages
-- [ ] Update `js/ai-mail-campaign-modal.js` to catch and display detailed server error messages
-- [ ] Update `seller/index.html` to catch and display detailed server error messages
+- [ ] Simplify AI Microphone UI in `seller/index.html` (remove text, reduce size)
+- [ ] Implement Draggable logic for the AI Microphone FAB in `seller/index.html`
+- [ ] Fix Wallet Tab overflow in `js/ai-mail-campaign-modal.js`
+- [ ] Enhance Razorpay error messaging to guide user through Netlify configuration
 - [ ] Verify changes with `analyze_file`
 - [ ] Create `walkthrough.artifact.md`
