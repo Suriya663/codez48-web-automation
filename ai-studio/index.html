@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio | CODEZ48</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/ai-studio.css">
+</head>
+<body class="bg-slate-50 text-slate-900 overflow-hidden h-screen">
+
+    <div id="ai-studio-app" class="flex h-full">
+
+        <!-- Sidebar Navigation -->
+        <aside id="studio-sidebar" class="w-72 bg-slate-950 text-white flex flex-col shrink-0 transition-transform duration-300 md:translate-x-0 -translate-x-full fixed md:relative z-50 h-full">
+            <div class="p-8 flex items-center justify-between border-b border-white/5">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="location.href='/index.html'">
+                    <span class="text-xl font-black tracking-tighter uppercase">CODEZ<span class="text-indigo-500">48</span></span>
+                </div>
+                <button class="md:hidden text-white/50 hover:text-white" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+                <nav class="space-y-1">
+                    <button onclick="switchView('home')" id="nav-home" class="sidebar-item active">
+                        <i class="fa-solid fa-house"></i> Studio Home
+                    </button>
+                    <button onclick="switchView('workspaces')" id="nav-workspaces" class="sidebar-item">
+                        <i class="fa-solid fa-folder-tree"></i> My Workspaces
+                    </button>
+                </nav>
+
+                <div class="space-y-3">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Development Protocol</p>
+                    <nav class="space-y-1">
+                        <button onclick="switchView('text-to-text')" id="nav-text-to-text" class="sidebar-item">
+                            <i class="fa-solid fa-comments"></i> Text → Text
+                        </button>
+                        <button onclick="switchView('datasets')" id="nav-datasets" class="sidebar-item">
+                            <i class="fa-solid fa-database"></i> Datasets
+                        </button>
+                        <button onclick="switchView('qa-builder')" id="nav-qa-builder" class="sidebar-item">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Q&A Builder
+                        </button>
+                        <button onclick="switchView('providers')" id="nav-providers" class="sidebar-item">
+                            <i class="fa-solid fa-plug"></i> AI Providers
+                        </button>
+                    </nav>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4">Production Stack</p>
+                    <nav class="space-y-1">
+                        <button onclick="switchView('training')" id="nav-training" class="sidebar-item">
+                            <i class="fa-solid fa-microchip"></i> Training Jobs
+                        </button>
+                        <button onclick="switchView('playground')" id="nav-playground" class="sidebar-item">
+                            <i class="fa-solid fa-play"></i> AI Playground
+                        </button>
+                        <button onclick="switchView('models')" id="nav-models" class="sidebar-item">
+                            <i class="fa-solid fa-brain"></i> My Models
+                        </button>
+                        <button onclick="switchView('api-keys')" id="nav-api-keys" class="sidebar-item">
+                            <i class="fa-solid fa-key"></i> Developer Keys
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-white/5 bg-slate-950/50">
+                <div class="flex items-center gap-3 mb-4">
+                    <div id="user-avatar" class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black uppercase">U</div>
+                    <div class="min-w-0">
+                        <p id="user-display-name" class="text-xs font-black truncate">Authenticating...</p>
+                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">System Architect</p>
+                    </div>
+                </div>
+                <button onclick="window.StudioAuth.logout()" class="w-full py-3 px-4 rounded-xl text-[10px] font-black text-rose-400 uppercase tracking-widest flex items-center gap-3 hover:bg-rose-500/10 transition-colors">
+                    <i class="fa-solid fa-power-off"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden p-2 text-slate-400" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars-staggered text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 id="view-title" class="text-lg font-black uppercase tracking-tight text-slate-900">Studio Dashboard</h2>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Protocol Signal Active</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2">
+                        <i class="fa-solid fa-coins text-amber-500 text-xs"></i>
+                        <span id="compute-credits" class="text-[10px] font-black text-slate-600 uppercase tracking-widest">0 Compute</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="view-container" class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 p-8">
+
+                <!-- View: Home -->
+                <section id="view-home" class="studio-view active space-y-12">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="glass-card-white p-8 space-y-4">
+                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-brain"></i></div>
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Models</p>
+                                <h3 id="stat-active-models" class="text-3xl font-black text-slate-900">0</h3>
+                            </div>
+                        </div>
+                        <div class="glass-card-white p-8 space-y-4">
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl"><i class="fa-solid fa-database"></i></div>
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Managed Datasets</p>
+                                <h3 id="stat-datasets" class="text-3xl font-black text-slate-900">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+                            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest">Recent Workspaces</h4>
+                            <div id="recent-workspaces-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="col-span-full py-16 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+                                    <p class="text-slate-400 text-xs font-medium mb-6">No active workspaces detected.</p>
+                                    <button onclick="switchView('workspaces')" class="bg-indigo-600 text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase">Initialize Workspace</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Workspaces -->
+                <section id="view-workspaces" class="studio-view space-y-8">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-2xl font-black text-slate-900 uppercase tracking-tight">Active Workspaces</h3>
+                        <button onclick="window.StudioWorkspace.startWizard()" class="btn-black px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">+ New Workspace</button>
+                    </div>
+                    <div id="workspaces-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+                </section>
+
+                <!-- View: AI Providers -->
+                <section id="view-providers" class="studio-view space-y-8">
+                    <h3 class="text-2xl font-black text-slate-900 uppercase tracking-tight">AI Connections</h3>
+                    <div id="providers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+                </section>
+
+                <!-- View: Q&A Builder -->
+                <section id="view-qa-builder" class="studio-view space-y-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1 space-y-6">
+                            <div class="glass-card-white p-8 space-y-4">
+                                <h4 class="text-xs font-black uppercase">Source Data</h4>
+                                <textarea id="qa-source-text" rows="8" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-medium focus:outline-none focus:border-indigo-600 resize-none" placeholder="Paste knowledge here..."></textarea>
+                                <select id="qa-target-ws" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold"></select>
+                                <select id="qa-provider-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="groq">Groq</option>
+                                </select>
+                                <button onclick="window.StudioQA.startGeneration()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase">Start Building</button>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <div class="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col h-[600px]">
+                                <div class="p-8 border-b bg-slate-50/50 flex justify-between items-center">
+                                    <h4 class="text-xs font-black uppercase">Live Pipeline</h4>
+                                    <div id="gen-status-pill" class="hidden flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                        <span class="text-[8px] font-black text-indigo-600 uppercase">Active</span>
+                                    </div>
+                                </div>
+                                <div id="qa-live-stream" class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Datasets -->
+                <section id="view-datasets" class="studio-view space-y-8">
+                    <h3 class="text-2xl font-black text-slate-900 uppercase">Knowledge Registry</h3>
+                    <div class="space-y-6">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Pending Curation</p>
+                        <div id="pending-curation-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                    </div>
+                    <div class="space-y-6 pt-8 border-t">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Finalized Sets</p>
+                        <div id="finalized-datasets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </div>
+                </section>
+
+                <!-- View: Playground -->
+                <section id="view-playground" class="studio-view space-y-6 h-full">
+                    <div class="flex justify-between items-center shrink-0">
+                        <h3 class="text-2xl font-black text-slate-900 uppercase">AI Playground</h3>
+                        <select id="playground-model-select" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold"></select>
+                    </div>
+                    <div class="flex-1 flex gap-8 min-h-0">
+                        <div class="flex-1 bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden flex flex-col">
+                            <div id="playground-chat-history" class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-slate-50/30"></div>
+                            <div class="p-6 bg-white border-t">
+                                <div class="relative flex items-center">
+                                    <textarea id="playground-msg-input" rows="1" class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-6 pr-16 text-sm font-medium focus:outline-none focus:border-indigo-600 resize-none" placeholder="Type message..."></textarea>
+                                    <button onclick="window.StudioPlayground.sendMessage()" class="absolute right-3 w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center hover:bg-indigo-600 transition-all shadow-lg">
+                                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                                    </button>
+                                </div>
+                                <div id="inference-meta" class="hidden flex items-center gap-3 text-[8px] font-bold text-indigo-500 uppercase mt-2">
+                                    <span id="meta-latency"></span> <span id="meta-tokens"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-80 space-y-6 shrink-0 hidden lg:block">
+                            <div id="playground-context-status" class="p-4 bg-white border border-slate-100 rounded-[2rem] text-center">
+                                <p class="text-[8px] text-slate-400 font-black uppercase">No Intelligence Loaded</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Models -->
+                <section id="view-models" class="studio-view space-y-8">
+                    <h3 class="text-2xl font-black text-slate-900 uppercase">Production Models</h3>
+                    <div id="production-models-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+                </section>
+
+                <!-- View: Training -->
+                <section id="view-training" class="studio-view space-y-8">
+                    <h3 class="text-2xl font-black text-slate-900 uppercase">Training Pipeline</h3>
+                    <div class="py-20 text-center text-slate-300 uppercase font-black text-[10px] tracking-widest border border-dashed border-slate-200 rounded-[3rem]">No Active Training Jobs</div>
+                </section>
+
+                <!-- View: API Keys -->
+                <section id="view-api-keys" class="studio-view space-y-8">
+                    <h3 class="text-2xl font-black text-slate-900 uppercase">Developer API Platform</h3>
+                    <div class="py-20 text-center space-y-6">
+                        <div class="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-sm"><i class="fa-solid fa-key text-3xl"></i></div>
+                        <h3 class="text-2xl font-black text-slate-900 uppercase">Secure Keys System</h3>
+                        <p class="text-sm text-slate-400 font-medium max-w-md mx-auto">cz48_live_... keys will be available in the next release.</p>
+                    </div>
+                </section>
+
+                <!-- View: Text to Text (The Wizard) -->
+                <section id="view-text-to-text" class="studio-view space-y-8">
+                    <h3 class="text-2xl font-black text-slate-900 uppercase">Text → Text Protocol</h3>
+                    <div id="text-to-text-wizard-container" class="max-w-4xl mx-auto bg-white rounded-[3rem] p-12 border border-slate-100 shadow-xl">
+                        <!-- Content injected by text-to-text.js -->
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="curation-modal" class="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-xl hidden flex items-center justify-center p-8">
+        <div class="w-full max-w-6xl h-full bg-white rounded-[3rem] overflow-hidden flex flex-col">
+            <div class="bg-slate-50 px-8 py-6 border-b flex justify-between items-center">
+                <h3 class="text-xl font-black uppercase">Dataset Curation</h3>
+                <button onclick="window.StudioQA.closeCuration()" class="text-slate-400 hover:text-black"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <div id="curation-items-list" class="w-1/3 border-r overflow-y-auto p-4 space-y-2"></div>
+                <div class="flex-1 p-8 space-y-8 overflow-y-auto">
+                    <div id="curation-editor-empty" class="h-full flex items-center justify-center opacity-30 uppercase font-black text-sm">Select item to edit</div>
+                    <div id="curation-editor-content" class="hidden space-y-6">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center"><label class="text-[10px] font-black uppercase text-slate-400">Question</label><span id="item-status-badge" class="text-[7px] font-black uppercase bg-slate-100 px-2 py-0.5 rounded-full"></span></div>
+                            <textarea id="edit-qa-question" rows="3" class="w-full bg-slate-50 border rounded-2xl p-5 text-sm font-bold focus:outline-none focus:border-indigo-600 resize-none"></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase text-slate-400">Answer</label>
+                            <textarea id="edit-qa-answer" rows="8" class="w-full bg-slate-50 border rounded-2xl p-5 text-sm font-medium focus:outline-none focus:border-indigo-600 resize-none"></textarea>
+                        </div>
+                        <div class="p-6 bg-slate-50 rounded-2xl border">
+                            <p class="text-[8px] font-black uppercase text-slate-300">Grounding Source</p>
+                            <p id="curation-source-preview" class="text-[10px] text-slate-400 italic mt-2"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-8 py-6 border-t flex justify-between">
+                <button onclick="window.StudioQA.rejectActiveItem()" id="btn-reject-item" class="px-8 py-4 bg-white text-rose-500 rounded-2xl text-[10px] font-black uppercase opacity-50 pointer-events-none">Reject</button>
+                <div class="flex gap-4">
+                    <button id="btn-finalize-dataset" onclick="window.StudioDatasets.startFinalization()" class="hidden px-8 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase">Finalize v1.0</button>
+                    <button onclick="window.StudioQA.acceptActiveItem()" id="btn-accept-item" class="px-12 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase opacity-50 pointer-events-none">Accept & Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="workspace-wizard-modal" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-xl hidden flex items-center justify-center p-4">
+        <div class="glass-card-white w-full max-w-md p-10 relative space-y-6">
+            <h3 class="text-xl font-black uppercase">New Workspace</h3>
+            <div class="space-y-4">
+                <input type="text" id="wiz-ws-name" placeholder="Workspace Name" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold focus:outline-none focus:border-indigo-600">
+                <textarea id="wiz-ws-desc" rows="3" placeholder="Description" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:outline-none focus:border-indigo-600 resize-none"></textarea>
+                <button onclick="window.StudioWorkspace.createWorkspace()" class="w-full py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase">Create</button>
+                <button onclick="window.StudioWorkspace.closeWizard()" class="w-full py-4 text-slate-400 uppercase font-black text-[10px]">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="global-loader" class="fixed inset-0 z-[1000] bg-white/50 backdrop-blur-sm flex items-center justify-center hidden">
+        <div class="w-12 h-12 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/workspace.js"></script>
+    <script type="module" src="js/providers.js"></script>
+    <script type="module" src="js/qa-builder.js"></script>
+    <script type="module" src="js/datasets.js"></script>
+    <script type="module" src="js/playground.js"></script>
+    <script type="module" src="js/text-to-text.js"></script>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('studio-sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>

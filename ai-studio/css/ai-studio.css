@@ -1,0 +1,112 @@
+/* AI Studio Specific Component Styles */
+
+.sidebar-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #64748b; /* slate-500 */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-item i {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+.sidebar-item.active {
+    background-color: #2563EB; /* royal blue */
+    color: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+}
+
+.glass-card-white {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.glass-card-white:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+    border-color: #e2e8f0;
+}
+
+.btn-indigo-outline {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #4f46e5; /* indigo-600 */
+    transition: all 0.2s ease;
+}
+
+.btn-indigo-outline:hover {
+    background: #f8faff;
+    border-color: #4f46e5;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 99px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
+
+.studio-view {
+    display: none;
+}
+
+.studio-view.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Chat Bubbles */
+.chat-bubble-user {
+    background: #2563EB;
+    color: white;
+    border-radius: 1.5rem 1.5rem 0 1.5rem;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+}
+
+.chat-bubble-ai {
+    background: white;
+    border: 1px solid #f1f5f9;
+    color: #1e293b;
+    border-radius: 1.5rem 1.5rem 1.5rem 0;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
