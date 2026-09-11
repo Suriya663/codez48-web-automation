@@ -122,15 +122,23 @@ export const StudioTextToText = {
 
     async launchPipeline() {
         const source = document.getElementById('wiz-source-text').value.trim();
-        if (source.length < 50) return alert("Knowledge source too short.");
+        if (source.length < 50) return alert("Knowledge source too short. Please provide at least 50 characters.");
+
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.classList.remove('hidden');
 
         // Set QA Builder values and switch view
-        document.getElementById('qa-source-text').value = source;
-        document.getElementById('qa-target-ws').value = this.wizardData.workspaceId;
+        const sourceField = document.getElementById('qa-source-text');
+        const targetField = document.getElementById('qa-target-ws');
 
-        window.switchView('qa-builder');
-        alert("Knowledge ingested! Initializing Q&A extraction pipeline...");
-        window.StudioQA.startGeneration();
+        if (sourceField) sourceField.value = source;
+        if (targetField) targetField.value = this.wizardData.workspaceId;
+
+        setTimeout(() => {
+            window.switchView('qa-builder');
+            if (loader) loader.classList.add('hidden');
+            if (window.StudioQA) window.StudioQA.startGeneration();
+        }, 800);
     }
 };
 

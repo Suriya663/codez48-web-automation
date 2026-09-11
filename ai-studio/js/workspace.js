@@ -29,8 +29,18 @@ export const StudioWorkspace = {
 
         if (!name) return alert("Workspace name required.");
 
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.classList.remove('hidden');
+
         try {
+            if (!auth.currentUser) {
+                console.log("[AI WORKSPACE] No user session. Handshaking...");
+                await signInAnonymously(auth);
+            }
+
             const idToken = await auth.currentUser.getIdToken();
+            console.log("[AI WORKSPACE] Token secured. Dispatching creation protocol...");
+
             const response = await fetch('/.netlify/functions/ai-workspace-create', {
                 method: 'POST',
                 headers: {
@@ -40,16 +50,31 @@ export const StudioWorkspace = {
                 body: JSON.stringify({ name, description: desc })
             });
 
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server Error: ${response.status} - ${errText}`);
+            }
+
             const result = await response.json();
             if (result.success) {
+                console.log("[AI WORKSPACE] Success:", result.workspaceId);
                 this.closeWizard();
-                this.load();
+
+                // Aggressive reload
+                await this.load();
+
+                // Show success feedback
+                alert("Workspace Initialized Successfully!");
+
                 if (window.switchView) window.switchView('workspaces');
             } else {
-                alert(result.error);
+                alert("Creation Error: " + (result.error || "Unknown response"));
             }
         } catch (e) {
-            alert(e.message);
+            console.error("[AI WORKSPACE] Creation failure:", e);
+            alert("Protocol Failure: " + e.message);
+        } finally {
+            if (loader) loader.classList.add('hidden');
         }
     },
 

@@ -18,10 +18,21 @@ export const StudioQA = {
         if (!select || !auth.currentUser) return;
 
         try {
-            const q = query(collection(db, "ai_workspaces"), where("ownerId", "==", auth.currentUser.uid));
+            select.innerHTML = '<option value="">Select Target Workspace</option>';
+            const q = query(collection(db, "ai_workspaces"), where("ownerId", "==", auth.currentUser.uid), orderBy("updatedAt", "desc"));
             const snap = await getDocs(q);
-            select.innerHTML = snap.docs.map(d => `<option value="${d.id}">${d.data().name}</option>`).join('');
-        } catch (e) {}
+
+            if (snap.empty) {
+                select.innerHTML = '<option value="">No active workspaces found</option>';
+                return;
+            }
+
+            snap.forEach(d => {
+                select.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+            });
+        } catch (e) {
+            console.error("[AI QA] Workspace registry load error:", e);
+        }
     },
 
     async startGeneration() {
@@ -31,21 +42,28 @@ export const StudioQA = {
         const workspaceId = document.getElementById('qa-target-ws').value;
         const provider = document.getElementById('qa-provider-select').value;
 
-        if (!source || source.length < 50) return alert("Source text too short.");
-        if (!workspaceId) return alert("Select workspace.");
+        if (!source || source.length < 50) return alert("Source text too short (min 50 chars).");
+        if (source.length > 50000) return alert("Source text exceeds 50,000 characters limit.");
+        if (!workspaceId) return alert("Please select a target workspace.");
+
+        console.log("[AI QA] Starting pipeline for workspace:", workspaceId);
 
         this.isGenerating = true;
-        document.getElementById('gen-status-pill').classList.remove('hidden');
+        const statusPill = document.getElementById('gen-status-pill');
+        if (statusPill) statusPill.classList.remove('hidden');
+
         const streamCont = document.getElementById('qa-live-stream');
-        streamCont.innerHTML = '';
+        if (streamCont) streamCont.innerHTML = '';
 
         try {
             const idToken = await auth.currentUser.getIdToken();
             const chunks = source.split('\n\n').filter(c => c.trim().length > 20);
 
+            console.log(`[AI QA] Ingested ${chunks.length} chunks.`);
+
             for (let i = 0; i < chunks.length; i++) {
                 const chunk = chunks[i];
-                this.renderStatus(`Processing chunk ${i+1} of ${chunks.length}...`);
+                this.renderStatus(`Generating intelligence from chunk ${i+1} of ${chunks.length}...`);
 
                 const response = await fetch('/.netlify/functions/ai-qa-generate-item', {
                     method: 'POST',
@@ -57,19 +75,24 @@ export const StudioQA = {
                 });
 
                 if (!response.ok) {
-                    const err = await response.json();
-                    this.renderError(err.error);
+                    const err = await response.json().catch(() => ({ error: "Network Error" }));
+                    this.renderError(err.error || "Generation Failed");
                     break;
                 }
 
                 const result = await response.json();
-                this.renderItem(result.qa);
+                if (result.success) {
+                    this.renderItem(result.qa);
+                } else {
+                    this.renderStatus(`Chunk ${i+1} skipped: ${result.error}`);
+                }
             }
         } catch (e) {
+            console.error("[AI QA] Pipeline Crash:", e);
             this.renderError(e.message);
         } finally {
             this.isGenerating = false;
-            document.getElementById('gen-status-pill').classList.add('hidden');
+            if (statusPill) statusPill.classList.add('hidden');
         }
     },
 
@@ -93,17 +116,32 @@ export const StudioQA = {
     renderItem(qa) {
         const streamCont = document.getElementById('qa-live-stream');
         const itemEl = document.createElement('div');
-        itemEl.className = "p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm space-y-4 animate-in slide-in-from-bottom-2";
+        itemEl.className = "p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm space-y-6 animate-in slide-in-from-bottom-4 duration-500 hover:border-indigo-500 transition-all";
         itemEl.innerHTML = `
             <div class="flex justify-between items-start">
-                <span class="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-widest">Training Pair Generated</span>
-                <button onclick="window.StudioQA.openCuration('${qa.workspaceId}')" class="text-indigo-600 hover:text-indigo-800 text-[9px] font-black uppercase tracking-widest flex items-center gap-1">Review <i class="fa-solid fa-arrow-right"></i></button>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-indigo-600 text-[9px] font-black uppercase tracking-widest">Protocol Intelligence Node Generated</span>
+                </div>
+                <button onclick="window.StudioQA.openCuration('${qa.workspaceId}')" class="bg-black text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Curate Item</button>
             </div>
-            <p class="text-xs font-bold text-slate-900">${qa.question}</p>
-            <p class="text-xs text-slate-500 leading-relaxed font-medium">${qa.answer}</p>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Autonomous Question</p>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-sm font-bold text-slate-900">${qa.question}</div>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Grounded AI Answer</p>
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-medium text-slate-600 leading-relaxed">${qa.answer.replace(/\n/g, '<br>')}</div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-slate-50 flex justify-between items-center text-[7px] font-black text-slate-400 uppercase tracking-widest">
+                <span>Model: ${qa.model}</span>
+                <span>Workspace: ${qa.workspaceId}</span>
+            </div>
         `;
-        streamCont.appendChild(itemEl);
-        streamCont.scrollTop = streamCont.scrollHeight;
+        streamCont.insertBefore(itemEl, streamCont.firstChild);
+        streamCont.scrollTop = 0;
     },
 
     // --- CURATION LOGIC ---

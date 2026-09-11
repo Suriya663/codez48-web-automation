@@ -157,3 +157,4 @@ export const StudioPlayground = {
 };
 
 window.StudioPlayground = StudioPlayground;
+StudioPlayground.init();

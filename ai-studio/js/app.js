@@ -30,14 +30,15 @@ export const StudioApp = {
         window.toggleSidebar = () => {
             const sidebar = document.getElementById('studio-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+            if(sidebar) sidebar.classList.toggle('-translate-x-full');
+            if(overlay) overlay.classList.toggle('hidden');
         };
 
         window.switchView = (viewId) => this.switchView(viewId);
     },
 
     async handleUserAuthenticated(user) {
+        console.log("[AI STUDIO] Session active:", user.uid);
         const nameEl = document.getElementById('user-display-name');
         if (nameEl) nameEl.innerText = user.email || "Anonymous Architect";
 
@@ -46,14 +47,30 @@ export const StudioApp = {
     },
 
     switchView(viewId) {
+        console.log(`[AI STUDIO] Navigating to: ${viewId}`);
+
+        // 1. Sidebar UI Update
         document.querySelectorAll('.sidebar-item').forEach(btn => {
             btn.classList.toggle('active', btn.id === `nav-${viewId}`);
         });
 
-        document.querySelectorAll('.studio-view').forEach(view => {
-            view.classList.toggle('active', view.id === `view-${viewId}`);
+        // 2. View Visibility Update
+        const views = document.querySelectorAll('.studio-view');
+        let viewFound = false;
+        views.forEach(view => {
+            if (view.id === `view-${viewId}`) {
+                view.classList.add('active');
+                view.classList.remove('hidden');
+                viewFound = true;
+            } else {
+                view.classList.remove('active');
+                view.classList.add('hidden');
+            }
         });
 
+        if (!viewFound) console.warn(`[AI STUDIO] View target not found: view-${viewId}`);
+
+        // 3. Title Update
         const titles = {
             'home': 'Studio Dashboard',
             'workspaces': 'My Workspaces',
@@ -68,21 +85,35 @@ export const StudioApp = {
         };
 
         const titleEl = document.getElementById('view-title');
-        if (titleEl) titleEl.innerText = titles[viewId] || 'AI Studio';
+        if (titleEl) titleEl.innerText = titles[viewId] || 'AI Studio Module';
 
-        // Lazy-load view controllers
-        if (viewId === 'qa-builder' && window.StudioQA) window.StudioQA.loadWorkspaces();
-        if (viewId === 'datasets' && window.StudioDatasets) window.StudioDatasets.loadRegistry();
-        if (viewId === 'playground' && window.StudioPlayground) window.StudioPlayground.load();
-        if (viewId === 'models') this.loadProductionModels();
-        if (viewId === 'providers' && window.StudioProviders) window.StudioProviders.loadConnections();
-        if (viewId === 'text-to-text' && window.StudioTextToText) window.StudioTextToText.startWizard();
+        // 4. Controller Bootstrapping
+        this.initView(viewId);
 
+        // 5. Mobile Close
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('studio-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
+            if (sidebar) sidebar.classList.add('-translate-x-full');
+            if (overlay) overlay.classList.add('hidden');
+        }
+    },
+
+    initView(viewId) {
+        try {
+            if (viewId === 'home') {
+                this.refreshDashboardStats();
+                if (window.StudioWorkspace) window.StudioWorkspace.load();
+            }
+            if (viewId === 'workspaces' && window.StudioWorkspace) window.StudioWorkspace.load();
+            if (viewId === 'qa-builder' && window.StudioQA) window.StudioQA.loadWorkspaces();
+            if (viewId === 'datasets' && window.StudioDatasets) window.StudioDatasets.loadRegistry();
+            if (viewId === 'playground' && window.StudioPlayground) window.StudioPlayground.load();
+            if (viewId === 'models') this.loadProductionModels();
+            if (viewId === 'providers' && window.StudioProviders) window.StudioProviders.loadConnections();
+            if (viewId === 'text-to-text' && window.StudioTextToText) window.StudioTextToText.startWizard();
+        } catch (e) {
+            console.error(`[AI STUDIO] View Init Error (${viewId}):`, e);
         }
     },
 
@@ -90,10 +121,21 @@ export const StudioApp = {
         if (!this.currentUser) return;
         try {
             const userId = this.currentUser.uid;
-            const mSnap = await getDocs(query(collection(db, "ai_datasets"), where("ownerId", "==", userId)));
-            document.getElementById('stat-active-models').innerText = mSnap.size;
-            document.getElementById('stat-datasets').innerText = mSnap.size;
-        } catch (e) {}
+
+            // Models Count (Finalized Datasets as models for now)
+            const dSnap = await getDocs(query(collection(db, "ai_datasets"), where("ownerId", "==", userId)));
+
+            const modelsEl = document.getElementById('stat-active-models');
+            const modelsBadge = document.getElementById('stat-active-models-badge');
+            const datasetsEl = document.getElementById('stat-datasets');
+
+            if (modelsEl) modelsEl.innerText = dSnap.size;
+            if (modelsBadge) modelsBadge.innerText = `${dSnap.size} Ready`;
+            if (datasetsEl) datasetsEl.innerText = dSnap.size;
+
+        } catch (e) {
+            console.warn("[AI STUDIO] Stats sync notice:", e.message);
+        }
     },
 
     async loadProductionModels() {
@@ -101,6 +143,7 @@ export const StudioApp = {
         if (!grid || !this.currentUser) return;
 
         try {
+            grid.innerHTML = '<div class="col-span-full py-10 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Scanning Production Tiers...</div>';
             const q = query(collection(db, "ai_datasets"), where("ownerId", "==", this.currentUser.uid), orderBy("createdAt", "desc"));
             const snap = await getDocs(q);
 
@@ -114,18 +157,21 @@ export const StudioApp = {
                 return `
                     <div class="glass-card-white p-8 space-y-4">
                         <div class="flex justify-between items-start">
-                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-brain"></i></div>
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm"><i class="fa-solid fa-brain"></i></div>
                             <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase border border-emerald-100">Ready</span>
                         </div>
-                        <h4 class="text-sm font-black text-slate-900 uppercase">${m.name}</h4>
-                        <p class="text-[9px] text-slate-400 font-bold uppercase">RAG Assistant • v${m.version}</p>
+                        <h4 class="text-sm font-black text-slate-900 uppercase tracking-tight">${m.name}</h4>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">RAG Assistant • v${m.version || '1.0'}</p>
                         <div class="pt-4 border-t border-slate-50 flex gap-2">
-                            <button onclick="switchView('playground')" class="flex-1 py-2 bg-black text-white rounded-lg text-[8px] font-black uppercase shadow-lg">Test</button>
+                            <button onclick="switchView('playground')" class="flex-1 py-2.5 bg-black text-white rounded-xl text-[8px] font-black uppercase shadow-lg active:scale-95 transition-all">Launch Test</button>
                         </div>
                     </div>
                 `;
             }).join('');
-        } catch (e) {}
+        } catch (e) {
+            console.error("[AI STUDIO] Model Registry Error:", e);
+            grid.innerHTML = `<p class="col-span-full text-center text-rose-500 py-10 font-bold uppercase text-[9px]">Sync Error</p>`;
+        }
     },
 
     showAuthError(msg) {
@@ -133,7 +179,9 @@ export const StudioApp = {
     },
 
     logout() {
-        auth.signOut().then(() => location.href = '../index.html');
+        if(confirm("Terminate Architect Session?")) {
+            auth.signOut().then(() => location.href = '../index.html');
+        }
     }
 };
 
@@ -141,4 +189,7 @@ window.StudioApp = StudioApp;
 window.StudioAuth = { logout: () => StudioApp.logout() };
 window.switchView = (id) => StudioApp.switchView(id);
 
-StudioApp.init();
+// Initial Load Handler
+window.addEventListener('load', () => {
+    StudioApp.init();
+});

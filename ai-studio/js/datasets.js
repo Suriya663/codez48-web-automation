@@ -14,9 +14,12 @@ export const StudioDatasets = {
     async loadRegistry() {
         const pendingList = document.getElementById('pending-curation-list');
         const finalizedList = document.getElementById('finalized-datasets-list');
-        if (!auth.currentUser) return;
+        if (!pendingList || !finalizedList || !auth.currentUser) return;
 
         try {
+            pendingList.innerHTML = '<div class="col-span-full py-6 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Checking Registry...</div>';
+            finalizedList.innerHTML = '<div class="col-span-full py-6 text-center animate-pulse text-slate-300 text-[8px] font-black uppercase">Accessing finalized sets...</div>';
+
             const qQA = query(collection(db, "qaItems"), where("ownerId", "==", auth.currentUser.uid), where("status", "==", "GENERATED"));
             const qaSnap = await getDocs(qQA);
             const pendingIds = new Set();
@@ -25,7 +28,7 @@ export const StudioDatasets = {
             if (pendingIds.size === 0) {
                 pendingList.innerHTML = '<p class="col-span-full text-center text-slate-300 py-10 text-[8px] font-black uppercase">No items awaiting curation</p>';
             } else {
-                this.renderPending(pendingList, Array.from(pendingIds));
+                await this.renderPending(pendingList, Array.from(pendingIds));
             }
 
             const qDS = query(collection(db, "ai_datasets"), where("ownerId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
@@ -35,7 +38,9 @@ export const StudioDatasets = {
             } else {
                 this.renderFinalized(finalizedList, dsSnap.docs.map(d => d.data()));
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("[AI DATASETS] Registry Error:", e);
+        }
     },
 
     async renderPending(container, wsIds) {
