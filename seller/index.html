@@ -1836,6 +1836,36 @@
                     currentSellerId = sellerDoc.id;
                     currentSellerData = data;
 
+                    // --- PROTOCOL LOCKDOWN CHECK ---
+                    const now = new Date();
+                    const expiryDate = data.subscriptionExpiresAt;
+                    let remainingDays = 30;
+                    if (expiryDate) {
+                        const exp = new Date(expiryDate);
+                        remainingDays = Math.max(0, Math.ceil((exp - now) / (1000 * 60 * 60 * 24)));
+                    }
+
+                    const isInactive = data.status === 'deactivated_insufficient_funds' ||
+                                       data.status === 'suspended_insufficient_funds' ||
+                                       remainingDays === 0;
+
+                    if (isInactive) {
+                        document.body.style.background = 'white';
+                        document.body.innerHTML = `
+                            <div style="height: 100vh; width: 100vw; background: white; display: flex; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 40px; position: fixed; inset: 0; z-index: 9999;">
+                                <div style="max-width: 400px;">
+                                    <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                                        <svg style="width: 40px; height: 40px; color: #cbd5e1;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                    </div>
+                                    <h1 style="font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; font-size: 24px; margin-bottom: 12px; color: black;">THIS PAGE IS STOPPED</h1>
+                                    <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">This business node is currently in sleep mode. Please authorize payment or recharge wallet to restore service.</p>
+                                    <p style="font-size: 8px; font-weight: 900; text-transform: uppercase; color: #e2e8f0; letter-spacing: 0.3em;">Status: PROTOCOL_LOCKED</p>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+
                     // AI Assistant Visibility Control
                     if (data.aiAssistantEnabled === false) {
                         const toast = document.getElementById('voice-activation-toast');

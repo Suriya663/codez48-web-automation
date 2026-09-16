@@ -1,7 +1,6 @@
-- [ ] **Phase 18: Subscription Automation & Recovery**
-    - [ ] Update `netlify/functions/daily-email-cron.js` with subscription check & auto-deduction
-    - [ ] Create `netlify/functions/subscriptionExpiredTemplate.js`
-    - [ ] Modify `js/profile.js` to show "Network Issue" for suspended nodes
-    - [ ] Update `js/api-key-manager.js` and `seller/developer.html` with expiry tracking
-    - [ ] Update `netlify/functions/razorpay-verify-payment.js` for instant activation
-    - [ ] Verify automated flow and UI interruption
+- [ ] **Phase 20: Profile Red Alert & Storefront Lockdown**
+    - [ ] Implement Red Alert Line in `js/profile.js` (Owner View)
+    - [ ] Map "Pay" button to `openMerchantWalletModal` in `js/profile.js`
+    - [ ] Update `seller/index.html` with strict "THIS PAGE IS STOPPED" lockdown
+    - [ ] Sync "Account Stopped" message in `js/navigation.js` ledger tab
+    - [ ] Verify instant reactivation once balance is detected

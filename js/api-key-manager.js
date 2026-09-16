@@ -57,10 +57,14 @@ export const ApiKeyManager = {
             localSaved.push(keyData);
             localStorage.setItem(`c48_api_keys_${userId}`, JSON.stringify(localSaved));
 
-            ApiKeyManager.statusMessage = {
-                type: 'success',
-                text: `⚡ New API Key Generated Successfully: ${keyId} (10 Tokens / 20 Free Emails Added)`
-            };
+            if (window.showProtocolNotice) {
+                window.showProtocolNotice(`New API Key Generated Successfully: ${keyId}`);
+            } else {
+                ApiKeyManager.statusMessage = {
+                    type: 'success',
+                    text: `⚡ New API Key Generated Successfully: ${keyId} (10 Tokens / 20 Free Emails Added)`
+                };
+            }
             ApiKeyManager.renderApiKeyUI();
             ApiKeyManager.populateKeySelector();
             return keyData;
@@ -778,6 +782,14 @@ export const ApiKeyManager = {
             }
         } catch(e) {}
 
+        // Fetch recovered keys
+        let recovered = [];
+        try {
+            const qR = query(collection(db, "my_subscription_apis"), where("userId", "==", ApiKeyManager.getUserId()));
+            const snapR = await getDocs(qR);
+            snapR.forEach(d => recovered.push(d.data()));
+        } catch (e) {}
+
         container.innerHTML = `
             <div class="p-6 md:p-8 bg-white rounded-[2.5rem] text-slate-900 space-y-8 shadow-xl border border-slate-200/80">
                 <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-6">
@@ -1056,7 +1068,11 @@ window.confirmTopUpWallet = async (sellerId) => {
                     const newBalance = currentBalance + amount;
 
                     await updateDoc(sRef, { walletBalance: newBalance, status: 'active' });
-                    alert(`⚡ Wallet Recharged Successfully! Balance: ₹${newBalance}`);
+                    if (window.showProtocolNotice) {
+                        window.showProtocolNotice(`Wallet Recharged! Balance: ₹${newBalance}`);
+                    } else {
+                        alert(`⚡ Wallet Recharged Successfully! Balance: ₹${newBalance}`);
+                    }
                     location.reload();
                 }
             },

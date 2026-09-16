@@ -330,6 +330,24 @@
         </div>
     </div>
 
+    <!-- Global Subscription Alert Bar -->
+    <div id="global-subscription-alert" class="fixed top-0 w-full z-[100] bg-rose-600 text-white py-3 px-6 hidden animate-in slide-in-from-top-full duration-500 shadow-xl">
+        <div class="container-fluid flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-circle-exclamation text-white"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest leading-none mb-1">THIS PAGE IS STOPPED</p>
+                    <p class="text-[11px] font-bold text-rose-100">Protocol node in sleep mode. Please authorize payment to restore service.</p>
+                </div>
+            </div>
+            <button onclick="window.openNodeSettings && window.openNodeSettings(window.currentUser.uid, 'ledger')" class="bg-white text-rose-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition shadow-lg active:scale-95 shrink-0">
+                Renew & Activate Now
+            </button>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="fixed w-full z-50 transition-all duration-300 glass-header" id="main-nav">
         <div class="container-fluid px-6 py-4 flex flex-wrap justify-between items-center">

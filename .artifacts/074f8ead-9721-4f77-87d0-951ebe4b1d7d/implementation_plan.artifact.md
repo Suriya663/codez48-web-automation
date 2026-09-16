@@ -1,73 +1,65 @@
-# Subscription Lifecycle & Automated Recovery Integration
+# Expiration Guard & Instant Wallet Payment Integration
 
-Implementation plan for automated subscription expiration notifications, auto-renewal from wallet, and service suspension UI for the CODEZ48 network.
+Implementation plan for enforcing a high-visibility lockdown when subscription days reach zero, including a "Red Alert Line" on the profile page and direct wallet integration for reactivation.
 
-## Workflow Architecture (Subscription Management)
+## Workflow Architecture (Enforcement)
 
 ```mermaid
 flowchart TD
-    A[Daily Cron Job] --> B{Check Subscription Expiry}
-    B -->|Active| C[Continue Service]
-    B -->|Expired| D{Check Wallet Balance}
+    A[Load Profile] --> B{Remaining Days == 0?}
+    B -->|Yes| C[Set status: suspended_insufficient_funds]
+    C --> D{Is User Owner?}
 
-    D -->|Funds Available| E[Auto-Deduct & Renew]
-    E --> F[Send Renewal Success Email]
+    D -->|Yes| E[Show Red Alert Bar: 'Account Stopped. Pay & Activate']
+    E --> F[Click Pay -> Open Wallet Modal]
 
-    D -->|Insufficient Funds| G[Suspend Service]
-    G --> H[Status: suspended_insufficient_funds]
-    H --> I[Send Expiry & Suspension Email]
-    I --> J[Public Profile: Show 'Network Issue']
+    D -->|No| G[Static White Screen: 'THIS PAGE IS STOPPED']
 
-    K[User Pays/Recharges] --> L[Immediate Status: active]
-    L --> M[Send Activation & Payment Confirmation Email]
+    H[Load Storefront URL] --> I{Node Suspended?}
+    I -->|Yes| J[Static White Screen Lockdown]
+    I -->|No| K[Load Products]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Service Interruption Display**:
-> - When a seller's account is suspended, their public profile will now display a professional **"Network Issue"** error screen instead of their products.
-> - This protects the user's brand by indicating a technical connection issue rather than a payment failure.
+> **Red Alert Line**:
+> - For owners, I will add a high-visibility red banner at the top of the profile content that specifically says: **"YOUR ACCOUNT WAS STOPPED. PAY AND ACTIVATE."**
+> - The button in this banner will open the **Merchant Wallet** instantly.
 
 > [!NOTE]
-> **Auto-Renewal Threshold**:
-> - Auto-renewal for Elite Nodes will trigger at ₹4,000.
-> - Auto-renewal for Pro API keys will trigger at ₹99.
-> - Notifications will include a direct link to the billing dashboard.
+> **Storefront Lockdown**:
+> - If any user (public or owner) visits the `seller/index.html` URL while the account is expired, the entire page will be replaced by a white screen with the "THIS PAGE IS STOPPED" message. No product data will be leaked.
 
 ## Proposed Changes
 
-### 1. Backend Automation (Cron & Webhooks)
-#### [MODIFY] [netlify/functions/daily-email-cron.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/daily-email-cron.js)
-- Implement monthly subscription check logic for both `api_keys` and `sellers`.
-- Add auto-deduction logic from `walletBalance`.
-- Implement "Subscription Expired" email dispatch with direct billing links.
-
-#### [NEW] [netlify/functions/subscriptionExpiredTemplate.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/subscriptionExpiredTemplate.js)
-- Professional black-themed email template for expiration notices and renewal confirmations.
-
-### 2. Service Interruption UI
+### 1. Profile Page Red Alert & Wallet Link
 #### [MODIFY] [js/profile.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/profile.js)
-- Update `showPublicProfile` to detect suspension status.
-- Render the **"Network Issue / Service Interruption"** overlay for inactive sellers.
+- Update `showPublicProfile`:
+  - Calculate `remainingDays` live. If `0`, force the `isInactive` UI logic.
+  - Implement the **Red Alert Line** at the top of the profile container for owners.
+  - Set the "Pay" button to trigger `openMerchantWalletModal(sellerId)`.
 
-### 3. Subscription & Billing UX
-#### [MODIFY] [js/api-key-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/api-key-manager.js)
-- Ensure `expiresAt` is correctly saved during purchase.
-- Highlight "Zero Balance" in the UI with a prompt to recharge.
+### 2. Storefront (Seller Index) Lockdown
+#### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
+- Ensure the `isInactive` check is the first thing that happens after the seller data is fetched.
+- Replace the current "Something went wrong" message with the exact wording: **"THIS PAGE IS STOPPED"**.
 
-#### [MODIFY] [seller/developer.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/developer.html)
-- Update Elite subscription logic to include `subscriptionExpiresAt`.
+### 3. Subscription Status Sync
+#### [MODIFY] [js/navigation.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/navigation.js)
+- Update `openNodeSettings`:
+  - Ensure the "ledger" view also prominently displays the "Account Stopped" message if days are at zero.
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. Manually set a seller's `subscriptionExpiresAt` to a past date in Firestore.
-2. Trigger the `daily-email-cron` function.
-3. Verify:
-   - [ ] Wallet is deducted (if balance > threshold).
-   - [ ] Email is received with a direct billing link.
-   - [ ] Public profile shows "Network Issue" if balance was insufficient.
-4. Complete a test payment and verify instant account activation.
+1. Log in to an account and manually set `subscriptionExpiresAt` to a past date in Firestore.
+2. Open your **Profile Page**.
+   - Verify the **Red Alert Line** is visible at the top.
+   - Click **Pay** and verify the **Wallet Modal** opens correctly.
+3. Visit the **Website URL** (`seller/index.html?s=...`).
+   - Verify the page is a white screen with **"THIS PAGE IS STOPPED"**.
+4. Add funds to the wallet.
+   - Verify the account reactivates instantly and data reappears.

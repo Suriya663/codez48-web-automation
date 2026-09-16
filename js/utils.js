@@ -133,4 +133,38 @@ export const sendDeveloperAccessEmail = async () => {
     }
 };
 
+/**
+ * Global Protocol Notice (Replaces browser alert() with custom DIV)
+ */
+export const showProtocolNotice = (message, type = 'success') => {
+    const noticeId = 'protocol-global-notice';
+    let notice = document.getElementById(noticeId);
+
+    if (!notice) {
+        notice = document.createElement('div');
+        notice.id = noticeId;
+        notice.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border animate-in slide-in-from-top-8 duration-500';
+        document.body.appendChild(notice);
+    }
+
+    const isError = type === 'error';
+    notice.className = `fixed top-24 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border animate-in slide-in-from-top-8 duration-500 ${isError ? 'bg-rose-600 border-rose-500 text-white' : 'bg-black border-white/10 text-white'}`;
+
+    notice.innerHTML = `
+        <div class="w-10 h-10 ${isError ? 'bg-white/20' : 'bg-emerald-500'} rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
+            <i class="fa-solid ${isError ? 'fa-moon' : 'fa-check'} text-white text-lg"></i>
+        </div>
+        <div class="text-left">
+            <p class="text-[11px] font-black uppercase tracking-[0.2em] ${isError ? 'text-rose-100' : 'text-emerald-400'}">THIS PAGE IS STOPPED</p>
+            <p class="text-xs font-medium opacity-90">${message}</p>
+        </div>
+    `;
+
+    setTimeout(() => {
+        notice.classList.add('animate-out', 'fade-out', 'slide-out-to-top-8');
+        setTimeout(() => notice.remove(), 500);
+    }, 5000);
+};
+
+window.showProtocolNotice = showProtocolNotice;
 window.sendDeveloperAccessEmail = sendDeveloperAccessEmail;

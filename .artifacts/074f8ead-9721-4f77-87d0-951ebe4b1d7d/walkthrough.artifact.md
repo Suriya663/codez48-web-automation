@@ -1,37 +1,39 @@
-# Profile Sleep Mode & UX Refinement Walkthrough
+# Protocol Lockdown & Instant Wallet Activation Walkthrough
 
-Successfully updated the suspension interface to a professional **"Sleep Mode"** protocol. This ensures that expired or low-balance profiles no longer display blunt "Expired" or "Suspended" messages, protecting the merchant's brand.
+Successfully implemented the final layer of subscription enforcement, including high-visibility red alerts for owners and brand-protective stealth lockdowns for public traffic.
 
 ## Key Changes Made
 
-### 1. "Sleep Mode" UI Implementation (`js/profile.js`)
-- **Public Visitor View**: Replaced the "Network Issue" error with a high-end **"Something went wrong"** screen.
-  - *Message*: "This profile is currently in sleep mode. Please check back later."
-  - *Visual*: Added an animated moon icon (`fa-moon`) to represent the sleep state.
-- **Merchant Owner View**: When you visit your own profile while suspended, you now see a dark, sleek dashboard notice.
-  - *Message*: "Something went wrong. This profile is in sleep mode."
-  - *CTA*: Provides direct buttons to "Recharge Wallet" or "Pay & Reactivate Node" to wake up the node.
+### 1. Profile Page Red Alert (`js/profile.js`)
+- **Owner-Only Alert**: When the owner visits their profile and days are at zero, a bold **Red Alert Line** now appears at the top of the content.
+- **Message**: *"YOUR ACCOUNT WAS STOPPED. Protocol Signal Lost • Pay and Activate to Restore Public Services."*
+- **Direct Action**: Integrated a "Pay & Activate Now" button that triggers the wallet modal instantly.
 
-### 2. Standardized Expiry Communication (`subscriptionExpiredTemplate.js`)
-- **Email Synchronization**: Updated the automated expiry emails to use the new terminology.
-- **Status Dashboard**: The "Current Status" table in the email now clearly states **"Sleep Mode Active"** instead of "Network Issue", keeping the user experience consistent from inbox to website.
+### 2. Stealth Public Lockdown (`js/profile.js`)
+- **Guest Protection**: If a guest or logged-out user visits an expired profile, the system now renders a **Pure Static White Screen**.
+- **Message**: *"THIS PAGE IS STOPPED. Protocol Node Sleeping."*
+- **Data Guard**: The internal business data (products, descriptions, partners) is completely removed from the DOM before rendering, ensuring zero data leakage.
 
-### 3. Protocol Cleanup
-- **Error Code Update**: Changed the internal error code to `PROFILE_SLEEP_MODE` for better diagnostic traceability.
-- **Visual Polish**: Integrated indigo accents and soft shadows to ensure the "Sleep Mode" screen feels like a deliberate premium feature rather than a system crash.
+### 3. Storefront (Product Page) Lockdown (`seller/index.html`)
+- **Complete Inactivity**: Navigating to the merchant's specific storefront URL while expired now triggers a full-page white screen lockdown.
+- **Enforcement**: This is the first check performed upon loading, preventing any product images or details from flashing before the error message appears.
+
+### 4. Self-Healing Wallet Logic (`js/profile.js`, `js/navigation.js`)
+- **Instant Auto-Wake**: If a node is suspended but has sufficient funds (₹83/₹133), the very first visit to the profile will now trigger **Instant Activation**.
+- **Automated Deduction**: The system will automatically deduct the daily fee, set the status to `active`, and reload the page to show the live business node immediately. No manual payment steps are needed if the wallet has a balance.
 
 ---
 
-## Technical Verification
+## Technical Flow Matrix
 
-| View | Old Message | New Message (Sleep Mode) | Status |
+| User Type | Profile View | Website/Store View | Action Required |
 | :--- | :--- | :--- | :--- |
-| **Public Profile** | Network Connection Issue | Something went wrong (Sleep Mode) | ✅ Verified |
-| **Owner Dashboard** | Website Service Suspended | Something went wrong (Sleep Mode) | ✅ Verified |
-| **Automated Email** | Network Issue Shown | Sleep Mode Active | ✅ Verified |
+| **Owner** | Red Alert Bar + Dashboard | "THIS PAGE IS STOPPED" | Click Pay or Recharge |
+| **Public Guest** | Pure White Screen | "THIS PAGE IS STOPPED" | None (Brand Protected) |
+| **Active Node** | Full Display | Full Products | None |
 
 ---
 
-> [!TIP]
-> **To "Wake Up" a Node**:
-> Simply recharge the merchant wallet by at least ₹83 (Starter) or ₹133 (Elite). The system will detect the balance and automatically switch the profile from **Sleep Mode** to **Online & Active** instantly.
+> [!IMPORTANT]
+> **Zero Latency Restoration**:
+> The moment a payment is confirmed or a wallet is recharged, all "THIS PAGE IS STOPPED" messages are removed instantly across the entire network, restoring 100% visibility to your business.

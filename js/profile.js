@@ -807,37 +807,83 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         const seller = sellerDoc.data();
         const sellerData = { id: sellerDoc.id, ...seller };
 
-        // Check if seller account is deactivated due to insufficient wallet balance
-        const isInactive = seller.status === 'deactivated_insufficient_funds' || seller.status === 'suspended_insufficient_funds';
+        // --- SUBSCRIPTION EXPIRY CALCULATION ---
+        const now = new Date();
+        const expiryDate = seller.subscriptionExpiresAt;
+        let remainingDays = 30; // Default for active nodes without expiry field yet
 
-        // Strictly check if current user is an active Collab Partner (STRICT PRIVACY GUARD)
+        if (expiryDate) {
+            const exp = new Date(expiryDate);
+            const diffMs = exp - now;
+            remainingDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        }
+
+        // Check if seller account is deactivated due to insufficient wallet balance or expiration
+        const isInactive = seller.status === 'deactivated_insufficient_funds' ||
+                           seller.status === 'suspended_insufficient_funds' ||
+                           remainingDays === 0;
+
         const currentSId = localStorage.getItem('tori_seller_id') || currentUser?.uid;
-        const isCollabPartner = await checkCollabStatus(sellerId, currentSId);
         const isOwner = currentUser && (currentUser.uid === sellerId || currentUser.sellerId === sellerId);
+        const isCollabPartner = await checkCollabStatus(sellerId, currentSId);
 
-        if (isInactive && !isOwner) {
-            const target = document.getElementById('profile-render-target');
-            if (target) {
-                target.innerHTML = `
-                    <div class="max-w-4xl mx-auto my-20 p-12 bg-white border border-slate-100 rounded-[3.5rem] text-center shadow-2xl space-y-8 animate-in fade-in zoom-in duration-500">
-                        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                            <i class="fa-solid fa-moon text-4xl text-slate-300 animate-pulse"></i>
-                        </div>
-                        <div class="space-y-3">
-                            <h3 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Something went wrong</h3>
-                            <p class="text-slate-500 font-medium max-w-md mx-auto leading-relaxed">This profile is currently in sleep mode. Please check back later.</p>
-                        </div>
-                        <div class="pt-4">
-                            <button onclick="location.reload()" class="bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl">
-                                <i class="fa-solid fa-rotate-right mr-2"></i> Refresh Connection
-                            </button>
-                        </div>
-                        <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em]">Protocol Code: PROFILE_SLEEP_MODE</p>
-                    </div>
-                `;
+        // --- INSTANT WALLET ACTIVATION LOGIC ---
+        const dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
+        const walletBalance = Number(seller.walletBalance) || 0;
+
+        if (isInactive && walletBalance >= dailyFee) {
+            console.log("[PROTOCOL] Balance detected. Attempting instant reactivation...");
+            try {
+                const sRef = doc(db, "sellers", sellerId);
+                const newBalance = walletBalance - dailyFee;
+                await updateDoc(sRef, {
+                    walletBalance: newBalance,
+                    status: 'active',
+                    lastActivatedAt: new Date().toISOString()
+                });
+
+                await addDoc(collection(db, "wallet_transactions"), {
+                    sellerId,
+                    type: 'INSTANT_UI_REACTIVATION',
+                    amount: -dailyFee,
+                    remainingBalance: newBalance,
+                    description: `Automated Instant Activation (₹${dailyFee} Applied)`,
+                    timestamp: new Date().toISOString()
+                });
+
+                if (window.showProtocolNotice) {
+                    window.showProtocolNotice("Protocol Signal Restored: Node activated using wallet balance.");
+                }
+                location.reload();
+                return;
+            } catch (syncErr) { console.error("Activation sync failed:", syncErr); }
+        }
+
+        // --- GLOBAL ALERT BAR FOR OWNER ---
+        const alertBar = document.getElementById('global-subscription-alert');
+        const mainNav = document.getElementById('main-nav');
+        if (isOwner && isInactive) {
+            if (alertBar) {
+                alertBar.classList.remove('hidden');
+                if (mainNav) mainNav.style.top = alertBar.offsetHeight + 'px';
             }
-            if (loader) loader.classList.add('hidden');
-            showView('public-profile');
+        } else {
+            if (alertBar) {
+                alertBar.classList.add('hidden');
+                if (mainNav) mainNav.style.top = '0px';
+            }
+        }
+
+        // --- STEALTH LOCKDOWN FOR GUESTS (PURE WHITE SCREEN) ---
+        if (isInactive && !isOwner) {
+            document.body.innerHTML = `
+                <div style="position: fixed; inset: 0; background: white; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
+                    <div style="text-align: center;">
+                        <h1 style="font-weight: 900; color: #000; letter-spacing: 0.1em; font-size: 24px;">THIS PAGE IS STOPPED</h1>
+                        <p style="color: #94a3b8; font-size: 10px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.3em;">Protocol Node Sleeping</p>
+                    </div>
+                </div>
+            `;
             return;
         }
 
@@ -904,22 +950,33 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         if (target) {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
             target.innerHTML = `
-                ${isInactive ? `
+                ${isInactive && isOwner ? `
+                    <div class="max-w-5xl mx-auto mb-10 animate-in slide-in-from-top-4 duration-500">
+                        <div class="bg-rose-600 text-white p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-rose-900/20 border-2 border-white/10">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl shrink-0 animate-pulse">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="text-xl font-black uppercase tracking-tight">YOUR ACCOUNT WAS STOPPED</h3>
+                                    <p class="text-xs text-rose-100 font-bold uppercase tracking-widest">Protocol Signal Lost • Pay and Activate to Restore Public Services</p>
+                                </div>
+                            </div>
+                            <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-white text-rose-600 px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all active:scale-95 shadow-xl shrink-0">
+                                Pay & Activate Now
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${isInactive && !isOwner ? `
                     <div class="max-w-4xl mx-auto my-8 p-10 bg-slate-900 border-2 border-indigo-500/30 rounded-[2.5rem] text-center shadow-xl space-y-6 relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fa-solid fa-moon text-6xl text-white"></i></div>
                         <div class="w-16 h-16 bg-white/5 text-indigo-400 rounded-3xl flex items-center justify-center mx-auto mb-3 font-black text-2xl">⚡</div>
                         <div>
-                            <h3 class="text-3xl font-black text-white uppercase tracking-tight">Something went wrong</h3>
-                            <p class="text-slate-400 text-xs font-bold mt-2 max-w-md mx-auto leading-relaxed uppercase tracking-widest">This profile is in sleep mode.</p>
-                            <p class="text-indigo-300 text-[10px] mt-2 font-medium">Recharge your wallet balance to wake up your node and restore public visibility.</p>
-                        </div>
-                        <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
-                            <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-105 transition-all">
-                                <i class="fa-solid fa-wallet mr-2"></i> Recharge Wallet
-                            </button>
-                            <button onclick="window.location.href='api-keys.html#ledger'" class="bg-rose-600 text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-rose-700 hover:scale-105 transition-all">
-                                Pay & Reactivate Node →
-                            </button>
+                            <h3 class="text-3xl font-black text-white uppercase tracking-tight">THIS PAGE IS STOPPED</h3>
+                            <p class="text-slate-400 text-xs font-bold mt-2 max-w-md mx-auto leading-relaxed uppercase tracking-widest">Protocol Node in Sleep Mode.</p>
+                            <p class="text-indigo-300 text-[10px] mt-2 font-medium">Please authorize payment or recharge your wallet to wake up the node.</p>
                         </div>
                     </div>
                 ` : ''}
