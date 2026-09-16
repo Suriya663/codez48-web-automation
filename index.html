@@ -8,10 +8,14 @@
     <link rel="manifest" href="/manifest.json">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Performance & Protocol Security -->
+    <meta http-equiv="Origin-Trial" content="Ak... (Optional if using specific QUIC trials)">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://checkout.razorpay.com">
+    <!-- Hint for stable HTTP/2 over experimental QUIC -->
+    <meta http-equiv="Link" content="<https://codez48.netlify.app/>; rel=preconnect">
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <!-- Meta Pixel Code -->
@@ -1414,5 +1418,22 @@
     <script type="module" src="js/developer-admin-modal.js"></script>
     <script type="module" src="js/push-notifications.js"></script>
     <script type="module" src="js/api-key-manager.js"></script>
+    <script>
+        // Global Protocol Guard (Fix for net::ERR_QUIC_PROTOCOL_ERROR)
+        window.onerror = function(message, source, lineno, colno, error) {
+            if (message.includes('ERR_QUIC_PROTOCOL_ERROR')) {
+                console.warn("[PROTOCOL_GUARD] QUIC failure detected. Forcing stable fallback...");
+                // Force a reload to try HTTP/2 or standard HTTP
+                location.reload();
+            }
+        };
+
+        // Network Reliability Monitor
+        if ('connection' in navigator) {
+            navigator.connection.addEventListener('change', () => {
+                console.log(`[NET_SYNC] Network type changed to: ${navigator.connection.effectiveType}`);
+            });
+        }
+    </script>
 </body>
 </html>

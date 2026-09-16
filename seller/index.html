@@ -1557,6 +1557,7 @@
         const createSimpleProductCard = (p) => {
             const card = document.createElement('div');
             card.className = 'product-card group flex-shrink-0 w-[140px] md:w-[200px] cursor-pointer transition-all duration-300';
+            card.style.willChange = 'transform';
             card.onclick = () => window.openProductDetail(p.id);
             card.setAttribute('data-name', (p.name || 'Unnamed Product').toLowerCase());
 
@@ -1576,9 +1577,27 @@
         const createDetailedProductCard = (p, formatCurrency) => {
             const card = document.createElement('div');
             card.className = 'product-card group bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 max-w-sm mx-auto w-full';
+            card.style.willChange = 'transform';
             card.setAttribute('data-name', (p.name || 'Unnamed Product').toLowerCase());
 
             const imgUrl = p.image || `https://placehold.co/400x400/ffffff/000000?text=${encodeURIComponent(p.name)}`;
+            const displayPrice = (p.price || 0) + 10;
+            const shortDesc = p.description || 'Premium quality product crafted for excellence.';
+
+            card.innerHTML = `
+                <!-- Image Area with Floating Icons -->
+                <div class="relative aspect-square bg-gray-50 flex items-center justify-center p-8">
+                    <img src="${imgUrl}" loading="lazy" class="max-w-full max-h-full object-contain mix-blend-multiply drop-shadow-lg group-hover:scale-105 transition-transform duration-700" onclick="window.openProductDetail('${p.id}')">
+
+                    <div class="absolute top-4 right-4 flex flex-col gap-3">
+                        <button onclick="window.openShareModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="floating-action-btn text-gray-400 hover:text-black transition">
+                            <i class="fa-solid fa-share-nodes text-sm"></i>
+                        </button>
+                        <button onclick="window.toggleLike('${p.id}')" class="floating-action-btn text-rose-400 hover:scale-110 transition">
+                            <i class="fa-solid fa-heart text-sm"></i>
+                        </button>
+                    </div>
+                </div>
             const displayPrice = (p.price || 0) + 10;
             const shortDesc = p.description || 'Premium quality product crafted for excellence.';
 
@@ -1968,11 +1987,11 @@
                 q = query(collection(db, "products"));
             }
 
-            // Set up real-time listener
-            onSnapshot(q, (snapshot) => {
-                if (renderTimeout) clearTimeout(renderTimeout);
+            // Performance Optimized: One-time fetch for high-traffic scenarios
+            const fetchAndRender = async () => {
+                try {
+                    const snapshot = await getDocs(q);
 
-                renderTimeout = setTimeout(() => {
                     if (snapshot.empty) {
                         container.innerHTML = `
                             <div class="text-center py-20">
@@ -1988,7 +2007,7 @@
                     allStoreProducts = []; // Reset master list
                     snapshot.forEach(docSnap => {
                         const p = docSnap.data(); p.id = docSnap.id;
-                        allStoreProducts.push(p); // Add to master list
+                        allStoreProducts.push(p);
                         if (p.isSpecialOffer) {
                             specialOffers.push(p);
                         }
@@ -1996,7 +2015,6 @@
                         productsByCategory[p.category].push(p);
                     });
 
-                    // Build fragment for better performance
                     const fragment = document.createDocumentFragment();
                     const renderFunc = HOME_TEMPLATES[currentHomeTemplate] || HOME_TEMPLATES.elite;
 
@@ -2008,10 +2026,8 @@
                     container.innerHTML = '';
                     container.appendChild(fragment);
 
-                    // Render Hero Slider
                     renderHeroSlider(specialOffers);
 
-                    // Update Quick Filters Dropdown
                     const filterList = document.getElementById('category-list-items');
                     if (filterList) {
                         filterList.innerHTML = '';
@@ -2028,11 +2044,14 @@
                     }
 
                     if (typeof window.updateMarqueeVisibility === 'function') window.updateMarqueeVisibility();
-                }, 100); // 100ms debounce
-            }, (error) => {
-                console.error("Firestore Catalog Error:", error);
-                container.innerHTML = '<div class="text-center py-20 text-red-500 font-bold">Maintenance in progress. Please check back later.</div>';
-            });
+                } catch (error) {
+                    console.error("Firestore Catalog Error:", error);
+                    container.innerHTML = '<div class="text-center py-20 text-red-500 font-bold">Protocol sync interrupted. Please refresh your browser.</div>';
+                }
+            };
+
+            // Execution: One-time fetch for performance
+            fetchAndRender();
         };
 
         window.toggleCategoryDropdown = () => {

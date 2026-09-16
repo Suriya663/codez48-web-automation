@@ -59,7 +59,7 @@ export const renderDirectory = (data = null) => {
             <div class="flex items-center gap-2 overflow-hidden shrink-0 pt-2">
                 <div class="flex -space-x-2 overflow-hidden shrink-0">
                     ${visibleLogos.map(l => `
-                        <img onclick="event.stopPropagation(); window.showPublicProfile('${l.id}')" src="${l.logo}" title="${l.brand}" class="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover bg-white cursor-pointer hover:scale-110 transition-transform">
+                        <img onclick="event.stopPropagation(); window.showPublicProfile('${l.id}')" src="${l.logo}" title="${l.brand}" loading="lazy" class="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover bg-white cursor-pointer hover:scale-110 transition-transform">
                     `).join('')}
                 </div>
                 ${extraCount > 0 ? `
@@ -72,8 +72,8 @@ export const renderDirectory = (data = null) => {
 
         card.innerHTML = `
             <div class="relative flex-shrink-0">
-                <div class="w-32 h-32 md:w-48 md:h-48 bg-slate-50 rounded-[2.5rem] flex items-center justify-center border border-slate-100 p-6 transition duration-500 group-hover:scale-105 group-hover:rotate-2 shadow-inner">
-                    <img src="${seller.logo || 'https://placehold.co/100x100?text=Brand'}" class="w-full h-full object-contain mix-blend-multiply">
+                <div class="w-32 h-32 md:w-48 md:h-48 bg-slate-50 rounded-[2.5rem] flex items-center justify-center border border-slate-100 p-6 transition duration-500 group-hover:scale-105 group-hover:rotate-2 shadow-inner" style="will-change: transform;">
+                    <img src="${seller.logo || 'https://placehold.co/100x100?text=Brand'}" loading="lazy" class="w-full h-full object-contain mix-blend-multiply" alt="${seller.brand}">
                 </div>
                 ${isPremium ? '<div class="absolute -top-3 -left-3 w-10 h-10 bg-royal text-white rounded-full flex items-center justify-center shadow-xl border-4 border-white"><i class="fa-solid fa-star text-base"></i></div>' : ''}
             </div>

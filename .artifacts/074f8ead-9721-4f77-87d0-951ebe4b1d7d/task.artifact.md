@@ -1,6 +1,6 @@
-- [ ] **AI Studio Stability Fixes**
-    - [ ] Upgrade all Netlify functions to native `fetch` (Remove `node-fetch`)
-    - [ ] Add extended logging to shared modules (`auth.js`, `crypto.js`)
-    - [ ] Refine `workspace.js` creation flow with more descriptive state logging
-    - [ ] Update `app.js` with safer view initialization
-    - [ ] Verify non-blank state for Workspaces once index is active
+- [ ] **Phase 17: Traffic Scaling & Performance**
+    - [ ] Implement `loading="lazy"` across all image-heavy views
+    - [ ] Optimize `seller/index.html` to use one-time `getDocs` instead of constant `onSnapshot`
+    - [ ] Add `will-change` CSS optimizations for smoother scrolling under load
+    - [ ] Implement Protocol Guard in `index.html` to handle QUIC failures
+    - [ ] Generate User Capacity & Load Report
