@@ -1,6 +1,7 @@
-- [ ] **Phase 17: Traffic Scaling & Performance**
-    - [ ] Implement `loading="lazy"` across all image-heavy views
-    - [ ] Optimize `seller/index.html` to use one-time `getDocs` instead of constant `onSnapshot`
-    - [ ] Add `will-change` CSS optimizations for smoother scrolling under load
-    - [ ] Implement Protocol Guard in `index.html` to handle QUIC failures
-    - [ ] Generate User Capacity & Load Report
+- [ ] **Phase 18: Subscription Automation & Recovery**
+    - [ ] Update `netlify/functions/daily-email-cron.js` with subscription check & auto-deduction
+    - [ ] Create `netlify/functions/subscriptionExpiredTemplate.js`
+    - [ ] Modify `js/profile.js` to show "Network Issue" for suspended nodes
+    - [ ] Update `js/api-key-manager.js` and `seller/developer.html` with expiry tracking
+    - [ ] Update `netlify/functions/razorpay-verify-payment.js` for instant activation
+    - [ ] Verify automated flow and UI interruption

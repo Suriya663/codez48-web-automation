@@ -139,17 +139,24 @@ export const confirmTopUpWallet = async (sellerId) => {
                             lastActivatedAt: new Date().toISOString()
                         });
 
-                        await addDoc(collection(db, "wallet_transactions"), {
-                            sellerId,
-                            type: 'RECHARGE_TOP_UP',
-                            amount: amount,
-                            remainingBalance: newBalance,
-                            paymentId: response.razorpay_payment_id,
-                            description: `Wallet Top-Up via Razorpay`,
-                            timestamp: new Date().toISOString()
-                        });
+                        // Notify activation success
+                        try {
+                            const host = window.location.host;
+                            const protocol = window.location.protocol;
+                            await fetch(`${protocol}//${host}/.netlify/functions/send-login-notification`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    action: 'PAYMENT_ACTIVATION_CONFIRMED',
+                                    sellerId: sellerId,
+                                    amount: amount,
+                                    email: window.currentUser?.email || sSnap.data()?.email,
+                                    brandName: sSnap.data()?.brand || sSnap.data()?.username || 'Merchant'
+                                })
+                            });
+                        } catch(e) {}
 
-                        alert(`⚡ Wallet Recharged Successfully! New Wallet Balance: ₹${newBalance}`);
+                        alert(`⚡ Wallet Recharged & Account Activated! New Wallet Balance: ₹${newBalance}`);
                         openMerchantWalletModal(sellerId);
                     } catch (dbErr) {
                         alert("Database sync error: " + dbErr.message);
@@ -750,12 +757,38 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         const sellerData = { id: sellerDoc.id, ...seller };
 
         // Check if seller account is deactivated due to insufficient wallet balance
-        const isInactive = seller.status === 'deactivated_insufficient_funds';
+        const isInactive = seller.status === 'deactivated_insufficient_funds' || seller.status === 'suspended_insufficient_funds';
 
         // Strictly check if current user is an active Collab Partner (STRICT PRIVACY GUARD)
         const currentSId = localStorage.getItem('tori_seller_id') || currentUser?.uid;
         const isCollabPartner = await checkCollabStatus(sellerId, currentSId);
         const isOwner = currentUser && (currentUser.uid === sellerId || currentUser.sellerId === sellerId);
+
+        if (isInactive && !isOwner) {
+            const target = document.getElementById('profile-render-target');
+            if (target) {
+                target.innerHTML = `
+                    <div class="max-w-4xl mx-auto my-20 p-12 bg-white border border-slate-100 rounded-[3.5rem] text-center shadow-2xl space-y-8 animate-in fade-in zoom-in duration-500">
+                        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                            <i class="fa-solid fa-cloud-bolt text-4xl text-slate-300 animate-pulse"></i>
+                        </div>
+                        <div class="space-y-3">
+                            <h3 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Network Connection Issue</h3>
+                            <p class="text-slate-500 font-medium max-w-md mx-auto leading-relaxed">We encountered a temporary technical issue connecting to this business node. The service has been interrupted.</p>
+                        </div>
+                        <div class="pt-4">
+                            <button onclick="location.reload()" class="bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl">
+                                <i class="fa-solid fa-rotate-right mr-2"></i> Retry Connection
+                            </button>
+                        </div>
+                        <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em]">Error Code: NODE_SYNC_INTERRUPTED</p>
+                    </div>
+                `;
+            }
+            if (loader) loader.classList.add('hidden');
+            showView('public-profile');
+            return;
+        }
 
         const adminContainer = document.getElementById('admin-action-container');
         if (adminContainer) {

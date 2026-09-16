@@ -319,7 +319,8 @@
                 <div id="sponsored">sponsored:</div>
                 <div id="skip_ad">0:00</div>
             </div>
-      </div> -->
+        </div>
+      -->
         <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-full shadow-lg flex flex-col p-4 space-y-4">
             <a href="#products" class="hover:text-black font-bold" onclick="toggleMobileMenu()">Home</a>
@@ -1266,6 +1267,8 @@
             </div>
         </div>
 
+    </div>
+
     <!-- Random Coupon Spin Modal -->
     <div id="coupon-spin-modal" class="fixed inset-0 bg-black/80 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center border border-purple-500 relative overflow-hidden transform scale-95 transition-transform duration-300" id="spin-modal-content">
@@ -1278,6 +1281,8 @@
                     ₹0
                 </div>
             </div>
+        </div>
+    </div>
 
     <!-- Order Success Modal -->
     <div id="order-success-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[700] flex items-center justify-center p-4">
@@ -1581,23 +1586,6 @@
             card.setAttribute('data-name', (p.name || 'Unnamed Product').toLowerCase());
 
             const imgUrl = p.image || `https://placehold.co/400x400/ffffff/000000?text=${encodeURIComponent(p.name)}`;
-            const displayPrice = (p.price || 0) + 10;
-            const shortDesc = p.description || 'Premium quality product crafted for excellence.';
-
-            card.innerHTML = `
-                <!-- Image Area with Floating Icons -->
-                <div class="relative aspect-square bg-gray-50 flex items-center justify-center p-8">
-                    <img src="${imgUrl}" loading="lazy" class="max-w-full max-h-full object-contain mix-blend-multiply drop-shadow-lg group-hover:scale-105 transition-transform duration-700" onclick="window.openProductDetail('${p.id}')">
-
-                    <div class="absolute top-4 right-4 flex flex-col gap-3">
-                        <button onclick="window.openShareModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="floating-action-btn text-gray-400 hover:text-black transition">
-                            <i class="fa-solid fa-share-nodes text-sm"></i>
-                        </button>
-                        <button onclick="window.toggleLike('${p.id}')" class="floating-action-btn text-rose-400 hover:scale-110 transition">
-                            <i class="fa-solid fa-heart text-sm"></i>
-                        </button>
-                    </div>
-                </div>
             const displayPrice = (p.price || 0) + 10;
             const shortDesc = p.description || 'Premium quality product crafted for excellence.';
 

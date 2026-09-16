@@ -1,65 +1,73 @@
-# Performance Optimization & Traffic Scaling Plan
+# Subscription Lifecycle & Automated Recovery Integration
 
-Implementation plan for resolving the `ERR_QUIC_PROTOCOL_ERROR` and optimizing the platform to handle high traffic volumes (100+ concurrent users) with flawless speed and reliability.
+Implementation plan for automated subscription expiration notifications, auto-renewal from wallet, and service suspension UI for the CODEZ48 network.
 
-## Workflow Architecture (Scaling)
+## Workflow Architecture (Subscription Management)
 
 ```mermaid
 flowchart TD
-    A[High Traffic: 100+ Users] --> B[Netlify CDN: Asset Edge Delivery]
-    B --> C[Browser: QUIC Fallback to HTTP/2]
+    A[Daily Cron Job] --> B{Check Subscription Expiry}
+    B -->|Active| C[Continue Service]
+    B -->|Expired| D{Check Wallet Balance}
 
-    subgraph Data Layer [Optimization]
-        D[Firestore: Optimized Queries]
-        E[Storage: Lazy Loaded Images]
-        F[Logic: One-time fetches for Static Data]
-    end
+    D -->|Funds Available| E[Auto-Deduct & Renew]
+    E --> F[Send Renewal Success Email]
 
-    C --> D & E & F
-    D & E & F --> G[Fast Page Load & Interactions]
+    D -->|Insufficient Funds| G[Suspend Service]
+    G --> H[Status: suspended_insufficient_funds]
+    H --> I[Send Expiry & Suspension Email]
+    I --> J[Public Profile: Show 'Network Issue']
+
+    K[User Pays/Recharges] --> L[Immediate Status: active]
+    L --> M[Send Activation & Payment Confirmation Email]
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **QUIC Protocol Error**:
-> - This error usually happens when a browser's experimental QUIC connection is unstable or blocked by the user's local network/ISP.
-> - I will implement a "Connection Guard" that automatically falls back to standard HTTP/2 if QUIC issues are detected, ensuring no user gets a blank page.
+> **Service Interruption Display**:
+> - When a seller's account is suspended, their public profile will now display a professional **"Network Issue"** error screen instead of their products.
+> - This protects the user's brand by indicating a technical connection issue rather than a payment failure.
 
-> [!IMPORTANT]
-> **Capacity Confirmation**:
-> - Your current architecture (Netlify + Firebase) is **serverless**. This means it scales automatically.
-> - **Individual Capacity**: Unlimited (Global edge nodes).
-> - **Simultaneous Capacity**: 100 users is a "low load" for this stack. The system can handle **1,000+ simultaneous users** without any code changes, but my optimizations will make those 1,000 users experience sub-second load times.
+> [!NOTE]
+> **Auto-Renewal Threshold**:
+> - Auto-renewal for Elite Nodes will trigger at ₹4,000.
+> - Auto-renewal for Pro API keys will trigger at ₹99.
+> - Notifications will include a direct link to the billing dashboard.
 
 ## Proposed Changes
 
-### 1. Advanced Image Optimization
-#### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
-#### [MODIFY] [js/search.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/search.js)
-- Implement `loading="lazy"` on all product and merchant images.
-- Use `IntersectionObserver` to only render HTML components as they enter the viewport.
-- Add `will-change: transform` to heavy UI elements (like cards) to enable GPU acceleration.
+### 1. Backend Automation (Cron & Webhooks)
+#### [MODIFY] [netlify/functions/daily-email-cron.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/daily-email-cron.js)
+- Implement monthly subscription check logic for both `api_keys` and `sellers`.
+- Add auto-deduction logic from `walletBalance`.
+- Implement "Subscription Expired" email dispatch with direct billing links.
 
-### 2. Database Overhead Reduction
-#### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
-- Replace `onSnapshot` (Real-time) with `getDocs` (One-time) for the main product catalog.
-- Real-time listeners stay open and consume bandwidth; one-time fetches are much lighter for high-traffic scenarios.
-- Add a "Refresh" button for manual updates.
+#### [NEW] [netlify/functions/subscriptionExpiredTemplate.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/subscriptionExpiredTemplate.js)
+- Professional black-themed email template for expiration notices and renewal confirmations.
 
-### 3. Protocol Stability Fix
-#### [MODIFY] [index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/index.html)
-- Add a meta tag to hint for stable connection types.
-- Implement a global `window.onerror` handler to detect protocol failures and suggest a page refresh or standard fallback.
+### 2. Service Interruption UI
+#### [MODIFY] [js/profile.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/profile.js)
+- Update `showPublicProfile` to detect suspension status.
+- Render the **"Network Issue / Service Interruption"** overlay for inactive sellers.
+
+### 3. Subscription & Billing UX
+#### [MODIFY] [js/api-key-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/api-key-manager.js)
+- Ensure `expiresAt` is correctly saved during purchase.
+- Highlight "Zero Balance" in the UI with a prompt to recharge.
+
+#### [MODIFY] [seller/developer.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/developer.html)
+- Update Elite subscription logic to include `subscriptionExpiresAt`.
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. Open the site and verify images load only as you scroll down (**Lazy Loading**).
-2. Use Chrome DevTools (Network tab) to simulate "Slow 3G" and verify the page remains functional.
-3. Rapidly click between 10+ merchant profiles to verify the Firestore connection pool doesn't exhaust.
-
-### Capacity Confirmation
-- I will provide a **Capacity Report** in the walkthrough confirming the maximum limits of your current plan.
+1. Manually set a seller's `subscriptionExpiresAt` to a past date in Firestore.
+2. Trigger the `daily-email-cron` function.
+3. Verify:
+   - [ ] Wallet is deducted (if balance > threshold).
+   - [ ] Email is received with a direct billing link.
+   - [ ] Public profile shows "Network Issue" if balance was insufficient.
+4. Complete a test payment and verify instant account activation.

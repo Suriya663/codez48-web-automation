@@ -650,8 +650,15 @@ export const ApiKeyManager = {
                             createdAt: new Date().toISOString()
                         };
 
+                        // Immediately update seller status to active upon successful subscription
+                        const sRef = doc(db, "sellers", userId);
+                        await updateDoc(sRef, {
+                            status: 'active',
+                            lastActivatedAt: serverTimestamp()
+                        });
+
                         await setDoc(doc(db, "api_keys", subKeyId), subKeyData);
-                        ApiKeyManager.statusMessage = { type: 'success', text: `⚡ Subscription Successful! Payment ID: ${subKeyData.paymentId}` };
+                        ApiKeyManager.statusMessage = { type: 'success', text: `⚡ Pro Subscription Activated! Payment ID: ${subKeyData.paymentId}` };
                         ApiKeyManager.renderApiKeyUI();
                         ApiKeyManager.populateKeySelector();
                     } else {
@@ -779,20 +786,20 @@ export const ApiKeyManager = {
 
                 <!-- Token & Key Quota Summary Stat Matrix -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
+                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1 ${keysGenerated === 0 ? 'border-rose-200 bg-rose-50' : ''}">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Keys Created</span>
                         <span class="text-base font-black text-slate-900">${keysGenerated} / 10</span>
-                        <span class="text-[8px] font-bold text-purple-600 block">${keysRemaining} Keys Available</span>
+                        <span class="text-[8px] font-bold ${keysGenerated === 0 ? 'text-rose-600' : 'text-purple-600'} block">${keysGenerated === 0 ? 'Create Key to Begin' : keysRemaining + ' Keys Available'}</span>
                     </div>
                     <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Tokens Generated</span>
                         <span class="text-base font-black text-purple-700">${totalTokensGenerated} Tokens</span>
                         <span class="text-[8px] font-bold text-slate-500 block">${totalTokensGenerated * 2} Emails Capacity</span>
                     </div>
-                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
+                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1 ${remainingTokens === 0 ? 'border-rose-200 bg-rose-50' : ''}">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Available Tokens</span>
-                        <span class="text-base font-black text-emerald-600">${remainingTokens} Tokens</span>
-                        <span class="text-[8px] font-bold text-emerald-600 block">${remainingTokens * 2} Emails Balance</span>
+                        <span class="text-base font-black ${remainingTokens === 0 ? 'text-rose-600' : 'text-emerald-600'}">${remainingTokens} Tokens</span>
+                        <span class="text-[8px] font-bold ${remainingTokens === 0 ? 'text-rose-600' : 'text-emerald-600'} block">${remainingTokens === 0 ? 'Action Required: Recharge' : (remainingTokens * 2) + ' Emails Balance'}</span>
                     </div>
                     <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Total Dispatched</span>
