@@ -182,6 +182,7 @@ exports.handler = async (event, context) => {
                     await sDoc.ref.update({
                         walletBalance: newBalance,
                         subscriptionExpiresAt: newExpiry.toISOString(),
+                        status: 'active', // Ensure status is set back to active on successful renewal
                         lastRenewedAt: admin.firestore.FieldValue.serverTimestamp()
                     });
 
@@ -234,7 +235,11 @@ exports.handler = async (event, context) => {
                     const newExpiry = new Date();
                     newExpiry.setDate(newExpiry.getDate() + 30);
 
-                    await kDoc.ref.update({ expiresAt: newExpiry.toISOString(), lastRenewedAt: admin.firestore.FieldValue.serverTimestamp() });
+                    await kDoc.ref.update({
+                        expiresAt: newExpiry.toISOString(),
+                        status: 'ACTIVE',
+                        lastRenewedAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
                     await uDoc.ref.update({ walletBalance: newBalance });
 
                     await db.collection('wallet_transactions').add({

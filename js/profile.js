@@ -60,20 +60,71 @@ export const checkCollabStatus = async (sellerA, sellerB) => {
 /**
  * Confirm Wallet Recharge via In-Modal Amount Input
  */
-export const confirmTopUpWallet = async (sellerId) => {
-    const inputEl = document.getElementById('wallet-topup-amount');
-    const amount = Number(inputEl ? inputEl.value : 0);
+export const confirmTopUpWallet = async (sellerId, isAutoRenewal = false) => {
+    let amount = 0;
 
-    if (!amount || isNaN(amount) || amount < 1) {
-        alert("Please enter a valid recharge amount (minimum ₹1).");
-        return;
+    if (isAutoRenewal) {
+        amount = 4000;
+        if (!confirm(`Reactivate Elite Node for 30 Days? ₹4,000 will be deducted from your wallet balance.`)) return;
+    } else {
+        const inputEl = document.getElementById('wallet-topup-amount');
+        amount = Number(inputEl ? inputEl.value : 0);
+        if (!amount || isNaN(amount) || amount < 1) {
+            alert("Please enter a valid recharge amount (minimum ₹1).");
+            return;
+        }
     }
 
     const loader = document.getElementById('global-loader');
     if (loader) loader.classList.remove('hidden');
 
+    if (isAutoRenewal) {
+        // Direct Wallet Deduction Logic
+        try {
+            const sRef = doc(db, "sellers", sellerId);
+            const sSnap = await getDoc(sRef);
+            const data = sSnap.data();
+            const currentBalance = Number(data.walletBalance) || 0;
+
+            if (currentBalance < amount) {
+                alert(`Insufficient Balance. Your wallet has ₹${currentBalance}, but ₹${amount} is required for Elite renewal.`);
+                if (loader) loader.classList.add('hidden');
+                return;
+            }
+
+            const newBalance = currentBalance - amount;
+            const newExpiry = new Date();
+            newExpiry.setDate(newExpiry.getDate() + 30);
+
+            await updateDoc(sRef, {
+                walletBalance: newBalance,
+                status: 'active',
+                isSubscribed: true,
+                subscriptionExpiresAt: newExpiry.toISOString(),
+                lastActivatedAt: new Date().toISOString()
+            });
+
+            await addDoc(collection(db, "wallet_transactions"), {
+                sellerId,
+                type: 'WALLET_AUTO_RENEWAL',
+                amount: -amount,
+                remainingBalance: newBalance,
+                description: `Manual Elite Node Renewal via Wallet`,
+                timestamp: new Date().toISOString()
+            });
+
+            alert(`⚡ Elite Node Reactivated Successfully! New Balance: ₹${newBalance}`);
+            location.reload();
+        } catch (e) {
+            alert("Renewal Error: " + e.message);
+        } finally {
+            if (loader) loader.classList.add('hidden');
+        }
+        return;
+    }
+
     try {
-        // 1. Create Order on Backend
+        // ... (Existing Razorpay Topup Logic)
         const orderResp = await fetch('/.netlify/functions/razorpay-create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -854,10 +905,20 @@ export const showPublicProfile = async (sellerId, currentUser) => {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
             target.innerHTML = `
                 ${isInactive ? `
-                    <div class="max-w-4xl mx-auto my-8 p-8 bg-rose-50 border-2 border-rose-300 rounded-[2.5rem] text-center shadow-lg">
-                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 font-bold text-2xl">⚠️</div>
-                        <h3 class="text-2xl font-black text-rose-900 uppercase tracking-tight">Website Temporarily Paused</h3>
-                        <p class="text-xs text-rose-700 font-medium mt-2 max-w-md mx-auto">This merchant website is currently inactive due to pending daily plan fee. Please recharge wallet to bring online.</p>
+                    <div class="max-w-4xl mx-auto my-8 p-10 bg-rose-50 border-2 border-rose-200 rounded-[2.5rem] text-center shadow-xl space-y-6">
+                        <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-3 font-black text-2xl">⚠️</div>
+                        <div>
+                            <h3 class="text-3xl font-black text-rose-900 uppercase tracking-tight">Website Service Suspended</h3>
+                            <p class="text-xs text-rose-700 font-bold mt-2 max-w-md mx-auto leading-relaxed">Your merchant node is currently offline due to an expired subscription or insufficient wallet balance.</p>
+                        </div>
+                        <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
+                            <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-105 transition-all">
+                                <i class="fa-solid fa-wallet mr-2"></i> Recharge Wallet
+                            </button>
+                            <button onclick="window.location.href='api-keys.html#ledger'" class="bg-rose-600 text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-rose-700 hover:scale-105 transition-all">
+                                Pay & Reactivate Node →
+                            </button>
+                        </div>
                     </div>
                 ` : ''}
 
