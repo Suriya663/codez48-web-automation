@@ -1,41 +1,37 @@
-# Subscription Automation & Service Interload Protection Walkthrough
+# Profile Sleep Mode & UX Refinement Walkthrough
 
-Successfully implemented automated subscription lifecycle management, wallet-based auto-renewals, and professional service interruption overlays.
+Successfully updated the suspension interface to a professional **"Sleep Mode"** protocol. This ensures that expired or low-balance profiles no longer display blunt "Expired" or "Suspended" messages, protecting the merchant's brand.
 
 ## Key Changes Made
 
-### 1. Automated Renewal & Expiry Engine (`daily-email-cron.js`)
-- **Smart Detection**: The background cron job now monitors both **Elite Node Subscriptions** (₹4,000/Mo) and **Pro API Keys** (₹99/Mo).
-- **Wallet-First Renewal**: If a subscription expires, the system automatically checks the user's wallet. If funds are available, it renews the service instantly without requiring user action.
-- **Suspension Protocol**: If the wallet balance is insufficient, the system sets the node to `suspended_insufficient_funds` and dispatches an automated alert.
+### 1. "Sleep Mode" UI Implementation (`js/profile.js`)
+- **Public Visitor View**: Replaced the "Network Issue" error with a high-end **"Something went wrong"** screen.
+  - *Message*: "This profile is currently in sleep mode. Please check back later."
+  - *Visual*: Added an animated moon icon (`fa-moon`) to represent the sleep state.
+- **Merchant Owner View**: When you visit your own profile while suspended, you now see a dark, sleek dashboard notice.
+  - *Message*: "Something went wrong. This profile is in sleep mode."
+  - *CTA*: Provides direct buttons to "Recharge Wallet" or "Pay & Reactivate Node" to wake up the node.
 
-### 2. High-End Expiry Notifications (`subscriptionExpiredTemplate.js`)
-- **Direct Links**: Users now receive a professional black-themed email upon expiry.
-- **Actionable CTAs**: The email contains a direct link that takes the user specifically to the **Subscription Ledger** on the `api-keys.html` page for immediate reactivation.
-- **Confirmation Emails**: Added a new success template for successful auto-renewals and manual payments.
+### 2. Standardized Expiry Communication (`subscriptionExpiredTemplate.js`)
+- **Email Synchronization**: Updated the automated expiry emails to use the new terminology.
+- **Status Dashboard**: The "Current Status" table in the email now clearly states **"Sleep Mode Active"** instead of "Network Issue", keeping the user experience consistent from inbox to website.
 
-### 3. Service Interruption UI (`js/profile.js`)
-- **Brand Protection**: When a merchant is suspended, their public profile no longer shows a broken layout or empty state.
-- **"Network Issue" Overlay**: Visitors now see a professional **"Network Connection Issue"** error screen (Error Code: `NODE_SYNC_INTERRUPTED`).
-- **Owner Access**: The owner can still see their own profile to access settings, but public traffic is shielded.
-
-### 4. Instant Payment Activation (`js/api-key-manager.js`, `profile.js`)
-- **Zero Latency**: Verified that immediately after a successful Razorpay transaction, the seller status is updated to `active` in the database.
-- **Real-Time UI**: The "Available Tokens" panel now highlights in **Red** if the balance is zero, prompting the user to take action.
+### 3. Protocol Cleanup
+- **Error Code Update**: Changed the internal error code to `PROFILE_SLEEP_MODE` for better diagnostic traceability.
+- **Visual Polish**: Integrated indigo accents and soft shadows to ensure the "Sleep Mode" screen feels like a deliberate premium feature rather than a system crash.
 
 ---
 
-## Technical Metrics & Flow
+## Technical Verification
 
-| Event | Logic | Notification |
-| :--- | :--- | :--- |
-| **Active Sub** | No action taken | None |
-| **Expired + Funds** | Auto-deduct & Add 30 Days | Renewal Success Email |
-| **Expired + No Funds** | Set status to Suspended | Expiry & Suspension Email |
-| **Manual Payment** | Set status to Active | Activation Confirmation Email |
+| View | Old Message | New Message (Sleep Mode) | Status |
+| :--- | :--- | :--- | :--- |
+| **Public Profile** | Network Connection Issue | Something went wrong (Sleep Mode) | ✅ Verified |
+| **Owner Dashboard** | Website Service Suspended | Something went wrong (Sleep Mode) | ✅ Verified |
+| **Automated Email** | Network Issue Shown | Sleep Mode Active | ✅ Verified |
 
 ---
 
-> [!IMPORTANT]
-> **Action for User**:
-> Please ensure that all Elite Sellers have the `subscriptionExpiresAt` field set in Firestore (Format: ISO String). I have updated the purchase logic to set this automatically for all future subscribers.
+> [!TIP]
+> **To "Wake Up" a Node**:
+> Simply recharge the merchant wallet by at least ₹83 (Starter) or ₹133 (Elite). The system will detect the balance and automatically switch the profile from **Sleep Mode** to **Online & Active** instantly.

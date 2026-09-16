@@ -21,7 +21,7 @@ const getSubscriptionExpiredTemplate = (data) => {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-size: 14px; font-weight: 600;">Public Profile</span>
-                    <span style="background-color: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase;">Network Issue Shown</span>
+                    <span style="background-color: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase;">Sleep Mode Active</span>
                 </div>
             </div>
 

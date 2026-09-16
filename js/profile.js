@@ -821,18 +821,18 @@ export const showPublicProfile = async (sellerId, currentUser) => {
                 target.innerHTML = `
                     <div class="max-w-4xl mx-auto my-20 p-12 bg-white border border-slate-100 rounded-[3.5rem] text-center shadow-2xl space-y-8 animate-in fade-in zoom-in duration-500">
                         <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                            <i class="fa-solid fa-cloud-bolt text-4xl text-slate-300 animate-pulse"></i>
+                            <i class="fa-solid fa-moon text-4xl text-slate-300 animate-pulse"></i>
                         </div>
                         <div class="space-y-3">
-                            <h3 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Network Connection Issue</h3>
-                            <p class="text-slate-500 font-medium max-w-md mx-auto leading-relaxed">We encountered a temporary technical issue connecting to this business node. The service has been interrupted.</p>
+                            <h3 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Something went wrong</h3>
+                            <p class="text-slate-500 font-medium max-w-md mx-auto leading-relaxed">This profile is currently in sleep mode. Please check back later.</p>
                         </div>
                         <div class="pt-4">
                             <button onclick="location.reload()" class="bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl">
-                                <i class="fa-solid fa-rotate-right mr-2"></i> Retry Connection
+                                <i class="fa-solid fa-rotate-right mr-2"></i> Refresh Connection
                             </button>
                         </div>
-                        <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em]">Error Code: NODE_SYNC_INTERRUPTED</p>
+                        <p class="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em]">Protocol Code: PROFILE_SLEEP_MODE</p>
                     </div>
                 `;
             }
@@ -905,11 +905,13 @@ export const showPublicProfile = async (sellerId, currentUser) => {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
             target.innerHTML = `
                 ${isInactive ? `
-                    <div class="max-w-4xl mx-auto my-8 p-10 bg-rose-50 border-2 border-rose-200 rounded-[2.5rem] text-center shadow-xl space-y-6">
-                        <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-3 font-black text-2xl">⚠️</div>
+                    <div class="max-w-4xl mx-auto my-8 p-10 bg-slate-900 border-2 border-indigo-500/30 rounded-[2.5rem] text-center shadow-xl space-y-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fa-solid fa-moon text-6xl text-white"></i></div>
+                        <div class="w-16 h-16 bg-white/5 text-indigo-400 rounded-3xl flex items-center justify-center mx-auto mb-3 font-black text-2xl">⚡</div>
                         <div>
-                            <h3 class="text-3xl font-black text-rose-900 uppercase tracking-tight">Website Service Suspended</h3>
-                            <p class="text-xs text-rose-700 font-bold mt-2 max-w-md mx-auto leading-relaxed">Your merchant node is currently offline due to an expired subscription or insufficient wallet balance.</p>
+                            <h3 class="text-3xl font-black text-white uppercase tracking-tight">Something went wrong</h3>
+                            <p class="text-slate-400 text-xs font-bold mt-2 max-w-md mx-auto leading-relaxed uppercase tracking-widest">This profile is in sleep mode.</p>
+                            <p class="text-indigo-300 text-[10px] mt-2 font-medium">Recharge your wallet balance to wake up your node and restore public visibility.</p>
                         </div>
                         <div class="flex flex-col md:flex-row justify-center gap-4 pt-4">
                             <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-black text-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-105 transition-all">
