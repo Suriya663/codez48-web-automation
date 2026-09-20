@@ -21,6 +21,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://checkout.razorpay.com">
     <!-- Hint for stable HTTP/2 over experimental QUIC -->
     <meta http-equiv="Link" content="<https://codez48.netlify.app/>; rel=preconnect">
@@ -340,7 +341,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="fixed w-full z-50 transition-all duration-300 glass-header" id="main-nav">
+    <nav class="fixed top-0 left-0 w-full z-[100] transition-all duration-300 glass-header" id="main-nav">
         <div class="container-fluid px-6 py-4 flex flex-wrap justify-between items-center">
             <!-- Brand & Hamburger Group -->
             <div class="flex items-center justify-between w-full md:w-auto">
@@ -1179,8 +1180,8 @@
     <div id="onboarding-overlay" class="hidden"></div>
 
     <div id="share-profile-modal" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
-        <div class="glass-card w-full max-w-sm rounded-[3rem] p-10 bg-white relative text-center">
-            <button onclick="closeShareProfile()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        <div class="glass-card w-full max-w-sm rounded-[3rem] p-10 bg-white relative text-center max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeShareProfile()" class="absolute top-4 right-4 md:top-8 md:right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
             <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-share-nodes text-2xl"></i></div>
             <h3 class="text-2xl font-black text-black uppercase tracking-tightest mb-2">Share Node</h3>
             <div class="grid grid-cols-2 gap-4 mt-8">
@@ -1191,8 +1192,8 @@
     </div>
 
     <div id="node-settings-modal" class="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
-        <div class="glass-card w-full max-w-md rounded-[3rem] p-10 bg-white relative">
-            <button onclick="closeNodeSettings()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        <div class="glass-card w-full max-w-md rounded-[3rem] p-6 md:p-10 bg-white relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeNodeSettings()" class="absolute top-4 right-4 md:top-8 md:right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
             <div class="text-center mb-8">
                 <div class="w-16 h-16 bg-royal/10 text-royal rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-shield-halved text-2xl"></i></div>
                 <h3 class="text-2xl font-black text-black uppercase tracking-tightest">Node Protocol</h3>
@@ -1226,8 +1227,8 @@
     </div>
 
     <div id="edit-profile-modal" class="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-6 hidden">
-        <div class="glass-card w-full max-w-lg rounded-[3rem] p-10 bg-white relative">
-            <button onclick="closeEditProfile()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        <div class="glass-card w-full max-w-lg rounded-[3rem] p-6 md:p-10 bg-white relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeEditProfile()" class="absolute top-4 right-4 md:top-8 md:right-8 text-slate-300 hover:text-black transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
             <h3 class="text-2xl font-black text-black uppercase tracking-tighter mb-8">Update Identity</h3>
             <div class="space-y-6">
                 <input type="text" id="edit-site-name" placeholder="Brand Name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-black focus:outline-none focus:border-royal transition font-medium">
@@ -1268,43 +1269,41 @@
             <div id="particles" style="position: absolute; width: 100%; height: 100%;"></div>
         </div>
 
-        <section class="program-modal" id="developerProgram" style="position: relative; width: min(1080px, 95vw); min-height: 545px; display: grid; grid-template-columns: 42% 58%; border-radius: 38px; border: 1px solid rgba(255,255,255,.25); background: #ffffff; box-shadow: 0 50px 120px rgba(0,0,0,.72);">
+        <section class="program-modal flex flex-col md:grid md:grid-cols-[42%_58%] relative w-[min(1080px,95vw)] min-h-[545px] rounded-[38px] border border-white/25 bg-white shadow-[0_50px_120px_rgba(0,0,0,0.72)] overflow-hidden">
             <!-- LEFT PANEL -->
-            <div class="left-panel" style="position: relative; padding: 38px 42px 45px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #ffffff; background: radial-gradient(circle at 50% 8%, rgba(255,255,255,.085), transparent 28%), linear-gradient(150deg, #151515 0%, #080808 50%, #000000 100%); border-right: 1px solid rgba(255,255,255,.08);">
+            <div class="left-panel p-10 md:p-[38px_42px_45px] flex flex-col justify-center items-center text-center text-white bg-[radial-gradient(circle_at_50%_8%,rgba(255,255,255,0.085),transparent_28%),linear-gradient(150deg,#151515_0%,#080808_50%,#000000_100%)] border-b md:border-b-0 md:border-r border-white/10 relative">
 
-                <div class="coin-stage" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; perspective: 900px; margin-bottom: 24px; position: relative; z-index: 3;">
-                    <div class="coin-shadow" style="position: absolute; width: 78px; height: 12px; bottom: 3px; border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(8px);"></div>
-                    <div class="coin" id="coin-3d" style="width: 88px; height: 88px; position: relative; transform-style: preserve-3d;">
+                <div class="coin-stage w-[120px] h-[120px] flex items-center justify-center perspective-[900px] mb-6 relative z-[3]">
+                    <div class="coin-shadow absolute w-[78px] h-3 bottom-[3px] rounded-[50%] bg-black/55 blur-lg"></div>
+                    <div class="coin relative w-[88px] h-[88px] transform-style-3d" id="coin-3d">
                         <!-- Coin faces generated by JS -->
-                        <div class="coin-face coin-front" style="position: absolute; inset: 0; width: 88px; height: 88px; border-radius: 50%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transform: translateZ(15px); background: radial-gradient(circle at 30% 24%, #444444 0%, #181818 22%, #080808 60%, #000000 100%); border: 3px solid #3a3a3a; overflow: hidden;">
-                            <div class="coin-glint" style="position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%); animation: coinGlint 3s linear infinite;"></div>
-                            <span class="coin-number" style="font-size: 30px; font-weight: 900; color: #ffffff; position: relative; z-index: 2; text-shadow: 0 1px 0 #888, 0 2px 0 #333, 0 4px 7px #000;">48</span>
-                        </div>
-                        <div class="coin-face coin-back" style="position: absolute; inset: 0; width: 88px; height: 88px; border-radius: 50%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transform: rotateY(180deg) translateZ(15px); background: radial-gradient(circle at 30% 24%, #fff2a2 0%, #ffd453 13%, #dba315 36%, #9c6b08 65%, #4d3000 100%); border: 3px solid #d0a02a; overflow: hidden;">
-                            <div class="coin-glint" style="position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%); animation: coinGlint 3s linear infinite;"></div>
-                            <span class="coin-number" style="font-size: 30px; font-weight: 900; color: #342000; position: relative; z-index: 2; text-shadow: 0 1px 0 #fff0a0, 0 2px 0 #c78c10, 0 4px 5px rgba(40,20,0,.5);">48</span>
+                        <div class="coin-face coin-front absolute inset-0 w-[88px] h-[88px] rounded-[50%] flex items-center justify-center backface-hidden transform-translate-z-15 bg-[radial-gradient(circle_at_30%_24%,#444444_0%,#181818_22%,#080808_60%,#000000_100%)] border-[3px]_solid_#3a3a3a overflow-hidden">
+                            <div class="coin-glint absolute inset-0 bg-[linear-gradient(135deg,transparent_40%,rgba(255,255,255,0.4)_50%,transparent_60%)] animate-[coinGlint_3s_linear_infinite]"></div>
+                            <span class="coin-number text-[30px] font-[900] text-white relative z-[2] [text-shadow:0_1px_0_#888,0_2px_0_#333,0_4px_7px_#000]">48</span>
                         </div>
                     </div>
                 </div>
 
-                <h1 class="program-title" style="font-size: clamp(34px, 3.1vw, 46px); font-weight: 900; line-height: 1.02; margin-bottom: 22px;">
-                    CODEZ48 <span id="intro-modal-span" style="display: block; color: #a9a9a9; margin-top: 5px;">DEVELOPER</span> PROGRAM
+                <h1 class="program-title text-3xl md:text-[clamp(34px,3.1vw,46px)] font-[900] leading-[1.02] mb-[22px]">
+                    CODEZ48 <span id="intro-modal-span" class="block text-[#a9a9a9] mt-[5px]">DEVELOPER</span> PROGRAM
                 </h1>
 
-                <p id="intro-modal-desc" style="color: #aaaaaa; font-size: 15px; line-height: 1.7; max-width: 330px;">
+                <p id="intro-modal-desc" class="text-[#aaaaaa] text-[15px] line-height-[1.7] max-w-[330px]">
                     Join our elite network of developers. Refer businesses and earn premium commissions on every successful registration.
                 </p>
 
-                <div class="left-badges" style="display: flex; gap: 9px; margin-top: 27px; flex-wrap: wrap; justify-content: center;">
-                    <div class="left-badge" id="intro-badge-1" style="padding: 8px 13px; border-radius: 50px; border: 1px solid #292929; color: #8d8d8d; background: rgba(255,255,255,.025); font-size: 10px; font-weight: 700;">DEVELOP</div>
-                    <div class="left-badge" id="intro-badge-2" style="padding: 8px 13px; border-radius: 50px; border: 1px solid #292929; color: #8d8d8d; background: rgba(255,255,255,.025); font-size: 10px; font-weight: 700;">REFER</div>
-                    <div class="left-badge" id="intro-badge-3" style="padding: 8px 13px; border-radius: 50px; border: 1px solid #292929; color: #8d8d8d; background: rgba(255,255,255,.025); font-size: 10px; font-weight: 700;">EARN</div>
+                <div class="left-badges flex gap-[9px] mt-[27px] flex-wrap justify-center">
+                    <div class="left-badge p-[8px_13px] rounded-[50px] border border-[#292929] color-[#8d8d8d] bg-[rgba(255,255,255,0.025)] text-[10px] font-[700]">DEVELOP</div>
+                    <div class="left-badge p-[8px_13px] rounded-[50px] border border-[#292929] color-[#8d8d8d] bg-[rgba(255,255,255,0.025)] text-[10px] font-[700]">REFER</div>
+                    <div class="left-badge p-[8px_13px] rounded-[50px] border border-[#292929] color-[#8d8d8d] bg-[rgba(255,255,255,0.025)] text-[10px] font-[700]">EARN</div>
                 </div>
             </div>
 
             <!-- RIGHT PANEL -->
-            <div class="right-panel" style="padding: 48px 54px 40px; color: #090909; background: linear-gradient(145deg, #ffffff, #f6f6f6); display: flex; flex-direction: column; justify-content: center;">
-                <button class="close-button" onclick="window.closeDevProgramIntro()" style="position: absolute; right: 27px; top: 23px; width: 42px; height: 42px; border: none; border-radius: 50%; cursor: pointer; background: transparent; color: #b6b6b6; font-size: 31px; font-weight: 300;">×</button>
+            <div class="right-panel p-10 md:p-[48px_54px_40px] text-[#090909] bg-[linear-gradient(145deg,#ffffff,#f6f6f6)] flex flex-col justify-center relative">
+                <button onclick="window.closeDevProgramIntro()" class="absolute top-8 right-8 w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-black hover:bg-slate-100 transition z-50">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
 
                 <div class="features" style="margin-top: 5px;">
                     <!-- FEATURE 1 -->
@@ -1400,23 +1399,35 @@
 
     <!-- ALL COLLABORATORS MODAL -->
     <div id="all-collaborators-modal" class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div class="glass-card w-full max-w-3xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
-            <button onclick="window.closeAllCollaboratorsModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
-                <i class="fa-solid fa-xmark text-2xl"></i>
-            </button>
-
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
-                <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg font-black shrink-0">
-                    <i class="fa-solid fa-network-wired"></i>
+        <div class="glass-card w-full max-w-4xl rounded-[2.5rem] bg-white relative shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <!-- Fixed Header -->
+            <div class="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg font-black shrink-0">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-black text-black uppercase tracking-tight">Registered Merchant Directory Nodes</h4>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Click any profile card to view full business details</p>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="text-xl font-black text-black uppercase tracking-tight">Registered Merchant Directory Nodes</h4>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Click any profile card to view full business details</p>
+                <button onclick="window.closeAllCollaboratorsModal()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-black hover:bg-slate-50 transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                <div id="modal-all-collaborators-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Rendered dynamically -->
                 </div>
             </div>
 
-            <div id="modal-all-collaborators-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <!-- Rendered dynamically -->
+            <!-- Fixed Footer -->
+            <div class="p-6 border-t border-slate-100 text-right bg-white shrink-0">
+                <button onclick="window.closeAllCollaboratorsModal()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg">
+                    Close Registry
+                </button>
             </div>
         </div>
     </div>

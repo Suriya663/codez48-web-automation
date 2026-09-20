@@ -1,51 +1,46 @@
-# Codez48 CLI Documentation & Website Integration Plan
+# Codez48 CLI AI Chat Integration Plan
 
-Adding a dedicated "Command Line" section to the Codez48 website to document the official CLI tool and its capabilities.
+Adding a continuous interactive AI chat feature to the Codez48 CLI, powered by the existing backend AI infrastructure.
 
-## 1. Website UI Integration
+## 1. Backend Infrastructure (Netlify)
 
-### [MODIFY] [tools/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/tools/index.html)
-- Add a new **Command Line** card to the "Business Suite" grid.
-- Visual: Terminal icon with a "Documentation & Setup" call to action.
-- Action: Redirect to `/cli.html`.
+### [NEW] `cli-ai-chat.js`
+A dedicated Netlify Function to handle CLI-based AI requests.
+- **Security**: Validates the `x-api-key` header to ensure only authenticated sellers can use the service.
+- **AI Logic**: Reuses the existing `GROQ_API_KEY` and `GEMINI_API_KEY` configuration.
+- **Context Support**: Accepts an array of messages to maintain conversation context.
+- **Standardized Response**: Always returns `application/json` with a `success` flag and the AI's `answer`.
 
-### [MODIFY] [index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/index.html)
-- Add "Command Line" to the "Tools" dropdown in the main navigation.
-- Add "Command Line" to the mobile navigation menu.
+## 2. CLI Extension (codez48cli)
 
-## 2. New CLI Documentation Page
+### [MODIFY] `cli.js`
+- **New Command**: `codez48 ai`.
+- **Interactive Loop**: Implements a continuous `You:` -> `Thinking...` -> `AI:` cycle using the `node:readline/promises` interface.
+- **Context Management**: Maintains up to 10 previous message pairs in memory during the session.
+- **Graceful Exit**: Handles `Ctrl+C` (SIGINT) to close the session cleanly with a professional message.
 
-### [NEW] [cli.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/cli.html)
-- **Design**: Premium, clean, minimal UI matching Codez48 theme.
-- **Terminal Component**: A visual terminal showing example commands.
-- **Sections**:
-    - **Requirements**: Node.js v18+.
-    - **Installation**: `npm install -g codez48-cli` with a copy button.
-    - **Authentication**: `codez48 login` documentation.
-    - **Product Management**: `add`, `list`, `update`, `delete` commands.
-    - **Advanced Tools**: `automation`, `tracker`, `notifications`, `mail`, `webhook`, `ai-studio`.
-    - **Command Reference**: A detailed table of all supported commands and their descriptions.
+## 3. Website Documentation
 
-## 3. Interactive Features
-- **Copy Buttons**: Every command block will have a "Copy" button that shows a temporary "Copied" state without using alerts.
-- **Responsive Layout**: Optimized for mobile (stacking sections) and desktop (grid-based reference).
+### [MODIFY] `cli.html`
+- Added an **AI Chat Interface** section documenting the `codez48 ai` command.
+- Updated the **Terminal Visual** mockup to showcase the interactive AI conversation.
+- Included the command in the **Full Reference** table.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Source of Truth**: All documented commands are derived directly from `C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js`.
+> **API Quota**: AI chat requests will be subject to standard API rate limits. High-volume usage may trigger throttling from the AI providers (Groq/Gemini).
 
 > [!WARNING]
-> **No Secrets**: This page is public documentation. It will never display real API keys, passwords, or tokens.
+> **Context Window**: To keep requests performant, only the last 10 interactions are preserved in the session context. Restarting the chat (`Ctrl+C` and running `codez48 ai` again) will clear the history.
 
 ## Verification Plan
 
-### Manual UI Testing
-1.  Verify the "Command Line" card appears in the Tools Hub.
-2.  Verify the navigation links in the header and mobile menu.
-3.  Test the "Copy" functionality on all command blocks.
-4.  Perform responsive checks (simulating mobile viewport).
-5.  Verify that all commands match the latest CLI version (1.1.0).
-6.  Ensure no secret data is hard-coded in the HTML/JS of the new page.
+### Local Development Tests
+1.  **Auth Check**: Run `node cli.js ai` without logging in. Verify rejection.
+2.  **Interaction**: Start the chat and ask "Hello". Verify response.
+3.  **Context**: Ask "My name is User", then "What is my name?". Verify context retention.
+4.  **Exit**: Press `Ctrl+C` and verify clean exit.
+5.  **Secrets**: Verify that NO API keys are logged or returned to the CLI.

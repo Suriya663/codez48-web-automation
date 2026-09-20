@@ -134,6 +134,10 @@
                 <p class="text-white">Seller ID: SLR-123456</p>
                 <p class="text-white">Password: ********</p>
                 <p class="text-emerald-500">[SUCCESS] Authentication persistent. Session Key stored.</p>
+                <p class="text-white mt-4">$ codez48 ai</p>
+                <p class="text-emerald-500">AI Chat activated. Press Ctrl+C to exit.</p>
+                <p class="text-white">You: Explain JavaScript</p>
+                <p class="text-slate-300">AI: JavaScript is a high-level programming language used to create interactive content...</p>
                 <p class="text-white mt-4">$ codez48 list-products</p>
                 <div class="text-slate-400 space-y-1 whitespace-pre">
                     <p>┌────────────┬──────────────────────┬─────────┬───────┐</p>
@@ -155,6 +159,7 @@
                     <nav class="flex flex-col gap-3">
                         <a href="#quick-start" class="text-xs font-bold text-slate-600 hover:text-royal transition">Quick Start Guide</a>
                         <a href="#products" class="text-xs font-bold text-slate-600 hover:text-royal transition">Product Management</a>
+                        <a href="#ai" class="text-xs font-bold text-slate-600 hover:text-royal transition">AI Chat Interface</a>
                         <a href="#tools" class="text-xs font-bold text-slate-600 hover:text-royal transition">Business Tools</a>
                         <a href="#reference" class="text-xs font-bold text-slate-600 hover:text-royal transition">Command Reference</a>
                         <a href="#local-dev" class="text-xs font-bold text-slate-600 hover:text-royal transition pt-4 border-t border-slate-100">Local Development</a>
@@ -246,6 +251,26 @@
                     </div>
                 </section>
 
+                <!-- Section: AI Chat -->
+                <section id="ai" class="space-y-8">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">AI Chat Interface</h2>
+                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
+                        Start an interactive, contextual conversation with Codez48 AI directly from your terminal. Get instant help with products, code, or business strategy.
+                    </p>
+                    <div class="code-block group">
+                        <code class="font-mono text-sm text-black">codez48 ai</code>
+                        <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                    </div>
+                    <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                            <i class="fa-solid fa-keyboard mr-1"></i> Interactive Conversation
+                        </p>
+                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                            Once activated, the session remains open. You can ask multiple questions in sequence. Press <span class="text-black font-bold">Ctrl+C</span> anytime to exit the chat.
+                        </p>
+                    </div>
+                </section>
+
                 <!-- Section: Business Tools -->
                 <section id="tools" class="space-y-8 md:space-y-12">
                     <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Business Tools Hub</h2>
@@ -297,6 +322,7 @@
                                     <tr><td class="px-6 py-4">codez48 login</td><td class="px-6 py-4 font-sans">Secure authentication</td></tr>
                                     <tr><td class="px-6 py-4">codez48 add-product</td><td class="px-6 py-4 font-sans">Interactive creation wizard</td></tr>
                                     <tr><td class="px-6 py-4">codez48 list-products</td><td class="px-6 py-4 font-sans">View active inventory</td></tr>
+                                    <tr><td class="px-6 py-4">codez48 ai</td><td class="px-6 py-4 font-sans">Interactive AI Chat Interface</td></tr>
                                     <tr><td class="px-6 py-4">codez48 tools tracker add</td><td class="px-6 py-4 font-sans">Register external site</td></tr>
                                     <tr><td class="px-6 py-4">codez48 tools automation run</td><td class="px-6 py-4 font-sans">Trigger background rule</td></tr>
                                     <tr><td class="px-6 py-4">codez48 logout</td><td class="px-6 py-4 font-sans">Clear local session key</td></tr>

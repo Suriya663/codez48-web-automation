@@ -59,6 +59,9 @@ export const showLanguageSelection = () => {
     overlay.classList.remove('hidden');
     overlay.innerHTML = `
         <div class="fixed inset-0 bg-white z-[200] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+            <button onclick="window.closeLanguageSelection()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
             <div class="mb-12">
                 <span class="text-3xl font-black tracking-tighter text-black uppercase">CODEZ<span class="text-royal">48</span></span>
             </div>
@@ -93,6 +96,15 @@ window.selectLanguage = (lang) => {
     localStorage.setItem('codez48_lang', lang);
     trackEvent('language_selected', { language: lang });
     startOnboarding();
+};
+
+window.closeLanguageSelection = () => {
+    const overlay = document.getElementById('onboarding-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.innerHTML = '';
+        document.body.classList.remove('overflow-hidden');
+    }
 };
 
 /**
@@ -234,7 +246,10 @@ const renderOnboardingStep = () => {
             <!-- Header -->
             <div class="flex justify-between items-center p-4 md:p-6 shrink-0 bg-white/80 backdrop-blur z-10 w-full">
                 <span class="text-base md:text-lg font-black tracking-tighter text-black uppercase">CODEZ<span class="text-royal">48</span></span>
-                <button onclick="window.skipOnboarding()" class="text-[9px] md:text-[10px] font-black text-slate-400 hover:text-black uppercase tracking-widest transition">${t('skip')}</button>
+                <div class="flex items-center gap-4">
+                    <button onclick="window.closeOnboarding()" class="text-[9px] md:text-[10px] font-black text-slate-400 hover:text-black uppercase tracking-widest transition">${t('close')}</button>
+                    <button onclick="window.skipOnboarding()" class="text-[9px] md:text-[10px] font-black text-slate-400 hover:text-black uppercase tracking-widest transition">${t('skip')}</button>
+                </div>
             </div>
 
             <!-- Content Area (Scrollable) -->

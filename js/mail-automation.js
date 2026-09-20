@@ -378,6 +378,9 @@ export const MailAutomationController = {
             modal.className = 'fixed inset-0 z-[120] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200';
             modal.innerHTML = `
                 <div class="glass-card w-full max-w-lg rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl">
+                    <button onclick="window.closeLiveDispatchModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg font-black shrink-0">

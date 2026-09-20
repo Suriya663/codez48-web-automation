@@ -212,99 +212,105 @@ export const openMerchantWalletModal = async (sellerId) => {
         } catch (e) {}
 
         modal.innerHTML = `
-            <div class="glass-card w-full max-w-xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <button onclick="window.closeMerchantWalletModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
-                </button>
-
-                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                    <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-xl font-black text-slate-900 uppercase tracking-tight">Merchant Wallet</h4>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">24-Hour Cycle Fee: ₹${dailyFee} / Day</p>
-                    </div>
-                </div>
-
-                <!-- Metallic FinTech Balance Card -->
-                <div class="p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white shadow-xl relative overflow-hidden space-y-4">
-                    <div class="flex justify-between items-start">
+            <div class="glass-card w-full max-w-xl rounded-[2.5rem] bg-white relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <!-- Fixed Header -->
+                <div class="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
                         <div>
-                            <span class="text-[9px] font-black uppercase text-purple-300 tracking-widest block">Available Balance</span>
-                            <span class="text-3xl md:text-4xl font-black tracking-tight text-white mt-1 block">₹${walletBalance.toFixed(2)}</span>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isInactive ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
-                            ${isInactive ? '⚠️ Paused' : '🟢 Website Active'}
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-3 border-t border-slate-800 text-[10px] font-mono text-slate-400">
-                        <span>Daily Rate: ₹${dailyFee}/Day</span>
-                        <span class="text-[9px] font-bold text-purple-300">24-Hour Cycle</span>
-                    </div>
-                </div>
-
-                <!-- In-Modal Wallet Recharge Form Container -->
-                <div id="wallet-recharge-form-container" class="p-5 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black uppercase text-purple-900 tracking-widest flex items-center gap-1.5">
-                            <i class="fa-solid fa-credit-card text-purple-600"></i> Recharge Wallet Balance
-                        </span>
-                        <span class="text-[9px] font-bold text-slate-500 uppercase">Enter Amount Below</span>
-                    </div>
-                    <div>
-                        <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">ENTER RECHARGE AMOUNT (₹)</label>
-                        <div class="flex gap-2">
-                            <input type="number" id="wallet-topup-amount" min="1" value="200" class="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-black text-purple-950 focus:outline-none focus:border-purple-600">
-                            <button onclick="window.confirmTopUpWallet('${sellerId}')" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 shrink-0 flex items-center gap-1.5">
-                                <i class="fa-solid fa-bolt"></i> Pay Now →
-                            </button>
+                            <h4 class="text-xl font-black text-slate-900 uppercase tracking-tight">Merchant Wallet</h4>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">24-Hour Cycle Fee: ₹${dailyFee} / Day</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 pt-1 flex-wrap">
-                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest mr-1">Quick Presets:</span>
-                        <button onclick="document.getElementById('wallet-topup-amount').value = 100" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹100</button>
-                        <button onclick="document.getElementById('wallet-topup-amount').value = 200" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹200</button>
-                        <button onclick="document.getElementById('wallet-topup-amount').value = 500" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹500</button>
-                        <button onclick="document.getElementById('wallet-topup-amount').value = 1000" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹1000</button>
-                    </div>
+                    <button onclick="window.closeMerchantWalletModal()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-black hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
                 </div>
 
-                ${isInactive ? `
-                    <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-900 text-xs font-bold flex items-center justify-between">
-                        <span>⚠️ Website is currently paused due to insufficient wallet balance. Please add at least ₹${dailyFee} to reactivate.</span>
-                    </div>
-                ` : ''}
-
-                <!-- Transaction History -->
-                <div class="space-y-3">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Billing & Transaction History</span>
-                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 max-h-48 overflow-y-auto custom-scrollbar font-mono text-[10px]">
-                        ${historyRows.length === 0 ? `
-                            <p class="text-slate-400 italic text-center py-6">No wallet transactions recorded yet.</p>
-                        ` : `
-                            <div class="space-y-2">
-                                ${historyRows.map(h => `
-                                    <div class="flex justify-between items-center border-b border-slate-200/60 pb-2">
-                                        <div>
-                                            <span class="font-bold text-slate-900 block">${h.description || h.type}</span>
-                                            <span class="text-slate-400 text-[8px]">${new Date(h.timestamp).toLocaleString()}</span>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="${h.amount > 0 ? 'text-emerald-600 font-bold' : 'text-slate-700 font-bold'}">${h.amount > 0 ? '+' : ''}₹${h.amount}</span>
-                                            <span class="text-slate-400 text-[8px] block">Bal: ₹${h.remainingBalance}</span>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                <!-- Scrollable Content -->
+                <div class="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    <!-- Metallic FinTech Balance Card -->
+                    <div class="p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white shadow-xl relative overflow-hidden space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[9px] font-black uppercase text-purple-300 tracking-widest block">Available Balance</span>
+                                <span class="text-3xl md:text-4xl font-black tracking-tight text-white mt-1 block">₹${walletBalance.toFixed(2)}</span>
                             </div>
-                        `}
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${isInactive ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                                ${isInactive ? '⚠️ Paused' : '🟢 Website Active'}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-3 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+                            <span>Daily Rate: ₹${dailyFee}/Day</span>
+                            <span class="text-[9px] font-bold text-purple-300">24-Hour Cycle</span>
+                        </div>
+                    </div>
+
+                    <!-- In-Modal Wallet Recharge Form Container -->
+                    <div id="wallet-recharge-form-container" class="p-5 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] font-black uppercase text-purple-900 tracking-widest flex items-center gap-1.5">
+                                <i class="fa-solid fa-credit-card text-purple-600"></i> Recharge Wallet Balance
+                            </span>
+                            <span class="text-[9px] font-bold text-slate-500 uppercase">Enter Amount Below</span>
+                        </div>
+                        <div>
+                            <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">ENTER RECHARGE AMOUNT (₹)</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="wallet-topup-amount" min="1" value="200" class="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-black text-purple-950 focus:outline-none focus:border-purple-600">
+                                <button onclick="window.confirmTopUpWallet('${sellerId}')" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 shrink-0 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bolt"></i> Pay Now →
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-1 flex-wrap">
+                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest mr-1">Quick Presets:</span>
+                            <button onclick="document.getElementById('wallet-topup-amount').value = 100" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹100</button>
+                            <button onclick="document.getElementById('wallet-topup-amount').value = 200" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹200</button>
+                            <button onclick="document.getElementById('wallet-topup-amount').value = 500" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹500</button>
+                            <button onclick="document.getElementById('wallet-topup-amount').value = 1000" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 text-purple-800 text-[8px] font-black rounded-lg transition shadow-sm">+₹1000</button>
+                        </div>
+                    </div>
+
+                    ${isInactive ? `
+                        <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-900 text-xs font-bold flex items-center justify-between">
+                            <span>⚠️ Website is currently paused due to insufficient wallet balance. Please add at least ₹${dailyFee} to reactivate.</span>
+                        </div>
+                    ` : ''}
+
+                    <!-- Transaction History -->
+                    <div class="space-y-3">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Billing & Transaction History</span>
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 max-h-48 overflow-y-auto custom-scrollbar font-mono text-[10px]">
+                            ${historyRows.length === 0 ? `
+                                <p class="text-slate-400 italic text-center py-6">No wallet transactions recorded yet.</p>
+                            ` : `
+                                <div class="space-y-2">
+                                    ${historyRows.map(h => `
+                                        <div class="flex justify-between items-center border-b border-slate-200/60 pb-2">
+                                            <div>
+                                                <span class="font-bold text-slate-900 block">${h.description || h.type}</span>
+                                                <span class="text-slate-400 text-[8px]">${new Date(h.timestamp).toLocaleString()}</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="${h.amount > 0 ? 'text-emerald-600 font-bold' : 'text-slate-700 font-bold'}">${h.amount > 0 ? '+' : ''}₹${h.amount}</span>
+                                                <span class="text-slate-400 text-[8px] block">Bal: ₹${h.remainingBalance}</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
                     </div>
                 </div>
 
-                <div class="text-right pt-2 border-t border-slate-100">
-                    <button onclick="window.closeMerchantWalletModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">
-                        Close
+                <!-- Fixed Footer -->
+                <div class="p-6 border-t border-slate-100 text-right bg-white shrink-0">
+                    <button onclick="window.closeMerchantWalletModal()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg">
+                        Close Wallet
                     </button>
                 </div>
             </div>
@@ -383,12 +389,9 @@ export const openMerchantCalendarModal = async (sellerId) => {
         }
 
         modal.innerHTML = `
-            <div class="glass-card w-full max-w-3xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <button onclick="window.closeMerchantCalendarModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
-                </button>
-
-                <div class="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div class="glass-card w-full max-w-3xl rounded-[2.5rem] bg-white relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <!-- Fixed Header -->
+                <div class="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
                             <i class="fa-solid fa-calendar-days"></i>
@@ -397,21 +400,28 @@ export const openMerchantCalendarModal = async (sellerId) => {
                             <h4 class="text-xl font-black text-slate-900 uppercase tracking-tight">${monthName} ${currentYear} Activation Calendar</h4>
                         </div>
                     </div>
+                    <button onclick="window.closeMerchantCalendarModal()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-black hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
                 </div>
 
-                <!-- Calendar Grid (Days 1 to ${daysInMonth}) -->
-                <div class="grid grid-cols-7 gap-2 md:gap-3">
-                    ${calendarDaysHtml}
+                <!-- Scrollable Content -->
+                <div class="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    <!-- Calendar Grid (Days 1 to ${daysInMonth}) -->
+                    <div class="grid grid-cols-7 gap-2 md:gap-3">
+                        ${calendarDaysHtml}
+                    </div>
+
+                    <!-- Interactive Day Click Details div -->
+                    <div id="calendar-day-detail-card" class="p-5 bg-slate-50 border border-slate-200 rounded-2xl hidden fade-in space-y-2 text-xs font-mono">
+                        <!-- Injected via selectCalendarDay() -->
+                    </div>
                 </div>
 
-                <!-- Interactive Day Click Details div -->
-                <div id="calendar-day-detail-card" class="p-5 bg-slate-50 border border-slate-200 rounded-2xl hidden fade-in space-y-2 text-xs font-mono">
-                    <!-- Injected via selectCalendarDay() -->
-                </div>
-
-                <div class="text-right pt-2 border-t border-slate-100">
-                    <button onclick="window.closeMerchantCalendarModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">
-                        Close
+                <!-- Fixed Footer -->
+                <div class="p-6 border-t border-slate-100 text-right bg-white shrink-0">
+                    <button onclick="window.closeMerchantCalendarModal()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition">
+                        Close Calendar
                     </button>
                 </div>
             </div>
@@ -510,48 +520,54 @@ export const openAiSuggestionsModal = async (sellerId) => {
         }).sort((a, b) => b.score - a.score).slice(0, 3).map(s => s.merchant);
 
         modal.innerHTML = `
-            <div class="glass-card w-full max-w-2xl rounded-[2.5rem] p-6 md:p-8 bg-white relative space-y-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar">
-                <button onclick="window.closeAiSuggestionsModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
-                </button>
-
-                <div class="flex items-center gap-3 border-b border-purple-100 pb-3">
-                    <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-xl font-black text-black uppercase tracking-tight">AI Synergy Business Match</h4>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    ${suggestions.map(m => `
-                        <div id="modal-suggestion-card-${m.id}" onclick="window.closeAiSuggestionsModal(); window.showPublicProfile('${m.id}')" class="p-4 bg-slate-50 hover:bg-purple-50/60 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group cursor-pointer">
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-                                        <img src="${m.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <h5 class="text-xs font-black text-black truncate uppercase group-hover:text-purple-700">${m.brand || 'Merchant Node'}</h5>
-                                        <p class="text-[8px] font-mono text-purple-700 font-bold truncate">${m.companyName || 'Verified Synergy Partner'}</p>
-                                    </div>
-                                </div>
-                                <p class="text-[9px] text-slate-500 font-medium line-clamp-2">${m.description || 'Offers business collaboration opportunities.'}</p>
-                            </div>
-
-                            <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
-                                <button onclick="event.stopPropagation(); window.closeAiSuggestionsModal(); window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
-                                    <i class="fa-solid fa-handshake"></i> Connect & Collaborate
-                                </button>
-                            </div>
+            <div class="glass-card w-full max-w-2xl rounded-[2.5rem] bg-white relative shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                <!-- Fixed Header -->
+                <div class="p-6 md:p-8 border-b border-purple-100 flex items-center justify-between shrink-0 bg-white z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
-                    `).join('')}
+                        <div>
+                            <h4 class="text-xl font-black text-black uppercase tracking-tight">AI Synergy Business Match</h4>
+                        </div>
+                    </div>
+                    <button onclick="window.closeAiSuggestionsModal()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-black hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
                 </div>
 
-                <div class="text-right pt-2 border-t border-slate-100">
-                    <button onclick="window.closeAiSuggestionsModal()" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition">
-                        Close
+                <!-- Scrollable Content -->
+                <div class="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${suggestions.map(m => `
+                            <div id="modal-suggestion-card-${m.id}" onclick="window.closeAiSuggestionsModal(); window.showPublicProfile('${m.id}')" class="p-4 bg-slate-50 hover:bg-purple-50/60 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between relative group cursor-pointer">
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                            <img src="${m.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h5 class="text-xs font-black text-black truncate uppercase group-hover:text-purple-700">${m.brand || 'Merchant Node'}</h5>
+                                            <p class="text-[8px] font-mono text-purple-700 font-bold truncate">${m.companyName || 'Verified Synergy Partner'}</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-[9px] text-slate-500 font-medium line-clamp-2">${m.description || 'Offers business collaboration opportunities.'}</p>
+                                </div>
+
+                                <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
+                                    <button onclick="event.stopPropagation(); window.closeAiSuggestionsModal(); window.sendCollabRequest('${m.id}')" class="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition shadow-md shadow-purple-200 flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-handshake"></i> Connect & Collaborate
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Fixed Footer -->
+                <div class="p-6 border-t border-slate-100 text-right bg-white shrink-0">
+                    <button onclick="window.closeAiSuggestionsModal()" class="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition">
+                        Close Suggestions
                     </button>
                 </div>
             </div>
