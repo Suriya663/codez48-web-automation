@@ -34,15 +34,23 @@ const initAdmin = () => {
 };
 
 exports.handler = async (event, context) => {
-    // 1. Extract ID from Query Params or Path
-    let id = event.queryStringParameters.id || event.queryStringParameters.projectId;
+    // 1. Extract ID from all possible sources (Resilience against environment variations)
+    const q = event.queryStringParameters || {};
+    let id = q.id || q.projectId;
 
-    if (!id && event.path) {
-        // Fallback: Use Regex to find the ID segment in the path (handles trailing slashes)
-        // Matches /preview/ID or /preview/ID/
-        const match = event.path.match(/\/preview\/([^\/]+)/);
-        if (match) {
-            id = match[1];
+    if (!id) {
+        // Try path segments
+        const pathMatch = event.path ? event.path.match(/\/preview\/([^\/]+)/) : null;
+        if (pathMatch) {
+            id = pathMatch[1];
+        }
+    }
+
+    if (!id && event.rawUrl) {
+        // Try raw URL
+        const urlMatch = event.rawUrl.match(/\/preview\/([^\/\?#]+)/);
+        if (urlMatch) {
+            id = urlMatch[1];
         }
     }
 
@@ -56,8 +64,8 @@ exports.handler = async (event, context) => {
                         <h1 style="color: #ef4444;">Error: Missing project ID</h1>
                         <p>No project ID was detected in the request URL.</p>
                         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                        <p style="font-size: 0.8rem; color: #999;">Request Path: ${event.path}</p>
-                        <p style="font-size: 0.8rem; color: #999;">Help: Ensure the URL follows /preview/PROJECT_ID</p>
+                        <p style="font-size: 0.8rem; color: #999;">Path Segment: ${event.path || 'N/A'}</p>
+                        <p style="font-size: 0.8rem; color: #999;">Reference: URL should be /preview/PROJECT_ID</p>
                     </body>
                 </html>
             `

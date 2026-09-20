@@ -130,12 +130,17 @@ app.get('/', async (req, res) => {
                 <h3>Available Endpoints:</h3>
                 <div class="endpoint">GET /health</div>
                 <div class="endpoint">POST /api/runs</div>
-                <div class="endpoint">WS /ws</div>
+                <div class="endpoint">WS /ws (WebSocket Only)</div>
                 <div class="endpoint">GET /api/runs/:runId/screenshot</div>
             </div>
         </body>
         </html>
     `);
+});
+
+// Explicit route to help debug 404s
+app.get('/ws', (req, res) => {
+    res.status(426).send("Upgrade Required: This is a WebSocket endpoint. Please connect using wss:// protocol.");
 });
 
 // 1. HEALTH CHECK ENDPOINT
@@ -410,10 +415,19 @@ const server = http.createServer(app);
 realtimeServer.attachWebSocketServer(server);
 
 server.on('upgrade', (request, socket, head) => {
-    const { pathname } = new URL(request.url, `http://${request.headers.host}`);
-    if (pathname === '/ws') {
-        realtimeServer.handleUpgrade(request, socket, head);
-    } else {
+    try {
+        const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+        const pathname = url.pathname;
+        console.log(`[UPGRADE] Request for path: ${pathname}`);
+
+        if (pathname === '/ws' || pathname === '/ws/') {
+            realtimeServer.handleUpgrade(request, socket, head);
+        } else {
+            console.warn(`[UPGRADE REJECT] Path mismatch: ${pathname}`);
+            socket.destroy();
+        }
+    } catch (err) {
+        console.error(`[UPGRADE ERROR] ${err.message}`);
         socket.destroy();
     }
 });
