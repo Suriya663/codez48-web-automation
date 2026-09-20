@@ -1,52 +1,42 @@
-# Codez48 Automation Engine Implementation Walkthrough
+# Codez48 CLI Documentation Update Walkthrough
 
-Successfully implemented the complete Automation layer for Codez48, enabling background business intelligence and remote management via CLI.
+Successfully updated the **Command Line Interface (CLI)** documentation on the website to distinguish between standard user installation and local development workflows.
 
-## 🛠️ Key Components Delivered
+## 🛠️ Key Improvements
 
-### 1. Secure Automation Backend
-- **`cli-automation-manager.js`**: A protected API gateway that handles all lifecycle events (Create, List, Toggle, Logs, Run) with server-side ownership verification.
-- **`service-automation-cron.js`**: A scheduled background processor that executes active business rules (Low Stock, Uptime, Reports) and dispatches real-time alerts.
+### 1. Corrected User Journey
+- **Global Commands**: All standard instructions now use the `codez48` command prefix instead of `node cli.js`.
+- **Installation Flow**:
+    - **Step 1**: Install Node.js.
+    - **Step 2**: Run `npm install -g codez48-cli`.
+    - **Step 3**: Authenticate with `codez48 login`.
+- **Interactive Documentation**: Clarified that commands like `add-product` and `login` use secure interactive wizards.
 
-### 2. First Automation Set (Sentinel Suite)
-- **Low-Stock Sentinel**: Monitors inventory levels and sends alerts when stock falls below a custom threshold.
-- **Uptime Guardian**: Periodically verifies website reachability and logs downtime events.
-- **Daily Business Report**: Aggregates revenue and order data into a chronological audit log.
+### 2. Local Development Section
+- Added a dedicated **Local Development** section at the bottom of the page.
+- Specifically targets developers testing from the source folder (`C:\Users\suriya prakash\OneDrive\Desktop\codez48cli`).
+- Documents the `node cli.js <command>` pattern for contributors.
 
-### 3. Website Tools Integration
-- **Automation Workspace**: A new dashboard in `tools/index.html` where sellers can visually manage their rules, view live activity signals, and trigger manual runs.
-- **Real-time Sync**: Uses Firestore listeners to ensure the UI updates instantly when a background task completes.
-
-### 4. Codez48 CLI v1.1.0
-- **New Command Set**: Added `codez48 automation [list, create, run, enable, disable, logs]`.
-- **Integrated Auth**: Reuses the existing `x-api-key` header, ensuring a single login session covers both product and automation management.
-
----
-
-## 🚀 CLI Integration Specs
-
-### Authentication
-Every request must include the `x-api-key` header.
-
-### Endpoints & JSON
-- **List**: `GET /cli-automation-manager`
-- **Create**: `POST /cli-automation-manager`
-  - Body: `{"action": "CREATE", "type": "LOW_STOCK", "name": "Stock Monitor", "config": {"threshold": 5}}`
-- **Run**: `POST /cli-automation-manager`
-  - Body: `{"action": "RUN", "automationId": "..."}`
+### 3. Professional UI Enhancements
+- **Terminal Visual**: Updated the terminal mockup to show the `codez48` command in action.
+- **Copy Buttons**: Integrated for all command blocks to ensure a frictionless setup experience.
+- **Free Plan Context**: Added a reminder that Free Trial users have a 4-product limit, which applies to the CLI just like the website.
 
 ---
 
-## 📋 Security Verification
-| Check | Result | Status |
+## 📋 Technical Audit
+
+| Feature | Implementation | Status |
 | :--- | :--- | :--- |
-| **Identity derivation** | Derived from API Key on Server | ✅ Verified |
-| **Data Isolation** | Query restricted by `ownerId` | ✅ Verified |
-| **Secrets Protection** | Credentials remain in Netlify Env Vars | ✅ Verified |
-| **Parity** | CLI and Web use identical logic | ✅ Verified |
+| **Command Prefix** | Switched to `codez48` for global use | ✅ Verified |
+| **Install Method** | Global npm installation emphasized | ✅ Verified |
+| **Dev Mode** | Isolated `node cli.js` instructions | ✅ Verified |
+| **Secrets Protection**| No real keys or IDs in documentation | ✅ Verified |
 
 ---
 
-> [!IMPORTANT]
-> **Manual Action Required**:
-> To enable background processing, configure the `service-automation-cron` function in Netlify as a **Scheduled Function** running every 4-6 hours.
+> [!TIP]
+> The documentation is now strictly aligned with the published `codez48-cli` npm package (v1.1.0).
+
+> [!WARNING]
+> **Source of Truth**: The documented commands match the logic in your standalone CLI project at `C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js`.

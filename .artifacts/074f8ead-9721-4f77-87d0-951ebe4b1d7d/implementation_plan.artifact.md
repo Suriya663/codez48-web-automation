@@ -1,86 +1,51 @@
-# Codez48 Automation Engine Integration Plan
+# Codez48 CLI Documentation & Website Integration Plan
 
-This plan outlines the implementation of the "Automation" layer for the Codez48 platform, allowing sellers to manage background business rules via the Website UI and CLI.
+Adding a dedicated "Command Line" section to the Codez48 website to document the official CLI tool and its capabilities.
 
-## 1. Data Architecture (Firestore)
-
-### [NEW] `service_automations` Collection
-Stores the configuration for background business rules.
-- `ownerId`: String (Seller UID derived from API Key)
-- `name`: String
-- `type`: `LOW_STOCK` | `UPTIME_CHECK` | `DAILY_REPORT`
-- `status`: `ACTIVE` | `PAUSED`
-- `config`: Map (e.g., `{ threshold: 5 }` or `{ url: "https://example.com" }`)
-- `lastRunAt`: Timestamp
-- `lastResult`: String
-- `createdAt`, `updatedAt`: Timestamps
-
-### [NEW] `service_automation_logs` Collection
-Stores history of execution.
-- `automationId`: String
-- `ownerId`: String (For security filtering)
-- `type`: String
-- `timestamp`: Timestamp
-- `status`: `SUCCESS` | `WARNING` | `ERROR`
-- `details`: String (Detailed message or report summary)
-
----
-
-## 2. Backend Infrastructure (Netlify Functions)
-
-### [NEW] `cli-automation-manager.js`
-A unified endpoint for all CLI automation commands (List, Create, Toggle, Run, Logs).
-- **Security**: Validates `x-api-key` and enforces `ownerId` checks for every operation.
-- **Actions**:
-    - `LIST`: Return user's automations.
-    - `CREATE`: Validate schema for specific type and save.
-    - `TOGGLE`: Switch status between `ACTIVE` and `PAUSED`.
-    - `LOGS`: Fetch recent 10 logs for a specific ID.
-    - `RUN`: Trigger the logic immediately and return result.
-
-### [NEW] `service-automation-cron.js` (Scheduled Function)
-Runs periodically (e.g., Every 4 hours) to process all `ACTIVE` automations in the background.
-- **Low Stock Sentinel**: Queries `products` collection for the seller and sends alerts if thresholds are met.
-- **Uptime Guardian**: Performs `fetch` checks on target URLs.
-- **Daily Business Report**: Aggregates `orders` and `external_sites` data.
-
----
-
-## 3. Website Integration
+## 1. Website UI Integration
 
 ### [MODIFY] [tools/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/tools/index.html)
-- Integrate a new "Automation Engine" card and workspace.
-- Provide a dashboard to view active rules, recent logs, and a "Run Now" button.
+- Add a new **Command Line** card to the "Business Suite" grid.
+- Visual: Terminal icon with a "Documentation & Setup" call to action.
+- Action: Redirect to `/cli.html`.
 
-### [NEW] [js/automation-tool.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/automation-tool.js)
-- Handle the UI logic for creating and managing rules.
-- Real-time sync with `service_automations` collection.
+### [MODIFY] [index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/index.html)
+- Add "Command Line" to the "Tools" dropdown in the main navigation.
+- Add "Command Line" to the mobile navigation menu.
 
----
+## 2. New CLI Documentation Page
 
-## 4. CLI Extension
+### [NEW] [cli.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/cli.html)
+- **Design**: Premium, clean, minimal UI matching Codez48 theme.
+- **Terminal Component**: A visual terminal showing example commands.
+- **Sections**:
+    - **Requirements**: Node.js v18+.
+    - **Installation**: `npm install -g codez48-cli` with a copy button.
+    - **Authentication**: `codez48 login` documentation.
+    - **Product Management**: `add`, `list`, `update`, `delete` commands.
+    - **Advanced Tools**: `automation`, `tracker`, `notifications`, `mail`, `webhook`, `ai-studio`.
+    - **Command Reference**: A detailed table of all supported commands and their descriptions.
 
-### [MODIFY] `cli.js`
-- **New Commands**:
-    - `codez48 automation`: Help.
-    - `codez48 automation list`: Display active rules.
-    - `codez48 automation create`: Interactive wizard.
-    - `codez48 automation run <id>`: Immediate execution.
-    - `codez48 automation enable/disable <id>`: State management.
-    - `codez48 automation logs <id>`: History view.
+## 3. Interactive Features
+- **Copy Buttons**: Every command block will have a "Copy" button that shows a temporary "Copied" state without using alerts.
+- **Responsive Layout**: Optimized for mobile (stacking sections) and desktop (grid-based reference).
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Data Scope**: The "Daily Business Report" will strictly use existing data from your `orders` and `external_sites` collections. It will not track data that isn't already being collected.
+> **Source of Truth**: All documented commands are derived directly from `C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js`.
 
 > [!WARNING]
-> **API Key Usage**: All CLI automation commands will consume API credits based on your current plan, as they utilize secure Netlify Function calls.
+> **No Secrets**: This page is public documentation. It will never display real API keys, passwords, or tokens.
 
 ## Verification Plan
-1. **Security Isolation**: Verify that Seller A cannot view or trigger Seller B's automation using a known ID.
-2. **Alert Reliability**: Trigger a "Low Stock" event manually and verify that the notification is received.
-3. **CLI Sync**: Create an automation via CLI and verify it appears in the Website Tools UI instantly.
-4. **Log Integrity**: Verify that logs do not contain sensitive metadata.
+
+### Manual UI Testing
+1.  Verify the "Command Line" card appears in the Tools Hub.
+2.  Verify the navigation links in the header and mobile menu.
+3.  Test the "Copy" functionality on all command blocks.
+4.  Perform responsive checks (simulating mobile viewport).
+5.  Verify that all commands match the latest CLI version (1.1.0).
+6.  Ensure no secret data is hard-coded in the HTML/JS of the new page.
