@@ -41,11 +41,11 @@ class RealtimeServer {
     }
 
     attachWebSocketServer(server) {
-        // Change: No path restriction. Listen on root (/) for best proxy compatibility.
-        this.wss = new WebSocket.Server({ server });
+        // Change: Explicitly listen on /ws for reliability
+        this.wss = new WebSocket.Server({ server, path: '/ws' });
 
         this.wss.on('connection', (ws, req) => {
-            console.log(`[REALTIME SERVER] Client connected. Path: ${req.url}`);
+            console.log(`[REALTIME SERVER] Client connected on path: ${req.url}`);
 
             ws.on('message', (message) => {
                 try {

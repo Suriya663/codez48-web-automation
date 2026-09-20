@@ -1,5 +1,10 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const fs = require('fs');
+const envPath = path.join(__dirname, '../.env');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+}
+
 
 if (!process.env.GROQ_API_KEY) {
     console.warn('[CONFIG WARNING] GROQ_API_KEY environment variable is missing. Configure GROQ_API_KEY for AI planner.');

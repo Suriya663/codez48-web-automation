@@ -1,4 +1,6 @@
 const http = require('http');
+const fs = require('fs');
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -87,10 +89,21 @@ const authenticateWorkerSecret = (req, res, next) => {
     next();
 };
 
-// SERVE STATIC PROJECT FILES FOR LOCAL DEVELOPMENT
-app.use(express.static(path.join(__dirname, '..')));
-app.use('/tools', express.static(path.join(__dirname, '../tools')));
-app.use('/js', express.static(path.join(__dirname, '../js')));
+// SERVE STATIC PROJECT FILES FOR LOCAL DEVELOPMENT (Safe checks for Railway Root Directory)
+const rootDir = path.join(__dirname, '..');
+const toolsDir = path.join(__dirname, '../tools');
+const jsDir = path.join(__dirname, '../js');
+
+if (fs.existsSync(rootDir) && fs.existsSync(path.join(rootDir, 'index.html'))) {
+    app.use(express.static(rootDir));
+}
+if (fs.existsSync(toolsDir)) {
+    app.use('/tools', express.static(toolsDir));
+}
+if (fs.existsSync(jsDir)) {
+    app.use('/js', express.static(jsDir));
+}
+
 
 // 0. ROOT DASHBOARD ENDPOINT
 app.get('/', async (req, res) => {
