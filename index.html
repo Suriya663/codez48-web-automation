@@ -396,11 +396,10 @@
                         <button onclick="location.href='api-keys.html'" class="w-full text-left px-6 py-2.5 text-[9px] font-black text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition uppercase tracking-widest flex items-center gap-3">
                             <i class="fa-solid fa-key text-xs"></i> API Keys & Billing
                         </button>
-                        <button onclick="location.href='cli.html'" class="w-full text-left px-6 py-3 text-[10px] font-black text-slate-900 bg-slate-50 hover:bg-slate-100 transition uppercase tracking-widest flex items-center gap-3 mt-2 border-t border-slate-100">
-                            <i class="fa-solid fa-terminal text-sm"></i> Command Line
-                        </button>
                     </div>
                 </div>
+
+                <a href="cli.html" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">CLI</a>
 
                 <a href="#merchant-directory" class="text-[10px] font-black text-slate-500 hover:text-black transition uppercase tracking-widest">Network</a>
                 <button onclick="window.openDevProgramIntro()" class="text-[10px] font-black text-royal hover:text-black transition uppercase tracking-widest">Dev Program</button>
@@ -448,10 +447,11 @@
                 <button onclick="location.href='api-keys.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
                     <i class="fa-solid fa-key text-emerald-600"></i> API Keys & Billing
                 </button>
-                <button onclick="location.href='cli.html'; window.toggleMobileMenu && window.toggleMobileMenu()" class="w-full text-left flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest bg-slate-100 p-2 rounded-xl">
-                    <i class="fa-solid fa-terminal text-slate-900"></i> Command Line
-                </button>
             </div>
+
+            <a href="cli.html" onclick="window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <i class="fa-solid fa-terminal"></i> Command Line (CLI)
+            </a>
 
             <a href="#merchant-directory" onclick="window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Network</a>
             <button onclick="window.openDevProgramIntro(); window.toggleMobileMenu && window.toggleMobileMenu()" class="text-[10px] font-black text-royal uppercase tracking-widest text-left">Dev Program</button>
