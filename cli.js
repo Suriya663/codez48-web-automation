@@ -2,7 +2,7 @@
 
 /**
  * CODEZ48 CLI - Official Client v1.1.0
- * Features: Restored Product Lifecycle & Complete Business Tools Suite
+ * Features: Product Lifecycle & Interactive Business Tools Suite
  */
 
 const fs = require('fs');
@@ -38,13 +38,23 @@ const apiCall = async (endpoint, method = 'GET', body = null, useAuth = true) =>
     if (useAuth) headers['x-api-key'] = key;
 
     try {
-        const fetchOptions = {
-            method,
-            headers
-        };
+        const fetchOptions = { method, headers };
         if (body) fetchOptions.body = JSON.stringify(body);
 
         const response = await fetch(`${BASE_URL}/${endpoint}`, fetchOptions);
+        const contentType = response.headers.get('content-type');
+
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error(`\n[SERVER ERROR] Expected JSON but received ${contentType || 'unknown'}.`);
+            if (text.includes('<!DOCTYPE html>')) {
+                console.error('The server returned an HTML page. This usually means a routing error or 404.');
+            } else {
+                console.error(`Response snippet: ${text.substring(0, 100)}`);
+            }
+            return null;
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -58,12 +68,54 @@ const apiCall = async (endpoint, method = 'GET', body = null, useAuth = true) =>
     }
 };
 
-// --- AUTH COMMANDS ---
+const secureQuestion = async (query) => {
+    // Basic hidden input for passwords
+    const stdin = process.stdin;
+    const stdout = process.stdout;
+    stdout.write(query);
+    stdin.setRawMode(true);
+    stdin.resume();
+
+    return new Promise((resolve) => {
+        let password = '';
+        stdin.on('data', function handleChar(char) {
+            char = char.toString();
+            switch (char) {
+                case '\n':
+                case '\r':
+                case '\u0004':
+                    stdin.setRawMode(false);
+                    stdin.pause();
+                    stdin.removeListener('data', handleChar);
+                    stdout.write('\n');
+                    resolve(password);
+                    break;
+                case '\u0003':
+                    process.exit();
+                    break;
+                default:
+                    // Backspace
+                    if (char === '\u0008' || char === '\x7f') {
+                        if (password.length > 0) {
+                            password = password.slice(0, -1);
+                            stdout.write('\b \b');
+                        }
+                    } else {
+                        password += char;
+                        stdout.write('*');
+                    }
+                    break;
+            }
+        });
+    });
+};
+
+// --- CORE AUTH COMMANDS ---
 
 const login = async () => {
     console.log('\n--- Codez48 Secure Login ---');
     const sellerId = await rl.question('Seller ID (SLR-xxxxxx): ');
-    const password = await rl.question('Password: ');
+    const password = await secureQuestion('Password: ');
 
     if (!sellerId || !password) {
         console.log('[ERROR] Both fields are required.');
@@ -81,7 +133,7 @@ const login = async () => {
     }
 };
 
-// --- PRODUCT MANAGEMENT (RESTORED FULL FLOW) ---
+// --- PRODUCT MANAGEMENT ---
 
 const addProduct = async () => {
     console.log('\n--- Add New Product ---');
@@ -108,9 +160,7 @@ const addProduct = async () => {
 
     const payload = { name, category, price, mrp, stock, description, image, type };
     const data = await apiCall('add-product', 'POST', payload);
-    if (data && data.success) {
-        console.log(`\n[SUCCESS] Product Created: ${data.productId}\n`);
-    }
+    if (data?.success) console.log(`\n[SUCCESS] Product Created: ${data.productId}\n`);
 };
 
 const listProducts = async () => {
@@ -206,7 +256,9 @@ const handleAutomation = async (subCmd, targetId) => {
     } else if (subCmd === 'create') {
         console.log('\nAvailable Rules: 1. LOW_STOCK | 2. UPTIME_CHECK | 3. DAILY_REPORT');
         const choice = await rl.question('Select Type (1-3): ');
-        let type = choice === '1' ? 'LOW_STOCK' : (choice === '2' ? 'UPTIME_CHECK' : 'DAILY_REPORT');
+        let type = choice === '1' ? 'LOW_STOCK' : (choice === '2' ? 'UPTIME_CHECK' : (choice === '3' ? 'DAILY_REPORT' : ''));
+        if (!type) return console.log('[ERROR] Invalid selection.');
+
         let config = {};
         if (type === 'LOW_STOCK') {
             const threshold = await rl.question('Stock Threshold (default 5): ');
@@ -240,7 +292,35 @@ const handleAutomation = async (subCmd, targetId) => {
             }
         }
     } else {
-        console.log('\nUsage: codez48 tools automation [list, create, run, logs, enable, disable]');
+        console.log('\nAutomation Commands: list, create, run, logs, enable, disable');
+    }
+};
+
+const handleNotifications = async (subCmd) => {
+    if (subCmd === 'list') {
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'notifications', action: 'LIST' });
+        if (data && data.success && Array.isArray(data.campaigns)) {
+            if (data.campaigns.length === 0) return console.log('No push campaigns found.\n');
+            console.table(data.campaigns.map(c => ({ ID: c.id, Site: c.siteUrl, Title: c.title, Sent: c.sentCount, Status: c.status })));
+        }
+    } else if (subCmd === 'send') {
+        const sites = await apiCall('cli-tools-manager', 'POST', { tool: 'tracker', action: 'LIST' });
+        if (!sites?.success || !Array.isArray(sites.sites) || sites.sites.length === 0) {
+            return console.log('[ERROR] You must register a website in the Tracker first to send notifications.');
+        }
+        console.table(sites.sites.map(s => ({ ID: s.id, URL: s.websiteUrl })));
+        const siteId = await rl.question('Select Site ID: ');
+        const title = await rl.question('Notification Title (Required): ');
+        const body = await rl.question('Notification Message (Required): ');
+        const url = await rl.question('Click URL (Optional): ');
+        const image = await rl.question('Image URL (Optional): ');
+
+        if (!siteId || !title || !body) return console.log('[ERROR] Missing required fields.');
+
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'notifications', action: 'SEND', siteId, title, body, url, image });
+        if (data?.success) console.log(`\n[SUCCESS] Notification dispatched to ${data.sentCount} devices.\n`);
+    } else {
+        console.log('\nNotification Commands: list, send');
     }
 };
 
@@ -252,11 +332,16 @@ const handleTracker = async (subCmd) => {
             console.table(data.sites.map(s => ({ ID: s.id, URL: s.websiteUrl, Status: s.status })));
         }
     } else if (subCmd === 'add') {
-        const url = await rl.question('Enter URL to track: ');
+        const url = await rl.question('Enter Website URL to track: ');
+        const name = await rl.question('Enter Website Name [optional]: ');
         if (!url) return console.log('[ERROR] URL required.');
-        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'tracker', action: 'ADD', url });
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'tracker', action: 'ADD', url, name });
         if (data && data.success) {
-            console.log(`[SUCCESS] Site registered: ${data.siteId}\n`);
+            console.log(`\n[SUCCESS] Site Registered! ID: ${data.siteId}`);
+            console.log('To start tracking, paste this script in your <head> tag:');
+            console.log('----------------------------------------------------');
+            console.log(data.trackingScript);
+            console.log('----------------------------------------------------\n');
         }
     } else if (subCmd === 'stats') {
         const id = await rl.question('Enter Site ID: ');
@@ -264,25 +349,13 @@ const handleTracker = async (subCmd) => {
         const data = await apiCall('cli-tools-manager', 'POST', { tool: 'tracker', action: 'STATS', siteId: id });
         if (data && data.success) {
             console.log(`\nEvents: ${data.eventCount} | Sessions: ${data.sessionCount}`);
-            if (Array.isArray(data.recentEvents)) {
+            if (Array.isArray(data.recentEvents) && data.recentEvents.length > 0) {
                 console.log('Recent Activity:');
                 console.table(data.recentEvents.map(e => ({ Event: e.eventType, Page: e.page, Time: e.timestamp })));
             }
         }
     } else {
-        console.log('\nUsage: codez48 tools tracker [list, add, stats]');
-    }
-};
-
-const handleNotifications = async (subCmd) => {
-    if (subCmd === 'list') {
-        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'notifications', action: 'LIST' });
-        if (data && data.success && Array.isArray(data.campaigns)) {
-            if (data.campaigns.length === 0) return console.log('No campaigns found.\n');
-            console.table(data.campaigns.map(c => ({ ID: c.id, Title: c.title, Sent: c.sentCount, Status: c.status })));
-        }
-    } else {
-        console.log('\nUsage: codez48 tools notifications [list]');
+        console.log('\nTracker Commands: list, add, stats');
     }
 };
 
@@ -291,34 +364,76 @@ const handleMail = async (subCmd) => {
         const data = await apiCall('cli-tools-manager', 'POST', { tool: 'mail', action: 'STATUS' });
         if (data && data.success) {
             console.log(`\nMail Automation: ${data.settings?.mailAutomation ? 'ACTIVE' : 'DISABLED'}`);
+            console.log(`Daily Cron: ${data.settings?.enableDailyCron ? 'ENABLED' : 'OFF'}`);
             console.log(`Primary Recipient: ${data.settings?.notificationEmail || 'Not configured'}\n`);
         }
+    } else if (subCmd === 'setup') {
+        const email = await rl.question('Notification Email: ');
+        const enabled = (await rl.question('Enable Mail Automation? (y/n): ')).toLowerCase() === 'y';
+        const dailyCron = (await rl.question('Send Daily Automatic Emails? (y/n): ')).toLowerCase() === 'y';
+        const recipientsStr = await rl.question('Recipients (comma separated): ');
+        const recipients = recipientsStr ? recipientsStr.split(',').map(e => e.trim()) : [];
+
+        console.log('\n--- Template Configuration ---');
+        const headerText = await rl.question('Email Header Title: ') || 'Welcome to CODEZ48';
+        const bodyText = await rl.question('Email Body Content: ');
+        const ctaText = await rl.question('CTA Button Label: ') || 'Contact Us Now';
+        const ctaUrl = await rl.question('CTA Target URL: ');
+
+        const payload = {
+            tool: 'mail',
+            action: 'SETUP',
+            email, enabled, dailyCron, recipients,
+            template: { headerText, businessDescription: bodyText, ctaText, ctaUrl }
+        };
+
+        const data = await apiCall('cli-tools-manager', 'POST', payload);
+        if (data?.success) console.log('\n[SUCCESS] Mail Automation settings saved.\n');
+    } else if (subCmd === 'test') {
+        const targetEmail = await rl.question('Enter recipient email for test: ');
+        if (!targetEmail) return console.log('[ERROR] Email required.');
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'mail', action: 'TEST', targetEmail });
+        if (data?.success) console.log('\n[SUCCESS] Test email dispatched.\n');
     } else {
-        console.log('\nUsage: codez48 tools mail [status]');
+        console.log('\nMail Commands: status, setup, test');
     }
 };
 
 const handleWebhook = async (subCmd) => {
-    if (subCmd === 'inbox') {
+    if (subCmd === 'status') {
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'webhook', action: 'STATUS' });
+        if (data?.success) console.log(`\nYour Inbound Webhook URL:\n${data.webhookUrl}\n`);
+    } else if (subCmd === 'inbox') {
         const data = await apiCall('cli-tools-manager', 'POST', { tool: 'webhook', action: 'INBOX' });
         if (data && data.success && Array.isArray(data.messages)) {
             if (data.messages.length === 0) return console.log('Inbox is empty.\n');
             console.table(data.messages.map(m => ({ Received: new Date(m.receivedAt).toLocaleString(), Payload: JSON.stringify(m.data).substring(0, 50) })));
         }
     } else {
-        console.log('\nUsage: codez48 tools webhook [inbox]');
+        console.log('\nWebhook Commands: status, inbox');
     }
 };
 
-const handleAiStudio = async (subCmd) => {
+const handleMailCampaign = async (subCmd) => {
     if (subCmd === 'list') {
-        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'ai-studio', action: 'LIST' });
-        if (data && data.success && Array.isArray(data.workspaces)) {
-            if (data.workspaces.length === 0) return console.log('No AI workspaces found.\n');
-            console.table(data.workspaces.map(w => ({ ID: w.id, Name: w.name, Model: w.modelId })));
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'mail-campaign', action: 'LIST' });
+        if (data && data.success && Array.isArray(data.campaigns)) {
+            if (data.campaigns.length === 0) return console.log('No AI campaigns found.\n');
+            console.table(data.campaigns.map(c => ({ ID: c.id, Business: c.businessName, Sent: c.sentCount, Status: c.status })));
         }
+    } else if (subCmd === 'create') {
+        const name = await rl.question('Business Name: ');
+        const email = await rl.question('Business Email: ');
+        const goal = await rl.question('Campaign Goal [Sell Product]: ') || 'Sell Product';
+        const description = await rl.question('Campaign Description: ');
+        const price = await rl.question('Product Price (INR): ');
+
+        if (!name || !email) return console.log('[ERROR] Name and Email required.');
+
+        const data = await apiCall('cli-tools-manager', 'POST', { tool: 'mail-campaign', action: 'CREATE', name, email, goal, description, price });
+        if (data?.success) console.log(`\n[SUCCESS] AI Mail Campaign queued. ID: ${data.campaignId}\n`);
     } else {
-        console.log('\nUsage: codez48 tools ai-studio [list]');
+        console.log('\nCampaign Commands: list, create');
     }
 };
 
@@ -328,13 +443,14 @@ const toolsHelp = () => {
     console.log('\n--- Codez48 Tools Hub ---');
     console.log('Usage: codez48 tools <tool-group> <command>');
     console.log('\nTool Groups:');
-    console.log('  automation    - Manage monitors (Low Stock, Uptime, Reports)');
+    console.log('  automation    - Background monitors (Low Stock, Uptime, Reports)');
     console.log('  tracker       - Real-time website visitor activity');
     console.log('  mail          - Control automated SMTP alerts');
     console.log('  webhook       - View inbound data stream');
-    console.log('  notifications - Push campaign history');
+    console.log('  notifications - Manage push notification campaigns');
+    console.log('  mail-campaign - AI powered email marketing');
     console.log('  ai-studio     - Custom AI model workspaces');
-    console.log('\nExample: codez48 tools automation run SLR-123\n');
+    console.log('\nExample: codez48 tools automation list\n');
 };
 
 // --- MAIN CLI ---
@@ -349,7 +465,14 @@ const main = async () => {
             case 'notifications': await handleNotifications(sub); break;
             case 'mail': await handleMail(sub); break;
             case 'webhook': await handleWebhook(sub); break;
-            case 'ai-studio': await handleAiStudio(sub); break;
+            case 'mail-campaign': await handleMailCampaign(sub); break;
+            case 'ai-studio':
+                const aData = await apiCall('cli-tools-manager', 'POST', { tool: 'ai-studio', action: 'LIST' });
+                if (aData?.success && Array.isArray(aData.workspaces)) {
+                    if (aData.workspaces.length === 0) return console.log('No AI workspaces found.\n');
+                    console.table(aData.workspaces.map(ws => ({ ID: ws.id, Name: ws.name, Model: ws.modelId })));
+                }
+                break;
             default: toolsHelp(); break;
         }
     } else {
