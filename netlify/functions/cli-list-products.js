@@ -33,6 +33,15 @@ const initAdmin = () => {
     }
 };
 
+const jsonResponse = (statusCode, data) => ({
+    statusCode,
+    headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(data)
+});
+
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
         return {
@@ -46,52 +55,35 @@ exports.handler = async (event, context) => {
     }
 
     if (event.httpMethod !== "GET") {
-        return { statusCode: 405, body: "Method Not Allowed" };
+        return jsonResponse(405, { success: false, error: "Method Not Allowed" });
     }
 
     if (!initAdmin() || !db) {
-        return { statusCode: 500, body: "Database unavailable" };
+        return jsonResponse(500, { success: false, error: "Database unavailable" });
     }
 
     try {
         const apiKey = event.headers['x-api-key'];
         if (!apiKey) {
-            return {
-                statusCode: 401,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Authentication Required" })
-            };
+            return jsonResponse(401, { success: false, error: "Authentication Required" });
         }
 
         const keySnap = await db.collection('api_keys').doc(apiKey).get();
         if (!keySnap.exists || keySnap.data().status !== 'ACTIVE') {
-            return {
-                statusCode: 403,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Invalid or inactive API Key." })
-            };
+            return jsonResponse(403, { success: false, error: "Invalid or inactive API Key." });
         }
 
         const sellerId = keySnap.data().userId;
 
-        // Fetch products for this seller
         const productsSnap = await db.collection('products').where('sellerId', '==', sellerId).get();
         const products = [];
         productsSnap.forEach(doc => {
             products.push({ id: doc.id, ...doc.data() });
         });
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: true, count: products.length, products })
-        };
+        return jsonResponse(200, { success: true, count: products.length, products });
 
     } catch (error) {
-        return {
-            statusCode: 500,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: error.message })
-        };
+        return jsonResponse(500, { success: false, error: error.message });
     }
 };

@@ -61,20 +61,12 @@ exports.handler = async (event, context) => {
         // 2. Authenticate CLI via API Key
         const apiKey = event.headers['x-api-key'];
         if (!apiKey) {
-            return {
-                statusCode: 401,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Authentication Required: Missing x-api-key header." })
-            };
+            return jsonResponse(401, { success: false, error: "Authentication Required: Missing x-api-key header." });
         }
 
         const keySnap = await db.collection('api_keys').doc(apiKey).get();
         if (!keySnap.exists || keySnap.data().status !== 'ACTIVE') {
-            return {
-                statusCode: 403,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Forbidden: Invalid or inactive API Key." })
-            };
+            return jsonResponse(403, { success: false, error: "Forbidden: Invalid or inactive API Key." });
         }
 
         const keyData = keySnap.data();
@@ -85,11 +77,7 @@ exports.handler = async (event, context) => {
         const { name, category, price, mrp, stock, description, image, type } = body;
 
         if (!name || isNaN(price)) {
-            return {
-                statusCode: 400,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Validation Failed: 'name' and numeric 'price' are required." })
-            };
+            return jsonResponse(400, { success: false, error: "Validation Failed: 'name' and numeric 'price' are required." });
         }
 
         // 4. Schema Sync with Website
@@ -146,23 +134,24 @@ exports.handler = async (event, context) => {
             console.warn("[CLI_EMAIL_WARN] Notification could not be dispatched:", emailErr.message);
         }
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({
-                success: true,
-                message: "Product created successfully via Codez48 CLI",
-                productId: pid,
-                sellerId: sellerId
-            })
-        };
+        return jsonResponse(200, {
+            success: true,
+            message: "Product created successfully via Codez48 CLI",
+            productId: pid,
+            sellerId: sellerId
+        });
 
     } catch (error) {
         console.error("CLI Add Product Error:", error.message);
-        return {
-            statusCode: 500,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: "Internal Server Error: " + error.message })
-        };
+        return jsonResponse(500, { success: false, error: "Internal Server Error: " + error.message });
     }
 };
+
+const jsonResponse = (statusCode, data) => ({
+    statusCode,
+    headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(data)
+});

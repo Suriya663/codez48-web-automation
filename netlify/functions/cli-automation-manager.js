@@ -41,6 +41,15 @@ const verifyApiKey = async (apiKey) => {
     return keySnap.data().userId;
 };
 
+const jsonResponse = (statusCode, data) => ({
+    statusCode,
+    headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(data)
+});
+
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
         return {
@@ -54,18 +63,14 @@ exports.handler = async (event, context) => {
     }
 
     if (!initAdmin() || !db) {
-        return { statusCode: 500, body: "Database unavailable" };
+        return jsonResponse(500, { success: false, error: "Database unavailable" });
     }
 
     const apiKey = event.headers['x-api-key'];
     const sellerId = await verifyApiKey(apiKey);
 
     if (!sellerId) {
-        return {
-            statusCode: 401,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: "Unauthorized: Invalid or missing API Key." })
-        };
+        return jsonResponse(401, { success: false, error: "Unauthorized: Invalid or missing API Key." });
     }
 
     try {
@@ -79,20 +84,19 @@ exports.handler = async (event, context) => {
                 .get();
 
             const automations = [];
-            snap.forEach(doc => automations.push({ id: doc.id, ...doc.data() }));
+            snap.forEach(doc => {
+                const data = doc.data();
+                automations.push({ id: doc.id, ...data });
+            });
 
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: true, automations })
-            };
+            return jsonResponse(200, { success: true, automations });
         }
 
         // --- 2. CREATE AUTOMATION ---
         if (action === 'CREATE') {
             const { type, name, config } = body;
             if (!type || !name || !config) {
-                return { statusCode: 400, body: JSON.stringify({ error: "Missing type, name or config" }) };
+                return jsonResponse(400, { success: false, error: "Missing type, name or config" });
             }
 
             const autoId = 'AUTO-' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -110,25 +114,21 @@ exports.handler = async (event, context) => {
 
             await db.collection('service_automations').doc(autoId).set(newAuto);
 
-            return {
-                statusCode: 201,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: true, message: "Automation created", automationId: autoId })
-            };
+            return jsonResponse(201, { success: true, message: "Automation created", automationId: autoId });
         }
 
         // --- 3. TOGGLE AUTOMATION ---
         if (action === 'TOGGLE') {
             const { automationId, status } = body;
             if (!automationId || !status) {
-                return { statusCode: 400, body: JSON.stringify({ error: "Missing automationId or status" }) };
+                return jsonResponse(400, { success: false, error: "Missing automationId or status" });
             }
 
             const autoRef = db.collection('service_automations').doc(automationId);
             const snap = await autoRef.get();
 
             if (!snap.exists || snap.data().ownerId !== sellerId) {
-                return { statusCode: 403, body: JSON.stringify({ error: "Forbidden: Ownership mismatch" }) };
+                return jsonResponse(403, { success: false, error: "Forbidden: Ownership mismatch" });
             }
 
             await autoRef.update({
@@ -136,17 +136,13 @@ exports.handler = async (event, context) => {
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
 
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: true, message: `Automation ${status.toLowerCase()}d` })
-            };
+            return jsonResponse(200, { success: true, message: `Automation ${status.toLowerCase()}d` });
         }
 
         // --- 4. GET LOGS ---
         if (action === 'LOGS') {
             const { automationId } = body;
-            if (!automationId) return { statusCode: 400, body: JSON.stringify({ error: "Missing automationId" }) };
+            if (!automationId) return jsonResponse(400, { success: false, error: "Missing automationId" });
 
             const logsSnap = await db.collection('service_automation_logs')
                 .where('automationId', '==', automationId)
@@ -156,53 +152,34 @@ exports.handler = async (event, context) => {
                 .get();
 
             const logs = [];
-            logsSnap.forEach(doc => logs.push({ id: doc.id, ...doc.data() }));
+            logsSnap.forEach(doc => logs.push({ id: doc.id, ...doc.data(), timestamp: doc.data().timestamp?.toDate() }));
 
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: true, logs })
-            };
+            return jsonResponse(200, { success: true, logs });
         }
 
         // --- 5. RUN NOW (Manual Trigger) ---
         if (action === 'RUN') {
             const { automationId } = body;
-            if (!automationId) return { statusCode: 400, body: JSON.stringify({ error: "Missing automationId" }) };
+            if (!automationId) return jsonResponse(400, { success: false, error: "Missing automationId" });
 
             const autoRef = db.collection('service_automations').doc(automationId);
             const snap = await autoRef.get();
 
             if (!snap.exists || snap.data().ownerId !== sellerId) {
-                return { statusCode: 403, body: JSON.stringify({ error: "Forbidden" }) };
+                return jsonResponse(403, { success: false, error: "Forbidden" });
             }
 
             const autoData = snap.data();
-
-            // Forward to internal cron logic (or similar)
-            // For now, we trigger the specific logic based on type
-            let result = "Execution triggered.";
-
-            // We can call the cron function endpoint or invoke logic directly
-            // Invoking logic directly is better for synchronous feedback in CLI
             const executionResult = await executeAutomationLogic(autoData, automationId, sellerId);
 
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: true, result: executionResult })
-            };
+            return jsonResponse(200, { success: true, result: executionResult });
         }
 
-        return { statusCode: 400, body: JSON.stringify({ error: "Invalid action" }) };
+        return jsonResponse(400, { success: false, error: "Invalid action" });
 
     } catch (error) {
         console.error("Automation Manager Error:", error.message);
-        return {
-            statusCode: 500,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: error.message })
-        };
+        return jsonResponse(500, { success: false, error: error.message });
     }
 };
 
@@ -225,7 +202,6 @@ async function executeAutomationLogic(auto, autoId, sellerId) {
             if (lowStockItems.length > 0) {
                 status = 'WARNING';
                 details = `Low stock detected for: ${lowStockItems.join(', ')}`;
-                // Here we would trigger an email/push
             } else {
                 details = 'All stock levels healthy.';
             }
@@ -246,7 +222,6 @@ async function executeAutomationLogic(auto, autoId, sellerId) {
             }
         }
         else if (auto.type === 'DAILY_REPORT') {
-            // Aggregation Logic
             const today = new Date();
             today.setHours(0,0,0,0);
 
@@ -262,7 +237,6 @@ async function executeAutomationLogic(auto, autoId, sellerId) {
             details = `Daily Summary: ${orderCount} Orders, Total Revenue: ₹${totalRevenue}.`;
         }
 
-        // Log the result
         await db.collection('service_automation_logs').add({
             automationId: autoId,
             ownerId: sellerId,
@@ -272,7 +246,6 @@ async function executeAutomationLogic(auto, autoId, sellerId) {
             details
         });
 
-        // Update automation metadata
         await db.collection('service_automations').doc(autoId).update({
             lastRunAt: timestamp,
             lastResult: details

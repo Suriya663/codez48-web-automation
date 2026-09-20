@@ -44,6 +44,15 @@ const verifyApiKey = async (apiKey) => {
     return keySnap.data().userId;
 };
 
+const jsonResponse = (statusCode, data) => ({
+    statusCode,
+    headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(data)
+});
+
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
         return {
@@ -57,18 +66,14 @@ exports.handler = async (event, context) => {
     }
 
     if (!initAdmin() || !db) {
-        return { statusCode: 500, body: "Database unavailable" };
+        return jsonResponse(500, { success: false, error: "Database unavailable" });
     }
 
     const apiKey = event.headers['x-api-key'];
     const sellerId = await verifyApiKey(apiKey);
 
     if (!sellerId) {
-        return {
-            statusCode: 401,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: "Unauthorized: Invalid or missing API Key." })
-        };
+        return jsonResponse(401, { success: false, error: "Unauthorized: Invalid or missing API Key." });
     }
 
     try {
@@ -78,15 +83,11 @@ exports.handler = async (event, context) => {
         const protocol = event.headers['x-forwarded-proto'] || 'https';
 
         if (!tool) {
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({
-                    success: true,
-                    tools: ["tracker", "notifications", "mail", "webhook", "ai-studio", "mail-campaign"],
-                    message: "Use 'tool' parameter to access specific tool data."
-                })
-            };
+            return jsonResponse(200, {
+                success: true,
+                tools: ["tracker", "notifications", "mail", "webhook", "ai-studio", "mail-campaign"],
+                message: "Use 'tool' parameter to access specific tool data."
+            });
         }
 
         // --- 1. WEBSITE TRACKER ---
@@ -94,42 +95,43 @@ exports.handler = async (event, context) => {
             if (action === 'LIST') {
                 const snap = await db.collection('external_sites').where('ownerId', '==', sellerId).get();
                 const sites = [];
-                snap.forEach(doc => sites.push({ id: doc.id, ...doc.data() }));
-                return { statusCode: 200, body: JSON.stringify({ success: true, sites }) };
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    sites.push({ id: doc.id, ...data });
+                });
+                return jsonResponse(200, { success: true, sites });
             }
             if (action === 'ADD') {
                 const { url, name, features } = body;
-                if (!url) return { statusCode: 400, body: JSON.stringify({ error: "URL required" }) };
+                if (!url) return jsonResponse(400, { success: false, error: "URL required" });
                 const siteId = 'SITE_' + Math.random().toString(36).substring(2, 9).toUpperCase();
-                await db.collection('external_sites').doc(siteId).set({
+                const siteData = {
                     ownerId: sellerId,
                     websiteUrl: url,
                     websiteName: name || url,
                     status: 'active',
                     features: features || { visitors: true, live: true, scroll: true, clicks: true, duration: true },
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
-                });
+                };
+                await db.collection('external_sites').doc(siteId).set(siteData);
                 const trackingScript = `<script>\n(function(){var s=document.createElement('script');s.src='${protocol}://${host}/tracker.js';s.setAttribute('data-id','${siteId}');document.head.appendChild(s);})();\n</script>`;
-                return { statusCode: 201, body: JSON.stringify({ success: true, siteId, trackingScript }) };
+                return jsonResponse(201, { success: true, siteId, trackingScript });
             }
             if (action === 'STATS') {
                 const { siteId } = body;
-                if (!siteId) return { statusCode: 400, body: JSON.stringify({ error: "siteId required" }) };
+                if (!siteId) return jsonResponse(400, { success: false, error: "siteId required" });
                 const siteSnap = await db.collection('external_sites').doc(siteId).get();
-                if (!siteSnap.exists || siteSnap.data().ownerId !== sellerId) return { statusCode: 403, body: "Forbidden" };
+                if (!siteSnap.exists || siteSnap.data().ownerId !== sellerId) return jsonResponse(403, { success: false, error: "Forbidden" });
 
                 const eventsSnap = await db.collection('external_sites').doc(siteId).collection('events').orderBy('timestamp', 'desc').limit(10).get();
                 const sessionsSnap = await db.collection('external_sites').doc(siteId).collection('sessions').limit(100).get();
 
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({
-                        success: true,
-                        eventCount: eventsSnap.size,
-                        sessionCount: sessionsSnap.size,
-                        recentEvents: eventsSnap.docs.map(d => ({...d.data(), timestamp: d.data().timestamp?.toDate()}))
-                    })
-                };
+                return jsonResponse(200, {
+                    success: true,
+                    eventCount: eventsSnap.size,
+                    sessionCount: sessionsSnap.size,
+                    recentEvents: eventsSnap.docs.map(d => ({...d.data(), timestamp: d.data().timestamp?.toDate()}))
+                });
             }
         }
 
@@ -142,25 +144,24 @@ exports.handler = async (event, context) => {
                     const campsSnap = await siteDoc.ref.collection('campaigns').get();
                     campsSnap.forEach(c => allCampaigns.push({ id: c.id, siteId: siteDoc.id, siteUrl: siteDoc.data().websiteUrl, ...c.data() }));
                 }
-                return { statusCode: 200, body: JSON.stringify({ success: true, campaigns: allCampaigns }) };
+                return jsonResponse(200, { success: true, campaigns: allCampaigns });
             }
             if (action === 'SEND') {
                 const { siteId, title, body: msgBody, url, image } = body;
-                if (!siteId || !title || !msgBody) return { statusCode: 400, body: JSON.stringify({ error: "siteId, title, and body required" }) };
+                if (!siteId || !title || !msgBody) return jsonResponse(400, { success: false, error: "siteId, title, and body required" });
 
                 const siteRef = db.collection('external_sites').doc(siteId);
                 const siteSnap = await siteRef.get();
-                if (!siteSnap.exists || siteSnap.data().ownerId !== sellerId) return { statusCode: 403, body: "Forbidden" };
+                if (!siteSnap.exists || siteSnap.data().ownerId !== sellerId) return jsonResponse(403, { success: false, error: "Forbidden" });
 
                 const campaignId = 'CAMP_' + Math.random().toString(36).substring(2, 9).toUpperCase();
 
-                // Get Tokens
                 const subsSnap = await siteRef.collection('subscribers').get();
                 const tokens = [];
                 subsSnap.forEach(d => { if(d.data().fcmToken) tokens.push(d.data().fcmToken); });
 
                 if (tokens.length === 0) {
-                    return { statusCode: 200, body: JSON.stringify({ success: false, message: "No subscribers found for this site." }) };
+                    return jsonResponse(200, { success: false, message: "No subscribers found for this site." });
                 }
 
                 const messages = tokens.map(t => ({
@@ -183,7 +184,7 @@ exports.handler = async (event, context) => {
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
                 });
 
-                return { statusCode: 200, body: JSON.stringify({ success: true, sentCount: response.successCount, failureCount: response.failureCount, campaignId }) };
+                return jsonResponse(200, { success: true, sentCount: response.successCount, failureCount: response.failureCount, campaignId });
             }
         }
 
@@ -192,7 +193,14 @@ exports.handler = async (event, context) => {
             const settingsRef = db.collection('mail_automation_settings').doc(sellerId);
             if (action === 'STATUS') {
                 const snap = await settingsRef.get();
-                return { statusCode: 200, body: JSON.stringify({ success: true, settings: snap.exists ? snap.data() : null }) };
+                let settings = null;
+                if (snap.exists) {
+                    settings = snap.data();
+                    // SECURITY: Redact sensitive keys
+                    if (settings.activeApiKey) settings.activeApiKey = 'HIDDEN';
+                    if (settings.apiKey) settings.apiKey = 'HIDDEN';
+                }
+                return jsonResponse(200, { success: true, settings });
             }
             if (action === 'SETUP') {
                 const { email, enabled, dailyCron, recipients, template } = body;
@@ -213,7 +221,7 @@ exports.handler = async (event, context) => {
                     templatePayload: template || {},
                 }, { merge: true });
 
-                return { statusCode: 200, body: JSON.stringify({ success: true, message: "Mail settings saved" }) };
+                return jsonResponse(200, { success: true, message: "Mail settings saved" });
             }
             if (action === 'TEST') {
                 const { targetEmail, template } = body;
@@ -229,7 +237,7 @@ exports.handler = async (event, context) => {
                     })
                 });
                 const result = await res.json();
-                return { statusCode: res.status, body: JSON.stringify(result) };
+                return jsonResponse(res.status, result);
             }
         }
 
@@ -237,7 +245,7 @@ exports.handler = async (event, context) => {
         if (tool === 'webhook') {
             if (action === 'STATUS') {
                 const webhookUrl = `${protocol}://${host}/.netlify/functions/inbound-webhook?sid=${sellerId}`;
-                return { statusCode: 200, body: JSON.stringify({ success: true, webhookUrl }) };
+                return jsonResponse(200, { success: true, webhookUrl });
             }
             if (action === 'INBOX') {
                 const snap = await db.collection('webhook_inbox')
@@ -247,7 +255,7 @@ exports.handler = async (event, context) => {
                     .get();
                 const messages = [];
                 snap.forEach(doc => messages.push({ id: doc.id, ...doc.data(), receivedAt: doc.data().receivedAt?.toDate() }));
-                return { statusCode: 200, body: JSON.stringify({ success: true, messages }) };
+                return jsonResponse(200, { success: true, messages });
             }
         }
 
@@ -257,7 +265,7 @@ exports.handler = async (event, context) => {
                 const snap = await db.collection('ai_workspaces').where('ownerId', '==', sellerId).get();
                 const workspaces = [];
                 snap.forEach(doc => workspaces.push({ id: doc.id, ...doc.data() }));
-                return { statusCode: 200, body: JSON.stringify({ success: true, workspaces }) };
+                return jsonResponse(200, { success: true, workspaces });
             }
         }
 
@@ -267,11 +275,11 @@ exports.handler = async (event, context) => {
                 const snap = await db.collection('ai_mail_campaigns').where('userId', '==', sellerId).orderBy('createdAt', 'desc').get();
                 const campaigns = [];
                 snap.forEach(doc => campaigns.push({ id: doc.id, ...doc.data() }));
-                return { statusCode: 200, body: JSON.stringify({ success: true, campaigns }) };
+                return jsonResponse(200, { success: true, campaigns });
             }
             if (action === 'CREATE') {
                 const { name, email, goal, description, price, productId, productImage } = body;
-                if (!name || !email) return { statusCode: 400, body: JSON.stringify({ error: "Name and Email required" }) };
+                if (!name || !email) return jsonResponse(400, { success: false, error: "Name and Email required" });
 
                 const campaignId = 'CAMP_' + Date.now();
                 const campaignData = {
@@ -294,25 +302,20 @@ exports.handler = async (event, context) => {
 
                 await db.collection('ai_mail_campaigns').doc(campaignId).set(campaignData);
 
-                // Queue the campaign
                 fetch(`${protocol}://${host}/.netlify/functions/aiMailCampaignQueue`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ campaignId, userId: sellerId })
                 }).catch(() => {});
 
-                return { statusCode: 201, body: JSON.stringify({ success: true, campaignId }) };
+                return jsonResponse(201, { success: true, campaignId });
             }
         }
 
-        return { statusCode: 400, body: JSON.stringify({ error: "Invalid tool or action" }) };
+        return jsonResponse(400, { success: false, error: "Invalid tool or action" });
 
     } catch (error) {
         console.error("CLI Tools Manager Error:", error.message);
-        return {
-            statusCode: 500,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: error.message })
-        };
+        return jsonResponse(500, { success: false, error: error.message });
     }
 };

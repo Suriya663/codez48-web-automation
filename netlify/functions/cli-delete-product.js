@@ -34,6 +34,22 @@ const initAdmin = () => {
     }
 };
 
+const jsonResponse = (statusCode, data) => ({
+    statusCode,
+    headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(data)
+});
+
+const verifyApiKey = async (apiKey) => {
+    if (!apiKey) return null;
+    const keySnap = await db.collection('api_keys').doc(apiKey).get();
+    if (!keySnap.exists || keySnap.data().status !== 'ACTIVE') return null;
+    return keySnap.data().userId;
+};
+
 exports.handler = async (event, context) => {
     if (event.httpMethod === "OPTIONS") {
         return {
@@ -47,71 +63,45 @@ exports.handler = async (event, context) => {
     }
 
     if (event.httpMethod !== "POST" && event.httpMethod !== "DELETE") {
-        return { statusCode: 405, body: "Method Not Allowed" };
+        return jsonResponse(405, { success: false, error: "Method Not Allowed" });
     }
 
     if (!initAdmin() || !db) {
-        return { statusCode: 500, body: "Database unavailable" };
+        return jsonResponse(500, { success: false, error: "Database unavailable" });
     }
 
     try {
         const apiKey = event.headers['x-api-key'];
-        if (!apiKey) {
-            return {
-                statusCode: 401,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Authentication Required" })
-            };
+        const sellerId = await verifyApiKey(apiKey);
+
+        if (!sellerId) {
+            return jsonResponse(401, { success: false, error: "Authentication Required" });
         }
 
-        const keySnap = await db.collection('api_keys').doc(apiKey).get();
-        if (!keySnap.exists || keySnap.data().status !== 'ACTIVE') {
-            return {
-                statusCode: 403,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Invalid or inactive API Key." })
-            };
-        }
-
-        const sellerId = keySnap.data().userId;
         const body = JSON.parse(event.body);
         const { productId } = body;
 
         if (!productId) {
-            return {
-                statusCode: 400,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Product ID is required for deletion." })
-            };
+            return jsonResponse(400, { success: false, error: "Product ID is required for deletion." });
         }
 
         const productRef = db.collection('products').doc(productId);
         const productSnap = await productRef.get();
 
         if (!productSnap.exists) {
-            return {
-                statusCode: 404,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Product not found." })
-            };
+            return jsonResponse(404, { success: false, error: "Product not found." });
         }
 
         const productData = productSnap.data();
         if (productData.sellerId !== sellerId) {
-            return {
-                statusCode: 403,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Unauthorized: You do not own this product." })
-            };
+            return jsonResponse(403, { success: false, error: "Unauthorized: You do not own this product." });
         }
 
         await productRef.delete();
 
-        // Fetch Seller Info for Email
         const sellerSnap = await db.collection('sellers').doc(sellerId).get();
         const sellerInfo = sellerSnap.exists ? sellerSnap.data() : {};
 
-        // Trigger Notification
         const host = event.headers.host || 'codez48.netlify.app';
         const protocol = event.headers['x-forwarded-proto'] || 'https';
 
@@ -133,17 +123,9 @@ exports.handler = async (event, context) => {
             });
         } catch (e) {}
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: true, message: "Product deleted successfully.", productId })
-        };
+        return jsonResponse(200, { success: true, message: "Product deleted successfully.", productId });
 
     } catch (error) {
-        return {
-            statusCode: 500,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: error.message })
-        };
+        return jsonResponse(500, { success: false, error: error.message });
     }
 };

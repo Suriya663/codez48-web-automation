@@ -58,11 +58,7 @@ exports.handler = async (event, context) => {
         const { sellerId, password } = JSON.parse(event.body);
 
         if (!sellerId || !password) {
-            return {
-                statusCode: 400,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Validation Failed: 'sellerId' and 'password' are required." })
-            };
+            return jsonResponse(400, { success: false, error: "Validation Failed: 'sellerId' and 'password' are required." });
         }
 
         // 2. Search for Seller in 'sellers' or 'seller_requests'
@@ -77,11 +73,7 @@ exports.handler = async (event, context) => {
         }
 
         if (snap.empty) {
-            return {
-                statusCode: 401,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Authentication Failed: Merchant identity not found." })
-            };
+            return jsonResponse(401, { success: false, error: "Authentication Failed: Merchant identity not found." });
         }
 
         const sellerDoc = snap.docs[0];
@@ -89,11 +81,7 @@ exports.handler = async (event, context) => {
 
         // 3. Verify Password (Existing raw-string logic)
         if (sellerData.password !== password) {
-            return {
-                statusCode: 401,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                body: JSON.stringify({ success: false, error: "Authentication Failed: Invalid password." })
-            };
+            return jsonResponse(401, { success: false, error: "Authentication Failed: Invalid password." });
         }
 
         const userId = sellerDoc.id; // Usually same as sellerId but using doc ID for consistency
@@ -132,23 +120,24 @@ exports.handler = async (event, context) => {
             apiKey = keyId;
         }
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({
-                success: true,
-                message: "CLI Login Successful",
-                apiKey: apiKey,
-                brand: sellerData.brand || sellerData.username
-            })
-        };
+        return jsonResponse(200, {
+            success: true,
+            message: "CLI Login Successful",
+            apiKey: apiKey,
+            brand: sellerData.brand || sellerData.username
+        });
 
     } catch (error) {
         console.error("CLI Login Error:", error.message);
-        return {
-            statusCode: 500,
-            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            body: JSON.stringify({ success: false, error: "Internal Server Error: " + error.message })
-        };
+        return jsonResponse(500, { success: false, error: "Internal Server Error: " + error.message });
     }
 };
+
+const jsonResponse = (statusCode, data) => ({
+    statusCode,
+    headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify(data)
+});
