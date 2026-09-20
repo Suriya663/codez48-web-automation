@@ -1,67 +1,86 @@
-# Complete Codez48 CLI Support Plan
+# Codez48 Automation Engine Integration Plan
 
-Implementation plan for the full suite of CLI commands: login, add, list, update, and delete products, using the existing Firebase seller/password system and secure Netlify Functions.
+This plan outlines the implementation of the "Automation" layer for the Codez48 platform, allowing sellers to manage background business rules via the Website UI and CLI.
 
-## 1. CLI Authentication (Reused System)
-- **Login Function**: Reusing `cli-login.js` which verifies `sellerId` and `password` and returns an API Key.
-- **Session Key**: All other functions will require the `x-api-key` header to authenticate and identify the seller.
+## 1. Data Architecture (Firestore)
 
-## 2. Technical API Endpoints
+### [NEW] `service_automations` Collection
+Stores the configuration for background business rules.
+- `ownerId`: String (Seller UID derived from API Key)
+- `name`: String
+- `type`: `LOW_STOCK` | `UPTIME_CHECK` | `DAILY_REPORT`
+- `status`: `ACTIVE` | `PAUSED`
+- `config`: Map (e.g., `{ threshold: 5 }` or `{ url: "https://example.com" }`)
+- `lastRunAt`: Timestamp
+- `lastResult`: String
+- `createdAt`, `updatedAt`: Timestamps
 
-### [NEW] `cli-list-products`
-- **Method**: GET
-- **Logic**: Fetch all documents from the `products` collection where `sellerId` matches the authenticated user.
-- **Output**: JSON array of products for the CLI to display.
+### [NEW] `service_automation_logs` Collection
+Stores history of execution.
+- `automationId`: String
+- `ownerId`: String (For security filtering)
+- `type`: String
+- `timestamp`: Timestamp
+- `status`: `SUCCESS` | `WARNING` | `ERROR`
+- `details`: String (Detailed message or report summary)
 
-### [NEW] `cli-update-product`
-- **Method**: POST
-- **Logic**:
-  - Validate the `productId` belongs to the authenticated `sellerId`.
-  - Perform a partial update using the existing `updateDoc` schema from `developer.html`.
-  - Trigger the `SELLER_PRODUCT_UPDATED` notification email.
+---
 
-### [NEW] `cli-delete-product`
-- **Method**: POST (or DELETE)
-- **Logic**:
-  - Verify ownership of the `productId`.
-  - Remove the document from Firestore.
-  - Trigger the `SELLER_PRODUCT_DELETED` notification email.
+## 2. Backend Infrastructure (Netlify Functions)
 
-## 3. Product Schema Discovery
-Based on `seller/developer.html`, the CLI will support these fields:
+### [NEW] `cli-automation-manager.js`
+A unified endpoint for all CLI automation commands (List, Create, Toggle, Run, Logs).
+- **Security**: Validates `x-api-key` and enforces `ownerId` checks for every operation.
+- **Actions**:
+    - `LIST`: Return user's automations.
+    - `CREATE`: Validate schema for specific type and save.
+    - `TOGGLE`: Switch status between `ACTIVE` and `PAUSED`.
+    - `LOGS`: Fetch recent 10 logs for a specific ID.
+    - `RUN`: Trigger the logic immediately and return result.
 
-| Field | CLI Question | Required? |
-| :--- | :--- | :--- |
-| `name` | What is the product name? | **Yes** |
-| `price` | Enter selling price (INR): | **Yes** |
-| `mrp` | Enter MRP (INR): | No (Defaults to Price) |
-| `category` | Enter category (e.g. Electronics): | No (Defaults to General) |
-| `stock` | Enter initial stock quantity: | No (Defaults to 0) |
-| `description` | Enter product description: | No |
-| `image` | Enter primary image URL: | No |
-| `type` | Product type (physical/digital/course): | No (Defaults to physical) |
+### [NEW] `service-automation-cron.js` (Scheduled Function)
+Runs periodically (e.g., Every 4 hours) to process all `ACTIVE` automations in the background.
+- **Low Stock Sentinel**: Queries `products` collection for the seller and sends alerts if thresholds are met.
+- **Uptime Guardian**: Performs `fetch` checks on target URLs.
+- **Daily Business Report**: Aggregates `orders` and `external_sites` data.
 
-## 4. Secure Backend Functions
-- **[NEW] [cli-list-products.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-list-products.js)**
-- **[NEW] [cli-update-product.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-update-product.js)**
-- **[NEW] [cli-delete-product.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-delete-product.js)**
+---
+
+## 3. Website Integration
+
+### [MODIFY] [tools/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/tools/index.html)
+- Integrate a new "Automation Engine" card and workspace.
+- Provide a dashboard to view active rules, recent logs, and a "Run Now" button.
+
+### [NEW] [js/automation-tool.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/automation-tool.js)
+- Handle the UI logic for creating and managing rules.
+- Real-time sync with `service_automations` collection.
+
+---
+
+## 4. CLI Extension
+
+### [MODIFY] `cli.js`
+- **New Commands**:
+    - `codez48 automation`: Help.
+    - `codez48 automation list`: Display active rules.
+    - `codez48 automation create`: Interactive wizard.
+    - `codez48 automation run <id>`: Immediate execution.
+    - `codez48 automation enable/disable <id>`: State management.
+    - `codez48 automation logs <id>`: History view.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **API Key Persistence**:
-> - After the CLI user logs in via `cli-login`, your separate CLI tool must store the returned `apiKey` locally (e.g., in a `.codez48cfg` file).
-> - Every subsequent request must include: `x-api-key: YOUR_KEY`.
+> **Data Scope**: The "Daily Business Report" will strictly use existing data from your `orders` and `external_sites` collections. It will not track data that isn't already being collected.
 
-> [!CAUTION]
-> **Data Isolation**:
-> - My implementation ensures that a user with a valid API key **cannot** list, update, or delete products belonging to another `sellerId`.
+> [!WARNING]
+> **API Key Usage**: All CLI automation commands will consume API credits based on your current plan, as they utilize secure Netlify Function calls.
 
 ## Verification Plan
-
-### Manual Tests
-1. **List Test**: Call `/cli-list-products` with a valid key. Verify it only returns YOUR products.
-2. **Update Test**: Update a product price via the API and check the website storefront instantly.
-3. **Delete Test**: Delete a test product via CLI and verify it disappears from `developer.html` dashboard.
+1. **Security Isolation**: Verify that Seller A cannot view or trigger Seller B's automation using a known ID.
+2. **Alert Reliability**: Trigger a "Low Stock" event manually and verify that the notification is received.
+3. **CLI Sync**: Create an automation via CLI and verify it appears in the Website Tools UI instantly.
+4. **Log Integrity**: Verify that logs do not contain sensitive metadata.

@@ -1,20 +1,14 @@
 {
-  "name": "codez48-tracker",
-  "version": "2.6.2",
-  "description": "Website Tracker and Playwright Browser Worker Service",
-  "main": "playwright-worker/server.js",
-  "scripts": {
-    "start": "node playwright-worker/server.js",
-    "build": "echo 'No build step required'"
+  "name": "codez48-cli",
+  "version": "1.1.0",
+  "description": "Codez48 Official CLI for Product & Automation Management",
+  "main": "cli.js",
+  "bin": {
+    "codez48": "./cli.js"
   },
-  "dependencies": {
-    "express": "^4.18.3",
-    "playwright": "^1.42.1",
-    "ws": "^8.16.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "firebase-admin": "^12.0.0",
-    "node-fetch": "^2.7.0",
-    "nodemailer": "^6.9.10"
-  }
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Codez48 Architect",
+  "license": "ISC"
 }
