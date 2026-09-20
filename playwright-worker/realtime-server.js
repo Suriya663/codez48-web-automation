@@ -140,10 +140,6 @@ class RealtimeServer {
         });
     }
 
-    handleUpgrade(request, socket, head) {
-        // Not used with direct server attachment
-    }
-
     broadcastToRoom(roomCode, payload, excludeWs = null) {
         const clients = this.rooms.get(roomCode);
         if (!clients) return;
