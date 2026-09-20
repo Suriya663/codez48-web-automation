@@ -41,10 +41,11 @@ class RealtimeServer {
     }
 
     attachWebSocketServer(server) {
-        this.wss = new WebSocket.Server({ server, path: '/ws' });
+        // Change: No path restriction. Listen on root (/) for best proxy compatibility.
+        this.wss = new WebSocket.Server({ server });
 
         this.wss.on('connection', (ws, req) => {
-            console.log('[REALTIME SERVER] Client connected to WebSocket.');
+            console.log(`[REALTIME SERVER] Client connected. Path: ${req.url}`);
 
             ws.on('message', (message) => {
                 try {
@@ -53,7 +54,7 @@ class RealtimeServer {
                     // --- 1. Automation Subscription ---
                     if (msg.type === 'SUBSCRIBE' && msg.runId) {
                         this.clients.set(ws, { type: 'automation', runId: msg.runId, userId: msg.userId || 'guest' });
-                        console.log(`[REALTIME SERVER] Client subscribed to run: ${msg.runId}`);
+                        console.log(`[REALTIME SERVER] Subscribed to run: ${msg.runId}`);
                         ws.send(JSON.stringify({ type: 'SUBSCRIBED', runId: msg.runId }));
                     }
 
@@ -107,7 +108,7 @@ class RealtimeServer {
                         }
                     }
                 } catch (e) {
-                    console.error('[REALTIME SERVER] Message processing error:', e.message);
+                    console.error('[REALTIME SERVER] Message error:', e.message);
                 }
             });
 
@@ -131,7 +132,11 @@ class RealtimeServer {
             });
         });
 
-        console.log('[REALTIME SERVER] WebSocket server attached on /ws endpoint.');
+        console.log('[REALTIME SERVER] WebSocket server attached to root (/).');
+    }
+
+    handleUpgrade(request, socket, head) {
+        // Not used with direct server attachment
     }
 
     broadcastToRoom(roomCode, payload, excludeWs = null) {

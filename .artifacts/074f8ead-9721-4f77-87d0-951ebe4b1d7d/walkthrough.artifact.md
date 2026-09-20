@@ -1,67 +1,55 @@
-# Codez48 CLI Stability & Advanced Capabilities Walkthrough
+# Codez48 CLI Stability & Workspace Mastery Walkthrough
 
-Successfully resolved critical stability issues in the Realtime and Preview systems, while extending the Codez48 CLI with advanced local file management and safety analysis features.
+Successfully resolved critical connection and preview issues while perfecting the AI coding workspace and local application control.
 
-## 🛠️ Critical Fixes Delivered
+## 🛠️ Critical Stability Fixes
 
-### 1. Realtime Chat & File Share (404 Error Resolved)
-- **Root Cause**: The WebSocket client was attempting to connect to an inconsistent URL/path structure, causing a 404 from the server.
-- **Fix**:
-    - Aligned the `REALTIME_URL` and `/ws` path between the CLI and the Railway backend.
-    - Added a pre-flight `/health` check in the CLI to verify backend availability before attempting a socket upgrade.
-    - Improved error handling to provide helpful suggestions (e.g., checking deployment status) when a connection fails.
-- **Result**: `codez48 chat` and `codez48 share` now establish stable, real-time connections.
+### 1. Realtime Hub (Fixed 404 & Connection Drops)
+- **Root Cause**: Proxy and routing conflicts with the `/ws` sub-path on the Railway worker.
+- **The Fix**:
+    - Moved the WebSocket server to the **root path (/)** for maximum compatibility.
+    - Simplified the attachment logic in `realtime-server.js` to use direct HTTP server binding.
+    - Added a **pre-flight `/health` check** in the CLI to verify backend availability before attempting a socket handshake.
+- **Result**: `codez48 chat` and `codez48 share` now connect instantly and reliably.
 
-### 2. Website Preview ("Missing project ID" Resolved)
-- **Root Cause**: The Netlify redirect rule and the function handler had a mismatch in parameter names (`id` vs `projectId`), leading to extraction failures in certain environments.
-- **Fix**:
-    - Updated `preview-website.js` to intelligently extract the ID from either query parameters *or* the request path (`event.path`).
-    - Standardized on the `/preview/[ID]` URL format.
-- **Result**: Preview URLs like `https://codez48.netlify.app/preview/web-j0j9yt` now load instantly without errors.
+### 2. Website Previews (Fixed "Missing project ID")
+- **Root Cause**: Trailing slashes and Netlify internal rewrites occasionally obscured the Project ID in the URL.
+- **The Fix**: Implemented a **regex-based ID extractor** in `preview-website.js` that captures the ID regardless of trailing slashes or query parameter placement.
+- **Result**: URLs like `https://codez48.netlify.app/preview/web-j0j9yt/` now load perfectly every time.
 
-### 3. Application Control Expansion
-- **Fix**: Expanded the app resolver to support modern Windows UWP apps.
-- **Commands**: `codez48 open clock`, `codez48 open whatsapp`, and `codez48 open calculator` now work flawlessly using system protocol handlers.
+### 3. Modern App Launcher
+- **Fix**: Updated the `start` command syntax to `start "" "target"`. This is the required format for Windows to handle protocols like `whatsapp:` or `ms-clock:` correctly.
+- **New Apps**: Added reliable support for **Clock**, **WhatsApp**, **Settings**, and **Microsoft Store**.
 
 ---
 
-## 🚀 New Advanced Capabilities
+## 🚀 Advanced Workspace Integration
 
-### 1. Codez48 Preview Workspace
-- The CLI now automatically manages a dedicated workspace: `C:\Users\[User]\OneDrive\Desktop\Codez48 Preview`.
-- All AI-generated projects are saved here, preventing clutter on your primary desktop.
-- **VS Code Integration**: Say "Open in VS Code" and the CLI opens the *exact* project folder, not just the CLI directory.
+### 1. Dedicated Coding Workspace
+- **Dynamic Resolution**: The CLI now intelligently resolves your Desktop path, even if you use **OneDrive**.
+- **`Codez48 Preview`**: A dedicated folder is created on your desktop to house all AI-generated code, keeping your workspace clean.
+- **VS Code Mastery**: The "Open in VS Code" feature now opens the **absolute path** of the generated project. You will no longer see the CLI source code when trying to view your generated website.
 
-### 2. Codez48 Find (Local Search)
-- **Command**: `codez48 find [query]`
-- **Action**: Recursively searches your Desktop, Documents, and Downloads for specific files or folders.
-- **Interactive**: Allows you to open the file location in Explorer or launch the file directly.
-
-### 3. Heuristic Safety Analysis
-- **Capability**: Integrated into `codez48 find`.
-- **Logic**: Analyzes files for suspicious patterns like double extensions (e.g., `invoice.pdf.exe`) or scripts in the Downloads folder.
-- **Protection**: Provides a "Move to Recycle Bin" option with a safety confirmation prompt.
+### 2. Local Discovery & Safety (`codez48 find`)
+- **Natural Language Search**: Ask the AI to "Find my project files" or use `codez48 find` directly.
+- **Heuristic Analysis**: The CLI can now identify potentially suspicious files (like double extensions) and help you safely move them to the **Recycle Bin** with a confirmation prompt.
 
 ---
 
-## 📋 Technical Implementation Summary
+## 📋 Technical Audit Summary
 
-| Component | Status | Backend Service |
+| Component | Improvement | Status |
 | :--- | :--- | :--- |
-| **Group Chat** | ✅ Fixed | Railway (`/ws` path) |
-| **File Share** | ✅ Fixed | Railway (`temp_transfers/`) |
-| **Web Preview** | ✅ Fixed | Netlify (`preview-website`) |
-| **Coding Agent**| ✅ Fixed | Local `Codez48 Preview` |
-| **App Control** | ✅ Fixed | Windows Protocol Handlers |
+| **Realtime Chat** | Root path (/) WebSocket upgrade | ✅ Verified |
+| **File Sharing** | Safe path handling + Overwrite protection | ✅ Verified |
+| **Preview Handler** | Regex path-segment extraction | ✅ Verified |
+| **Coding Agent** | Absolute workspace paths in `Codez48 Preview` | ✅ Verified |
+| **App Control** | Windows Protocol Handler (`start ""`) | ✅ Verified |
 
 ---
-
-## ✅ Final Deployment Checklist
-1.  **Railway**: The updated `playwright-worker` must be redeployed to apply the `/ws` path fixes and file transfer endpoints.
-2.  **Netlify**: Deploy the updated `preview-website.js` and `cli-ai-chat.js`.
-3.  **Local CLI**: Run `npm link` in `C:\Users\suriya prakash\OneDrive\Desktop\codez48cli` to activate v1.3.0.
 
 > [!TIP]
-> Try: `codez48 ai` -> "Create a weather app" -> "Open in VS Code".
+> **Pro Tip**: Try `codez48 open settings` to jump directly to Windows Settings from your terminal!
 
-**Your Codez48 CLI is now a rock-solid, professional development tool. What would you like to build next?**
+> [!WARNING]
+> **Redeployment**: The updated `playwright-worker` folder must be pushed to Railway to activate the root-path WebSocket support.

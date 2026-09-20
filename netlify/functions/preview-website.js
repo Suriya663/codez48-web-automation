@@ -38,13 +38,12 @@ exports.handler = async (event, context) => {
     let id = event.queryStringParameters.id || event.queryStringParameters.projectId;
 
     if (!id && event.path) {
-        // Fallback: Extract from path (e.g. /preview/web-123 -> web-123)
-        const parts = event.path.split('/');
-        // Usually the last part if the URL is /preview/ID
-        id = parts[parts.length - 1];
-
-        // Ensure it's not the base 'preview' path
-        if (id === 'preview' || id === '') id = null;
+        // Fallback: Use Regex to find the ID segment in the path (handles trailing slashes)
+        // Matches /preview/ID or /preview/ID/
+        const match = event.path.match(/\/preview\/([^\/]+)/);
+        if (match) {
+            id = match[1];
+        }
     }
 
     if (!id) {
@@ -58,7 +57,7 @@ exports.handler = async (event, context) => {
                         <p>No project ID was detected in the request URL.</p>
                         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
                         <p style="font-size: 0.8rem; color: #999;">Request Path: ${event.path}</p>
-                        <p style="font-size: 0.8rem; color: #999;">Help: Ensure the URL follows /preview/[ID]</p>
+                        <p style="font-size: 0.8rem; color: #999;">Help: Ensure the URL follows /preview/PROJECT_ID</p>
                     </body>
                 </html>
             `
