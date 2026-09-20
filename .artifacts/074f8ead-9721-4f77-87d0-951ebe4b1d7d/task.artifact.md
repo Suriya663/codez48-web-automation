@@ -1,27 +1,10 @@
-- [x] **Phase 26: Automation Engine Implementation**
-    - [x] Create Firestore collections: `service_automations`, `service_automation_logs`
-    - [x] Implement `netlify/functions/cli-automation-manager.js`
-    - [x] Implement `netlify/functions/service-automation-cron.js`
-    - [x] Add "Automation Engine" to `tools/index.html`
-    - [x] Create `js/automation-tool.js` for frontend logic
-    - [x] Update `cli.js` with full `codez48 automation` command set
-    - [x] Finalize implementation report and updated technical specs
-- [x] **Phase 29: CLI Documentation Website Integration**
-    - [x] Add "Command Line" card to `tools/index.html`
-    - [x] Add "Command Line" to `index.html` navigation (Desktop & Mobile)
-- [x] **Phase 30: CLI Documentation Page Implementation**
-    - [x] Create `cli.html` with premium design
-    - [x] Implement visual terminal component
-    - [x] Add installation and authentication sections
-    - [x] Document Product Management commands
-    - [x] Document Advanced Tool commands (Automation, Tracker, etc.)
-    - [x] Implement Command Reference table with copy buttons
-- [x] **Phase 31: Verification & Final Audit**
-    - [x] Test all copy buttons
-    - [x] Perform responsive design audit
-    - [x] Ensure no secret exposure in page source
-- [ ] **Phase 32: CLI AI Chat Implementation**
-    - [x] Implement `netlify/functions/cli-ai-chat.js`
-    - [x] Add `handleAiChat` interactive loop to `cli.js`
-    - [x] Update `cli.html` documentation and terminal visual
-    - [ ] Local verification of AI conversation flow
+- [ ] **Phase 35: Documentation Update (cli.html)**
+    - [x] Research structure of `cli.html`
+    - [ ] Rename/Expand "Quick Start" to "Install Codez48 CLI"
+    - [ ] Implement Step 1: Node.js verification
+    - [ ] Implement Step 2: Global npm installation
+    - [ ] Implement Step 3: Running first commands
+    - [ ] Implement Step 4: Windows PATH troubleshooting section
+    - [ ] Implement Step 5: Verification check
+    - [ ] Implement Step 6: Update instructions
+    - [ ] Verify copy buttons and responsive layout

@@ -1,55 +1,42 @@
-# Codez48 CLI Stability & Workspace Mastery Walkthrough
+# Beginner-Friendly CLI Installation Guide Walkthrough
 
-Successfully resolved critical connection and preview issues while perfecting the AI coding workspace and local application control.
+Successfully updated the `cli.html` documentation to include a comprehensive, beginner-friendly installation and troubleshooting guide.
 
-## 🛠️ Critical Stability Fixes
+## 🛠️ Key Improvements
 
-### 1. Realtime Hub (Fixed 404 & Connection Drops)
-- **Root Cause**: Proxy and routing conflicts with the `/ws` sub-path on the Railway worker.
-- **The Fix**:
-    - Moved the WebSocket server to the **root path (/)** for maximum compatibility.
-    - Simplified the attachment logic in `realtime-server.js` to use direct HTTP server binding.
-    - Added a **pre-flight `/health` check** in the CLI to verify backend availability before attempting a socket handshake.
-- **Result**: `codez48 chat` and `codez48 share` now connect instantly and reliably.
+### 1. New "Install Codez48 CLI" Section
+- Replaced the basic "Quick Start Guide" with a detailed 6-step process.
+- **Step 1**: Node.js & npm verification instructions.
+- **Step 2**: Clear global installation command (`npm install -g codez48-cli`).
+- **Step 3**: Launch instructions and command examples (`ai`, `chat`, `share`, `login`).
 
-### 2. Website Previews (Fixed "Missing project ID")
-- **Root Cause**: Trailing slashes and Netlify internal rewrites occasionally obscured the Project ID in the URL.
-- **The Fix**: Implemented a **regex-based ID extractor** in `preview-website.js` that captures the ID regardless of trailing slashes or query parameter placement.
-- **Result**: URLs like `https://codez48.netlify.app/preview/web-j0j9yt/` now load perfectly every time.
+### 2. Windows Troubleshooting Card
+- Added a dedicated section for fixing the "codez48 is not recognized" error.
+- Provided **permanent PATH setup** instructions for the Windows Environment Variables UI.
+- Provided a **temporary PowerShell fix** for immediate use.
+- Uses dynamic path resolution instructions (e.g., mentioning `npm config get prefix`) to avoid hardcoding usernames.
 
-### 3. Modern App Launcher
-- **Fix**: Updated the `start` command syntax to `start "" "target"`. This is the required format for Windows to handle protocols like `whatsapp:` or `ms-clock:` correctly.
-- **New Apps**: Added reliable support for **Clock**, **WhatsApp**, **Settings**, and **Microsoft Store**.
-
----
-
-## 🚀 Advanced Workspace Integration
-
-### 1. Dedicated Coding Workspace
-- **Dynamic Resolution**: The CLI now intelligently resolves your Desktop path, even if you use **OneDrive**.
-- **`Codez48 Preview`**: A dedicated folder is created on your desktop to house all AI-generated code, keeping your workspace clean.
-- **VS Code Mastery**: The "Open in VS Code" feature now opens the **absolute path** of the generated project. You will no longer see the CLI source code when trying to view your generated website.
-
-### 2. Local Discovery & Safety (`codez48 find`)
-- **Natural Language Search**: Ask the AI to "Find my project files" or use `codez48 find` directly.
-- **Heuristic Analysis**: The CLI can now identify potentially suspicious files (like double extensions) and help you safely move them to the **Recycle Bin** with a confirmation prompt.
+### 3. UI/UX Enhancements
+- **Terminal Design**: All commands are presented in dark-themed, professional code blocks.
+- **Copy Buttons**: Every command block includes an interactive "Copy" button for a frictionless experience.
+- **Responsive Layout**: The guide uses a grid system that scales from single-column on mobile to structured layouts on desktop.
 
 ---
 
-## 📋 Technical Audit Summary
+## 📋 Technical Audit
 
-| Component | Improvement | Status |
-| :--- | :--- | :--- |
-| **Realtime Chat** | Root path (/) WebSocket upgrade | ✅ Verified |
-| **File Sharing** | Safe path handling + Overwrite protection | ✅ Verified |
-| **Preview Handler** | Regex path-segment extraction | ✅ Verified |
-| **Coding Agent** | Absolute workspace paths in `Codez48 Preview` | ✅ Verified |
-| **App Control** | Windows Protocol Handler (`start ""`) | ✅ Verified |
+| Check | Result |
+| :--- | :--- |
+| **File Modified** | `cli.html` |
+| **New Section** | `Install Codez48 CLI` |
+| **Troubleshooting** | Included (Windows PATH fix) |
+| **Secrets Protection** | No API keys or backend URLs exposed |
+| **Logic Integrity** | No changes made to `.js` or backend functions |
 
 ---
 
 > [!TIP]
-> **Pro Tip**: Try `codez48 open settings` to jump directly to Windows Settings from your terminal!
+> Beginners can now set up the CLI and resolve path issues entirely through the UI without needing external help.
 
-> [!WARNING]
-> **Redeployment**: The updated `playwright-worker` folder must be pushed to Railway to activate the root-path WebSocket support.
+> [!IMPORTANT]
+> The documentation is now aligned with the latest version **v1.3.0** of the CLI.
