@@ -1,6 +1,5 @@
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
-const { getSubscriptionExpiredTemplate, getSubscriptionRenewedTemplate } = require('./subscriptionExpiredTemplate.js');
 
 let isInitialized = false;
 let db = null;
@@ -40,6 +39,9 @@ const escapeHtml = (str) => {
 
 /**
  * NETLIFY SCHEDULED BACKGROUND CRON FUNCTION (0 9 * * *)
+ * 1. Automatically dispatches active daily email schedules every 24 hours without requiring user login.
+ * 2. Automatically processes 24-hour merchant wallet daily fee deductions (₹83 / ₹133).
+ * 3. Automatically credits pro-rata daily developer commissions (₹16.67/day) to referring developers.
  */
 exports.handler = async (event, context) => {
     console.log("[DAILY CRON ENGINE] Starting 24-hour background execution...");
@@ -51,7 +53,6 @@ exports.handler = async (event, context) => {
 
     try {
         const now = new Date();
-        const todayDateStr = now.toISOString().split('T')[0];
 
         // Configure default SMTP Transporter
         let smtpHost = process.env.SMTP_HOST;
@@ -66,13 +67,14 @@ exports.handler = async (event, context) => {
             auth: { user: smtpUser, pass: smtpPass }
         });
 
-        const smtpFrom = process.env.SMTP_FROM || smtpUser || 'CODEZ48 Alerts <no-reply@codez48.io>';
-
         // ----------------------------------------------------
         // 1. PROCESS DAILY EMAIL AUTOMATION CAMPAIGN SCHEDULES
         // ----------------------------------------------------
         const q = db.collection('mail_automation_schedules').where('enableDailyCron', '==', true);
         const snapshot = await q.get();
+
+        let processedSchedules = 0;
+        let totalEmailsDispatched = 0;
 
         if (!snapshot.empty) {
             for (const docSnap of snapshot.docs) {
@@ -89,6 +91,7 @@ exports.handler = async (event, context) => {
                 let activeTransporter = defaultTransporter;
                 let activeUser = smtpUser;
 
+                // Check Pro Custom SMTP
                 if (siteId) {
                     try {
                         const customSnap = await db.collection('user_custom_smtp').doc(siteId).get();
@@ -97,7 +100,9 @@ exports.handler = async (event, context) => {
                             if (cData.customSmtpUser && cData.customSmtpPass) {
                                 activeUser = cData.customSmtpUser;
                                 activeTransporter = nodemailer.createTransport({
-                                    host: smtpHost, port: smtpPort, secure: smtpPort === 465,
+                                    host: smtpHost,
+                                    port: smtpPort,
+                                    secure: smtpPort === 465,
                                     auth: { user: cData.customSmtpUser, pass: cData.customSmtpPass }
                                 });
                             }
@@ -105,14 +110,18 @@ exports.handler = async (event, context) => {
                     } catch (e) {}
                 }
 
+                // Calculate API Key Quota Limit
                 let allowedLimit = 20;
                 if (activeApiKey) {
                     try {
                         const keySnap = await db.collection('api_keys').doc(activeApiKey).get();
                         if (keySnap.exists) {
                             const kData = keySnap.data();
-                            if (kData.planType === 'PRO_SUBSCRIPTION') allowedLimit = 60;
-                            else allowedLimit = Math.min(20, (kData.tokensRemaining || 10) * 2);
+                            if (kData.planType === 'PRO_SUBSCRIPTION') {
+                                allowedLimit = 60;
+                            } else {
+                                allowedLimit = Math.min(20, (kData.tokensRemaining || 10) * 2);
+                            }
                         }
                     } catch (e) {}
                 }
@@ -125,7 +134,7 @@ exports.handler = async (event, context) => {
                         const safeHeader = escapeHtml(templatePayload.headerText || 'Welcome to CODEZ48');
                         const safeDesc = escapeHtml(templatePayload.businessDescription || 'Welcome to CODZ48! You can create your website and Android application in just one minute.');
                         const safeCtaText = escapeHtml(templatePayload.ctaText || 'Contact Us Now');
-                        const safeCtaUrl = escapeHtml(templatePayload.ctaUrl || 'https://codez48.netlify.app/api-keys.html');
+                        const safeCtaUrl = escapeHtml(templatePayload.ctaUrl || 'https://codez48.netlify.app/about.html');
 
                         await activeTransporter.sendMail({
                             from: process.env.SMTP_FROM || activeUser,
@@ -157,148 +166,196 @@ exports.handler = async (event, context) => {
                     dailySentToday: cronSentCount,
                     totalCronRuns: admin.firestore.FieldValue.increment(1)
                 });
+
+                processedSchedules++;
+                totalEmailsDispatched += cronSentCount;
             }
         }
 
         // ----------------------------------------------------
-        // 2. PROCESS MONTHLY SUBSCRIPTION RENEWALS (ELITE NODES)
-        // ----------------------------------------------------
-        const expiredSellersSnap = await db.collection('sellers').where('isSubscribed', '==', true).get();
-
-        for (const sDoc of expiredSellersSnap.docs) {
-            const seller = sDoc.data();
-            if (!seller.subscriptionExpiresAt) continue;
-
-            const expiry = new Date(seller.subscriptionExpiresAt);
-            if (now > expiry) {
-                const renewalPrice = 4000;
-                const currentWallet = Number(seller.walletBalance) || 0;
-
-                if (currentWallet >= renewalPrice) {
-                    const newBalance = currentWallet - renewalPrice;
-                    const newExpiry = new Date();
-                    newExpiry.setDate(newExpiry.getDate() + 30);
-
-                    await sDoc.ref.update({
-                        walletBalance: newBalance,
-                        subscriptionExpiresAt: newExpiry.toISOString(),
-                        status: 'active', // Ensure status is set back to active on successful renewal
-                        lastRenewedAt: admin.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    await db.collection('wallet_transactions').add({
-                        sellerId: sDoc.id, type: 'MONTHLY_AUTO_RENEWAL', amount: -renewalPrice,
-                        remainingBalance: newBalance, description: `Elite Node Monthly Renewal (₹4,000)`,
-                        timestamp: admin.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    if (seller.email) {
-                        await defaultTransporter.sendMail({
-                            from: smtpFrom, to: seller.email,
-                            subject: `✅ Elite Subscription Renewed Successfully`,
-                            html: getSubscriptionRenewedTemplate({ brandName: seller.brand || sDoc.id, type: 'Elite Node Subscription', newExpiryDate: newExpiry, amount: renewalPrice })
-                        });
-                    }
-                } else {
-                    await sDoc.ref.update({ status: 'suspended_insufficient_funds', isSubscribed: false });
-                    if (seller.email) {
-                        await defaultTransporter.sendMail({
-                            from: smtpFrom, to: seller.email,
-                            subject: `⚠️ Important: Your Elite Subscription has Expired`,
-                            html: getSubscriptionExpiredTemplate({ brandName: seller.brand || sDoc.id, type: 'Elite Node Subscription', expiryDate: expiry })
-                        });
-                    }
-                }
-            }
-        }
-
-        // ----------------------------------------------------
-        // 3. PROCESS PRO API KEY RENEWALS
-        // ----------------------------------------------------
-        const expiredKeysSnap = await db.collection('api_keys').where('planType', '==', 'PRO_SUBSCRIPTION').where('status', '==', 'ACTIVE').get();
-
-        for (const kDoc of expiredKeysSnap.docs) {
-            const key = kDoc.data();
-            if (!key.expiresAt) continue;
-
-            const expiry = new Date(key.expiresAt);
-            if (now > expiry) {
-                const renewalPrice = 99;
-                const uDoc = await db.collection('sellers').doc(key.userId).get();
-                if (!uDoc.exists) continue;
-
-                const user = uDoc.data();
-                const currentWallet = Number(user.walletBalance) || 0;
-
-                if (currentWallet >= renewalPrice) {
-                    const newBalance = currentWallet - renewalPrice;
-                    const newExpiry = new Date();
-                    newExpiry.setDate(newExpiry.getDate() + 30);
-
-                    await kDoc.ref.update({
-                        expiresAt: newExpiry.toISOString(),
-                        status: 'ACTIVE',
-                        lastRenewedAt: admin.firestore.FieldValue.serverTimestamp()
-                    });
-                    await uDoc.ref.update({ walletBalance: newBalance });
-
-                    await db.collection('wallet_transactions').add({
-                        sellerId: key.userId, type: 'PRO_API_AUTO_RENEWAL', amount: -renewalPrice,
-                        remainingBalance: newBalance, description: `Pro API Key Monthly Renewal (₹99)`,
-                        timestamp: admin.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    if (user.email) {
-                        await defaultTransporter.sendMail({
-                            from: smtpFrom, to: user.email,
-                            subject: `✅ Pro API Subscription Renewed`,
-                            html: getSubscriptionRenewedTemplate({ brandName: user.brand || key.userId, type: 'Pro API Subscription', newExpiryDate: newExpiry, amount: renewalPrice })
-                        });
-                    }
-                } else {
-                    await kDoc.ref.update({ status: 'EXPIRED' });
-                    if (user.email) {
-                        await defaultTransporter.sendMail({
-                            from: smtpFrom, to: user.email,
-                            subject: `⚠️ Your Pro API Subscription has Expired`,
-                            html: getSubscriptionExpiredTemplate({ brandName: user.brand || key.userId, type: 'Pro API Subscription', expiryDate: expiry })
-                        });
-                    }
-                }
-            }
-        }
-
-        // ----------------------------------------------------
-        // 4. PROCESS MERCHANT WALLET DAILY DEDUCTIONS
+        // 2. PROCESS MERCHANT WALLET DAILY DEDUCTIONS & DEVELOPER PRO-RATA COMMISSIONS
         // ----------------------------------------------------
         const sellersSnap = await db.collection('sellers').where('status', '==', 'active').get();
+        let walletDeductedCount = 0;
+        let pausedCount = 0;
+        let devCommissionsCredited = 0;
+
+        // Using YYYY-MM-DD for daily idempotency string
+        const todayDateStr = now.toISOString().split('T')[0];
+
         for (const sDoc of sellersSnap.docs) {
             const seller = sDoc.data();
             const sId = sDoc.id;
+
             const dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
             const currentWallet = Number(seller.walletBalance) || 0;
-            const idempotencyKey = `DAILY_FEE_${sId}_${todayDateStr}`;
 
+            // Strict Idempotency Check: Did we already process this seller today?
+            const idempotencyKey = `DAILY_FEE_${sId}_${todayDateStr}`;
             const existingTxSnap = await db.collection('wallet_transactions').where('idempotencyKey', '==', idempotencyKey).get();
-            if (!existingTxSnap.empty) continue;
+
+            if (!existingTxSnap.empty) {
+                console.log(`[IDEMPOTENCY SKIP] Seller ${sId} already charged for ${todayDateStr}.`);
+                continue;
+            }
 
             if (currentWallet >= dailyFee) {
                 const newBalance = currentWallet - dailyFee;
-                await sDoc.ref.update({ walletBalance: newBalance, status: 'active', lastActivatedAt: admin.firestore.FieldValue.serverTimestamp() });
+                await sDoc.ref.update({
+                    walletBalance: newBalance,
+                    status: 'active',
+                    lastActivatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+
                 await db.collection('wallet_transactions').add({
-                    sellerId: sId, type: 'DAILY_AUTO_DEDUCTION', amount: -dailyFee, remainingBalance: newBalance,
-                    idempotencyKey: idempotencyKey, description: `24-Hour Website Activation Fee (${seller.tier || 'Starter'})`,
+                    sellerId: sId,
+                    type: 'DAILY_AUTO_DEDUCTION',
+                    amount: -dailyFee,
+                    remainingBalance: newBalance,
+                    idempotencyKey: idempotencyKey,
+                    description: `24-Hour Website Activation Fee (${seller.tier || 'Starter'})`,
                     timestamp: admin.firestore.FieldValue.serverTimestamp()
                 });
-            } else {
-                await sDoc.ref.update({ status: 'deactivated_insufficient_funds' });
+
+                walletDeductedCount++;
+
+                // Trigger Black & White Email Module
+                try {
+                    await fetch(`https://${event.headers.host || 'codez48.netlify.app'}/.netlify/functions/dailyAccountActive`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'DAILY_ACCOUNT_ACTIVATED',
+                            sellerId: sId,
+                            email: seller.email,
+                            brandName: seller.brand || seller.username || 'Merchant',
+                            chargeAmount: dailyFee,
+                            remainingBalance: newBalance,
+                            date: todayDateStr,
+                            alias: seller.customUrl || seller.username || sId
+                        })
+                    });
+                } catch(e) {}
+
+                    // ----------------------------------------------------
+                    // 3. PRO-RATA DEVELOPER DAILY COMMISSION (₹16.67/DAY)
+                    // ----------------------------------------------------
+                    if (seller.referredBy) {
+                        try {
+                            const devQuery = db.collection('dev_prog_users').where('referralCode', '==', seller.referredBy);
+                            const devSnap = await devQuery.get();
+
+                            if (!devSnap.empty) {
+                                const devDoc = devSnap.docs[0];
+                                const devData = devDoc.data();
+                                const dailyCommissionShare = 16.67; // Pro-rata share of ₹500 over 30 days
+
+                                await devDoc.ref.update({
+                                    walletBalance: admin.firestore.FieldValue.increment(dailyCommissionShare),
+                                    totalEarned: admin.firestore.FieldValue.increment(dailyCommissionShare)
+                                });
+
+                                await db.collection('dev_prog_earnings_log').add({
+                                    developerEmail: devData.email,
+                                    referralCode: seller.referredBy,
+                                    sellerId: sId,
+                                    sellerBrand: seller.brand || seller.username || 'Merchant',
+                                    type: 'PRO_RATA_DAILY_COMMISSION',
+                                    amount: dailyCommissionShare,
+                                    description: `Daily Pro-Rata Commission for Referred Seller ${sId} (₹83/Day Plan)`,
+                                    timestamp: admin.firestore.FieldValue.serverTimestamp()
+                                });
+
+                                devCommissionsCredited++;
+                            }
+                        } catch (devErr) {
+                            console.warn(`[DEV COMMISSION NOTICE] Seller ${sId}:`, devErr.message);
+                        }
+                    }
+
+                    // Check if wallet balance is low (< 2 days remaining) and dispatch low balance warning email
+                    if (newBalance < (dailyFee * 2) && seller.email && seller.email.includes('@')) {
+                        try {
+                            await defaultTransporter.sendMail({
+                                from: process.env.SMTP_FROM || smtpUser,
+                                to: seller.email,
+                                subject: `⚠️ Warning: Your CODEZ48 Wallet Balance is Very Low`,
+                                html: `
+                                    <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; border-radius: 24px; border: 2px solid #000000; max-width: 580px; margin: 0 auto; color: #000000;">
+                                        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000000; padding-bottom: 16px;">
+                                            <img src="https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg" style="height: 50px; width: auto; margin-bottom: 10px;" alt="CODEZ48 Logo" />
+                                            <h2 style="margin: 0; font-size: 22px; font-weight: 900; text-transform: uppercase; color: #000000;">Low Wallet Balance Notice</h2>
+                                            <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #000000;">Recharge Required Soon</p>
+                                        </div>
+
+                                        <p style="font-size: 14px; font-weight: 600; color: #000000; line-height: 1.6; margin-bottom: 20px;">
+                                            Hello ${escapeHtml(seller.brand || seller.username || 'Merchant')}, your CODEZ48 wallet balance is very low (<strong>₹${newBalance.toFixed(2)}</strong>).
+                                            Please recharge your wallet now to keep your website and profile active without interruption.
+                                        </p>
+
+                                        <div style="background-color: #ffffff; border: 1px solid #000000; padding: 18px; border-radius: 16px; margin-bottom: 24px; font-family: monospace; font-size: 12px; color: #000000;">
+                                            <p style="margin: 0 0 6px 0;">Seller ID: <strong>${escapeHtml(sId)}</strong></p>
+                                            <p style="margin: 0 0 6px 0;">Remaining Balance: <strong>₹${newBalance.toFixed(2)}</strong></p>
+                                            <p style="margin: 0;">Daily Plan Fee: <strong>₹${dailyFee} / Day</strong></p>
+                                        </div>
+
+                                        <div style="text-align: center;">
+                                            <a href="https://codez48.netlify.app/api-keys.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 14px 32px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
+                                                Recharge Wallet Now →
+                                            </a>
+                                        </div>
+                                    </div>
+                                `
+                            });
+                        } catch (e) {}
+                    }
+                } else {
+                    // Insufficient balance: Pause website & trigger independent insufficientBalance email module
+                    await sDoc.ref.update({ status: 'deactivated_insufficient_funds' });
+                    pausedCount++;
+
+                    if (seller.email && seller.email.includes('@')) {
+                        try {
+                            await fetch(`https://${event.headers.host || 'codez48.netlify.app'}/.netlify/functions/insufficientBalance`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    event: 'ACCOUNT_SUSPENDED_INSUFFICIENT_BALANCE',
+                                    sellerId: sId,
+                                    email: seller.email,
+                                    brandName: seller.brand || seller.username || 'Merchant',
+                                    walletBalance: currentWallet,
+                                    dailyFee: dailyFee,
+                                    timestamp: new Date().toISOString()
+                                })
+                            });
+                        } catch (e) {}
+                    }
+                }
             }
         }
 
-        return { statusCode: 200, body: "Daily background cron executed successfully." };
+        console.log(`[DAILY CRON COMPLETED] Schedules: ${processedSchedules}, Emails: ${totalEmailsDispatched}, Wallet Deductions: ${walletDeductedCount}, Dev Commissions: ${devCommissionsCredited}, Paused Sites: ${pausedCount}`);
+
+        return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                success: true,
+                processedSchedules,
+                totalEmailsDispatched,
+                walletDeductedCount,
+                devCommissionsCredited,
+                pausedCount,
+                message: `Daily background cron executed successfully.`
+            })
+        };
 
     } catch (error) {
         console.error("[DAILY CRON ERROR]:", error.message);
-        return { statusCode: 500, body: error.message };
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+        };
     }
 };

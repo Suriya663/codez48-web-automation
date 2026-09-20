@@ -5446,16 +5446,11 @@
                 "name": "CODEZ48 Protocol",
                 "description": "Elite Node Subscription (₹4,000/Mo)",
                 "handler": async function (response) {
-                    const today = new Date();
-                    const expiryDate = new Date();
-                    expiryDate.setDate(today.getDate() + 30);
-
+                    const today = new Date().toISOString().split('T')[0];
                     await updateDoc(doc(db, "sellers", currentSeller.sellerId), {
                         isSubscribed: true,
-                        status: 'active',
                         dailyPool: increment(200),
-                        lastCreditReset: today.toISOString().split('T')[0],
-                        subscriptionExpiresAt: expiryDate.toISOString(),
+                        lastCreditReset: today,
                         subscriptionPaymentId: response.razorpay_payment_id
                     });
                     alert("Elite Protocol Activated! 200 Credits Added to Daily Pool.");

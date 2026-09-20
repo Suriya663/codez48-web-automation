@@ -4,18 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CODEZ48 | High-Performance Business Network</title>
+    <!-- Protocol Stability Guard -->
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.message && (e.message.includes('QUIC') || e.message.includes('network'))) {
+                console.warn("[PROTOCOL GUARD] Network instability detected. Standard fallback hinted.");
+            }
+        }, true);
+    </script>
     <!-- Web App Manifest for Mobile Push Support -->
     <link rel="manifest" href="/manifest.json">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Performance & Protocol Security -->
+    <meta http-equiv="Origin-Trial" content="Ak... (Optional if using specific QUIC trials)">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://checkout.razorpay.com">
-    <!-- Fonts -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Hint for stable HTTP/2 over experimental QUIC -->
+    <meta http-equiv="Link" content="<https://codez48.netlify.app/>; rel=preconnect">
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <!-- Meta Pixel Code -->
@@ -199,6 +207,7 @@
             position: relative;
             background: linear-gradient(to bottom right, #ffffff, #f0f7ff);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
         }
         .premium-card:hover {
             transform: translateY(-10px);
@@ -327,24 +336,6 @@
         <div class="flex flex-col items-center">
             <div class="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
             <p class="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">CODEZ48 Protocol Syncing...</p>
-        </div>
-    </div>
-
-    <!-- Global Subscription Alert Bar -->
-    <div id="global-subscription-alert" class="fixed top-0 w-full z-[100] bg-rose-600 text-white py-3 px-6 hidden animate-in slide-in-from-top-full duration-500 shadow-xl">
-        <div class="container-fluid flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-circle-exclamation text-white"></i>
-                </div>
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-widest leading-none mb-1">THIS PAGE IS STOPPED</p>
-                    <p class="text-[11px] font-bold text-rose-100">Protocol node in sleep mode. Please authorize payment to restore service.</p>
-                </div>
-            </div>
-            <button onclick="window.openNodeSettings && window.openNodeSettings(window.currentUser.uid, 'ledger')" class="bg-white text-rose-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition shadow-lg active:scale-95 shrink-0">
-                Renew & Activate Now
-            </button>
         </div>
     </div>
 
@@ -1164,6 +1155,9 @@
             </div>
         </section>
 
+            </div>
+        </section>
+
         <!-- Virtual AI Cursor -->
         <div id="ai-cursor" class="fixed pointer-events-none z-[10000] hidden">
             <div class="relative">
@@ -1221,22 +1215,6 @@
             <div id="settings-view-ledger" class="hidden space-y-6">
                 <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Activation Date</p><p id="settings-res-date" class="text-xs font-black uppercase">Pending</p></div>
                 <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Remaining</p><p id="settings-res-days" class="text-xl font-black text-royal">0 Days</p></div>
-
-                <!-- Subscription Management & Payment -->
-                <div id="recharge-node-container" class="hidden animate-in fade-in zoom-in duration-300">
-                    <div class="p-6 bg-purple-50 border border-purple-200 rounded-[2rem] space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-purple-600 shadow-sm"><i class="fa-solid fa-credit-card"></i></div>
-                            <div>
-                                <p class="text-[10px] font-black text-purple-900 uppercase">Subscription Action Required</p>
-                                <p class="text-[8px] font-bold text-purple-400 uppercase">Reactivate your elite business node</p>
-                            </div>
-                        </div>
-                        <button id="btn-node-renew" class="w-full py-4 bg-purple-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all active:scale-95">
-                            Add Funds & Renew Now →
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

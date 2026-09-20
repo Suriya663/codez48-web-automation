@@ -703,65 +703,6 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Handle Payment Activation Confirmation (Instant Activation Alert)
-        if (action === 'PAYMENT_ACTIVATION_CONFIRMED') {
-            const targetEmail = data.email || userEmail || notificationEmail;
-            const amount = data.amount || 0;
-            const brandName = data.brandName || userName || 'Merchant';
-            const sellerId = data.sellerId || siteId || 'SLR-000';
-
-            const activationHtml = `
-                <div style="font-family: system-ui, sans-serif; padding: 40px; background-color: #ffffff; border-radius: 24px; border: 2px solid #000000; max-width: 600px; margin: 0 auto; color: #000000;">
-                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;">
-                        <h1 style="margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase;">Payment Confirmed</h1>
-                        <p style="margin: 5px 0 0 0; font-size: 12px; font-weight: 700; color: #10b981; text-transform: uppercase;">⚡ Account Activated Instantly</p>
-                    </div>
-
-                    <p style="font-size: 15px; font-weight: 600; line-height: 1.6; margin-bottom: 25px;">
-                        Hello ${escapeHtml(brandName)},<br><br>
-                        Your payment of <strong>₹${amount}</strong> has been successfully processed. Your CODEZ48 network node and website service have been <strong>reactivated immediately</strong>.
-                    </p>
-
-                    <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; padding: 20px; border-radius: 16px; margin-bottom: 30px;">
-                        <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 700; color: #15803d; text-transform: uppercase;">Service Update</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 14px; font-weight: 600;">Website Status</span>
-                            <span style="background-color: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase;">ONLINE & ACTIVE</span>
-                        </div>
-                    </div>
-
-                    <div style="text-align: center;">
-                        <a href="https://codez48.netlify.app/seller/developer.html" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 900; font-size: 13px; text-transform: uppercase; padding: 16px 40px; border-radius: 12px; text-decoration: none;">
-                            Access Admin Console →
-                        </a>
-                    </div>
-                </div>
-            `;
-
-            if (targetEmail && targetEmail.includes('@')) {
-                await transporter.sendMail({
-                    from: smtpFrom,
-                    to: targetEmail,
-                    subject: `✅ Payment Confirmed & Service Activated (₹${amount})`,
-                    html: activationHtml
-                });
-            }
-
-            // Also alert Developer Admin
-            await transporter.sendMail({
-                from: smtpFrom,
-                to: DEVELOPER_EMAILS.join(', '),
-                subject: `⚡ PAYMENT ACTIVATION: ${escapeHtml(sellerId)} - ₹${amount}`,
-                html: activationHtml
-            });
-
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ success: true, message: "Activation confirmation email dispatched." })
-            };
-        }
-
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },

@@ -55,14 +55,6 @@ const initApp = () => {
             alert("🛒 Order Placed Successfully!\nYour request has been transmitted to the merchant.");
             window.location.hash = '';
         }, 500);
-    } else if (initialHash === 'ledger' || initialHash === 'subscription') {
-        showView('landing');
-        setTimeout(() => {
-            if (window.currentUser) {
-                // Open Node Settings to Subscription Tab
-                if (window.openNodeSettings) window.openNodeSettings(window.currentUser.uid, 'ledger');
-            }
-        }, 1000);
     } else if (initialHash === 'payment-verified-successful') {
         showView('landing');
         setTimeout(() => {

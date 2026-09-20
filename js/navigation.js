@@ -168,96 +168,24 @@ export const openNodeSettings = async (id) => {
         document.getElementById('settings-res-pass').classList.add('blur-sm');
 
         const activationDate = d.approvedAt || d.date;
-        const expiryDate = d.subscriptionExpiresAt;
-        const now = new Date();
-
         if (activationDate) {
             const dateObj = new Date(activationDate);
             document.getElementById('settings-res-date').innerText = dateObj.toLocaleDateString('en-IN', {
                 day: 'numeric', month: 'long', year: 'numeric'
             });
-        }
 
-        // Calculate remaining days based on subscriptionExpiresAt (Preferred) or approvedAt
-        let remaining = 0;
-        if (expiryDate) {
-            const exp = new Date(expiryDate);
-            const diffMs = exp - now;
-            remaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-        } else if (activationDate) {
-            const start = new Date(activationDate);
-            const diffMs = now - start;
-            const elapsedDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            remaining = Math.max(0, 30 - elapsedDays);
-        }
+            const now = new Date();
+            const diffMs = now - dateObj;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const remaining = Math.max(0, 30 - diffDays);
 
-        document.getElementById('settings-res-days').innerText = `${remaining} Days`;
-        const progress = Math.min(100, (remaining / 30) * 100);
-        const progressEl = document.getElementById('settings-res-progress');
-        if (progressEl) progressEl.style.width = `${progress}%`;
+            document.getElementById('settings-res-days').innerText = `${remaining} Days`;
+            const progress = (remaining / 30) * 100;
+            const progressEl = document.getElementById('settings-res-progress');
+            if (progressEl) progressEl.style.width = `${progress}%`;
 
-        const rechargeContainer = document.getElementById('recharge-node-container');
-        if (rechargeContainer) {
-            // Show pay option if remaining days are low or zero
-            rechargeContainer.classList.toggle('hidden', remaining > 3);
-
-            // Default: Open Wallet Modal to add funds
-            const defaultRenewBtn = rechargeContainer.querySelector('button');
-            if (defaultRenewBtn) {
-                defaultRenewBtn.onclick = () => {
-                    window.closeNodeSettings();
-                    window.openMerchantWalletModal(id);
-                };
-            }
-
-            // If expired, check wallet for instant reactivation logic
-            if (remaining === 0 && d.status !== 'active') {
-                const walletBalance = Number(d.walletBalance) || 0;
-                const renewalFee = 4000;
-
-                if (walletBalance >= renewalFee) {
-                    rechargeContainer.innerHTML = `
-                        <div class="p-6 bg-emerald-50 border border-emerald-200 rounded-[2rem] space-y-4">
-                            <p class="text-[10px] font-black text-emerald-900 uppercase">Funds Available for Renewal</p>
-                            <p class="text-[9px] text-emerald-600 font-medium">Your wallet has ₹${walletBalance}. Click below to instantly reactivate your node for 30 days.</p>
-                            <button onclick="window.confirmTopUpWallet('${id}', true); window.closeNodeSettings();" class="w-full py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
-                                YOUR ACCOUNT WAS STOPPED - Renew Using Wallet (₹4,000)
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    rechargeContainer.innerHTML = `
-                        <div class="p-6 bg-rose-50 border border-rose-200 rounded-[2rem] space-y-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-rose-600 shadow-sm"><i class="fa-solid fa-credit-card"></i></div>
-                                <div>
-                                    <p class="text-[10px] font-black text-rose-900 uppercase">YOUR ACCOUNT WAS STOPPED</p>
-                                    <p class="text-[8px] text-rose-400 uppercase">Insufficient wallet balance</p>
-                                </div>
-                            </div>
-                            <button onclick="window.openMerchantWalletModal('${id}'); window.closeNodeSettings();" class="w-full py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
-                                Pay & Activate Now →
-                            </button>
-                        </div>
-                    `;
-                }
-            } else {
-                 // Standard close-to-expiry button
-                 rechargeContainer.innerHTML = `
-                    <div class="p-6 bg-purple-50 border border-purple-200 rounded-[2rem] space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-purple-600 shadow-sm"><i class="fa-solid fa-credit-card"></i></div>
-                            <div>
-                                <p class="text-[10px] font-black text-purple-900 uppercase">Protocol Activation</p>
-                                <p class="text-[8px] text-purple-400 uppercase">Keep your business node active</p>
-                            </div>
-                        </div>
-                        <button onclick="window.openMerchantWalletModal('${id}'); window.closeNodeSettings();" class="w-full py-4 bg-purple-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
-                            Recharge & Renew Now →
-                        </button>
-                    </div>
-                 `;
-            }
+            const rechargeContainer = document.getElementById('recharge-node-container');
+            if (rechargeContainer) rechargeContainer.classList.toggle('hidden', remaining > 3);
         }
 
         switchSettingsTab('details');

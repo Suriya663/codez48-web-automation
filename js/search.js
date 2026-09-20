@@ -109,7 +109,7 @@ export const openAllCollaboratorsModal = () => {
     grid.innerHTML = allSellers.map(s => `
         <div onclick="window.closeAllCollaboratorsModal(); window.showPublicProfile('${s.id}')" class="p-4 bg-slate-50 hover:bg-purple-50 border border-slate-200 rounded-2xl cursor-pointer transition-all flex items-center gap-3 group">
             <div class="w-10 h-10 bg-white rounded-xl border border-slate-200 p-1 flex items-center justify-center shrink-0">
-                <img src="${s.logo || 'https://placehold.co/100x100?text=Node'}" class="w-full h-full object-contain">
+                <img src="${s.logo || 'https://placehold.co/100x100?text=Node'}" loading="lazy" class="w-full h-full object-contain">
             </div>
             <div class="min-w-0 flex-1">
                 <h5 class="text-xs font-black text-slate-900 uppercase truncate group-hover:text-purple-700">${s.brand || 'Merchant'}</h5>

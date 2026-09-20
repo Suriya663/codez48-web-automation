@@ -1,6 +1,12 @@
-- [ ] **Phase 20: Profile Red Alert & Storefront Lockdown**
-    - [ ] Implement Red Alert Line in `js/profile.js` (Owner View)
-    - [ ] Map "Pay" button to `openMerchantWalletModal` in `js/profile.js`
-    - [ ] Update `seller/index.html` with strict "THIS PAGE IS STOPPED" lockdown
-    - [ ] Sync "Account Stopped" message in `js/navigation.js` ledger tab
-    - [ ] Verify instant reactivation once balance is detected
+- [ ] **Phase 24: High-Performance Optimization (Scaling)**
+    - [ ] Implement `loading="lazy"` in `seller/index.html` and `js/search.js`
+    - [ ] Optimize Firestore usage in `seller/index.html` (One-time fetch)
+    - [ ] Add `will-change` CSS for GPU acceleration
+    - [ ] Implement Connection Guard in `index.html` for QUIC errors
+
+- [ ] **Phase 25: CLI Integration (add-product API)**
+    - [ ] Create `netlify/functions/add-product.js`
+    - [ ] Implement API Key authentication logic
+    - [ ] Implement Product Creation logic (Firestore `products` collection)
+    - [ ] Integrate automated email dispatch
+    - [ ] Finalize `cli_integration_report.artifact.md`

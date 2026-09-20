@@ -69,62 +69,18 @@ export const confirmTopUpWallet = async (sellerId, isAutoRenewal = false) => {
     } else {
         const inputEl = document.getElementById('wallet-topup-amount');
         amount = Number(inputEl ? inputEl.value : 0);
-        if (!amount || isNaN(amount) || amount < 1) {
-            alert("Please enter a valid recharge amount (minimum ₹1).");
-            return;
-        }
+    }
+
+    if (!amount || isNaN(amount) || amount < 1) {
+        alert("Please enter a valid recharge amount (minimum ₹1).");
+        return;
     }
 
     const loader = document.getElementById('global-loader');
     if (loader) loader.classList.remove('hidden');
 
-    if (isAutoRenewal) {
-        // Direct Wallet Deduction Logic
-        try {
-            const sRef = doc(db, "sellers", sellerId);
-            const sSnap = await getDoc(sRef);
-            const data = sSnap.data();
-            const currentBalance = Number(data.walletBalance) || 0;
-
-            if (currentBalance < amount) {
-                alert(`Insufficient Balance. Your wallet has ₹${currentBalance}, but ₹${amount} is required for Elite renewal.`);
-                if (loader) loader.classList.add('hidden');
-                return;
-            }
-
-            const newBalance = currentBalance - amount;
-            const newExpiry = new Date();
-            newExpiry.setDate(newExpiry.getDate() + 30);
-
-            await updateDoc(sRef, {
-                walletBalance: newBalance,
-                status: 'active',
-                isSubscribed: true,
-                subscriptionExpiresAt: newExpiry.toISOString(),
-                lastActivatedAt: new Date().toISOString()
-            });
-
-            await addDoc(collection(db, "wallet_transactions"), {
-                sellerId,
-                type: 'WALLET_AUTO_RENEWAL',
-                amount: -amount,
-                remainingBalance: newBalance,
-                description: `Manual Elite Node Renewal via Wallet`,
-                timestamp: new Date().toISOString()
-            });
-
-            alert(`⚡ Elite Node Reactivated Successfully! New Balance: ₹${newBalance}`);
-            location.reload();
-        } catch (e) {
-            alert("Renewal Error: " + e.message);
-        } finally {
-            if (loader) loader.classList.add('hidden');
-        }
-        return;
-    }
-
     try {
-        // ... (Existing Razorpay Topup Logic)
+        // 1. Create Order on Backend
         const orderResp = await fetch('/.netlify/functions/razorpay-create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -190,24 +146,17 @@ export const confirmTopUpWallet = async (sellerId, isAutoRenewal = false) => {
                             lastActivatedAt: new Date().toISOString()
                         });
 
-                        // Notify activation success
-                        try {
-                            const host = window.location.host;
-                            const protocol = window.location.protocol;
-                            await fetch(`${protocol}//${host}/.netlify/functions/send-login-notification`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    action: 'PAYMENT_ACTIVATION_CONFIRMED',
-                                    sellerId: sellerId,
-                                    amount: amount,
-                                    email: window.currentUser?.email || sSnap.data()?.email,
-                                    brandName: sSnap.data()?.brand || sSnap.data()?.username || 'Merchant'
-                                })
-                            });
-                        } catch(e) {}
+                        await addDoc(collection(db, "wallet_transactions"), {
+                            sellerId,
+                            type: 'RECHARGE_TOP_UP',
+                            amount: amount,
+                            remainingBalance: newBalance,
+                            paymentId: response.razorpay_payment_id,
+                            description: `Wallet Top-Up via Razorpay`,
+                            timestamp: new Date().toISOString()
+                        });
 
-                        alert(`⚡ Wallet Recharged & Account Activated! New Wallet Balance: ₹${newBalance}`);
+                        alert(`⚡ Wallet Recharged Successfully! New Wallet Balance: ₹${newBalance}`);
                         openMerchantWalletModal(sellerId);
                     } catch (dbErr) {
                         alert("Database sync error: " + dbErr.message);
@@ -807,85 +756,13 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         const seller = sellerDoc.data();
         const sellerData = { id: sellerDoc.id, ...seller };
 
-        // --- SUBSCRIPTION EXPIRY CALCULATION ---
-        const now = new Date();
-        const expiryDate = seller.subscriptionExpiresAt;
-        let remainingDays = 30; // Default for active nodes without expiry field yet
+        // Check if seller account is deactivated due to insufficient wallet balance
+        const isInactive = seller.status === 'deactivated_insufficient_funds';
 
-        if (expiryDate) {
-            const exp = new Date(expiryDate);
-            const diffMs = exp - now;
-            remainingDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-        }
-
-        // Check if seller account is deactivated due to insufficient wallet balance or expiration
-        const isInactive = seller.status === 'deactivated_insufficient_funds' ||
-                           seller.status === 'suspended_insufficient_funds' ||
-                           remainingDays === 0;
-
+        // Strictly check if current user is an active Collab Partner (STRICT PRIVACY GUARD)
         const currentSId = localStorage.getItem('tori_seller_id') || currentUser?.uid;
-        const isOwner = currentUser && (currentUser.uid === sellerId || currentUser.sellerId === sellerId);
         const isCollabPartner = await checkCollabStatus(sellerId, currentSId);
-
-        // --- INSTANT WALLET ACTIVATION LOGIC ---
-        const dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
-        const walletBalance = Number(seller.walletBalance) || 0;
-
-        if (isInactive && walletBalance >= dailyFee) {
-            console.log("[PROTOCOL] Balance detected. Attempting instant reactivation...");
-            try {
-                const sRef = doc(db, "sellers", sellerId);
-                const newBalance = walletBalance - dailyFee;
-                await updateDoc(sRef, {
-                    walletBalance: newBalance,
-                    status: 'active',
-                    lastActivatedAt: new Date().toISOString()
-                });
-
-                await addDoc(collection(db, "wallet_transactions"), {
-                    sellerId,
-                    type: 'INSTANT_UI_REACTIVATION',
-                    amount: -dailyFee,
-                    remainingBalance: newBalance,
-                    description: `Automated Instant Activation (₹${dailyFee} Applied)`,
-                    timestamp: new Date().toISOString()
-                });
-
-                if (window.showProtocolNotice) {
-                    window.showProtocolNotice("Protocol Signal Restored: Node activated using wallet balance.");
-                }
-                location.reload();
-                return;
-            } catch (syncErr) { console.error("Activation sync failed:", syncErr); }
-        }
-
-        // --- GLOBAL ALERT BAR FOR OWNER ---
-        const alertBar = document.getElementById('global-subscription-alert');
-        const mainNav = document.getElementById('main-nav');
-        if (isOwner && isInactive) {
-            if (alertBar) {
-                alertBar.classList.remove('hidden');
-                if (mainNav) mainNav.style.top = alertBar.offsetHeight + 'px';
-            }
-        } else {
-            if (alertBar) {
-                alertBar.classList.add('hidden');
-                if (mainNav) mainNav.style.top = '0px';
-            }
-        }
-
-        // --- STEALTH LOCKDOWN FOR GUESTS (PURE WHITE SCREEN) ---
-        if (isInactive && !isOwner) {
-            document.body.innerHTML = `
-                <div style="position: fixed; inset: 0; background: white; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: sans-serif;">
-                    <div style="text-align: center;">
-                        <h1 style="font-weight: 900; color: #000; letter-spacing: 0.1em; font-size: 24px;">THIS PAGE IS STOPPED</h1>
-                        <p style="color: #94a3b8; font-size: 10px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.3em;">Protocol Node Sleeping</p>
-                    </div>
-                </div>
-            `;
-            return;
-        }
+        const isOwner = currentUser && (currentUser.uid === sellerId || currentUser.sellerId === sellerId);
 
         const adminContainer = document.getElementById('admin-action-container');
         if (adminContainer) {
@@ -950,40 +827,17 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         if (target) {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
             target.innerHTML = `
-                ${isInactive && isOwner ? `
-                    <div class="max-w-5xl mx-auto mb-10 animate-in slide-in-from-top-4 duration-500">
-                        <div class="bg-rose-600 text-white p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-rose-900/20 border-2 border-white/10">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl shrink-0 animate-pulse">
-                                    <i class="fa-solid fa-circle-exclamation"></i>
-                                </div>
-                                <div class="text-left">
-                                    <h3 class="text-xl font-black uppercase tracking-tight">YOUR ACCOUNT WAS STOPPED</h3>
-                                    <p class="text-xs text-rose-100 font-bold uppercase tracking-widest">Protocol Signal Lost • Pay and Activate to Restore Public Services</p>
-                                </div>
-                            </div>
-                            <button onclick="window.openMerchantWalletModal('${sellerId}')" class="bg-white text-rose-600 px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all active:scale-95 shadow-xl shrink-0">
-                                Pay & Activate Now
-                            </button>
-                        </div>
-                    </div>
-                ` : ''}
-
-                ${isInactive && !isOwner ? `
-                    <div class="max-w-4xl mx-auto my-8 p-10 bg-slate-900 border-2 border-indigo-500/30 rounded-[2.5rem] text-center shadow-xl space-y-6 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fa-solid fa-moon text-6xl text-white"></i></div>
-                        <div class="w-16 h-16 bg-white/5 text-indigo-400 rounded-3xl flex items-center justify-center mx-auto mb-3 font-black text-2xl">⚡</div>
-                        <div>
-                            <h3 class="text-3xl font-black text-white uppercase tracking-tight">THIS PAGE IS STOPPED</h3>
-                            <p class="text-slate-400 text-xs font-bold mt-2 max-w-md mx-auto leading-relaxed uppercase tracking-widest">Protocol Node in Sleep Mode.</p>
-                            <p class="text-indigo-300 text-[10px] mt-2 font-medium">Please authorize payment or recharge your wallet to wake up the node.</p>
-                        </div>
+                ${isInactive ? `
+                    <div class="max-w-4xl mx-auto my-8 p-8 bg-rose-50 border-2 border-rose-300 rounded-[2.5rem] text-center shadow-lg">
+                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 font-bold text-2xl">⚠️</div>
+                        <h3 class="text-2xl font-black text-rose-900 uppercase tracking-tight">Website Temporarily Paused</h3>
+                        <p class="text-xs text-rose-700 font-medium mt-2 max-w-md mx-auto">This merchant website is currently inactive due to pending daily plan fee. Please recharge wallet to bring online.</p>
                     </div>
                 ` : ''}
 
                 <div class="profile-header">
                     <div class="logo-container bg-slate-50 rounded-[3rem] border border-slate-50 flex items-center justify-center p-1 shadow-2xl overflow-hidden">
-                        <img src="${seller.logo || 'https://placehold.co/200x200?text=Logo'}" class="w-full h-full object-contain mix-blend-multiply">
+                        <img src="${seller.logo || 'https://placehold.co/200x200?text=Logo'}" loading="lazy" class="w-full h-full object-contain mix-blend-multiply">
                     </div>
                     <div class="max-w-5xl mx-auto">
                         <div class="flex justify-center items-center gap-3 mb-6 flex-wrap">

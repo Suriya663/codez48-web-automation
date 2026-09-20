@@ -1,65 +1,48 @@
-# Expiration Guard & Instant Wallet Payment Integration
+# CLI Authentication & Secure Login Integration Plan
 
-Implementation plan for enforcing a high-visibility lockdown when subscription days reach zero, including a "Red Alert Line" on the profile page and direct wallet integration for reactivation.
+Implementation plan to provide a secure login mechanism for the Codez48 CLI using the existing `sellerId` and `password` system.
 
-## Workflow Architecture (Enforcement)
+## 1. CLI Login Flow (Authentication)
 
-```mermaid
-flowchart TD
-    A[Load Profile] --> B{Remaining Days == 0?}
-    B -->|Yes| C[Set status: suspended_insufficient_funds]
-    C --> D{Is User Owner?}
+### Backend: Netlify Function
+- **[NEW] [cli-login.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-login.js)**:
+    - Secure POST endpoint for CLI authentication.
+    - **Logic**:
+        1. Initialize `firebase-admin`.
+        2. Accept `sellerId` and `password` from request body.
+        3. Query `sellers` (and `seller_requests`) for the matching `sellerId`.
+        4. Perform a server-side password verification (reusing existing raw-string comparison logic).
+        5. Upon success:
+           - Check the `api_keys` collection for an existing `ACTIVE` key for this user.
+           - If no key exists, generate a new one (type: `CLI_SESSION`).
+           - Return the `keyId` to the CLI.
+        6. Log the login event for security auditing.
 
-    D -->|Yes| E[Show Red Alert Bar: 'Account Stopped. Pay & Activate']
-    E --> F[Click Pay -> Open Wallet Modal]
+## 2. Secure Request Bridge
 
-    D -->|No| G[Static White Screen: 'THIS PAGE IS STOPPED']
+### Updated API Endpoint: `add-product`
+- The previously created `add-product` function already supports `x-api-key` authentication.
+- It will now seamlessly accept the key returned by `cli-login`, creating a complete authentication cycle for the CLI tool.
 
-    H[Load Storefront URL] --> I{Node Suspended?}
-    I -->|Yes| J[Static White Screen Lockdown]
-    I -->|No| K[Load Products]
-```
+---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Red Alert Line**:
-> - For owners, I will add a high-visibility red banner at the top of the profile content that specifically says: **"YOUR ACCOUNT WAS STOPPED. PAY AND ACTIVATE."**
-> - The button in this banner will open the **Merchant Wallet** instantly.
+> **Password Security**:
+> - As per your existing architecture, passwords are currently stored and compared as raw strings. The `cli-login` function will maintain this behavior to ensure compatibility with your current database.
 
-> [!NOTE]
-> **Storefront Lockdown**:
-> - If any user (public or owner) visits the `seller/index.html` URL while the account is expired, the entire page will be replaced by a white screen with the "THIS PAGE IS STOPPED" message. No product data will be leaked.
-
-## Proposed Changes
-
-### 1. Profile Page Red Alert & Wallet Link
-#### [MODIFY] [js/profile.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/profile.js)
-- Update `showPublicProfile`:
-  - Calculate `remainingDays` live. If `0`, force the `isInactive` UI logic.
-  - Implement the **Red Alert Line** at the top of the profile container for owners.
-  - Set the "Pay" button to trigger `openMerchantWalletModal(sellerId)`.
-
-### 2. Storefront (Seller Index) Lockdown
-#### [MODIFY] [seller/index.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/seller/index.html)
-- Ensure the `isInactive` check is the first thing that happens after the seller data is fetched.
-- Replace the current "Something went wrong" message with the exact wording: **"THIS PAGE IS STOPPED"**.
-
-### 3. Subscription Status Sync
-#### [MODIFY] [js/navigation.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/navigation.js)
-- Update `openNodeSettings`:
-  - Ensure the "ledger" view also prominently displays the "Account Stopped" message if days are at zero.
-
----
+> [!CAUTION]
+> **Credential Handling**:
+> - The CLI should NEVER store the user's password locally. It should only store the returned API Key (token) securely for future requests.
 
 ## Verification Plan
 
-### Manual Verification
-1. Log in to an account and manually set `subscriptionExpiresAt` to a past date in Firestore.
-2. Open your **Profile Page**.
-   - Verify the **Red Alert Line** is visible at the top.
-   - Click **Pay** and verify the **Wallet Modal** opens correctly.
-3. Visit the **Website URL** (`seller/index.html?s=...`).
-   - Verify the page is a white screen with **"THIS PAGE IS STOPPED"**.
-4. Add funds to the wallet.
-   - Verify the account reactivates instantly and data reappears.
+### CLI Login Test
+- **Invalid Credentials**: POST to `/cli-login` with wrong password. (Expect 401).
+- **Valid Login**: POST valid `sellerId` and `password`. (Expect 200 + `apiKey`).
+- **Token Persistence**: Use the returned `apiKey` to call `add-product`. Verify successful authorization.
+
+### Security Audit
+- Verify that no Firestore administrative secrets are exposed in the CLI response.
+- Verify that the `sellerId` is derived server-side from the API Key, preventing account impersonation.

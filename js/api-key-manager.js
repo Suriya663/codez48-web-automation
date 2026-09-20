@@ -57,14 +57,10 @@ export const ApiKeyManager = {
             localSaved.push(keyData);
             localStorage.setItem(`c48_api_keys_${userId}`, JSON.stringify(localSaved));
 
-            if (window.showProtocolNotice) {
-                window.showProtocolNotice(`New API Key Generated Successfully: ${keyId}`);
-            } else {
-                ApiKeyManager.statusMessage = {
-                    type: 'success',
-                    text: `⚡ New API Key Generated Successfully: ${keyId} (10 Tokens / 20 Free Emails Added)`
-                };
-            }
+            ApiKeyManager.statusMessage = {
+                type: 'success',
+                text: `⚡ New API Key Generated Successfully: ${keyId} (10 Tokens / 20 Free Emails Added)`
+            };
             ApiKeyManager.renderApiKeyUI();
             ApiKeyManager.populateKeySelector();
             return keyData;
@@ -654,33 +650,8 @@ export const ApiKeyManager = {
                             createdAt: new Date().toISOString()
                         };
 
-                        // Immediately update seller status to active upon successful subscription
-                        const sRef = doc(db, "sellers", userId);
-                        await updateDoc(sRef, {
-                            status: 'active',
-                            lastActivatedAt: serverTimestamp()
-                        });
-
                         await setDoc(doc(db, "api_keys", subKeyId), subKeyData);
-
-                        // Trigger Activation Notification
-                        try {
-                            const host = window.location.host;
-                            const protocol = window.location.protocol;
-                            await fetch(`${protocol}//${host}/.netlify/functions/send-login-notification`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    action: 'PAYMENT_ACTIVATION_CONFIRMED',
-                                    sellerId: userId,
-                                    amount: 99,
-                                    email: auth.currentUser?.email,
-                                    brandName: 'Pro API Merchant'
-                                })
-                            });
-                        } catch(e) {}
-
-                        ApiKeyManager.statusMessage = { type: 'success', text: `⚡ Pro Subscription Activated! Payment ID: ${subKeyData.paymentId}` };
+                        ApiKeyManager.statusMessage = { type: 'success', text: `⚡ Subscription Successful! Payment ID: ${subKeyData.paymentId}` };
                         ApiKeyManager.renderApiKeyUI();
                         ApiKeyManager.populateKeySelector();
                     } else {
@@ -771,17 +742,6 @@ export const ApiKeyManager = {
         const remainingTokens = keys.reduce((acc, k) => acc + (k.tokensRemaining || 0), 0);
         const totalEmailsSent = keys.reduce((acc, k) => acc + (k.emailsSent || 0), 0);
 
-        // Fetch user wallet data
-        let walletBalance = 0;
-        let dailyFee = 83;
-        try {
-            const uSnap = await getDoc(doc(db, "sellers", ApiKeyManager.getUserId()));
-            if (uSnap.exists()) {
-                walletBalance = Number(uSnap.data().walletBalance) || 0;
-                dailyFee = uSnap.data().dailyFee || (uSnap.data().tier === 'premium' ? 133 : 83);
-            }
-        } catch(e) {}
-
         // Fetch recovered keys
         let recovered = [];
         try {
@@ -791,61 +751,21 @@ export const ApiKeyManager = {
         } catch (e) {}
 
         container.innerHTML = `
-            <div class="p-6 md:p-8 bg-white rounded-[2.5rem] text-slate-900 space-y-8 shadow-xl border border-slate-200/80">
-                <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-6">
+            <div class="p-6 md:p-8 bg-white rounded-[2.5rem] text-slate-900 space-y-6 shadow-xl border border-slate-200/80">
+                <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-4">
                     <div>
                         <h4 class="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-slate-900">
-                            <i class="fa-solid fa-wallet text-purple-600"></i> Billing & Wallet Registry
+                            <i class="fa-solid fa-key text-purple-600"></i> Active API Keys & Quota Management
                         </h4>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Firebase Secured • Secure Protocol Encryption Active</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Firebase Secured • Click Any API Key Card to View Analytics & Logs</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.createFreeApiKey()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 border border-slate-200">
-                            <i class="fa-solid fa-plus"></i> Free Key
+                        <button onclick="window.createFreeApiKey()" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-md shadow-purple-200">
+                            <i class="fa-solid fa-plus"></i> Generate Free Key (10 Tokens)
                         </button>
-                        <button onclick="window.launchRazorpaySubscription()" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-md shadow-purple-200">
-                            <i class="fa-solid fa-crown"></i> Pro Subscription (₹99)
+                        <button onclick="window.launchRazorpaySubscription()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-md shadow-emerald-200">
+                            <i class="fa-solid fa-crown"></i> Buy Pro Plan (₹99/Mo - 60 Emails/Day)
                         </button>
-                    </div>
-                </div>
-
-                <!-- Wallet Management Block -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Metallic Balance Card -->
-                    <div class="p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 via-indigo-950 to-black text-white shadow-2xl relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-700">
-                            <i class="fa-solid fa-building-columns text-6xl"></i>
-                        </div>
-                        <div class="relative z-10 space-y-6">
-                            <div>
-                                <p class="text-[9px] font-black uppercase text-indigo-400 tracking-[0.2em] mb-2">Available Wallet Balance</p>
-                                <h2 class="text-4xl md:text-5xl font-black tracking-tightest">₹${walletBalance.toFixed(2)}</h2>
-                            </div>
-                            <div class="flex items-center gap-3 pt-4 border-t border-white/10">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">Rate: ₹${dailyFee}/Day</span>
-                                <span class="w-1.5 h-1.5 rounded-full ${walletBalance < dailyFee ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}"></span>
-                                <span class="text-[9px] font-black uppercase ${walletBalance < dailyFee ? 'text-rose-400' : 'text-emerald-400'}">${walletBalance < dailyFee ? 'Recharge Required' : 'Signal Active'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Top-up Interface -->
-                    <div class="p-8 rounded-[2.5rem] bg-slate-50 border border-slate-200/60 flex flex-col justify-center space-y-6">
-                        <div class="space-y-1">
-                            <h4 class="text-sm font-black uppercase tracking-tight text-slate-900">Add Wallet Credits</h4>
-                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Protocol-Level Instant Top-Up</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="number" id="wallet-topup-amount" value="500" class="flex-1 bg-white border border-slate-200 rounded-2xl px-4 py-3 text-lg font-black text-slate-900 focus:outline-none focus:border-purple-600 transition-all shadow-inner">
-                            <button onclick="window.confirmTopUpWallet('${ApiKeyManager.getUserId()}')" class="px-8 py-3 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition shadow-xl active:scale-95">
-                                Add Funds →
-                            </button>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="document.getElementById('wallet-topup-amount').value = 100" class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-50 transition">+₹100</button>
-                            <button onclick="document.getElementById('wallet-topup-amount').value = 500" class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-50 transition">+₹500</button>
-                            <button onclick="document.getElementById('wallet-topup-amount').value = 1000" class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-50 transition">+₹1000</button>
-                        </div>
                     </div>
                 </div>
 
@@ -859,21 +779,20 @@ export const ApiKeyManager = {
 
                 <!-- Token & Key Quota Summary Stat Matrix -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1 ${keysGenerated === 0 ? 'border-rose-200 bg-rose-50' : ''}">
+                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Keys Created</span>
                         <span class="text-base font-black text-slate-900">${keysGenerated} / 10</span>
-                        <span class="text-[8px] font-bold ${keysGenerated === 0 ? 'text-rose-600' : 'text-purple-600'} block">${keysGenerated === 0 ? 'Create Key to Begin' : keysRemaining + ' Keys Available'}</span>
+                        <span class="text-[8px] font-bold text-purple-600 block">${keysRemaining} Keys Available</span>
                     </div>
                     <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Tokens Generated</span>
                         <span class="text-base font-black text-purple-700">${totalTokensGenerated} Tokens</span>
                         <span class="text-[8px] font-bold text-slate-500 block">${totalTokensGenerated * 2} Emails Capacity</span>
                     </div>
-                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1 ${remainingTokens === 0 ? 'border-rose-200 bg-rose-50' : ''}">
+                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Available Tokens</span>
-                        <span class="text-base font-black ${remainingTokens === 0 ? 'text-rose-600' : 'text-emerald-600'}">${remainingTokens} Tokens</span>
-                        <span class="text-[8px] font-bold ${remainingTokens === 0 ? 'text-rose-600' : 'text-emerald-600'} block">${remainingTokens === 0 ? 'Action Required: Recharge' : (remainingTokens * 2) + ' Emails Balance'}</span>
-                        ${remainingTokens === 0 ? `<button onclick="window.launchRazorpaySubscription()" class="mt-2 text-[7px] font-black uppercase text-rose-500 underline">Buy Tokens Now</button>` : ''}
+                        <span class="text-base font-black text-emerald-600">${remainingTokens} Tokens</span>
+                        <span class="text-[8px] font-bold text-emerald-600 block">${remainingTokens * 2} Emails Balance</span>
                     </div>
                     <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
                         <span class="text-[8px] font-black text-slate-400 uppercase block">Total Dispatched</span>
@@ -1014,78 +933,6 @@ window.verifySmtpOTP = () => ApiKeyManager.verifySmtpOTP();
 window.sendCustomSmtpTestMail = () => ApiKeyManager.sendCustomSmtpTestMail();
 window.launchRazorpaySubscription = () => ApiKeyManager.launchRazorpaySubscription();
 window.handleActiveKeySelectChange = () => ApiKeyManager.handleActiveKeySelectChange();
-
-/**
- * Shared Wallet Top-Up Logic for Billing Page
- */
-window.confirmTopUpWallet = async (sellerId) => {
-    const inputEl = document.getElementById('wallet-topup-amount');
-    const amount = Number(inputEl ? inputEl.value : 0);
-
-    if (!amount || isNaN(amount) || amount < 1) {
-        alert("Please enter a valid recharge amount (minimum ₹1).");
-        return;
-    }
-
-    const loader = document.getElementById('global-loader') || { classList: { add: () => {}, remove: () => {} } };
-    loader.classList.remove('hidden');
-
-    try {
-        const orderResp = await fetch('/.netlify/functions/razorpay-create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: amount * 100, // paise
-                currency: "INR",
-                notes: { sellerId: sellerId, type: 'wallet_recharge' }
-            })
-        });
-
-        const razorpayOrder = await orderResp.json();
-        const options = {
-            key: "rzp_live_TaX2zuAv0lLUKf",
-            amount: razorpayOrder.amount,
-            currency: razorpayOrder.currency,
-            name: "CODEZ48 Wallet Recharge",
-            description: `Wallet Top-Up: ₹${amount}`,
-            order_id: razorpayOrder.id,
-            handler: async function (response) {
-                const verifyResp = await fetch('/.netlify/functions/razorpay-verify-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature
-                    })
-                });
-
-                const verifyResult = await verifyResp.json();
-                if (verifyResult.success) {
-                    const sRef = doc(db, "sellers", sellerId);
-                    const sSnap = await getDoc(sRef);
-                    const currentBalance = sSnap.exists() ? (Number(sSnap.data().walletBalance) || 0) : 0;
-                    const newBalance = currentBalance + amount;
-
-                    await updateDoc(sRef, { walletBalance: newBalance, status: 'active' });
-                    if (window.showProtocolNotice) {
-                        window.showProtocolNotice(`Wallet Recharged! Balance: ₹${newBalance}`);
-                    } else {
-                        alert(`⚡ Wallet Recharged Successfully! Balance: ₹${newBalance}`);
-                    }
-                    location.reload();
-                }
-            },
-            theme: { color: "#2563EB" }
-        };
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-    } catch (e) {
-        alert("Payment Error: " + e.message);
-    } finally {
-        loader.classList.add('hidden');
-    }
-};
 
 onAuthStateChanged(auth, (user) => {
     if (user) {

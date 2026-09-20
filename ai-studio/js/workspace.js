@@ -75,11 +75,7 @@ export const StudioWorkspace = {
                 await this.load();
 
                 // Show success feedback
-                if (window.showProtocolNotice) {
-                    window.showProtocolNotice("Workspace initialized and synchronized.");
-                } else {
-                    alert("SUCCESS: Workspace initialized and synchronized.");
-                }
+                alert("SUCCESS: Workspace initialized and synchronized.");
 
                 if (window.switchView) window.switchView('workspaces');
             } else {

@@ -319,8 +319,7 @@
                 <div id="sponsored">sponsored:</div>
                 <div id="skip_ad">0:00</div>
             </div>
-        </div>
-      -->
+      </div> -->
         <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-full shadow-lg flex flex-col p-4 space-y-4">
             <a href="#products" class="hover:text-black font-bold" onclick="toggleMobileMenu()">Home</a>
@@ -1267,8 +1266,6 @@
             </div>
         </div>
 
-    </div>
-
     <!-- Random Coupon Spin Modal -->
     <div id="coupon-spin-modal" class="fixed inset-0 bg-black/80 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center border border-purple-500 relative overflow-hidden transform scale-95 transition-transform duration-300" id="spin-modal-content">
@@ -1281,8 +1278,6 @@
                     ₹0
                 </div>
             </div>
-        </div>
-    </div>
 
     <!-- Order Success Modal -->
     <div id="order-success-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[700] flex items-center justify-center p-4">
@@ -1603,6 +1598,23 @@
                         </button>
                     </div>
                 </div>
+            const displayPrice = (p.price || 0) + 10;
+            const shortDesc = p.description || 'Premium quality product crafted for excellence.';
+
+            card.innerHTML = `
+                <!-- Image Area with Floating Icons -->
+                <div class="relative aspect-square bg-gray-50 flex items-center justify-center p-8">
+                    <img src="${imgUrl}" loading="lazy" class="max-w-full max-h-full object-contain mix-blend-multiply drop-shadow-lg group-hover:scale-105 transition-transform duration-700" onclick="window.openProductDetail('${p.id}')">
+
+                    <div class="absolute top-4 right-4 flex flex-col gap-3">
+                        <button onclick="window.openShareModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="floating-action-btn text-gray-400 hover:text-black transition">
+                            <i class="fa-solid fa-share-nodes text-sm"></i>
+                        </button>
+                        <button onclick="window.toggleLike('${p.id}')" class="floating-action-btn text-rose-400 hover:scale-110 transition">
+                            <i class="fa-solid fa-heart text-sm"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Content Area (Reference Image Match) -->
                 <div class="p-8 bg-white rounded-t-[2.5rem] -mt-8 relative z-10">
@@ -1835,36 +1847,6 @@
                     const data = sellerDoc.data();
                     currentSellerId = sellerDoc.id;
                     currentSellerData = data;
-
-                    // --- PROTOCOL LOCKDOWN CHECK ---
-                    const now = new Date();
-                    const expiryDate = data.subscriptionExpiresAt;
-                    let remainingDays = 30;
-                    if (expiryDate) {
-                        const exp = new Date(expiryDate);
-                        remainingDays = Math.max(0, Math.ceil((exp - now) / (1000 * 60 * 60 * 24)));
-                    }
-
-                    const isInactive = data.status === 'deactivated_insufficient_funds' ||
-                                       data.status === 'suspended_insufficient_funds' ||
-                                       remainingDays === 0;
-
-                    if (isInactive) {
-                        document.body.style.background = 'white';
-                        document.body.innerHTML = `
-                            <div style="height: 100vh; width: 100vw; background: white; display: flex; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 40px; position: fixed; inset: 0; z-index: 9999;">
-                                <div style="max-width: 400px;">
-                                    <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
-                                        <svg style="width: 40px; height: 40px; color: #cbd5e1;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                                    </div>
-                                    <h1 style="font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; font-size: 24px; margin-bottom: 12px; color: black;">THIS PAGE IS STOPPED</h1>
-                                    <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">This business node is currently in sleep mode. Please authorize payment or recharge wallet to restore service.</p>
-                                    <p style="font-size: 8px; font-weight: 900; text-transform: uppercase; color: #e2e8f0; letter-spacing: 0.3em;">Status: PROTOCOL_LOCKED</p>
-                                </div>
-                            </div>
-                        `;
-                        return;
-                    }
 
                     // AI Assistant Visibility Control
                     if (data.aiAssistantEnabled === false) {
@@ -2106,7 +2088,7 @@
                         <!-- Image first on mobile -->
                         <div class="w-full md:w-2/5 flex justify-center relative order-1 md:order-2">
                             <div class="absolute w-[120%] h-[120%] bg-white/5 blur-[40px] md:blur-[80px] rounded-full"></div>
-                            <img src="${p.image}" class="w-40 md:w-[320px] drop-shadow-[0_20px_40px_rgba(255,255,255,0.1)] animate-float relative z-10 object-contain" alt="${p.name}">
+                            <img src="${p.image}" loading="lazy" class="w-40 md:w-[320px] drop-shadow-[0_20px_40px_rgba(255,255,255,0.1)] animate-float relative z-10 object-contain" alt="${p.name}">
                         </div>
 
                         <!-- Text second on mobile -->
@@ -3525,7 +3507,7 @@
                     listCont.innerHTML = (flashRequest.items || []).map(item => `
                         <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
                             <div class="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
-                                <img src="${item.image || 'https://placehold.co/100x100?text=Item'}" class="w-full h-full object-contain">
+                                <img src="${item.image || 'https://placehold.co/100x100?text=Item'}" loading="lazy" class="w-full h-full object-contain">
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-sm text-gray-800 line-clamp-1">${item.name}</h4>
@@ -4116,7 +4098,7 @@
                         if (order.items && Array.isArray(order.items)) {
                             itemsHTML = order.items.map(item => `
                                 <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-100 mb-2">
-                                    <img src="${item.image || 'https://placehold.co/100x100?text=Item'}" class="w-10 h-10 object-contain bg-white rounded-lg border">
+                                    <img src="${item.image || 'https://placehold.co/100x100?text=Item'}" loading="lazy" class="w-10 h-10 object-contain bg-white rounded-lg border">
                                     <div class="flex-1">
                                         <p class="text-[10px] font-bold text-gray-800 line-clamp-1">${item.name}</p>
                                         <p class="text-[9px] text-gray-500 uppercase">Qty: ${item.qty}</p>
@@ -4231,7 +4213,7 @@
                 // Slide
                 const slide = document.createElement('div');
                 slide.className = 'gallery-slide';
-                slide.innerHTML = `<img src="${img}" class="max-w-full max-h-full object-contain drop-shadow-xl animate-float">`;
+                slide.innerHTML = `<img src="${img}" loading="lazy" class="max-w-full max-h-full object-contain drop-shadow-xl animate-float">`;
                 gallery.appendChild(slide);
 
                 // Dot
@@ -4240,7 +4222,7 @@
                 dots.appendChild(dot);
 
                 // Thumbnail
-                thumbHtml += `<img src="${img}" class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-xl border border-gray-100 ${idx===0?'border-black':''} hover:border-black cursor-pointer transition shadow-sm" onclick="window.scrollToSlide(${idx})">`;
+                thumbHtml += `<img src="${img}" loading="lazy" class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-xl border border-gray-100 ${idx===0?'border-black':''} hover:border-black cursor-pointer transition shadow-sm" onclick="window.scrollToSlide(${idx})">`;
             });
 
             if (thumbContainer) {
