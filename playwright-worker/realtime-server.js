@@ -16,7 +16,8 @@ function sanitizeFirestoreObject(obj) {
 class RealtimeServer {
     constructor() {
         this.wss = null;
-        this.clients = new Map(); // wsClient -> { runId, userId }
+        this.clients = new Map(); // wsClient -> { type, runId, userId, room, name }
+        this.rooms = new Map();   // roomCode -> Set of clients
         this.db = null;
         this.initFirebase();
     }
@@ -48,20 +49,103 @@ class RealtimeServer {
             ws.on('message', (message) => {
                 try {
                     const msg = JSON.parse(message);
+
+                    // --- 1. Automation Subscription ---
                     if (msg.type === 'SUBSCRIBE' && msg.runId) {
-                        this.clients.set(ws, { runId: msg.runId, userId: msg.userId || 'guest' });
+                        this.clients.set(ws, { type: 'automation', runId: msg.runId, userId: msg.userId || 'guest' });
                         console.log(`[REALTIME SERVER] Client subscribed to run: ${msg.runId}`);
                         ws.send(JSON.stringify({ type: 'SUBSCRIBED', runId: msg.runId }));
                     }
-                } catch (e) {}
+
+                    // --- 2. Room-Based Chat & Share ---
+                    if (msg.type === 'JOIN_ROOM' && msg.room) {
+                        const roomCode = String(msg.room);
+                        const name = msg.name || 'Anonymous';
+
+                        this.clients.set(ws, { type: 'room', room: roomCode, name });
+
+                        if (!this.rooms.has(roomCode)) {
+                            this.rooms.set(roomCode, new Set());
+                        }
+                        this.rooms.get(roomCode).add(ws);
+
+                        console.log(`[REALTIME SERVER] ${name} joined room: ${roomCode}`);
+
+                        // Notify room
+                        this.broadcastToRoom(roomCode, {
+                            type: 'ROOM_EVENT',
+                            action: 'USER_JOINED',
+                            name,
+                            userCount: this.rooms.get(roomCode).size
+                        }, ws);
+
+                        ws.send(JSON.stringify({ type: 'JOINED', room: roomCode, userCount: this.rooms.get(roomCode).size }));
+                    }
+
+                    if (msg.type === 'CHAT_MESSAGE' && msg.text) {
+                        const info = this.clients.get(ws);
+                        if (info && info.room) {
+                            this.broadcastToRoom(info.room, {
+                                type: 'CHAT_MESSAGE',
+                                sender: info.name,
+                                text: msg.text,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
+                    }
+
+                    // --- 3. File Sharing ---
+                    if (msg.type === 'FILE_OFFER' && msg.file) {
+                        const info = this.clients.get(ws);
+                        if (info && info.room) {
+                            this.broadcastToRoom(info.room, {
+                                type: 'FILE_OFFER',
+                                sender: info.name,
+                                file: msg.file, // { name, size, uploadId }
+                                timestamp: new Date().toISOString()
+                            }, ws);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[REALTIME SERVER] Message processing error:', e.message);
+                }
             });
 
             ws.on('close', () => {
+                const info = this.clients.get(ws);
+                if (info && info.room && this.rooms.has(info.room)) {
+                    const roomClients = this.rooms.get(info.room);
+                    roomClients.delete(ws);
+                    if (roomClients.size === 0) {
+                        this.rooms.delete(info.room);
+                    } else {
+                        this.broadcastToRoom(info.room, {
+                            type: 'ROOM_EVENT',
+                            action: 'USER_LEFT',
+                            name: info.name,
+                            userCount: roomClients.size
+                        });
+                    }
+                }
                 this.clients.delete(ws);
             });
         });
 
         console.log('[REALTIME SERVER] WebSocket server attached on /ws endpoint.');
+    }
+
+    broadcastToRoom(roomCode, payload, excludeWs = null) {
+        const clients = this.rooms.get(roomCode);
+        if (!clients) return;
+
+        const jsonStr = JSON.stringify(payload);
+        for (const client of clients) {
+            if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
+                try {
+                    client.send(jsonStr);
+                } catch (e) {}
+            }
+        }
     }
 
     emitRunEvent(runId, eventType, eventData = {}) {

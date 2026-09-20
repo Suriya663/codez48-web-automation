@@ -107,19 +107,18 @@ exports.handler = async (event, context) => {
 
         const systemPrompt = `You are Codez48 AI, a professional full-stack developer and business assistant.
 
-        WEBSITE GENERATION CAPABILITY:
-        If the user asks to create, build, or develop a website, you MUST generate a complete, responsive, and polished HTML/CSS/JS solution.
-        1. Always prefer a single self-contained HTML file.
-        2. If you are generating a website, your entire response MUST be a valid JSON object with the following keys:
-           {
-             "isWebsite": true,
-             "html": "...",
-             "explanation": "Brief summary of what you built"
-           }
-        3. If you are just answering a normal question, respond with plain text as usual.
-        4. If updating an existing project (context provided), ensure the new "html" is complete.
+        CAPABILITIES:
+        1. WEBSITE GENERATION: Generate complete HTML/CSS/JS. Return as JSON: {"isWebsite": true, "html": "...", "explanation": "..."}
+        2. CODING AGENT: Create or edit LOCAL files. Return as JSON: {"isAction": true, "actions": [{"type": "create_file", "path": "filename", "content": "..."}, {"type": "open_vscode"}], "explanation": "..."}
+        3. APP CONTROL: Open local apps. Return as JSON: {"isAction": true, "actions": [{"type": "open_app", "name": "chrome"}], "explanation": "..."}
+        4. GENERAL CHAT: Respond with plain text.
 
-        Provide high-quality, modern, and mobile-friendly designs using standard CSS or Tailwind CDN if requested.`;
+        RULES:
+        - If generating a website preview, use "isWebsite": true.
+        - If performing local file/app actions, use "isAction": true.
+        - Otherwise, just talk normally.
+        - For local files, always use relative paths.
+        - Provide high-quality, modern, and mobile-friendly designs.`;
 
         let aiResponse = null;
 
@@ -156,14 +155,13 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // Fallback to Gemini if no response from Groq
+        // Fallback to Gemini
         if (!aiResponse && geminiApiKey) {
             try {
                 const contents = messages.map(m => ({
                     role: m.role === 'assistant' ? 'model' : 'user',
                     parts: [{ text: m.content || " " }]
                 }));
-                // Prepend system prompt to the first user message or as a separate turn
                 contents.unshift({ role: 'user', parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }] });
 
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
@@ -190,17 +188,16 @@ exports.handler = async (event, context) => {
 
         // Process Response
         try {
-            // Check if it's a JSON response (Website Generation)
             const parsed = JSON.parse(aiResponse.trim());
+
+            // 1. Handle Website Generation (Public Preview)
             if (parsed.isWebsite && parsed.html) {
                 const projectId = existingProjectId || 'web-' + Math.random().toString(36).substring(2, 8);
-
                 await db.collection('generated_websites').doc(projectId).set({
                     projectId,
                     ownerId: sellerId,
                     html: parsed.html,
                     prompt: messages[messages.length - 1].content,
-                    createdAt: existingProjectId ? admin.firestore.FieldValue.serverTimestamp() : admin.firestore.FieldValue.serverTimestamp(),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
 
@@ -210,6 +207,16 @@ exports.handler = async (event, context) => {
                     projectId: projectId,
                     previewUrl: `https://codez48.netlify.app/preview/${projectId}`,
                     answer: parsed.explanation || "Website generated successfully."
+                });
+            }
+
+            // 2. Handle Local Actions (Coding Agent / App Control)
+            if (parsed.isAction && Array.isArray(parsed.actions)) {
+                return jsonResponse(200, {
+                    success: true,
+                    isAction: true,
+                    actions: parsed.actions,
+                    answer: parsed.explanation || "Action(s) prepared."
                 });
             }
         } catch (e) {

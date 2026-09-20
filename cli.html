@@ -250,32 +250,79 @@
                     </div>
                 </section>
 
-                <!-- Section: AI Chat -->
+                <!-- Section: AI Chat & Web Builder -->
                 <section id="ai" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">AI Chat Interface</h2>
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">AI Chat & Web Builder</h2>
                     <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                        Start an interactive, contextual conversation with Codez48 AI directly from your terminal. Get instant help with products, code, or business strategy.
+                        Start an interactive, contextual conversation with Codez48 AI. Beyond simple chat, this agent can generate full websites and even create local files on your computer.
                     </p>
-                    <div class="code-block group">
-                        <code class="font-mono text-sm text-black">codez48 ai</code>
-                        <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                    <div class="space-y-6">
+                        <div class="code-block group">
+                            <code class="font-mono text-sm text-black">codez48 ai</code>
+                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                        </div>
+                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                            <div>
+                                <p class="text-[10px] font-black text-royal uppercase tracking-widest mb-1">Interactive Website Generation</p>
+                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Create a portfolio website"</span> and get a live preview URL instantly.</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Local Coding Agent</p>
+                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Create a calculator with index.html, style.css and script.js"</span> to have the files generated in your current folder.</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">VS Code Integration</p>
+                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Open this project in VS Code"</span> to launch your editor immediately.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> New: Website Generation
-                        </p>
-                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
-                            You can now ask the AI to build entire websites for you. Just say <span class="text-black font-bold">"Create a portfolio website for a photographer"</span> and the CLI will generate the HTML, CSS, and JS, providing you with a live preview URL instantly.
-                        </p>
-                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
-                            The session remains open. You can ask for modifications like <span class="text-black font-bold">"Change the background to black"</span> and the same preview will update in real-time.
-                        </p>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic pt-2">
-                            <i class="fa-solid fa-keyboard mr-1"></i> Interactive Conversation
-                        </p>
-                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
-                            Press <span class="text-black font-bold">Ctrl+C</span> anytime to exit the chat.
-                        </p>
+                </section>
+
+                <!-- Section: App Control -->
+                <section id="open" class="space-y-6">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">App & URL Launcher</h2>
+                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
+                        Instantly open installed applications or websites from your command line.
+                    </p>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="code-block group">
+                            <code class="font-mono text-sm text-black">codez48 open chrome</code>
+                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                        </div>
+                        <div class="code-block group">
+                            <code class="font-mono text-sm text-black">codez48 open https://google.com</code>
+                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Real-time Rooms -->
+                <section id="rooms" class="space-y-8">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Real-time Group Rooms</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-comments"></i></div>
+                                <h3 class="text-lg font-black text-black uppercase tracking-tight">Group Chat</h3>
+                            </div>
+                            <p class="text-slate-500 text-xs font-medium">Create or join encrypted, room-based chat sessions with other users.</p>
+                            <div class="code-block group">
+                                <code class="font-mono text-xs text-black">codez48 chat</code>
+                                <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                            </div>
+                        </div>
+
+                        <div class="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-share-nodes"></i></div>
+                                <h3 class="text-lg font-black text-black uppercase tracking-tight">File Sharing</h3>
+                            </div>
+                            <p class="text-slate-500 text-xs font-medium">Share local files instantly with everyone in your private room.</p>
+                            <div class="code-block group">
+                                <code class="font-mono text-xs text-black">codez48 share</code>
+                                <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -330,7 +377,10 @@
                                     <tr><td class="px-6 py-4">codez48 login</td><td class="px-6 py-4 font-sans">Secure authentication</td></tr>
                                     <tr><td class="px-6 py-4">codez48 add-product</td><td class="px-6 py-4 font-sans">Interactive creation wizard</td></tr>
                                     <tr><td class="px-6 py-4">codez48 list-products</td><td class="px-6 py-4 font-sans">View active inventory</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 ai</td><td class="px-6 py-4 font-sans">Interactive AI Chat Interface</td></tr>
+                                    <tr><td class="px-6 py-4">codez48 ai</td><td class="px-6 py-4 font-sans">Interactive AI Chat & Web Builder</td></tr>
+                                    <tr><td class="px-6 py-4">codez48 open [app]</td><td class="px-6 py-4 font-sans">Launch local apps or URLs</td></tr>
+                                    <tr><td class="px-6 py-4">codez48 chat</td><td class="px-6 py-4 font-sans">Real-time room-based group chat</td></tr>
+                                    <tr><td class="px-6 py-4">codez48 share</td><td class="px-6 py-4 font-sans">Multi-user room-based file sharing</td></tr>
                                     <tr><td class="px-6 py-4">codez48 tools tracker add</td><td class="px-6 py-4 font-sans">Register external site</td></tr>
                                     <tr><td class="px-6 py-4">codez48 tools automation run</td><td class="px-6 py-4 font-sans">Trigger background rule</td></tr>
                                     <tr><td class="px-6 py-4">codez48 logout</td><td class="px-6 py-4 font-sans">Clear local session key</td></tr>

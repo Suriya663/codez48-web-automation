@@ -34,13 +34,13 @@ const initAdmin = () => {
 };
 
 exports.handler = async (event, context) => {
-    const id = event.queryStringParameters.id;
+    const id = event.queryStringParameters.id || event.queryStringParameters.projectId;
 
     if (!id) {
         return {
             statusCode: 400,
             headers: { "Content-Type": "text/html" },
-            body: "<html><body><h1>Error: Missing project ID.</h1></body></html>"
+            body: "<html><body><h1>Error: Missing project ID.</h1><p>Please provide a valid project ID in the URL.</p></body></html>"
         };
     }
 

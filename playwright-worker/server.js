@@ -34,6 +34,42 @@ app.use(cors({
 
 app.use(express.json());
 
+// FILE TRANSFER ENDPOINTS (Module 27)
+const transfersDir = path.join(__dirname, 'temp_transfers');
+if (!fs.existsSync(transfersDir)) fs.mkdirSync(transfersDir);
+
+app.post('/api/files/upload', async (req, res) => {
+    try {
+        const uploadId = 'file_' + Math.random().toString(36).substring(2, 10);
+        const fileName = req.query.name || 'file.bin';
+        const filePath = path.join(transfersDir, uploadId);
+
+        const fileStream = fs.createWriteStream(filePath);
+        req.pipe(fileStream);
+
+        req.on('end', () => {
+            res.json({ success: true, uploadId, name: fileName });
+        });
+
+        // Auto-cleanup after 1 hour
+        setTimeout(() => {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        }, 3600000);
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/files/download/:id', (req, res) => {
+    const filePath = path.join(transfersDir, req.params.id);
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).send('File not found or expired');
+    }
+    const name = req.query.name || 'download';
+    res.download(filePath, name);
+});
+
 // WORKER SECRET AUTH MIDDLEWARE
 const authenticateWorkerSecret = (req, res, next) => {
     const secret = process.env.PLAYWRIGHT_WORKER_SECRET || 'codez48_secret_worker_token';
