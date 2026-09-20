@@ -1,46 +1,62 @@
-# Codez48 CLI AI Chat Integration Plan
+# AI Website Generation & Live Preview Implementation Plan
 
-Adding a continuous interactive AI chat feature to the Codez48 CLI, powered by the existing backend AI infrastructure.
+Adding the capability to generate full websites and provide live preview URLs directly from the Codez48 CLI AI chat.
 
-## 1. Backend Infrastructure (Netlify)
+## 1. Backend Infrastructure (Netlify & Firestore)
 
-### [NEW] `cli-ai-chat.js`
-A dedicated Netlify Function to handle CLI-based AI requests.
-- **Security**: Validates the `x-api-key` header to ensure only authenticated sellers can use the service.
-- **AI Logic**: Reuses the existing `GROQ_API_KEY` and `GEMINI_API_KEY` configuration.
-- **Context Support**: Accepts an array of messages to maintain conversation context.
-- **Standardized Response**: Always returns `application/json` with a `success` flag and the AI's `answer`.
+### [NEW] `generated_websites` Collection
+Stores the code for AI-generated projects.
+- `projectId`: Unique random slug (e.g., `a8k29x`).
+- `ownerId`: Seller UID (derived from API Key).
+- `html`: The full generated HTML (including inline CSS/JS).
+- `prompt`: The user's original request.
+- `createdAt`, `updatedAt`: Timestamps.
+
+### [MODIFY] `netlify/functions/cli-ai-chat.js`
+- **Intent Detection**: Add a system instruction to detect website generation requests.
+- **Generation Logic**: If a website is requested, the AI will be instructed to return the code in a structured format (JSON within the response or a specific block).
+- **Persistence**: Save the generated code to Firestore and return a `projectId`.
+- **Update Support**: Accept an optional `projectId` in the request to update an existing project.
+
+### [NEW] `netlify/functions/preview-website.js`
+- **Function**: Retrieves the HTML from Firestore based on the `projectId` provided in the query string.
+- **Response**: Returns the content with `Content-Type: text/html`.
+- **Security**: Basic sanitization and security headers to isolate the preview.
+
+### [MODIFY] `netlify.toml`
+- Add a redirect rule: `/preview/:id  /.netlify/functions/preview-website?id=:id  200`.
 
 ## 2. CLI Extension (codez48cli)
 
 ### [MODIFY] `cli.js`
-- **New Command**: `codez48 ai`.
-- **Interactive Loop**: Implements a continuous `You:` -> `Thinking...` -> `AI:` cycle using the `node:readline/promises` interface.
-- **Context Management**: Maintains up to 10 previous message pairs in memory during the session.
-- **Graceful Exit**: Handles `Ctrl+C` (SIGINT) to close the session cleanly with a professional message.
+- **State Management**: Keep track of `currentProjectId` during the AI session.
+- **Visual Feedback**: When `isWebsite` is detected in the response:
+    - Display "Creating your website..."
+    - Simulate "Generating HTML/CSS/JS..." steps for a premium feel.
+    - Display the final Preview URL.
+- **Context**: Pass the `currentProjectId` to the backend for all subsequent messages in the session to allow follow-up edits.
 
 ## 3. Website Documentation
 
 ### [MODIFY] `cli.html`
-- Added an **AI Chat Interface** section documenting the `codez48 ai` command.
-- Updated the **Terminal Visual** mockup to showcase the interactive AI conversation.
-- Included the command in the **Full Reference** table.
+- Update the **AI Chat Interface** section to document the new website generation feature.
+- Example: "You can now say 'Create a landing page for a coffee shop' and get a live URL instantly."
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **API Quota**: AI chat requests will be subject to standard API rate limits. High-volume usage may trigger throttling from the AI providers (Groq/Gemini).
+> **Data Persistence**: Previews are stored in Firestore. This ensures they are available permanently unless manually deleted from the database.
 
 > [!WARNING]
-> **Context Window**: To keep requests performant, only the last 10 interactions are preserved in the session context. Restarting the chat (`Ctrl+C` and running `codez48 ai` again) will clear the history.
+> **Security Isolation**: Previews will be served from `codez48.netlify.app/preview/:id`. Since they share the main domain, generated scripts will have access to the same-origin scope. We will mitigate this by not storing sensitive main-site data in accessible browser storage (cookies/localStorage) where possible, but users should be aware that generated code is live.
 
 ## Verification Plan
 
 ### Local Development Tests
-1.  **Auth Check**: Run `node cli.js ai` without logging in. Verify rejection.
-2.  **Interaction**: Start the chat and ask "Hello". Verify response.
-3.  **Context**: Ask "My name is User", then "What is my name?". Verify context retention.
-4.  **Exit**: Press `Ctrl+C` and verify clean exit.
-5.  **Secrets**: Verify that NO API keys are logged or returned to the CLI.
+1.  **Generation**: Ask `codez48 ai` to "Create a personal portfolio for Suriya".
+2.  **Preview**: Copy the returned URL and open it in a browser. Verify the content renders correctly.
+3.  **Edits**: Ask "Make the text color blue" and verify the *same* URL reflects the change upon refresh.
+4.  **Ownership**: Verify that project IDs are random and unique.
+5.  **Graceful Fallback**: Verify that normal questions (e.g., "What is 2+2?") still return simple text answers without creating projects.

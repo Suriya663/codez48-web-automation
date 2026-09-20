@@ -6,6 +6,11 @@
   node_bundler = "esbuild"
 
 [[redirects]]
+  from = "/preview/:id"
+  to = "/.netlify/functions/preview-website?id=:id"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

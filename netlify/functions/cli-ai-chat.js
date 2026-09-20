@@ -78,7 +78,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { messages } = JSON.parse(event.body || '{}');
+        const { messages, projectId: existingProjectId } = JSON.parse(event.body || '{}');
 
         if (!messages || !Array.isArray(messages)) {
             return jsonResponse(400, { success: false, error: "Invalid request: 'messages' array required." });
@@ -92,6 +92,24 @@ exports.handler = async (event, context) => {
             return jsonResponse(500, { success: false, error: "AI Service Unconfigured on Server." });
         }
 
+        const systemPrompt = `You are Codez48 AI, a professional full-stack developer and business assistant.
+
+        WEBSITE GENERATION CAPABILITY:
+        If the user asks to create, build, or develop a website, you MUST generate a complete, responsive, and polished HTML/CSS/JS solution.
+        1. Always prefer a single self-contained HTML file.
+        2. If you are generating a website, your entire response MUST be a valid JSON object with the following keys:
+           {
+             "isWebsite": true,
+             "html": "...",
+             "explanation": "Brief summary of what you built"
+           }
+        3. If you are just answering a normal question, respond with plain text as usual.
+        4. If updating an existing project (context provided), ensure the new "html" is complete.
+
+        Provide high-quality, modern, and mobile-friendly designs using standard CSS or Tailwind CDN if requested.`;
+
+        let aiResponse = null;
+
         // Try Groq First
         if (groqKeys.length > 0) {
             const shuffledKeys = [...groqKeys].sort(() => 0.5 - Math.random());
@@ -104,21 +122,20 @@ exports.handler = async (event, context) => {
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
-                            model: "openai/gpt-oss-120b", // Matched with working website configuration
+                            model: "openai/gpt-oss-120b",
                             messages: [
-                                { role: "system", content: "You are Codez48 AI, a helpful assistant integrated into the Codez48 CLI. Provide concise and accurate answers." },
+                                { role: "system", content: systemPrompt },
                                 ...messages
                             ],
                             temperature: 0.5,
-                            max_tokens: 2048
+                            max_tokens: 4096
                         })
                     });
 
                     const data = await response.json();
                     if (response.ok) {
-                        return jsonResponse(200, { success: true, answer: data.choices[0].message.content });
-                    } else {
-                        console.warn(`[Groq Error] Status: ${response.status} | Key: ${groqApiKey.substring(0,6)}...`);
+                        aiResponse = data.choices[0].message.content;
+                        break;
                     }
                 } catch (err) {
                     console.warn(`[Groq Retry] Key failure:`, err.message);
@@ -126,13 +143,15 @@ exports.handler = async (event, context) => {
             }
         }
 
-        // Fallback to Gemini
-        if (geminiApiKey) {
+        // Fallback to Gemini if no response from Groq
+        if (!aiResponse && geminiApiKey) {
             try {
                 const contents = messages.map(m => ({
                     role: m.role === 'assistant' ? 'model' : 'user',
                     parts: [{ text: m.content || " " }]
                 }));
+                // Prepend system prompt to the first user message or as a separate turn
+                contents.unshift({ role: 'user', parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }] });
 
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
                     method: "POST",
@@ -142,17 +161,49 @@ exports.handler = async (event, context) => {
 
                 const data = await response.json();
                 if (response.ok && data.candidates && data.candidates[0]) {
-                    return jsonResponse(200, { success: true, answer: data.candidates[0].content.parts[0].text });
+                    aiResponse = data.candidates[0].content.parts[0].text;
                 }
             } catch (err) {
                 console.error("[Gemini Fallback Error]:", err.message);
             }
         }
 
-        return jsonResponse(502, {
-            success: false,
-            error: "AI Services (Groq/Gemini) are currently unreachable or rejected the request. Please verify your Netlify environment variables."
-        });
+        if (!aiResponse) {
+            return jsonResponse(502, {
+                success: false,
+                error: "AI Services are currently unreachable."
+            });
+        }
+
+        // Process Response
+        try {
+            // Check if it's a JSON response (Website Generation)
+            const parsed = JSON.parse(aiResponse.trim());
+            if (parsed.isWebsite && parsed.html) {
+                const projectId = existingProjectId || 'web-' + Math.random().toString(36).substring(2, 8);
+
+                await db.collection('generated_websites').doc(projectId).set({
+                    projectId,
+                    ownerId: sellerId,
+                    html: parsed.html,
+                    prompt: messages[messages.length - 1].content,
+                    createdAt: existingProjectId ? admin.firestore.FieldValue.serverTimestamp() : admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                return jsonResponse(200, {
+                    success: true,
+                    isWebsite: true,
+                    projectId: projectId,
+                    previewUrl: `https://codez48.netlify.app/preview/${projectId}`,
+                    answer: parsed.explanation || "Website generated successfully."
+                });
+            }
+        } catch (e) {
+            // Not a JSON response, treat as normal text chat
+        }
+
+        return jsonResponse(200, { success: true, answer: aiResponse });
 
     } catch (error) {
         console.error("CLI AI Chat Error:", error.message);
