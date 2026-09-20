@@ -1537,7 +1537,6 @@
                         ${showViewAll ? `<button onclick="window.location.hash = 'view-all:' + encodeURIComponent('${catName}')" class="text-[10px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest border-b-2 border-blue-600 pb-0.5">View All</button>` : ''}
                     </div>
                     <div class="category-row px-2" id="row-${slugify(catName)}">
-                        <!-- Items injected here -->
                     </div>
                 `;
 
@@ -1585,24 +1584,6 @@
             const shortDesc = p.description || 'Premium quality product crafted for excellence.';
 
             card.innerHTML = `
-                <!-- Image Area with Floating Icons -->
-                <div class="relative aspect-square bg-gray-50 flex items-center justify-center p-8">
-                    <img src="${imgUrl}" loading="lazy" class="max-w-full max-h-full object-contain mix-blend-multiply drop-shadow-lg group-hover:scale-105 transition-transform duration-700" onclick="window.openProductDetail('${p.id}')">
-
-                    <div class="absolute top-4 right-4 flex flex-col gap-3">
-                        <button onclick="window.openShareModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="floating-action-btn text-gray-400 hover:text-black transition">
-                            <i class="fa-solid fa-share-nodes text-sm"></i>
-                        </button>
-                        <button onclick="window.toggleLike('${p.id}')" class="floating-action-btn text-rose-400 hover:scale-110 transition">
-                            <i class="fa-solid fa-heart text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-            const displayPrice = (p.price || 0) + 10;
-            const shortDesc = p.description || 'Premium quality product crafted for excellence.';
-
-            card.innerHTML = `
-                <!-- Image Area with Floating Icons -->
                 <div class="relative aspect-square bg-gray-50 flex items-center justify-center p-8">
                     <img src="${imgUrl}" loading="lazy" class="max-w-full max-h-full object-contain mix-blend-multiply drop-shadow-lg group-hover:scale-105 transition-transform duration-700" onclick="window.openProductDetail('${p.id}')">
 
@@ -1616,7 +1597,6 @@
                     </div>
                 </div>
 
-                <!-- Content Area (Reference Image Match) -->
                 <div class="p-8 bg-white rounded-t-[2.5rem] -mt-8 relative z-10">
                     <h3 class="detail-green-title text-xl mb-2 line-clamp-1 cursor-pointer" onclick="window.openProductDetail('${p.id}')">${p.name}</h3>
 
@@ -1624,7 +1604,6 @@
                         <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                     </div>
 
-                    <!-- Description with More/Scroll -->
                     <div class="mb-6">
                         <div id="card-desc-${p.id}" class="text-[11px] text-gray-500 font-light leading-relaxed transition-all">
                             <p class="line-clamp-2">${shortDesc}</p>
@@ -2085,13 +2064,11 @@
                         <div class="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
                     </div>
                     <div class="container mx-auto px-6 md:px-16 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
-                        <!-- Image first on mobile -->
                         <div class="w-full md:w-2/5 flex justify-center relative order-1 md:order-2">
                             <div class="absolute w-[120%] h-[120%] bg-white/5 blur-[40px] md:blur-[80px] rounded-full"></div>
                             <img src="${p.image}" loading="lazy" class="w-40 md:w-[320px] drop-shadow-[0_20px_40px_rgba(255,255,255,0.1)] animate-float relative z-10 object-contain" alt="${p.name}">
                         </div>
 
-                        <!-- Text second on mobile -->
                         <div class="text-white w-full md:w-3/5 text-center md:text-left space-y-2 md:space-y-4 order-2 md:order-1 px-4">
                             <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-2 md:px-3 py-1 rounded-full">
                                 <span class="w-1 h-1 md:w-1.5 md:h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
@@ -4153,7 +4130,6 @@
                                 <i class="fa-solid fa-truck-fast"></i> ${order.status === 'Delivered' ? 'Delivered' : `Arriving in ${deliveryDays} days`}
                             </div>` : ''}
 
-                            <!-- Help with this order -->
                             <div class="mt-4 p-3 bg-gray-100 rounded-lg border border-gray-200">
                                 <p class="text-[10px] text-gray-500 font-bold uppercase mb-2">Need help with this order?</p>
                                 <div class="flex gap-2">

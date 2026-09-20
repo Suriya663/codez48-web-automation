@@ -1,48 +1,67 @@
-# CLI Authentication & Secure Login Integration Plan
+# Complete Codez48 CLI Support Plan
 
-Implementation plan to provide a secure login mechanism for the Codez48 CLI using the existing `sellerId` and `password` system.
+Implementation plan for the full suite of CLI commands: login, add, list, update, and delete products, using the existing Firebase seller/password system and secure Netlify Functions.
 
-## 1. CLI Login Flow (Authentication)
+## 1. CLI Authentication (Reused System)
+- **Login Function**: Reusing `cli-login.js` which verifies `sellerId` and `password` and returns an API Key.
+- **Session Key**: All other functions will require the `x-api-key` header to authenticate and identify the seller.
 
-### Backend: Netlify Function
-- **[NEW] [cli-login.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-login.js)**:
-    - Secure POST endpoint for CLI authentication.
-    - **Logic**:
-        1. Initialize `firebase-admin`.
-        2. Accept `sellerId` and `password` from request body.
-        3. Query `sellers` (and `seller_requests`) for the matching `sellerId`.
-        4. Perform a server-side password verification (reusing existing raw-string comparison logic).
-        5. Upon success:
-           - Check the `api_keys` collection for an existing `ACTIVE` key for this user.
-           - If no key exists, generate a new one (type: `CLI_SESSION`).
-           - Return the `keyId` to the CLI.
-        6. Log the login event for security auditing.
+## 2. Technical API Endpoints
 
-## 2. Secure Request Bridge
+### [NEW] `cli-list-products`
+- **Method**: GET
+- **Logic**: Fetch all documents from the `products` collection where `sellerId` matches the authenticated user.
+- **Output**: JSON array of products for the CLI to display.
 
-### Updated API Endpoint: `add-product`
-- The previously created `add-product` function already supports `x-api-key` authentication.
-- It will now seamlessly accept the key returned by `cli-login`, creating a complete authentication cycle for the CLI tool.
+### [NEW] `cli-update-product`
+- **Method**: POST
+- **Logic**:
+  - Validate the `productId` belongs to the authenticated `sellerId`.
+  - Perform a partial update using the existing `updateDoc` schema from `developer.html`.
+  - Trigger the `SELLER_PRODUCT_UPDATED` notification email.
+
+### [NEW] `cli-delete-product`
+- **Method**: POST (or DELETE)
+- **Logic**:
+  - Verify ownership of the `productId`.
+  - Remove the document from Firestore.
+  - Trigger the `SELLER_PRODUCT_DELETED` notification email.
+
+## 3. Product Schema Discovery
+Based on `seller/developer.html`, the CLI will support these fields:
+
+| Field | CLI Question | Required? |
+| :--- | :--- | :--- |
+| `name` | What is the product name? | **Yes** |
+| `price` | Enter selling price (INR): | **Yes** |
+| `mrp` | Enter MRP (INR): | No (Defaults to Price) |
+| `category` | Enter category (e.g. Electronics): | No (Defaults to General) |
+| `stock` | Enter initial stock quantity: | No (Defaults to 0) |
+| `description` | Enter product description: | No |
+| `image` | Enter primary image URL: | No |
+| `type` | Product type (physical/digital/course): | No (Defaults to physical) |
+
+## 4. Secure Backend Functions
+- **[NEW] [cli-list-products.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-list-products.js)**
+- **[NEW] [cli-update-product.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-update-product.js)**
+- **[NEW] [cli-delete-product.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-delete-product.js)**
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Password Security**:
-> - As per your existing architecture, passwords are currently stored and compared as raw strings. The `cli-login` function will maintain this behavior to ensure compatibility with your current database.
+> **API Key Persistence**:
+> - After the CLI user logs in via `cli-login`, your separate CLI tool must store the returned `apiKey` locally (e.g., in a `.codez48cfg` file).
+> - Every subsequent request must include: `x-api-key: YOUR_KEY`.
 
 > [!CAUTION]
-> **Credential Handling**:
-> - The CLI should NEVER store the user's password locally. It should only store the returned API Key (token) securely for future requests.
+> **Data Isolation**:
+> - My implementation ensures that a user with a valid API key **cannot** list, update, or delete products belonging to another `sellerId`.
 
 ## Verification Plan
 
-### CLI Login Test
-- **Invalid Credentials**: POST to `/cli-login` with wrong password. (Expect 401).
-- **Valid Login**: POST valid `sellerId` and `password`. (Expect 200 + `apiKey`).
-- **Token Persistence**: Use the returned `apiKey` to call `add-product`. Verify successful authorization.
-
-### Security Audit
-- Verify that no Firestore administrative secrets are exposed in the CLI response.
-- Verify that the `sellerId` is derived server-side from the API Key, preventing account impersonation.
+### Manual Tests
+1. **List Test**: Call `/cli-list-products` with a valid key. Verify it only returns YOUR products.
+2. **Update Test**: Update a product price via the API and check the website storefront instantly.
+3. **Delete Test**: Delete a test product via CLI and verify it disappears from `developer.html` dashboard.

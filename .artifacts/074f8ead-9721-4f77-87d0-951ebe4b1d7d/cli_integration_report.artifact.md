@@ -1,79 +1,89 @@
-# Codez48 CLI Integration Report
+# Codez48 CLI Complete Technical Specification
 
-Successfully implemented the secure backend API for the Codez48 CLI, including authentication and product management.
+This report provides the full technical specifications for integrating your Node.js CLI tool with the Codez48 backend. All endpoints are secured and synchronized with your existing Firebase/Firestore setup.
 
-## 1. Authentication Flow (CLI Login)
-The CLI must first authenticate to obtain an `apiKey`. This uses the existing `sellerId` and `password` from the Codez48 database.
+## 1. Core Authentication (`cli-login`)
+Before running any product commands, the CLI must authenticate to obtain a session API Key.
 
 | Spec | Detail |
 | :--- | :--- |
-| **Function Name** | `cli-login` |
 | **Endpoint** | `https://codez48.netlify.app/.netlify/functions/cli-login` |
-| **HTTP Method** | `POST` |
-| **JSON Request Body** | `{"sellerId": "SLR-xxxxxx", "password": "..."}` |
-| **JSON Response** | `{"success": true, "apiKey": "c48_api_..."}` |
+| **Method** | `POST` |
+| **Body** | `{"sellerId": "SLR-xxxxxx", "password": "..."}` |
+| **CLI Question 1** | "Enter your Seller ID (e.g. SLR-123456):" |
+| **CLI Question 2** | "Enter your Password:" |
 
-## 2. Product Management (Add Product)
-Once authenticated, the `apiKey` must be sent in every subsequent request.
+## 2. Product Management Endpoints
+All these endpoints require the `x-api-key` header obtained from the login step.
 
-| Spec | Detail |
-| :--- | :--- |
-| **Function Name** | `add-product` |
-| **Endpoint** | `https://codez48.netlify.app/.netlify/functions/add-product` |
-| **HTTP Method** | `POST` |
-| **Authentication** | `x-api-key` header (required) |
-| **Content-Type** | `application/json` |
+### A. List Products (`cli-list-products`)
+- **Endpoint**: `https://codez48.netlify.app/.netlify/functions/cli-list-products`
+- **Method**: `GET`
+- **Response**: `{"success": true, "count": 5, "products": [...]}`
 
-## 2. Authentication Requirements
-The CLI **must** send an active API Key generated from the website's "API Keys & Quota Management" section.
+### B. Add Product (`add-product`)
+- **Endpoint**: `https://codez48.netlify.app/.netlify/functions/add-product`
+- **Method**: `POST`
+- **Required Fields**: `name`, `price`
+- **CLI Questions**:
+    1.  "Product Name? (Required):"
+    2.  "Selling Price in INR? (Required):"
+    3.  "Category? (Optional, default: Uncategorized):"
+    4.  "Stock Quantity? (Optional, default: 0):"
+    5.  "MRP in INR? (Optional, default: same as price):"
+    6.  "Product Description? (Optional):"
+    7.  "Image URL? (Optional):"
 
-**Header Example:**
-```http
-x-api-key: c48_api_xxxxxxxxxxxxxxxx
-```
+### C. Update Product (`cli-update-product`)
+- **Endpoint**: `https://codez48.netlify.app/.netlify/functions/cli-update-product`
+- **Method**: `POST`
+- **Logic**: Performs a partial update. Only send the fields you want to change.
+- **CLI Flow**:
+    1.  List products to let the user pick an `ID`.
+    2.  Ask: "Enter the Product ID to update:"
+    3.  Ask: "Which field would you like to change? (name/price/stock/etc):"
+    4.  Ask: "Enter the new value:"
 
-## 3. Request Body Structure
-The following JSON fields are accepted by the `add-product` endpoint:
+### D. Delete Product (`cli-delete-product`)
+- **Endpoint**: `https://codez48.netlify.app/.netlify/functions/cli-delete-product`
+- **Method**: `POST`
+- **Body**: `{"productId": "..."}`
+- **CLI Flow**:
+    1.  Ask: "Enter the Product ID to delete:"
+    2.  Ask: "Are you sure? (y/n):"
 
-| Field | Type | Requirement | Description |
-| :--- | :--- | :--- | :--- |
-| `name` | String | **Required** | The public display name of the product. |
-| `price` | Number | **Required** | The selling price in INR. |
-| `category` | String | Optional | e.g. "Electronics", "Fashion". Defaults to "Uncategorized". |
-| `stock` | Number | Optional | Quantity available. Defaults to 0. |
-| `mrp` | Number | Optional | Maximum Retail Price. Defaults to `price`. |
-| `description` | String | Optional | Detailed product info. |
-| `image` | URL String | Optional | Primary product image URL. |
-| `type` | String | Optional | "physical", "digital", or "course". Defaults to "physical". |
+---
 
-### JSON Example:
+## 3. Product Schema (Detected from Website)
+The backend enforces this exact schema to ensure CLI products show up perfectly in your storefront:
+
 ```json
 {
-  "name": "CLI Pro Mouse",
-  "price": 999,
-  "category": "Accessories",
-  "stock": 50,
-  "description": "High-performance gaming mouse added via CLI."
+  "name": "String",
+  "category": "String",
+  "price": "Number (INR)",
+  "mrp": "Number (INR)",
+  "stock": "Number",
+  "description": "String",
+  "image": "URL String",
+  "type": "physical | digital | course",
+  "sellerId": "Auto-filled from API Key",
+  "isDynamic": true,
+  "lastUpdated": "ISO Timestamp"
 }
 ```
 
-## 4. Success Response
-```json
-{
-  "success": true,
-  "message": "Product created successfully via Codez48 CLI",
-  "productId": "cli-pro-mouse-a1b2c",
-  "sellerId": "user_12345"
-}
-```
-
-## 5. Automated Features
-- **Data Sync**: Products created via CLI are instantly visible in the website directory and seller dashboard.
-- **Auto-Emails**: A confirmation email is automatically sent to the seller's registered email address upon successful creation.
-- **Unique IDs**: Product IDs are auto-generated based on the name (slugified) with a unique suffix for collision prevention.
+## 4. Automated Workflows
+Successful commands trigger the following:
+- **Add/Update/Delete**: Dispatches automated email notifications via your existing SMTP system.
+- **Data Sync**: Changes are instantly reflected on the live website storefront and developer dashboard.
 
 ---
 
 > [!IMPORTANT]
 > **Security Guard**:
-> This API does not trust the `sellerId` provided by the CLI. It automatically derives the `sellerId` from the verified API Key in the `api_keys` collection, preventing users from adding products to other people's accounts.
+> The `sellerId` is **derived server-side** from the API key. A CLI user can only manage products that belong to their own account. Administrative secrets (Firebase keys) are never sent to the CLI.
+
+> [!TIP]
+> **Node.js Integration**:
+> Use the `axios` or `node-fetch` library in your CLI. Always store the `apiKey` in a hidden file like `.codez48cfg` in the user's home directory after a successful login.
