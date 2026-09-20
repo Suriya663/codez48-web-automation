@@ -34,6 +34,12 @@ app.use(cors({
 
 app.use(express.json());
 
+// DEBUG LOGGER FOR ALL REQUESTS
+app.use((req, res, next) => {
+    console.log(`[HTTP] ${req.method} ${req.path} - ${new Date().toISOString()}`);
+    next();
+});
+
 // FILE TRANSFER ENDPOINTS (Module 27)
 const transfersDir = path.join(__dirname, 'temp_transfers');
 if (!fs.existsSync(transfersDir)) fs.mkdirSync(transfersDir);
@@ -127,7 +133,9 @@ app.get('/health', async (req, res) => {
         status: health.status,
         browserConnected: health.browserConnected,
         activeRunsCount: RunManager.runs.size,
-        timestamp: new Date().toISOString()
+        websocketPath: '/ws',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
     });
 });
 

@@ -34,8 +34,18 @@ const initAdmin = () => {
 };
 
 exports.handler = async (event, context) => {
-    // Netlify passes path params as query params in redirects
-    const id = event.queryStringParameters.id || event.queryStringParameters.projectId;
+    // 1. Extract ID from Query Params or Path
+    let id = event.queryStringParameters.id || event.queryStringParameters.projectId;
+
+    if (!id && event.path) {
+        // Fallback: Extract from path (e.g. /preview/web-123 -> web-123)
+        const parts = event.path.split('/');
+        // Usually the last part if the URL is /preview/ID
+        id = parts[parts.length - 1];
+
+        // Ensure it's not the base 'preview' path
+        if (id === 'preview' || id === '') id = null;
+    }
 
     if (!id) {
         return {
@@ -47,7 +57,8 @@ exports.handler = async (event, context) => {
                         <h1 style="color: #ef4444;">Error: Missing project ID</h1>
                         <p>No project ID was detected in the request URL.</p>
                         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                        <p style="font-size: 0.8rem;">Path: ${event.path}</p>
+                        <p style="font-size: 0.8rem; color: #999;">Request Path: ${event.path}</p>
+                        <p style="font-size: 0.8rem; color: #999;">Help: Ensure the URL follows /preview/[ID]</p>
                     </body>
                 </html>
             `
