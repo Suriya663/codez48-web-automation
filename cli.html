@@ -296,16 +296,16 @@
                     </div>
                 </section>
 
-                <!-- Section: Real-time Rooms -->
+                <!-- Section: Collaboration Rooms -->
                 <section id="rooms" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Real-time Group Rooms</h2>
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Collaboration Rooms</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-4">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-comments"></i></div>
                                 <h3 class="text-lg font-black text-black uppercase tracking-tight">Group Chat</h3>
                             </div>
-                            <p class="text-slate-500 text-xs font-medium">Create or join encrypted, room-based chat sessions with other users.</p>
+                            <p class="text-slate-500 text-xs font-medium">Join real-time chat rooms with a 5-digit code.</p>
                             <div class="code-block group">
                                 <code class="font-mono text-xs text-black">codez48 chat</code>
                                 <button onclick="copyCode(this)" class="copy-btn">Copy</button>
@@ -317,10 +317,34 @@
                                 <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-share-nodes"></i></div>
                                 <h3 class="text-lg font-black text-black uppercase tracking-tight">File Sharing</h3>
                             </div>
-                            <p class="text-slate-500 text-xs font-medium">Share local files instantly with everyone in your private room.</p>
+                            <p class="text-slate-500 text-xs font-medium">Instantly share files with everyone in the room.</p>
                             <div class="code-block group">
                                 <code class="font-mono text-xs text-black">codez48 share</code>
                                 <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Local Search & Analysis -->
+                <section id="search" class="space-y-8">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Local Discovery & Safety</h2>
+                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
+                        Find files and folders on your computer using natural language, and perform heuristic safety analysis on suspicious downloads.
+                    </p>
+                    <div class="space-y-6">
+                        <div class="code-block group">
+                            <code class="font-mono text-sm text-black">codez48 find</code>
+                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
+                        </div>
+                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                            <div>
+                                <p class="text-[10px] font-black text-black uppercase tracking-widest mb-1">Natural Language Search</p>
+                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Find my invoice from Downloads"</span> in AI Chat.</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Safety Analysis</p>
+                                <p class="text-xs text-slate-600 font-medium">Ask the AI to <span class="text-black font-bold">"Analyze my Downloads for suspicious files"</span> to run heuristic checks.</p>
                             </div>
                         </div>
                     </div>
@@ -379,6 +403,7 @@
                                     <tr><td class="px-6 py-4">codez48 list-products</td><td class="px-6 py-4 font-sans">View active inventory</td></tr>
                                     <tr><td class="px-6 py-4">codez48 ai</td><td class="px-6 py-4 font-sans">Interactive AI Chat & Web Builder</td></tr>
                                     <tr><td class="px-6 py-4">codez48 open [app]</td><td class="px-6 py-4 font-sans">Launch local apps or URLs</td></tr>
+                                    <tr><td class="px-6 py-4">codez48 find</td><td class="px-6 py-4 font-sans">Local file & folder search tool</td></tr>
                                     <tr><td class="px-6 py-4">codez48 chat</td><td class="px-6 py-4 font-sans">Real-time room-based group chat</td></tr>
                                     <tr><td class="px-6 py-4">codez48 share</td><td class="px-6 py-4 font-sans">Multi-user room-based file sharing</td></tr>
                                     <tr><td class="px-6 py-4">codez48 tools tracker add</td><td class="px-6 py-4 font-sans">Register external site</td></tr>

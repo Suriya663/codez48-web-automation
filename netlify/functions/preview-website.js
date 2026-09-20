@@ -34,13 +34,23 @@ const initAdmin = () => {
 };
 
 exports.handler = async (event, context) => {
+    // Netlify passes path params as query params in redirects
     const id = event.queryStringParameters.id || event.queryStringParameters.projectId;
 
     if (!id) {
         return {
             statusCode: 400,
             headers: { "Content-Type": "text/html" },
-            body: "<html><body><h1>Error: Missing project ID.</h1><p>Please provide a valid project ID in the URL.</p></body></html>"
+            body: `
+                <html>
+                    <body style="font-family: sans-serif; text-align: center; padding: 50px; color: #666;">
+                        <h1 style="color: #ef4444;">Error: Missing project ID</h1>
+                        <p>No project ID was detected in the request URL.</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="font-size: 0.8rem;">Path: ${event.path}</p>
+                    </body>
+                </html>
+            `
         };
     }
 
@@ -59,7 +69,7 @@ exports.handler = async (event, context) => {
                     <html>
                         <body style="font-family: sans-serif; text-align: center; padding: 50px; color: #666;">
                             <h1>404: Preview Not Found</h1>
-                            <p>The requested AI-generated website does not exist or has expired.</p>
+                            <p>The requested AI-generated website (ID: ${id}) does not exist or has expired.</p>
                             <a href="https://codez48.netlify.app" style="color: #2563EB;">Return to Codez48</a>
                         </body>
                     </html>
