@@ -104,12 +104,12 @@ exports.handler = async (event, context) => {
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
-                            model: "llama3-70b-8192", // High performance model for CLI
+                            model: "openai/gpt-oss-120b", // Matched with working website configuration
                             messages: [
                                 { role: "system", content: "You are Codez48 AI, a helpful assistant integrated into the Codez48 CLI. Provide concise and accurate answers." },
                                 ...messages
                             ],
-                            temperature: 0.7,
+                            temperature: 0.5,
                             max_tokens: 2048
                         })
                     });
@@ -117,6 +117,8 @@ exports.handler = async (event, context) => {
                     const data = await response.json();
                     if (response.ok) {
                         return jsonResponse(200, { success: true, answer: data.choices[0].message.content });
+                    } else {
+                        console.warn(`[Groq Error] Status: ${response.status} | Key: ${groqApiKey.substring(0,6)}...`);
                     }
                 } catch (err) {
                     console.warn(`[Groq Retry] Key failure:`, err.message);
@@ -139,7 +141,7 @@ exports.handler = async (event, context) => {
                 });
 
                 const data = await response.json();
-                if (response.ok) {
+                if (response.ok && data.candidates && data.candidates[0]) {
                     return jsonResponse(200, { success: true, answer: data.candidates[0].content.parts[0].text });
                 }
             } catch (err) {
@@ -147,7 +149,10 @@ exports.handler = async (event, context) => {
             }
         }
 
-        return jsonResponse(502, { success: false, error: "AI Providers currently unreachable. Please try again later." });
+        return jsonResponse(502, {
+            success: false,
+            error: "AI Services (Groq/Gemini) are currently unreachable or rejected the request. Please verify your Netlify environment variables."
+        });
 
     } catch (error) {
         console.error("CLI AI Chat Error:", error.message);
