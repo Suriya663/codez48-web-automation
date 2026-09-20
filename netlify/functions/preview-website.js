@@ -39,7 +39,8 @@ exports.handler = async (event, context) => {
     if (!id) {
         return {
             statusCode: 400,
-            body: "Missing project ID."
+            headers: { "Content-Type": "text/html" },
+            body: "<html><body><h1>Error: Missing project ID.</h1></body></html>"
         };
     }
 

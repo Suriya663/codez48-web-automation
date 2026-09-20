@@ -71,10 +71,13 @@ exports.handler = async (event, context) => {
     }
 
     const apiKey = event.headers['x-api-key'];
-    const sellerId = await verifyApiKey(apiKey);
+    let sellerId = 'anonymous';
 
-    if (!sellerId) {
-        return jsonResponse(401, { success: false, error: "Unauthorized: Invalid or missing API Key. Please login via 'codez48 login' first." });
+    if (apiKey) {
+        sellerId = await verifyApiKey(apiKey);
+        if (!sellerId) {
+            return jsonResponse(401, { success: false, error: "Invalid API Key. Please login via 'codez48 login' or use anonymously without x-api-key header." });
+        }
     }
 
     try {
@@ -82,6 +85,16 @@ exports.handler = async (event, context) => {
 
         if (!messages || !Array.isArray(messages)) {
             return jsonResponse(400, { success: false, error: "Invalid request: 'messages' array required." });
+        }
+
+        // Basic Rate Limiting / Abuse Protection
+        if (messages.length > 30) {
+            return jsonResponse(400, { success: false, error: "Conversation history too long. Please start a new session." });
+        }
+
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage.content && lastMessage.content.length > 2000) {
+            return jsonResponse(400, { success: false, error: "Message too long. Please keep questions under 2000 characters." });
         }
 
         const rawGroqKeys = process.env.GROQ_API_KEY;
