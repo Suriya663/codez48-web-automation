@@ -41,8 +41,7 @@ class RealtimeServer {
     }
 
     attachWebSocketServer(server) {
-        // Change: Explicitly listen on /ws for reliability
-        this.wss = new WebSocket.Server({ server, path: '/ws' });
+        this.wss = new WebSocket.Server({ noServer: true });
 
         this.wss.on('connection', (ws, req) => {
             console.log(`[REALTIME SERVER] Client connected on path: ${req.url}`);
@@ -132,7 +131,13 @@ class RealtimeServer {
             });
         });
 
-        console.log('[REALTIME SERVER] WebSocket server attached to root (/).');
+        console.log('[REALTIME SERVER] WebSocket server initialized (waiting for manual upgrade).');
+    }
+
+    handleUpgrade(request, socket, head) {
+        this.wss.handleUpgrade(request, socket, head, (ws) => {
+            this.wss.emit('connection', ws, request);
+        });
     }
 
     handleUpgrade(request, socket, head) {

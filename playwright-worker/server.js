@@ -409,6 +409,15 @@ async function runAgentLoop(runId) {
 const server = http.createServer(app);
 realtimeServer.attachWebSocketServer(server);
 
+server.on('upgrade', (request, socket, head) => {
+    const { pathname } = new URL(request.url, `http://${request.headers.host}`);
+    if (pathname === '/ws') {
+        realtimeServer.handleUpgrade(request, socket, head);
+    } else {
+        socket.destroy();
+    }
+});
+
 server.listen(config.PORT, () => {
     console.log(`====================================================`);
     console.log(`[PLAYWRIGHT WORKER SERVICE ONLINE] Listening on port: ${config.PORT}`);
