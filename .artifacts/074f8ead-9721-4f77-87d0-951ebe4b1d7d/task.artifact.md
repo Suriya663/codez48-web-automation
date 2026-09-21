@@ -1,17 +1,27 @@
-# Codez48 CLI Agent Behavioral Refinements
+# Codez48 CLI Agent Fix & Refinement Task Tracker
 
-- `[x]` **Phase 1: Intent Gating & Normal Chat Preservation**
-    - [x] Add `isAutomationIntent(goal)` check in `src/core/agent-controller.js`
-- `[x]` **Phase 2: Zero-Dependency Static Web Preview Server**
-    - [x] Add built-in Node `http` static server in `src/adapters/static-web.js`
-- `[x]` **Phase 3: Execution Truthfulness & Status Reporting**
-    - [x] Display `Run command: <cmd>` before execution
-    - [x] Capture package install exit codes and set accurate status (`Running`/`Completed`/`Failed`)
-- `[x]` **Phase 4: Follow-up Editing & Active Workspace Continuity**
-    - [x] Ensure follow-up prompts modify existing project files in `activeProjectPath`
-- `[x]` **Phase 5: Local Testing & Verification**
-    - [x] Test 1: "What is Node.js?" (Normal Chat)
-    - [x] Test 2: "Create a simple portfolio website and run it." (Static Web)
-    - [x] Test 3: "Create a Node.js Express website and run it." (Framework)
-    - [x] Test 4: "Change the heading." (Follow-Up Edit)
-    - [x] Test 5: "Open this project in VS Code." (VS Code)
+- `[x]` **Phase 1: Canonical Path Resolver & One Source of Truth**
+    - [x] Update `src/core/workspace-manager.js` to strip project name prefixes and enforce canonical `activeProjectPath`
+    - [x] Update `src/actions/filesystem-actions.js` to use `workspaceManager.resolvePath()` for all file/folder operations
+- `[x]` **Phase 2: Node.js Pre-Run Dependency Analysis & Package.json Workflow**
+    - [x] Update `src/adapters/node.js` to inspect `package.json` + `require()` / `import` statements in source files
+    - [x] Execute `npm install` with `cwd = activeProjectPath` after user approval and verify exit code 0
+    - [x] Detect exact run script (`npm start`, `npm run dev`) or verified entry point
+- `[x]` **Phase 3: Static Web Preview Contract & Asset Pipeline**
+    - [x] Ensure `cli-ai-chat.js` and `src/adapters/static-web.js` bundle HTML/CSS/JS into Firestore `generated_websites` payload
+    - [x] Save separate `index.html`, `style.css`, `script.js` in `activeProjectPath`
+    - [x] Perform real HTTP check on `https://codez48.netlify.app/preview/<projectId>` before launching browser
+- `[x]` **Phase 4: Compact Auto-Fix Requests & Deterministic Error Handling**
+    - [x] Budget AI fix prompts to <= 800 characters and send as clean single-message payload
+    - [x] Resolve missing module / missing file errors locally without AI requests
+- `[x]` **Phase 5: Process Success Verification & VS Code Integration**
+    - [x] Verify non-zero process exit codes, report true status (`Status: Running` / `Status: Failed`)
+    - [x] Ensure VS Code opens exact `activeProjectPath` (`code "<activeProjectPath>"`)
+- `[ ]` **Phase 6: Multi-Adapter Lifecycle Uniformity**
+    - [ ] Enforce pre-run validation and lifecycle sequence across Python, Java, Android, Flutter, .NET adapters
+- `[ ]` **Phase 7: Testing & Final Verification**
+    - [ ] Validate syntax across all modules with `node -c`
+    - [ ] Test Node.js Express flow: "Create a Node.js Express website and run it"
+    - [ ] Test Static Web flow: "Create a portfolio website"
+    - [ ] Test VS Code flow: "Open this project in VS Code"
+    - [ ] Test Follow-Up Edit flow: "Change the heading"
