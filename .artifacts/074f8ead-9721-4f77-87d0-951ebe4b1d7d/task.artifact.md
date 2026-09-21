@@ -1,30 +1,17 @@
-# Codez48 CLI AI Software Development Agent Implementation
+# Codez48 CLI Agent Behavioral Refinements
 
-- `[x]` **Phase 1: Server-Side AI System Prompt**
-    - [x] Update `netlify/functions/cli-ai-chat.js` with multi-language agent prompt & smart editing instructions
-- `[x]` **Phase 2: Core Infrastructure Modules**
-    - [x] Create `src/core/workspace-manager.js`
-    - [x] Create `src/core/environment-detector.js`
-    - [x] Create `src/core/command-policy.js`
-    - [x] Create `src/core/process-manager.js`
-- `[x]` **Phase 3: Multi-Language Project Adapters**
-    - [x] Create `src/adapters/base-adapter.js`
-    - [x] Create `src/adapters/static-web.js`
-    - [x] Create `src/adapters/node.js`
-    - [x] Create `src/adapters/python.js`
-    - [x] Create `src/adapters/java.js`
-    - [x] Create `src/adapters/android.js`
-    - [x] Create `src/adapters/dotnet.js`
-    - [x] Create `src/adapters/flutter.js`
-    - [x] Create `src/adapters/adapter-factory.js`
-- `[x]` **Phase 4: Action Handlers**
-    - [x] Create `src/actions/filesystem-actions.js`
-    - [x] Create `src/actions/browser-actions.js`
-    - [x] Create `src/actions/vscode-actions.js`
-- `[x]` **Phase 5: Agent Controller & CLI Router Integration**
-    - [x] Create `src/core/agent-controller.js`
-    - [x] Integrate into `C:/Users/suriya prakash/OneDrive/Desktop/codez48cli/cli.js` while keeping all existing commands (`login`, `list-products`, `chat`, `share`, `tools`) working
-- `[x]` **Phase 6: Verification & Local Testing**
-    - [x] Validate syntax across all modules with `node -c`
-    - [x] Test local autonomous workflow ("Create a Node.js website and run it")
-    - [x] Test follow-up session modification ("Change background color")
+- `[x]` **Phase 1: Intent Gating & Normal Chat Preservation**
+    - [x] Add `isAutomationIntent(goal)` check in `src/core/agent-controller.js`
+- `[x]` **Phase 2: Zero-Dependency Static Web Preview Server**
+    - [x] Add built-in Node `http` static server in `src/adapters/static-web.js`
+- `[x]` **Phase 3: Execution Truthfulness & Status Reporting**
+    - [x] Display `Run command: <cmd>` before execution
+    - [x] Capture package install exit codes and set accurate status (`Running`/`Completed`/`Failed`)
+- `[x]` **Phase 4: Follow-up Editing & Active Workspace Continuity**
+    - [x] Ensure follow-up prompts modify existing project files in `activeProjectPath`
+- `[x]` **Phase 5: Local Testing & Verification**
+    - [x] Test 1: "What is Node.js?" (Normal Chat)
+    - [x] Test 2: "Create a simple portfolio website and run it." (Static Web)
+    - [x] Test 3: "Create a Node.js Express website and run it." (Framework)
+    - [x] Test 4: "Change the heading." (Follow-Up Edit)
+    - [x] Test 5: "Open this project in VS Code." (VS Code)

@@ -1,151 +1,57 @@
-# Codez48 CLI AI Autonomous Software Development Agent Upgrade
+# Codez48 Autonomous Agent Behavioral Refinements Plan
 
-Upgrading `codez48 ai` into an extensible, multi-language, multi-framework autonomous local software-development agent with environment detection, process management, structured action policy sandboxing, dependency approval, automatic error fixing loops, and project session tracking.
-
-## Architecture Overview
-
-```text
-User Goal ("Create a Python Flask API and run it")
-        │
-        ▼
-Codez48 Agent Controller (cli.js / src/core/)
-        │
-        ├── 1. Project Type & Adapter Selection (Node, Python, Java, Android, Flutter, .NET, Static Web)
-        ├── 2. Environment & Runtime Inspection (node, python, java, gradle, dotnet, adb)
-        ├── 3. Internal Plan Generation (Files, Folders, Dependencies, Entry Point)
-        ├── 4. Iterative File Creation / Smart File Editing (Prevents duplicate files)
-        ├── 5. Dependency Detection & User Approval Prompt ("Install flask, requests? (y/n)")
-        ├── 6. Safe Allowlisted Command Execution (npm install, pip install, dotnet run, etc.)
-        ├── 7. Process Management & Background Server Monitoring (Port detection & logs)
-        ├── 8. Error Monitoring & Automatic Healing Loop (Read file -> Fix -> Re-run)
-        └── 9. Output Viewer (Browser for Web, Terminal/App for CLI/Desktop, Emulator/Device for Android)
-```
+Enhancing the Codez48 CLI Autonomous Agent with 15 refined behavioral rules for intent gating, static web defaults, real execution statuses, follow-up session editing, and project-type-specific output handling.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Safety & Sandboxing Policy**:
-> - The AI model never gets direct arbitrary shell access. Commands are validated against an allowlist maintained by language-specific Project Adapters.
-> - High-impact actions (package installation, runtime setup, file deletion) strictly require explicit user approval `(y/n)`.
-> - All project files reside inside the dynamic `Desktop/Codez48 Preview/<project-name>` workspace. Path traversal outside authorized workspaces is blocked.
-
-> [!NOTE]
-> **Existing Commands Preserved**: All existing commands (`codez48`, `codez48 login`, `codez48 list-products`, `codez48 chat`, `codez48 share`, `codez48 tools`) will remain 100% functional and untouched.
+> **Behavioral Refinements Overview**:
+> - **Normal Chat Gating**: Questions like "What is Node.js?" or "Explain REST API" return pure conversational answers without triggering workspace creation, environment checks, or file generation.
+> - **Static Web Default**: Simple "Create a website" prompts default to lightweight static HTML/CSS/JS (`index.html`, `style.css`, `script.js`) using a zero-dependency built-in node HTTP preview server.
+> - **Truthful Execution Statuses**: Status reports show `Running` or `Completed` ONLY if processes, health-checks, or installations exit with code 0. Failed commands report `Status: Failed` or `Status: Needs Attention`.
+> - **Follow-Up Session Editing**: Edits target the `activeProjectPath` directly, modifying existing files rather than spawning duplicate files.
 
 ---
 
 ## Proposed Changes
 
-### 1. Server-Side AI Agent System Prompt
-#### [MODIFY] [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js)
-- Expand system prompt to support multi-language software development agent actions (`plan_project`, `create_file`, `update_file`, `read_file`, `detect_environment`, `install_dependencies`, `build_project`, `run_project`, `fix_error`).
-- Instruct the AI to perform smart targeted edits on existing files instead of spawning duplicate file names.
+### 1. Intent Detection & Normal Chat Gating
+#### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
+- Implement `isAutomationIntent(goal)` check.
+- If goal is purely informational, bypass file operations, environment checks, and workspace creation. Simply query AI API and output text response.
 
----
+### 2. Static Web Preview Server & Default Adapter
+#### [MODIFY] [static-web.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/static-web.js)
+- Implement zero-dependency built-in static HTTP preview server using Node's native `http` and `fs` modules.
+- Automatically serves `index.html`, `style.css`, and `script.js` on an available port.
 
-### 2. CLI Core Modules
-#### [NEW] [src/core/workspace-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/workspace-manager.js)
-- Resolves Desktop path (OneDrive Desktop or user Desktop) without hardcoded username.
-- Manages active session state: `activeProjectPath`, `activeProjectType`, `activeProcess`, `activePort`, `activeOutput`.
-- Enforces strict path traversal security checks.
+### 3. Real Execution Verification & Run Method Display
+#### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
+- Log `Run command: <command>` prior to execution.
+- Capture exact exit codes and stdout/stderr for package installations (`npm install`, `pip install`).
+- Set final status to `Status: Running` / `Status: Completed` or `Status: Failed` / `Status: Needs Attention` based on true process state.
 
-#### [NEW] [src/core/environment-detector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/environment-detector.js)
-- Inspects installed runtimes and SDKs (`node`, `npm`, `python`, `pip`, `java`, `javac`, `gradle`, `dotnet`, `flutter`, `adb`).
-- Reports version and missing tools per project type.
-
-#### [NEW] [src/core/command-policy.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/command-policy.js)
-- Allowlist command execution sandbox. Prevents arbitrary shell execution.
-- Only permits validated commands generated by project adapters.
-
-#### [NEW] [src/core/process-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/process-manager.js)
-- Spawns and manages long-running background development processes (Vite, Express, Flask, etc.).
-- Buffers stdout/stderr, detects active HTTP ports (`localhost:3000`, `5173`, etc.), tracks process lifecycle, handles non-blocking terminal execution.
-
-#### [NEW] [src/core/agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
-- Drives the agent development lifecycle:
-  1. Receive Goal -> Plan Project
-  2. Create/Verify Directory
-  3. Create/Update Files One-by-One
-  4. Check Environment & Package Manager
-  5. Prompt for Dependency Installation Approval
-  6. Run Build / Start Server
-  7. Capture Output & Detect Errors
-  8. Auto-Fix Loop (Read relevant file -> AI fix -> Write -> Re-run)
-  9. Launch Browser / Desktop App / Emulator
- 10. Continuous Session: Handle follow-up modifications on active project.
-
----
-
-### 3. Project Adapters Layer
-#### [NEW] [src/adapters/base-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/base-adapter.js)
-- Abstract base class defining project detection, environment checking, build commands, run commands, entry points, and error parsing interface.
-
-#### [NEW] [src/adapters/static-web.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/static-web.js)
-- HTML/CSS/JS static web adapter.
-
-#### [NEW] [src/adapters/node.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/node.js)
-- Node.js, Express, React, Vite, Next.js, TypeScript adapter. Detects `package.json` scripts and package manager (`npm`, `pnpm`, `yarn`).
-
-#### [NEW] [src/adapters/python.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/python.js)
-- Python, Flask, FastAPI, Django adapter. Detects `requirements.txt` / `pyproject.toml` and `pip`.
-
-#### [NEW] [src/adapters/java.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/java.js)
-- Java CLI / Maven / Gradle adapter.
-
-#### [NEW] [src/adapters/android.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/android.js)
-- Android / Kotlin / Gradle / ADB adapter. Detects JDK, Android SDK, Gradle Wrapper, connected devices or emulators.
-
-#### [NEW] [src/adapters/dotnet.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/dotnet.js)
-- C# / .NET CLI adapter (`dotnet restore`, `dotnet build`, `dotnet run`).
-
-#### [NEW] [src/adapters/flutter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/flutter.js)
-- Flutter / Dart adapter (`flutter pub get`, `flutter run`).
-
-#### [NEW] [src/adapters/adapter-factory.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/adapter-factory.js)
-- Registers and dynamically selects the correct project adapter based on user goal or project files.
-
----
-
-### 4. Actions Layer
-#### [NEW] [src/actions/filesystem-actions.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/actions/filesystem-actions.js)
-- File/folder creation, safe read, update, directory listing, check existence with path validation.
-
-#### [NEW] [src/actions/browser-actions.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/actions/browser-actions.js)
-- Performs HTTP health check on detected local URLs (`http://localhost:X`) and launches default system browser when ready.
-
-#### [NEW] [src/actions/vscode-actions.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/actions/vscode-actions.js)
-- Opens the exact `activeProjectPath` in VS Code (`code "<activeProjectPath>"`).
-
----
-
-### 5. CLI Entry Point Integration
-#### [MODIFY] [cli.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/cli.js)
-- Wire `handleAiChat` into the new `AgentController`.
-- Preserve all existing commands (`login`, `list-products`, `add-product`, `chat`, `share`, `open`, `find`, `tools`).
+### 4. Smart Editing & Session Persistence
+#### [MODIFY] [filesystem-actions.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/actions/filesystem-actions.js)
+- Ensures follow-up prompts on an active project search existing files in `activeProjectPath`, reading and modifying existing files directly.
 
 ---
 
 ## Verification Plan
 
-### Automated Syntax & Integration Validation
-1. Verify all new JavaScript files load without syntax or module errors using `node -c`.
-2. Verify all existing CLI commands (`codez48 login`, `codez48 list-products`, `codez48 find`, `codez48 open`) execute without regression.
-
 ### Test Scenarios
-1. **Scenario A: Static Web Project**
-   - Goal: "Create a simple portfolio website and run it."
-   - Verification: Workspace created under `Codez48 Preview/portfolio`, HTML/CSS/JS written, browser opens local site.
-2. **Scenario B: Node.js Express Application**
-   - Goal: "Create a Node.js Express API with student routes and run it."
-   - Verification: `package.json` created, `express` dependency detected -> user prompted (`y/n`) -> installed -> server started on port -> browser/terminal verified.
-3. **Scenario C: Existing File Editing**
-   - Goal: "Change the page header to 'Welcome Student Portal'".
-   - Verification: Reads existing file, updates the exact file, does NOT create `index2.html` or `app-new.js`.
-4. **Scenario D: Auto-Fix Runtime Error**
-   - Goal: AI generates file with deliberate syntax/runtime error -> runner catches stderr -> reads file -> sends fix prompt -> updates file -> re-runs successfully.
-5. **Scenario E: Open in VS Code**
-   - Goal: "Open this in VS Code"
-   - Verification: Opens exact `activeProjectPath`, not CLI directory.
-6. **Scenario F: Multi-Language Environment Inspection**
-   - Goal: "Create a Python Flask API" or "Create an Android app"
-   - Verification: Correct adapter selected, relevant tools checked (`python`, `pip` or `jdk`, `sdk`, `gradle`), clear status reported.
+1. **Normal Chat Test**:
+   - Prompt: `"What is Node.js?"`
+   - Verification: Returns text answer only. No workspace, no file creation, no commands.
+2. **Static Web Default Test**:
+   - Prompt: `"Create a portfolio website and run it."`
+   - Verification: Creates static HTML/CSS/JS, launches built-in HTTP server, opens browser at `http://localhost:<port>`.
+3. **Node.js Express Test**:
+   - Prompt: `"Create a Node.js Express website and run it."`
+   - Verification: Prompts for `npm install`, runs `npm start`, health-checks port, opens browser.
+4. **Follow-Up Modification Test**:
+   - Prompt: `"Change the background color to black."`
+   - Verification: Modifies existing `style.css` in active project directory without spawning new files or folders.
+5. **VS Code Opening Test**:
+   - Prompt: `"Open this project in VS Code."`
+   - Verification: Opens exact `activeProjectPath`.
