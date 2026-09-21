@@ -1,19 +1,16 @@
-# Codez48 CLI Bug Fixes & Execution Plan
+# Codez48 CLI Bug Fix & Verification Task Tracker
 
-- `[x]` **Phase 1: Single Source of Truth & Path Security**
-    - [x] Update `src/core/workspace-manager.js` to enforce canonical `activeProjectPath` and double-nesting removal
-    - [x] Update `src/actions/filesystem-actions.js` to strip redundant prefixes
-- `[x]` **Phase 2: Package Validation & Pre-Run Dependency Installation**
-    - [x] Implement `isValidNpmPackageName(pkgName)` to reject file paths
-    - [x] Implement `node.js` adapter pre-run package.json analysis
-    - [x] Run `npm install` with `cwd = activeProjectPath` and verify exit code 0
-- `[x]` **Phase 3: Static Website Preview Contract & Firestore Persistence**
-    - [x] Persist bundled static HTML to Firestore `generated_websites` via Netlify function
-    - [x] Perform real HTTP check on `https://codez48.netlify.app/preview/<projectId>` before opening browser
-- `[x]` **Phase 4: Agent Controller & Process Execution**
-    - [x] Ensure process manager runs with `cwd = activeProjectPath`
-    - [x] Budget auto-fix repair prompt to <= 800 characters
-- `[x]` **Phase 5: Local Testing & Verification**
-    - [x] Test Node.js Express flow ("Create a Node.js Express website and run it")
-    - [x] Test Static Web flow ("Create a portfolio website")
-    - [x] Test VS Code flow ("Open this project in VS Code")
+- `[x]` **Issue 1: Fix Static Web Runtime Requirements**
+    - [x] Update `AdapterFactory.getAdapter` to prioritize static web adapter when goals specify HTML/CSS/JS/portfolio
+    - [x] Verify `staticWebAdapter` has `requiredTools = []` (no npm requirement)
+- `[x]` **Issue 2: Fix Static Web Output Routing & Public Preview 404**
+    - [x] Prevent static web workflow from falling through into Node runner / `localhost:3000` / `INTERNAL_STATIC_SERVER`
+    - [x] Update `cli-ai-chat.js` with `storePreview` direct endpoint
+    - [x] Update `agent-controller.js` to bundle HTML/CSS/JS into Firestore `generated_websites` payload
+    - [x] Perform real HTTP health check on `https://codez48.netlify.app/preview/<projectId>` before opening browser
+- `[x]` **Issue 3: Fix npm Detection on Windows & Pre-Run Node.js Installation**
+    - [x] Update `environment-detector.js` with `shell: true` and `.cmd` fallback for Windows npm checks
+    - [x] Reject local file paths (`C:\...\server.js`, `server.js`) in `isValidNpmPackageName`
+    - [x] Execute `npm install` with `cwd = activeProjectPath` after user approval and verify exit code 0
+    - [x] Inspect `package.json` scripts (`"start": "node server.js"`) and prefer `npm start`
+    - [x] Ensure Node apps open `http://localhost:<actual-port>` while static web opens Codez48 preview URL

@@ -81,7 +81,28 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { messages, projectId: existingProjectId } = JSON.parse(event.body || '{}');
+        const parsedBody = JSON.parse(event.body || '{}');
+
+        // Direct Preview Persistence Endpoint
+        if (parsedBody.storePreview && parsedBody.htmlContent) {
+            const projectId = parsedBody.projectId || 'web-' + Math.random().toString(36).substring(2, 8);
+            await db.collection('generated_websites').doc(projectId).set({
+                projectId,
+                ownerId: sellerId,
+                html: parsedBody.htmlContent,
+                prompt: parsedBody.prompt || 'Codez48 Static Preview',
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            return jsonResponse(200, {
+                success: true,
+                isWebsite: true,
+                projectId: projectId,
+                previewUrl: `https://codez48.netlify.app/preview/${projectId}`
+            });
+        }
+
+        const { messages, projectId: existingProjectId } = parsedBody;
 
         if (!messages || !Array.isArray(messages)) {
             return jsonResponse(400, { success: false, error: "Invalid request: 'messages' array required." });
