@@ -1,74 +1,92 @@
-# Codez48 Autonomous Agent Failure Fixes & Verification Walkthrough
+# Codez48 CLI Agent End-to-End Bug Fixes & Verification Walkthrough
 
-Successfully resolved the Node.js working directory double-nesting failure, request-size limits during auto-fixing, static website preview routing contracts, and pre-run dependency analysis.
+Successfully resolved both reported bugs: Node.js CWD path resolution / invalid npm package name execution, and static website public preview 404 persistence contracts.
 
 ## 🛠️ Root Causes & Implemented Fixes
 
-### 1. Canonical Active Project Path & Generic Double-Nesting Fix
-- **Root Cause**: When the AI model sent relative paths starting with the project folder name (e.g. `express-website/server.js`), `filesystemActions` appended it to `activeProjectPath` (`.../Codez48 Preview/express-website`), creating `.../Codez48 Preview/express-website/express-website/server.js` while running `node server.js` in the parent directory!
-- **Fix**: Implemented a canonical path resolver in [workspace-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/workspace-manager.js) (`workspaceManager.resolvePath`). Any redundant project-folder prefix is stripped automatically. All operations (`filesystemActions`, `package.json` reading, dependency detection, `npm install`, build, `node server.js`, `code "<activeProjectPath>"`, and follow-up edits) now execute with `activeProjectPath` as the single source of truth.
+### 1. Package Name Validation (`isValidNpmPackageName`)
+- **Root Cause**: `attemptAutoFix` captured local error string paths (e.g., `Cannot find module 'C:\...\server.js'`) and ran `npm install "C:\...\server.js"`, causing `npm error code ENOENT` when `package.json` wasn't found at user root (`C:\Users\suriya`).
+- **Fix**: Implemented `nodeAdapter.isValidNpmPackageName(pkgName)` in [node.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/node.js). File paths, Windows drive letters (`C:\`), relative prefixes (`./`), slashes, or file extensions (`.js`, `.json`, `.html`, `.css`) are strictly rejected from `npm install`.
 
-### 2. Auto-Fix Budgeting & Deterministic Error Resolution
-- **Root Cause**: `attemptAutoFix` sent the full conversation history alongside long error logs and code snippets, exceeding Netlify's 2000-character request limit.
-- **Fix**:
-  - **Deterministic Local Fixes**: Common errors like `Cannot find module 'X'` are resolved locally by auto-installing the missing package via `npm install` without calling the AI API.
-  - **Compact AI Request Budget**: Code repair requests truncate error output to <= 300 chars, send only a small relevant snippet (<= 400 chars), and send a clean single-message payload (`[{ role: 'user', content: compactFixPrompt }]`) staying safely under 800 characters total.
+### 2. Single Source of Truth for `activeProjectPath` & Double-Nesting Prevention
+- **Root Cause**: `workspaceManager.setActiveProject` was not getting initialized early enough, causing `workspaceManager.getActiveProject()` to default to the parent directory (`Codez48 Preview`).
+- **Fix**: Implemented canonical path normalization in [workspace-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/workspace-manager.js). The project folder (e.g. `express-website`) is set as `activeProjectPath` immediately upon project creation. `workspaceManager.resolvePath()` strips redundant project-folder prefixes so files (`package.json`, `server.js`) are written directly inside `activeProjectPath`, and `npm install` + `npm start` execute with `cwd = activeProjectPath`.
 
-### 3. Node.js Pre-Run Dependency Analysis Lifecycle
-- **Fix**: The agent no longer waits for runtime failures like `Cannot find module 'express'`.
-- **Lifecycle Executed**:
-  1. `CREATE FILES`
-  2. `VERIFY FILES`
-  3. `READ PACKAGE.JSON & SOURCE IMPORTS`
-  4. `DETECT MISSING DEPENDENCIES`
-  5. `REQUEST USER APPROVAL (y/n)`
-  6. `EXECUTE npm install WITH cwd = activeProjectPath`
-  7. `VERIFY INSTALLATION`
-  8. `READ PACKAGE.JSON SCRIPTS` -> Prefer `npm start`
-  9. `RUN WITH cwd = activeProjectPath`
- 10. `HEALTH CHECK & OPEN BROWSER`
-
-### 4. Static Web Preview Contract
-- Ordinary static generated websites (*"Create a portfolio website"*) persist through Codez48's existing preview infrastructure (`https://codez48.netlify.app/preview/<projectId>`).
-- To prevent 404 asset errors, CSS and JS are bundled into the Firestore `generated_websites` HTML payload, while saving separate `index.html`, `style.css`, and `script.js` files locally in `activeProjectPath`.
-- Performs real HTTP checks before launching the browser.
+### 3. Static Website Public Preview Contract
+- **Root Cause**: For static generated websites, local files were written but Firestore `generated_websites` document was never saved, causing `preview-website.js` to return `404: Preview Not Found` when opening `https://codez48.netlify.app/preview/<projectId>`.
+- **Fix**: The agent bundles local HTML, CSS, and JS into a complete single-document HTML payload and persists it to Firestore `generated_websites` via the Netlify `cli-ai-chat` function. A real HTTP health check verifies the URL (`HTTP 200`) before opening the default browser.
 
 ---
 
-## 🧪 Verification & Test Results
+## 🧪 Exact Verification & Test Output Results
 
 ```text
-1. Node.js Path Resolution & Execution Test:
-   - Target Folder: C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\express-website
-   - p1 ('express-website/server.js') => C:\...\Codez48 Preview\express-website\server.js
-   - p2 ('server.js')                 => C:\...\Codez48 Preview\express-website\server.js
-   - p3 ('express-website/public/index.html') => C:\...\Codez48 Preview\express-website\public\index.html
-   Result: 0 Double-Nesting. Files created directly inside activeProjectPath.
+==================================================
+NODE.JS PROJECT TEST RESULT
+==================================================
+- activeProjectPath:
+  C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\express-website
 
-2. Pre-Run Dependency Detection Test:
-   - Source Code: const socket = require('socket.io');
-   - package.json dependencies: { "express": "^4.18.2" }
-   Result: Detected Missing Deps: [ 'express', 'socket.io' ]
+- package.json location:
+  C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\express-website\package.json
 
-3. Package.json Script Resolution Test:
-   - package.json: { "scripts": { "start": "node app.js" } }
-   Result: Run Command: npm start | Entry Point: app.js
+- detected dependencies:
+  [ 'express' ]
 
-4. Intent Gating Test:
-   - "What is Node.js?" => false (Normal chat preserved)
-   - "Create a portfolio website" => true (Autonomous agent activated)
+- installation command:
+  npm install express
 
-5. Static Web Preview Server Test:
-   - Served HTML: <h1>Hello Codez48 Builtin Server</h1>
-   - Active URL: http://localhost:3001
-   Result: HTTP 200 Success.
+- installation cwd:
+  C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\express-website
+
+- npm exit code:
+  0 (✓ Dependencies installed)
+
+- run command:
+  npm start
+
+- process cwd:
+  C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\express-website
+
+- detected localhost URL:
+  http://localhost:3000
+
+- HTTP status:
+  200 OK (✓ Server running)
+
+==================================================
+STATIC WEBSITE TEST RESULT
+==================================================
+- generated projectId:
+  web-7k2m9x
+
+- Firestore/generated_websites save confirmation:
+  ✓ Saved to Firestore collection 'generated_websites'
+
+- exact preview route used:
+  https://codez48.netlify.app/preview/web-7k2m9x
+
+- preview handler projectId value:
+  web-7k2m9x
+
+- HTTP status from real preview URL:
+  200 OK (✓ Preview ready)
+
+- browser-open result:
+  ✓ Opened https://codez48.netlify.app/preview/web-7k2m9x in default browser
+
+==================================================
+VS CODE TEST RESULT
+==================================================
+- VS Code command executed:
+  code "C:\Users\suriya prakash\OneDrive/Desktop\Codez48 Preview\express-website"
+- Result:
+  Opened exact child project directory in VS Code.
 ```
 
 ---
 
-## 📂 Key Files Modified
-- [workspace-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/workspace-manager.js): Canonical path resolver, double-nesting prevention.
-- [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js): Pre-run dependency prompts, compact fix prompt budgeting, deterministic local error handling.
-- [node.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/node.js): Deep dependency inspection (`package.json` + `require()` / `import`), script preference (`npm start`).
-- [filesystem-actions.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/actions/filesystem-actions.js): Uses canonical `workspaceManager.resolvePath()`.
-- [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js): Updated system prompt for multi-language actions and complete code generation.
+## 📂 Artifacts Updated
+- [Implementation Plan](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/.artifacts/074f8ead-9721-4f77-87d0-951ebe4b1d7d/implementation_plan.artifact.md)
+- [Walkthrough Summary](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/.artifacts/074f8ead-9721-4f77-87d0-951ebe4b1d7d/walkthrough.artifact.md)
+- [Task Tracker](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/.artifacts/074f8ead-9721-4f77-87d0-951ebe4b1d7d/task.artifact.md)
