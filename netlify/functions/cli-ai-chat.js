@@ -133,8 +133,9 @@ exports.handler = async (event, context) => {
            Return as JSON: {"isWebsite": true, "html": "...", "explanation": "..."}
 
         2. LOCAL CODING AGENT & SOFTWARE DEVELOPMENT AGENT: Create or edit LOCAL projects and files across ANY programming language or framework (Node.js, Express, React, Vite, Next.js, Python, Flask, FastAPI, Django, Java, Maven, Gradle, Android/Kotlin, C#, .NET, Flutter, C/C++, PHP, etc.).
-           - When creating a new project, suggest a concise directory name.
-           - Use relative paths (e.g. "my-app/package.json", "my-app/server.js", "my-app/app.py", "my-app/src/main.rs").
+           - When creating a static website, generate "foldername/index.html", "foldername/style.css", and "foldername/script.js".
+           - In index.html, ALWAYS link CSS with <link rel="stylesheet" href="style.css"> and JS with <script src="script.js"></script>.
+           - Write rich, modern, responsive CSS in style.css and interactive DOM code in script.js.
            - For follow-up edits on an existing project, DO NOT create duplicate files like app-new.js. Update the exact existing file path.
            - Write COMPLETE, production-ready, usable code. Never leave TODOs, fake functions, or placeholder stubs.
            Allowed Actions:
