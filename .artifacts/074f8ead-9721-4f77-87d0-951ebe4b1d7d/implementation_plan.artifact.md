@@ -1,64 +1,47 @@
-# Codez48 CLI Bug Fixes & Execution Plan
+# Codez48 Static Web Preview Pipeline & Content Preservation Fix Plan
 
-Fixing the Node.js project path/dependency execution failure and resolving the static website public preview 404 error.
+Resolving the preview content loss bug so that generated HTML, CSS, and JS structure (sections, layouts, styling, scripts) render completely on the public Codez48 preview URL without placeholder/title-only fallbacks.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Root Cause & Fix Summary**:
-> 1. **Package Validation Security Fix**:
->    - The error resolver was treating missing local files (`Cannot find module 'C:\...\server.js'`) as npm package names, attempting `npm install "C:\...\server.js"` from user root!
->    - **Fix**: Implemented strict package name validation. Paths containing file extensions (`.js`, `.json`), slashes, Windows drive letters (`C:\`), or relative prefixes (`./`) are strictly rejected from being passed to `npm install`.
-> 2. **Canonical `activeProjectPath` & CWD Fix**:
->    - `workspaceManager.setActiveProject` will be initialized immediately upon project detection and used as the single source of truth across all actions (`cwd: activeProjectPath`).
->    - `workspaceManager.resolvePath` strips redundant folder name prefixes to prevent double-nesting (`express-website/express-website/server.js`).
-> 3. **Node.js Pre-Run Dependency Analysis**:
->    - Before spawning the process, read `package.json` and scan source files -> prompt user `(y/n)` -> execute `npm install` inside `activeProjectPath` -> verify exit code 0 -> check package.json scripts (`npm start`) -> verify entry file -> run process with `cwd = activeProjectPath`.
-> 4. **Static Website Public Preview 404 Fix**:
->    - Local static files (`index.html`, `style.css`, `script.js`) write to `activeProjectPath`.
->    - The agent merges HTML, CSS, and JS into a complete single-document HTML payload and persists it to Firestore `generated_websites` under `doc(projectId)`.
->    - Performs a real HTTP check on `https://codez48.netlify.app/preview/<projectId>` to verify `HTTP 200` before opening the browser.
+> **Root Cause Identified**:
+> In `agent-controller.js`, if `readFile('index.html')` failed or returned empty content, it fell back to `'<html><body><h1>Codez48 Static Website</h1></body></html>'`.
+> Additionally, the CSS/JS injection used rigid `replace('</head>')` and `replace('</body>')` logic. If `index.html` lacked lowercase tags, or if CSS/JS were linked via `<link rel="stylesheet" href="style.css">`, the injection failed silently, persisting only bare HTML to Firestore!
 
----
+## Proposed Fix Strategy
 
-## Proposed Changes
+### 1. Robust Multi-File HTML Bundling Engine
+- Implement a smart HTML bundler function `bundleStaticWebHtml(indexHtml, cssContent, jsContent)`:
+  - Strips external `<link href="style.css">` and `<script src="script.js">` tags from HTML.
+  - Injects full `style.css` and `script.js` content into `<style>` and `<script>` blocks flexibly (handling missing `<head>`/`<body>` tags safely).
+  - Preserves DOCTYPE, semantic tags, navbar, hero, sections, classes, IDs, and layouts intact.
 
-### 1. Workspace & Path Security
-#### [MODIFY] [workspace-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/workspace-manager.js)
-#### [MODIFY] [filesystem-actions.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/actions/filesystem-actions.js)
-- Enforce single canonical `activeProjectPath`.
-- Normalize all paths and strip double-nesting prefixes.
+### 2. File Resolution & Fallback Elimination
+- If `index.html` is not in root, scan `activeDir` for any generated `.html` file.
+- Never overwrite real generated HTML with a placeholder string (`"Codez48 Static Website"`).
 
-### 2. Dependency Manager & Package Validation
-#### [MODIFY] [node.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/node.js)
-#### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
-- Implement `isValidNpmPackageName(pkg)` to reject file paths from `npm install`.
-- Execute `npm install` with `cwd: activeProjectPath`.
-- Read `package.json` scripts (`"start": "node server.js"`) and prefer `npm start`.
-
-### 3. Static Web Preview Persistence
-#### [MODIFY] [static-web.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/static-web.js)
-#### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
-- For static web goals, persist the bundled HTML payload to Firestore `generated_websites` via the Netlify `cli-ai-chat` API so `https://codez48.netlify.app/preview/<projectId>` returns `HTTP 200`.
+### 3. Response Verification
+- After persisting to Firestore, fetch the public preview URL `https://codez48.netlify.app/preview/<projectId>`.
+- Verify:
+  - HTTP Status == 200.
+  - Response body contains actual website content (length > 200 chars, no default title-only placeholder).
+- Only when response verification passes: open browser and display `✓ Preview Ready`.
 
 ---
 
 ## Verification Plan
 
-### Test Scenario 1: Node.js Express Application
-- **Command**: `codez48 ai` -> *"Create a Node.js Express website and run it"*
-- **Verification**:
-  - `activeProjectPath`: `...\Codez48 Preview\express-website`
-  - `package.json` created in `express-website`
-  - `express` dependency detected
-  - `npm install` runs with `cwd = ...\express-website`
-  - `npm start` runs with `cwd = ...\express-website`
-  - Localhost URL detected and opened.
-
-### Test Scenario 2: Static Portfolio Website
-- **Command**: `codez48 ai` -> *"Create a portfolio website"*
-- **Verification**:
-  - Local `index.html`, `style.css`, `script.js` created.
-  - Document persisted to Firestore `generated_websites`.
-  - Preview URL `https://codez48.netlify.app/preview/<projectId>` returns `HTTP 200`.
-  - Browser opens public preview URL.
+### Test Scenario: Complete Portfolio Generation
+1. Goal Prompt:
+   *"Create a modern responsive portfolio website using HTML, CSS and JavaScript with a navigation bar, hero section, about section, skills section, projects section, contact section and footer."*
+2. Check local generated files:
+   - `index.html` (contains navbar, hero, about, skills, projects, contact, footer).
+   - `style.css` (contains complete responsive CSS).
+   - `script.js` (contains interactions).
+3. Check Firestore persisted HTML payload:
+   - Bundled HTML contains complete structure and inlined CSS/JS.
+4. Check public preview response (`https://codez48.netlify.app/preview/<projectId>`):
+   - HTTP 200 OK.
+   - Body contains "About", "Skills", "Projects", "Contact".
+5. Browser opens public preview URL rendering the complete design.
