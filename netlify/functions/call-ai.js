@@ -24,7 +24,9 @@ exports.handler = async (event, context) => {
         const model = "openai/gpt-oss-120b";
 
         const rawGroqKeys = process.env.GROQ_API_KEY;
-        const groqKeys = rawGroqKeys ? rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean) : [];
+        const groqKeys = rawGroqKeys
+            ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
+            : [];
         const geminiApiKey = process.env.GEMINI_API_KEY || "";
 
         if (groqKeys.length === 0 && !geminiApiKey) {

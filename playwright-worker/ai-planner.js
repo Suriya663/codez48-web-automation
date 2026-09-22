@@ -4,7 +4,9 @@ const config = require('./config');
 class AIPlanner {
     async callAI(promptMessages) {
         const rawGroqKeys = config.GROQ_API_KEY;
-        const groqKeys = rawGroqKeys ? rawGroqKeys.split(',').map(k => k.trim()) : [];
+        const groqKeys = rawGroqKeys
+            ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
+            : [];
 
         // Randomize Groq keys for automatic load balancing and key rotation
         const shuffledKeys = [...groqKeys].sort(() => 0.5 - Math.random());
