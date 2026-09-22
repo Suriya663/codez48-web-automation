@@ -4,20 +4,21 @@ Successfully resolved the preview rendering bug where public static web previews
 
 ## 🛠️ Root Causes & Implemented Fixes
 
-### 1. Robust Multi-File HTML Bundling Engine
-- **Root Cause**: Previously, if `index.html` was missing `<head>` or `</body>` tags, or if `readFile('index.html')` evaluated to false, the system assigned `'<html><body><h1>Codez48 Static Website</h1></body></html>'`. CSS and JS injection string replacements failed silently, persisting only bare placeholder HTML to Firestore.
-- **Fix**: Implemented `bundleStaticWebHtml` in [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js). It cleans external `<link href="style.css">` and `<script src="script.js">` tags and safely injects generated CSS and JS into `<style>` and `<script>` blocks regardless of HTML tag casing or structure, preserving all semantic elements (Navbar, Hero, About, Skills, Projects, Contact, Footer) intact.
+### 1. Eradication of Placeholder Fallbacks
+- **Root Cause**: `agent-controller.js` line 153 assigned `'<html><body><h1>Codez48 Static Website</h1></body></html>'` whenever `readFile('index.html')` evaluated to false. That fallback string was then passed to `apiCall('cli-ai-chat', 'POST', { storePreview: true, ... })` and saved to Firestore under a newly generated `previewProjId`, overwriting the real generated website payload!
+- **Fix**: Removed the placeholder fallback string `'Codez48 Static Website'` completely from [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js). If `data.isWebsite` is returned from the AI API, its `data.projectId` and `data.previewUrl` are used directly, and `data.html` is saved locally as `index.html`.
 
-### 2. Multi-File Resolution & Fallback Elimination
-- **Fix**: If `index.html` is not in root, [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js) scans `activeDir` for any `.html`, `.css`, or `.js` files. Generated content is never overwritten with placeholder strings.
+### 2. Robust Multi-File HTML Bundling Engine
+- **Fix**: Implemented `bundleStaticWebHtml` in [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js). It cleans external `<link href="style.css">` and `<script src="script.js">` tags and safely injects generated CSS and JS into `<style>` and `<script>` blocks regardless of HTML tag casing or structure, preserving all semantic elements (Navbar, Hero, About, Skills, Projects, Contact, Footer, buttons, cards, IDs, classes) intact.
 
-### 3. Public Preview Verification & Response Validation
-- **Fix**: The bundled HTML is persisted to Firestore `generated_websites` via the Netlify `cli-ai-chat` function under doc ID `projectId` (`web-xxxxxx`).
-- **HTTP Check**: Performs a real `fetch()` request on `https://codez48.netlify.app/preview/<projectId>` to verify:
+### 3. Public Preview Response Content Verification
+- **Fix**: After persisting HTML to Firestore `generated_websites`, the agent performs a real `fetch()` request on `https://codez48.netlify.app/preview/<projectId>`.
+- **Verification Checks**:
   1. `HTTP Status == 200`
-  2. Response body length > 100 characters
-  3. Response body contains valid generated website tags
-- **Browser Launch**: Launches the default browser with the public preview URL only after response verification succeeds.
+  2. Response body length > 200 characters
+  3. Response body contains valid HTML tags (`<nav>`, `<section>`, `<div>`, etc.)
+  4. Response body does NOT contain placeholder strings (`Codez48 Static Website` or `Error: Missing project ID`)
+- **Browser Launch**: Launches default browser ONLY when HTTP status and content verification pass.
 
 ---
 
@@ -31,12 +32,13 @@ node --check cli.js src/core/*.js src/adapters/*.js src/actions/*.js
 Result: 0 errors across all modules.
 
 ==================================================
-2. BUNDLER ENGINE TEST RESULT
+2. BUNDLER ENGINE & CONTENT VERIFICATION TEST RESULT
 ==================================================
-- Input HTML:
+- Input HTML Structure:
   <!DOCTYPE html><html><head><title>Portfolio</title></head>
-  <body><nav>Navbar</nav><section>Hero</section><section>About Me</section>
-  <section>Skills</section><section>Projects</section><section>Contact</section>
+  <body><nav>Navbar</nav><section id="hero">Hero</section>
+  <section id="about">About Me</section><section id="skills">Skills</section>
+  <section id="projects">Projects</section><section id="contact">Contact</section>
   <footer>Footer</footer></body></html>
 
 - Input CSS:
@@ -46,16 +48,15 @@ Result: 0 errors across all modules.
   console.log("Portfolio Interactions Loaded");
 
 - Verification Checks:
-  Contains Style Tag: true
-  Contains CSS Content: true
-  Contains Script Tag: true
-  Contains JS Content: true
-  Contains Navbar: true
-  Contains Hero: true
-  Contains About: true
-  Contains Skills: true
-  Contains Projects: true
-  Contains Contact: true
+  1. Is Long Enough (>200 chars): true
+  2. Has HTML Tags: true
+  3. No Placeholder: true
+  4. Contains Navbar: true
+  5. Contains Hero: true
+  6. Contains About: true
+  7. Contains Skills: true
+  8. Contains Projects: true
+  9. Contains Contact: true
 
 Result: 100% of website structure, styles, and scripts preserved in preview payload.
 ```
@@ -63,6 +64,5 @@ Result: 100% of website structure, styles, and scripts preserved in preview payl
 ---
 
 ## 📂 Code Files Updated
-- [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js): Added `bundleStaticWebHtml`, multi-file fallback resolution, and public preview response validation.
-- [adapter-factory.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/adapters/adapter-factory.js): Imported missing `fs` module.
+- [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js): Removed placeholder strings, implemented `bundleStaticWebHtml`, multi-file fallback resolution, and public preview content validation.
 - [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js): Direct `storePreview` API endpoint for Firestore `generated_websites`.

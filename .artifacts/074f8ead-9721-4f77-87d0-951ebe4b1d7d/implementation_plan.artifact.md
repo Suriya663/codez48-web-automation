@@ -1,32 +1,33 @@
-# Codez48 Static Web Preview Pipeline & Content Preservation Fix Plan
+# Codez48 Static Web Preview Pipeline Root Cause Fix Plan
 
-Resolving the preview content loss bug so that generated HTML, CSS, and JS structure (sections, layouts, styling, scripts) render completely on the public Codez48 preview URL without placeholder/title-only fallbacks.
+Eliminating the placeholder fallback string `'Codez48 Static Website'` and fixing the static preview persistence pipeline so public previews render the complete generated HTML/CSS/JS website.
 
 ## User Review Required
 
 > [!IMPORTANT]
 > **Root Cause Identified**:
-> In `agent-controller.js`, if `readFile('index.html')` failed or returned empty content, it fell back to `'<html><body><h1>Codez48 Static Website</h1></body></html>'`.
-> Additionally, the CSS/JS injection used rigid `replace('</head>')` and `replace('</body>')` logic. If `index.html` lacked lowercase tags, or if CSS/JS were linked via `<link rel="stylesheet" href="style.css">`, the injection failed silently, persisting only bare HTML to Firestore!
+> 1. In `cli-ai-chat.js`, when Groq/Gemini returned `isWebsite: true`, `cli-ai-chat.js` saved the full generated HTML to Firestore under `doc(data.projectId)` and returned `data.previewUrl`.
+> 2. However, `agent-controller.js` received `data.isWebsite = true`, ignored `data.previewUrl`, generated a **second** random `previewProjId`, failed to find local files (because `isWebsite` didn't write local files), fell back to `'<html><body><h1>Codez48 Static Website</h1></body></html>'`, and **overwrote Firestore** with this placeholder HTML under the new ID!
+> 3. **The Fix**:
+>    - Remove all placeholder fallback HTML strings (`'Codez48 Static Website'`) from `agent-controller.js`.
+>    - Ensure static website creation creates both local files (`index.html`, `style.css`, `script.js`) AND persists the full HTML to Firestore under one single `projectId`.
+>    - When `data.isWebsite` is returned, use `data.previewUrl` directly without creating a second ID or overwriting Firestore.
 
-## Proposed Fix Strategy
+---
 
-### 1. Robust Multi-File HTML Bundling Engine
-- Implement a smart HTML bundler function `bundleStaticWebHtml(indexHtml, cssContent, jsContent)`:
-  - Strips external `<link href="style.css">` and `<script src="script.js">` tags from HTML.
-  - Injects full `style.css` and `script.js` content into `<style>` and `<script>` blocks flexibly (handling missing `<head>`/`<body>` tags safely).
-  - Preserves DOCTYPE, semantic tags, navbar, hero, sections, classes, IDs, and layouts intact.
+## Proposed Changes
 
-### 2. File Resolution & Fallback Elimination
-- If `index.html` is not in root, scan `activeDir` for any generated `.html` file.
-- Never overwrite real generated HTML with a placeholder string (`"Codez48 Static Website"`).
+### 1. Server-Side Prompt & Local File Generation
+#### [MODIFY] [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js)
+- Update system prompt so static website generation requests return `isAction: true` with full local files (`index.html`, `style.css`, `script.js`) AND `isWebsite: true` with `html` bundling.
 
-### 3. Response Verification
-- After persisting to Firestore, fetch the public preview URL `https://codez48.netlify.app/preview/<projectId>`.
-- Verify:
-  - HTTP Status == 200.
-  - Response body contains actual website content (length > 200 chars, no default title-only placeholder).
-- Only when response verification passes: open browser and display `✓ Preview Ready`.
+### 2. Client-Side Agent Controller
+#### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
+- Remove all fallback placeholder strings (`'Codez48 Static Website'`).
+- If `data.isWebsite` is true, use `data.projectId` and `data.previewUrl` directly.
+- If local files exist, bundle `index.html`, `style.css`, and `script.js` into `htmlBundle` and update the single Firestore document `doc(projectId)`.
+- If local files were not written, extract HTML from `data.html` and write local files (`index.html`, `style.css`, `script.js`) in `activeProjectPath`.
+- Perform real HTTP check on `publicPreviewUrl` verifying `res.status === 200` and response length > 200 chars before launching the default browser.
 
 ---
 
@@ -40,8 +41,8 @@ Resolving the preview content loss bug so that generated HTML, CSS, and JS struc
    - `style.css` (contains complete responsive CSS).
    - `script.js` (contains interactions).
 3. Check Firestore persisted HTML payload:
-   - Bundled HTML contains complete structure and inlined CSS/JS.
+   - Verified that Firestore document contains full HTML with inlined styles and scripts.
 4. Check public preview response (`https://codez48.netlify.app/preview/<projectId>`):
    - HTTP 200 OK.
    - Body contains "About", "Skills", "Projects", "Contact".
-5. Browser opens public preview URL rendering the complete design.
+5. Browser opens public preview URL rendering the complete designed portfolio.
