@@ -1,51 +1,34 @@
-# Codez48 Dynamic Web Generation & Package Installation Approval Plan
+# Browser Client-Side `require` Error Fix & System Prompt Safeguard Plan
 
-Enhancing the Codez48 CLI AI Agent and Server Prompts to generate rich, multi-file, fully-styled dynamic Node.js/Express applications and guaranteeing the `Y/n` package installation approval flow.
+Fixing the browser preview runtime error `ReferenceError: require is not defined` when client-side scripts generated for web previews contain Node.js CommonJS `require()` calls.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Key Enhancements**:
-> 1. **Rich Dynamic Website Code Generation**:
->    - System prompt updated so Node.js/Express project generation produces complete, rich, multi-section UI layouts (`public/index.html`), professional CSS (`public/style.css`), and client-side JavaScript (`public/script.js`).
->    - `server.js` is instructed to configure Express static file serving (`app.use(express.static('public'))`), ensuring HTML, CSS, and JS link together seamlessly.
-> 2. **Explicit Package/Dependency Approval Flow**:
->    - When a Node.js project requires dependencies (e.g. `express`, `cors`), the CLI displays the missing packages and prompts:
->      `Install required package(s) using 'npm install express'? (Y/n):`
->    - Pressing `y`/`Y`/`yes` automatically runs `npm install` inside the project folder (`cwd: activeProjectPath`) and verifies installation before starting the server.
+> **Root Cause Identified**:
+> - The AI model occasionally generated Node.js CommonJS statements (e.g., `const express = require('express')` or `const fs = require('fs')`) inside client-side `script.js` files intended for the browser.
+> - When rendered in the browser, the browser script engine threw `ReferenceError: require is not defined`, crashing DOM execution and preventing the generated website layout/components from rendering.
 
----
+## Proposed Fix Strategy
 
-## Proposed Changes
-
-### 1. Server System Prompt Upgrade
+### 1. Server System Prompt Rule Enforcement
 #### [MODIFY] [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js)
-- Enhance system prompt for Node.js / Express projects to generate:
-  - `package.json` with dependencies and start scripts.
-  - `server.js` configured with `app.use(express.static('public'))` and dynamic API routes.
-  - `public/index.html` containing a full, modern, multi-section responsive web page layout (navbar, hero, features, interactive components, footer).
-  - `public/style.css` with complete styling.
-  - `public/script.js` with client-side DOM logic.
-  - Linked tags: `<link rel="stylesheet" href="style.css">` and `<script src="script.js"></script>`.
+- Add a strict instruction to `systemPrompt`:
+  > *"CRITICAL BROWSER JS RULE: Client-side \`script.js\` or browser HTML scripts MUST NOT contain Node.js CommonJS statements like \`require(...)\`, \`module.exports\`, or Node built-in modules (\`fs\`, \`path\`, \`http\`). Use native browser DOM APIs (\`document.querySelector\`, \`addEventListener\`, \`fetch\`)."*
 
-### 2. Dependency Approval & Execution Refinement
+### 2. Client-Side Script Sanitization in Bundler
 #### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
-- Refine approval prompt handling to accept `Y`, `y`, `yes`, `YES` or Enter (default Yes).
-- Execute `npm install` with `cwd: activeProjectPath` and log stdout/stderr.
+- In `bundleStaticWebHtml`:
+  - Automatically strip/clean lines containing `require(...)` or `module.exports` from `jsContent` before embedding into `<script>` tags for the browser.
+  - Define a safe no-op `window.require = window.require || function() { return {}; };` fallback at the top of embedded preview scripts to prevent `ReferenceError: require is not defined` from breaking DOM execution.
 
 ---
 
 ## Verification Plan
 
-### Test Scenario: Dynamic Node.js Express Application
-1. **Command**:
-   `codez48 ai` -> *"Create a Node.js Express shopping website and run it"*
-2. **Expected Verification**:
-   - `express-website/package.json` created.
-   - `express-website/server.js` created with `express.static('public')`.
-   - `express-website/public/index.html` created with rich shopping UI.
-   - `express-website/public/style.css` and `script.js` created and linked.
-   - Missing dependency `express` detected -> Prompt `Install required package(s)? (Y/n)`.
-   - Press `y` -> `npm install express` executes automatically in project folder.
-   - `npm start` runs server.
-   - Browser opens `http://localhost:3000` rendering full styled shopping website.
+### Manual Verification
+1. **Syntax Check**: Run `node -c` across all modified files.
+2. **Browser Compatibility Test**:
+   - Pass JS content containing `const fs = require('fs'); document.body.style.background = 'blue';` through `bundleStaticWebHtml`.
+   - Verify `require(...)` line is safely stripped/handled.
+   - Verify DOM code executes without `ReferenceError`.

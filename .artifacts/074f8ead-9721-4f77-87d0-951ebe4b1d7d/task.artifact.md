@@ -1,10 +1,10 @@
-# Codez48 Dynamic Web Generation & Package Installation Approval Task Tracker
+# Browser Client-Side `require` Error Fix Task Tracker
 
-- `[x]` **Phase 1: Server System Prompt Enhancement**
-    - [x] Update `netlify/functions/cli-ai-chat.js` system prompt for rich Node.js/Express `public/` structure, CSS, JS, and static middleware
-- `[x]` **Phase 2: Dependency Approval & Installation Refinement**
-    - [x] Refine `agent-controller.js` dependency approval prompt `(Y/n)`
-    - [x] Verify `npm install` execution with `cwd: activeProjectPath`
-- `[x]` **Phase 3: Syntax Check & Verification Testing**
-    - [x] Run `node -c` across all JavaScript modules (0 errors)
-    - [x] Test dynamic Node.js Express website creation and package approval flow
+- `[x]` **Phase 1: System Prompt Browser JS Rule Enforcement**
+    - [x] Update `netlify/functions/cli-ai-chat.js` system prompt to explicitly forbid CommonJS `require(...)` in client-side scripts
+- `[x]` **Phase 2: Client-Side Script Sanitization & Fallback in Bundler**
+    - [x] Update `bundleStaticWebHtml` in `src/core/agent-controller.js` to strip `require(...)` lines from `jsContent`
+    - [x] Inject safe `window.require` fallback in preview script payloads
+- `[x]` **Phase 3: Syntax Verification & Test Execution**
+    - [x] Run `node --check` across all JavaScript modules (0 errors)
+    - [x] Test `bundleStaticWebHtml` with JS containing `require(...)` statements

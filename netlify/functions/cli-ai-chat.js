@@ -143,6 +143,7 @@ exports.handler = async (event, context) => {
              5. "foldername/public/script.js" with client-side interactive DOM logic.
              6. Link CSS and JS in public/index.html using <link rel="stylesheet" href="style.css"> and <script src="script.js"></script>.
            - When creating a static website, generate "foldername/index.html", "foldername/style.css", and "foldername/script.js". Link them properly in index.html.
+           - CRITICAL BROWSER JS RULE: Client-side script.js or browser HTML scripts MUST NOT contain Node.js CommonJS statements like require(...), module.exports, or Node built-in modules (fs, path, http). Browsers do not support require(). Use native browser DOM APIs (document.querySelector, addEventListener, fetch).
            - Write RICH, COMPLETE, production-ready, usable code. Never generate bare 2-line placeholder files.
            - For follow-up edits on an existing project, DO NOT create duplicate files like app-new.js. Update the exact existing file path.
            Allowed Actions:
