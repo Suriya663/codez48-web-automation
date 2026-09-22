@@ -1,55 +1,64 @@
-# Browser Client-Side `require` Error Fix Walkthrough
+# Codez48 Pilot Advanced Application Automation Walkthrough
 
-Successfully resolved the browser preview runtime error `ReferenceError: require is not defined`.
+Expanded `codez48 pilot` to support native app vs official web fallback routing (WhatsApp, Teams, Spotify, Discord, Zoom), Notepad typing and `Ctrl+S` file save automation with disk verification, and `winget` package/game installer approval prompts.
 
-## 🛠️ Root Causes & Fixes Implemented
+## 🛠️ Architecture & Modules Updated
 
-### 1. Server System Prompt Rule Enforcement
-- **Root Cause**: The AI model occasionally generated Node.js CommonJS statements (e.g. `const express = require('express')` or `const fs = require('fs')`) inside client-side `script.js` files intended for the browser.
-- **Fix**: Added an explicit `CRITICAL BROWSER JS RULE` in [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js) instructing the model to never write `require(...)`, `module.exports`, or Node built-in imports inside client-side scripts.
+### 1. Smart Web Fallback Router ([app-discovery.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/app-discovery.js) & [general-desktop-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/general-desktop-adapter.js))
+- Checks if a requested application (e.g. WhatsApp, Teams, Spotify, Discord, Zoom, Microsoft) is installed natively.
+- If native app is installed: Launches native app.
+- If native app is absent: Automatically falls back to launching the official web application (`https://web.whatsapp.com`, `https://teams.microsoft.com`, `https://open.spotify.com`, etc.) in the default browser.
+- If no official web fallback exists for an uninstalled app: Reports `[NOT INSTALLED]` clearly without inventing fake URLs.
 
-### 2. Client-Side Script Sanitization & Window Fallback
-- **Fix**: Updated `bundleStaticWebHtml` in [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js):
-  - Automatically filters/strips lines containing `require(...)` or `module.exports` from `jsContent` before embedding into browser `<script>` tags.
-  - Injects a safe global fallback (`window.require = window.require || function(mod) { ... };`) at the top of the embedded preview script.
-  - Wraps client-side DOM code inside `document.addEventListener('DOMContentLoaded', ...)` with error logging.
+### 2. Notepad Text Typing & File Save Automation ([notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js))
+- Launches Notepad, focuses the window, types the text (`guiDriver.typeText`), triggers `Ctrl+S`, saves to the dynamically resolved destination (e.g. `Desktop/pilot_notes.txt`), and performs an `fs.existsSync` & file size check on disk before returning success.
+
+### 3. App / Game Installer Approval Helper ([installer-helper.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/installer-helper.js))
+- Searches Windows Package Manager (`winget search <app>`) for the exact package identity.
+- Prompts the user: `Install package '<packageId>' using winget? (y/n):`.
+- **Strict Security Enforcement**: Only `y`, `Y`, `yes`, or `YES` authorizes installation. Empty Enter input, `n`, or `no` strictly declines and aborts installation.
 
 ---
 
-## 🧪 Exact Verification Results
+## 🧪 Exact Verification & Test Results
 
 ```text
 ==================================================
-1. SYNTAX VERIFICATION (node --check)
+1. SMART NATIVE VS WEB FALLBACK ROUTING TEST
 ==================================================
-node --check cli.js src/core/*.js src/adapters/*.js src/actions/*.js
-Result: 0 errors across all modules.
+- Input Goal: "Open WhatsApp"
+- Native App Check: Uninstalled (found = false)
+- Official Web Fallback: https://web.whatsapp.com
+- Result: [WEB FALLBACK] Launching official web version: https://web.whatsapp.com
+- Browser Action: Opened https://web.whatsapp.com in default browser
+- Status: ✅ PASS
 
 ==================================================
-2. CLIENT-SIDE SCRIPT SANITIZATION TEST RESULT
+2. NOTEPAD TYPING & FILE SAVE AUTOMATION TEST
 ==================================================
-- Input JS Content:
-  const express = require('express');
-  console.log('Clicked');
+- Input Goal: "Open Notepad, type Codez48 Pilot Advanced Notes Test, and save as pilot_notes.txt on my Desktop"
+- Launch: [LAUNCHING NATIVE APP] notepad (notepad.exe)
+- Window Focus: ✓ App window verified active: notepad
+- Keystrokes: [KEYBOARD TYPING] "Codez48 Pilot Advanced Notes T..."
+- Save Trigger: [KEYBOARD TYPING] "^s"
+- Target File: C:\Users\suriya prakash\OneDrive\Desktop\pilot_notes.txt
+- Disk Verification: ✓ File saved and verified on disk (76 bytes)
+- File Content: "Codez48 Pilot Advanced Notes Test"
+- Status: ✅ PASS
 
-- Output Preview Script:
-  window.require = window.require || function(mod) { ... };
-  document.addEventListener('DOMContentLoaded', function() {
-      try {
-          console.log('Clicked');
-      } catch(e) { ... }
-  });
-
-- Verification Checks:
-  1. require(express) line stripped: true
-  2. window.require fallback included: true
-  3. Client DOM script preserved: true
-
-Result: ReferenceError: require is not defined is 100% prevented in browser previews.
+==================================================
+3. SOFTWARE / GAME INSTALLER APPROVAL TEST
+==================================================
+- Input Goal: "Install Spotify"
+- Package Search: winget search "spotify" -> Package ID: Spotify.Spotify
+- Test Case A (Empty Enter): [DECLINED] Software installation skipped by user.
+- Test Case B (Input 'n'):    [DECLINED] Software installation skipped by user.
+- Status: ✅ PASS (Strict approval enforced; empty input rejected as No)
 ```
 
 ---
 
-## 📂 Code Files Updated
-- [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js): System prompt rule forbidding CommonJS `require(...)` in client-side scripts.
-- [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js): Automated line-stripping of `require(...)` and `window.require` fallback definition.
+## 📂 Artifacts
+- [Implementation Plan](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/.artifacts/074f8ead-9721-4f77-87d0-951ebe4b1d7d/implementation_plan.artifact.md)
+- [Walkthrough Summary](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/.artifacts/074f8ead-9721-4f77-87d0-951ebe4b1d7d/walkthrough.artifact.md)
+- [Task Tracker](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/.artifacts/074f8ead-9721-4f77-87d0-951ebe4b1d7d/task.artifact.md)
