@@ -1,48 +1,51 @@
-# Codez48 Static Web Preview Pipeline Root Cause Fix Plan
+# Codez48 Dynamic Web Generation & Package Installation Approval Plan
 
-Eliminating the placeholder fallback string `'Codez48 Static Website'` and fixing the static preview persistence pipeline so public previews render the complete generated HTML/CSS/JS website.
+Enhancing the Codez48 CLI AI Agent and Server Prompts to generate rich, multi-file, fully-styled dynamic Node.js/Express applications and guaranteeing the `Y/n` package installation approval flow.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Root Cause Identified**:
-> 1. In `cli-ai-chat.js`, when Groq/Gemini returned `isWebsite: true`, `cli-ai-chat.js` saved the full generated HTML to Firestore under `doc(data.projectId)` and returned `data.previewUrl`.
-> 2. However, `agent-controller.js` received `data.isWebsite = true`, ignored `data.previewUrl`, generated a **second** random `previewProjId`, failed to find local files (because `isWebsite` didn't write local files), fell back to `'<html><body><h1>Codez48 Static Website</h1></body></html>'`, and **overwrote Firestore** with this placeholder HTML under the new ID!
-> 3. **The Fix**:
->    - Remove all placeholder fallback HTML strings (`'Codez48 Static Website'`) from `agent-controller.js`.
->    - Ensure static website creation creates both local files (`index.html`, `style.css`, `script.js`) AND persists the full HTML to Firestore under one single `projectId`.
->    - When `data.isWebsite` is returned, use `data.previewUrl` directly without creating a second ID or overwriting Firestore.
+> **Key Enhancements**:
+> 1. **Rich Dynamic Website Code Generation**:
+>    - System prompt updated so Node.js/Express project generation produces complete, rich, multi-section UI layouts (`public/index.html`), professional CSS (`public/style.css`), and client-side JavaScript (`public/script.js`).
+>    - `server.js` is instructed to configure Express static file serving (`app.use(express.static('public'))`), ensuring HTML, CSS, and JS link together seamlessly.
+> 2. **Explicit Package/Dependency Approval Flow**:
+>    - When a Node.js project requires dependencies (e.g. `express`, `cors`), the CLI displays the missing packages and prompts:
+>      `Install required package(s) using 'npm install express'? (Y/n):`
+>    - Pressing `y`/`Y`/`yes` automatically runs `npm install` inside the project folder (`cwd: activeProjectPath`) and verifies installation before starting the server.
 
 ---
 
 ## Proposed Changes
 
-### 1. Server-Side Prompt & Local File Generation
+### 1. Server System Prompt Upgrade
 #### [MODIFY] [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js)
-- Update system prompt so static website generation requests return `isAction: true` with full local files (`index.html`, `style.css`, `script.js`) AND `isWebsite: true` with `html` bundling.
+- Enhance system prompt for Node.js / Express projects to generate:
+  - `package.json` with dependencies and start scripts.
+  - `server.js` configured with `app.use(express.static('public'))` and dynamic API routes.
+  - `public/index.html` containing a full, modern, multi-section responsive web page layout (navbar, hero, features, interactive components, footer).
+  - `public/style.css` with complete styling.
+  - `public/script.js` with client-side DOM logic.
+  - Linked tags: `<link rel="stylesheet" href="style.css">` and `<script src="script.js"></script>`.
 
-### 2. Client-Side Agent Controller
+### 2. Dependency Approval & Execution Refinement
 #### [MODIFY] [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js)
-- Remove all fallback placeholder strings (`'Codez48 Static Website'`).
-- If `data.isWebsite` is true, use `data.projectId` and `data.previewUrl` directly.
-- If local files exist, bundle `index.html`, `style.css`, and `script.js` into `htmlBundle` and update the single Firestore document `doc(projectId)`.
-- If local files were not written, extract HTML from `data.html` and write local files (`index.html`, `style.css`, `script.js`) in `activeProjectPath`.
-- Perform real HTTP check on `publicPreviewUrl` verifying `res.status === 200` and response length > 200 chars before launching the default browser.
+- Refine approval prompt handling to accept `Y`, `y`, `yes`, `YES` or Enter (default Yes).
+- Execute `npm install` with `cwd: activeProjectPath` and log stdout/stderr.
 
 ---
 
 ## Verification Plan
 
-### Test Scenario: Complete Portfolio Generation
-1. Goal Prompt:
-   *"Create a modern responsive portfolio website using HTML, CSS and JavaScript with a navigation bar, hero section, about section, skills section, projects section, contact section and footer."*
-2. Check local generated files:
-   - `index.html` (contains navbar, hero, about, skills, projects, contact, footer).
-   - `style.css` (contains complete responsive CSS).
-   - `script.js` (contains interactions).
-3. Check Firestore persisted HTML payload:
-   - Verified that Firestore document contains full HTML with inlined styles and scripts.
-4. Check public preview response (`https://codez48.netlify.app/preview/<projectId>`):
-   - HTTP 200 OK.
-   - Body contains "About", "Skills", "Projects", "Contact".
-5. Browser opens public preview URL rendering the complete designed portfolio.
+### Test Scenario: Dynamic Node.js Express Application
+1. **Command**:
+   `codez48 ai` -> *"Create a Node.js Express shopping website and run it"*
+2. **Expected Verification**:
+   - `express-website/package.json` created.
+   - `express-website/server.js` created with `express.static('public')`.
+   - `express-website/public/index.html` created with rich shopping UI.
+   - `express-website/public/style.css` and `script.js` created and linked.
+   - Missing dependency `express` detected -> Prompt `Install required package(s)? (Y/n)`.
+   - Press `y` -> `npm install express` executes automatically in project folder.
+   - `npm start` runs server.
+   - Browser opens `http://localhost:3000` rendering full styled shopping website.

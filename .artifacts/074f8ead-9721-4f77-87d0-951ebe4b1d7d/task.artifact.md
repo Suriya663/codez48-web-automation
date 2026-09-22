@@ -1,16 +1,10 @@
-# Codez48 Static Web Preview Pipeline Fix Task Tracker
+# Codez48 Dynamic Web Generation & Package Installation Approval Task Tracker
 
-- `[x]` **Phase 1: Eradicate Placeholder String & Fix Double Project ID Overwrite**
-    - [x] Update `src/core/agent-controller.js` to completely remove `'Codez48 Static Website'` placeholder fallback
-    - [x] When `data.isWebsite` is true, use `data.projectId` and `data.previewUrl` directly without creating a second ID or overwriting Firestore
-- `[x]` **Phase 2: Local File Creation & Single Project ID Sync**
-    - [x] Ensure local `index.html`, `style.css`, and `script.js` are written to `activeProjectPath`
-    - [x] If `data.isWebsite` returns bundled `html`, extract and save `index.html`, `style.css`, and `script.js` into `activeProjectPath`
-- `[x]` **Phase 3: Public Preview Response & Content Verification**
-    - [x] Perform real `fetch(publicPreviewUrl)` HTTP request
-    - [x] Verify `HTTP Status == 200` AND response body contains generated HTML sections (e.g. `<nav>`, `<section>`, `hero`, `about`, `projects`, `contact`)
-    - [x] Open browser only when HTTP and content checks pass
-- `[x]` **Phase 4: End-to-End Testing & Verification**
-    - [x] Run full portfolio test scenario
-    - [x] Verify local multi-file structure
-    - [x] Verify public preview URL renders complete website
+- `[x]` **Phase 1: Server System Prompt Enhancement**
+    - [x] Update `netlify/functions/cli-ai-chat.js` system prompt for rich Node.js/Express `public/` structure, CSS, JS, and static middleware
+- `[x]` **Phase 2: Dependency Approval & Installation Refinement**
+    - [x] Refine `agent-controller.js` dependency approval prompt `(Y/n)`
+    - [x] Verify `npm install` execution with `cwd: activeProjectPath`
+- `[x]` **Phase 3: Syntax Check & Verification Testing**
+    - [x] Run `node -c` across all JavaScript modules (0 errors)
+    - [x] Test dynamic Node.js Express website creation and package approval flow

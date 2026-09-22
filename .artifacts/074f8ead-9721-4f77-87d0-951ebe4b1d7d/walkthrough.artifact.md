@@ -1,24 +1,27 @@
-# Codez48 Static Web Public Preview Rendering Fix Walkthrough
+# Codez48 Dynamic Web Generation & Package Installation Approval Walkthrough
 
-Successfully resolved the preview rendering bug where public static web previews displayed only title/placeholder text instead of the complete generated HTML/CSS/JS website.
+Updated the AI system prompt and agent execution engine to generate rich, multi-file, fully-styled dynamic Node.js/Express applications and guarantee the `(Y/n)` package installation approval flow.
 
-## 🛠️ Root Causes & Implemented Fixes
+## 🛠️ Key Improvements & Fixes
 
-### 1. Eradication of Placeholder Fallbacks
-- **Root Cause**: `agent-controller.js` line 153 assigned `'<html><body><h1>Codez48 Static Website</h1></body></html>'` whenever `readFile('index.html')` evaluated to false. That fallback string was then passed to `apiCall('cli-ai-chat', 'POST', { storePreview: true, ... })` and saved to Firestore under a newly generated `previewProjId`, overwriting the real generated website payload!
-- **Fix**: Removed the placeholder fallback string `'Codez48 Static Website'` completely from [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js). If `data.isWebsite` is returned from the AI API, its `data.projectId` and `data.previewUrl` are used directly, and `data.html` is saved locally as `index.html`.
+### 1. Rich Dynamic Code Generation & Express Static Serving
+- **System Prompt Enhancement**: Updated `systemPrompt` in [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js). When creating a Node.js / Express project, the AI generates:
+  1. `foldername/package.json` with dependencies (`express`, `cors`, etc.) and `"scripts": { "start": "node server.js" }`.
+  2. `foldername/server.js` configured with `app.use(express.static('public'))` and dynamic API routes.
+  3. `foldername/public/index.html` with a complete, rich, multi-section responsive web layout (navbar, hero, feature cards, dynamic UI, interactive elements, footer).
+  4. `foldername/public/style.css` with complete CSS rules.
+  5. `foldername/public/script.js` with client-side interactive DOM logic.
+  6. Linked tags: `<link rel="stylesheet" href="style.css">` and `<script src="script.js"></script>`.
 
-### 2. Robust Multi-File HTML Bundling Engine
-- **Fix**: Implemented `bundleStaticWebHtml` in [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js). It cleans external `<link href="style.css">` and `<script src="script.js">` tags and safely injects generated CSS and JS into `<style>` and `<script>` blocks regardless of HTML tag casing or structure, preserving all semantic elements (Navbar, Hero, About, Skills, Projects, Contact, Footer, buttons, cards, IDs, classes) intact.
+### 2. Package & Dependency Approval Flow `(Y/n)`
+- **Prompt Handling**: When a project requires missing dependencies, the CLI displays the required packages and prompts:
+  ```text
+  Required packages detected:
+   - express
 
-### 3. Public Preview Response Content Verification
-- **Fix**: After persisting HTML to Firestore `generated_websites`, the agent performs a real `fetch()` request on `https://codez48.netlify.app/preview/<projectId>`.
-- **Verification Checks**:
-  1. `HTTP Status == 200`
-  2. Response body length > 200 characters
-  3. Response body contains valid HTML tags (`<nav>`, `<section>`, `<div>`, etc.)
-  4. Response body does NOT contain placeholder strings (`Codez48 Static Website` or `Error: Missing project ID`)
-- **Browser Launch**: Launches default browser ONLY when HTTP status and content verification pass.
+  Install required package(s) using 'npm install express'? (Y/n):
+  ```
+- **Execution**: Pressing `Y`, `y`, `yes`, `YES`, or Enter automatically executes `npm install` in `cwd: activeProjectPath` before starting the server.
 
 ---
 
@@ -26,43 +29,32 @@ Successfully resolved the preview rendering bug where public static web previews
 
 ```text
 ==================================================
-1. SYNTAX VERIFICATION (node --check)
+DYNAMIC NODE.JS EXPRESS PROJECT TEST RESULT
 ==================================================
-node --check cli.js src/core/*.js src/adapters/*.js src/actions/*.js
-Result: 0 errors across all modules.
+- Active Project Path:
+  C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\shopping-express
 
-==================================================
-2. BUNDLER ENGINE & CONTENT VERIFICATION TEST RESULT
-==================================================
-- Input HTML Structure:
-  <!DOCTYPE html><html><head><title>Portfolio</title></head>
-  <body><nav>Navbar</nav><section id="hero">Hero</section>
-  <section id="about">About Me</section><section id="skills">Skills</section>
-  <section id="projects">Projects</section><section id="contact">Contact</section>
-  <footer>Footer</footer></body></html>
+- Generated Project Files:
+  1. package.json
+  2. server.js (app.use(express.static('public')))
+  3. public/index.html (Linked <link href="style.css"> & <script src="script.js">)
+  4. public/style.css
+  5. public/script.js
 
-- Input CSS:
-  body { background: #0f172a; color: #fff; } nav { display: flex; }
+- Dependency Detection & Approval:
+  Detected Missing Deps: ['express']
+  Prompt: Install required package(s) using 'npm install express'? (Y/n): Y
+  Execution: npm install express
+  Working Directory: C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\shopping-express
+  Result: Exit code 0 (✓ Package installation complete)
 
-- Input JS:
-  console.log("Portfolio Interactions Loaded");
-
-- Verification Checks:
-  1. Is Long Enough (>200 chars): true
-  2. Has HTML Tags: true
-  3. No Placeholder: true
-  4. Contains Navbar: true
-  5. Contains Hero: true
-  6. Contains About: true
-  7. Contains Skills: true
-  8. Contains Projects: true
-  9. Contains Contact: true
-
-Result: 100% of website structure, styles, and scripts preserved in preview payload.
+- Execution Command:
+  Run Command: npm start
+  Process CWD: C:\Users\suriya prakash\OneDrive\Desktop\Codez48 Preview\shopping-express
 ```
 
 ---
 
 ## 📂 Code Files Updated
-- [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js): Removed placeholder strings, implemented `bundleStaticWebHtml`, multi-file fallback resolution, and public preview content validation.
-- [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js): Direct `storePreview` API endpoint for Firestore `generated_websites`.
+- [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js): System prompt enhanced for multi-file Node.js/Express `public/` structure, CSS, JS, and static middleware.
+- [agent-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/core/agent-controller.js): Refined `(Y/n)` approval prompt handling.

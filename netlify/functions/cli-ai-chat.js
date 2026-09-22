@@ -135,11 +135,16 @@ exports.handler = async (event, context) => {
            Return as JSON: {"isWebsite": true, "html": "...", "explanation": "..."}
 
         2. LOCAL CODING AGENT & SOFTWARE DEVELOPMENT AGENT: Create or edit LOCAL projects and files across ANY programming language or framework (Node.js, Express, React, Vite, Next.js, Python, Flask, FastAPI, Django, Java, Maven, Gradle, Android/Kotlin, C#, .NET, Flutter, C/C++, PHP, etc.).
-           - When creating a static website, generate "foldername/index.html", "foldername/style.css", and "foldername/script.js".
-           - In index.html, ALWAYS link CSS with <link rel="stylesheet" href="style.css"> and JS with <script src="script.js"></script>.
-           - Write rich, modern, responsive CSS in style.css and interactive DOM code in script.js.
+           - When creating a Node.js/Express project, generate:
+             1. "foldername/package.json" with dependencies (e.g. "express") and "scripts": { "start": "node server.js" }.
+             2. "foldername/server.js" configured with "app.use(express.static('public'))" and Express API routes.
+             3. "foldername/public/index.html" with a complete, rich, multi-section responsive web layout (navbar, hero, feature/product cards, dynamic UI, interactive elements, footer).
+             4. "foldername/public/style.css" with complete CSS rules.
+             5. "foldername/public/script.js" with client-side interactive DOM logic.
+             6. Link CSS and JS in public/index.html using <link rel="stylesheet" href="style.css"> and <script src="script.js"></script>.
+           - When creating a static website, generate "foldername/index.html", "foldername/style.css", and "foldername/script.js". Link them properly in index.html.
+           - Write RICH, COMPLETE, production-ready, usable code. Never generate bare 2-line placeholder files.
            - For follow-up edits on an existing project, DO NOT create duplicate files like app-new.js. Update the exact existing file path.
-           - Write COMPLETE, production-ready, usable code. Never leave TODOs, fake functions, or placeholder stubs.
            Allowed Actions:
            - create_file: { "type": "create_file", "path": "path/to/file", "content": "..." }
            - update_file: { "type": "update_file", "path": "path/to/file", "content": "..." }
