@@ -1,71 +1,72 @@
-# Codez48 Pilot Advanced Application Automation & Fallback Plan
+# Codez48 Pilot Task Session Isolation & Desktop Worker Upgrade Plan
 
-Expanding `codez48 pilot` to support web fallbacks (e.g. WhatsApp Web), Notepad file save/location automation, winget app/game installation helper (with `Y/n` user approval), and A-to-Z app discovery.
+Upgrading `codez48 pilot` with task session isolation, explicit CREATE vs EDIT intent distinction, unique filename auto-incrementing, Calculator live UI automation, VS Code fresh project folder opening, and Netlify deployment stage integration.
 
 ## Architecture Overview
 
 ```text
-User Goal ("Open WhatsApp and type hello" OR "Write notes in Notepad and save to Desktop")
+User Goal ("Open Notepad and write a story" / "Open Calculator and calculate 4250 * 18")
         │
         ▼
-1. Capability & App Discovery (app-discovery.js)
+1. Task Session Manager (src/pilot/task-session.js)
+        ├── Assigns unique taskId (TASK-XXXX)
+        └── Determines Intent Mode: CREATE (Fresh Artifact) vs EDIT (Existing Artifact)
         │
-        ├── Native App Installed?
-        │     ├── YES: Launch native app (ms-clock:, whatsapp:, notepad.exe, etc.)
-        │     └── NO : Fall back to Web App URL (https://web.whatsapp.com, https://microsoft.com)
+2. Unique Filename Resolver
+        └── If story.txt exists during CREATE -> returns story-2.txt
         │
-2. Notepad & Editor File Automation
-        │     ├── Type text into active window
-        │     ├── Trigger Save As (Ctrl+S / Alt+F, S)
-        │     ├── Navigate & save to exact requested location (e.g., Desktop/notes.txt)
-        │     └── Verify target file exists on disk
-        │
-3. Application & Game Installation Helper
-        │     ├── Check winget / ms-windows-store:
-        │     ├── Request user approval: "Install <package> via winget? (Y/n)"
-        │     └── Execute installer after Y approval
+3. Application & Capability Drivers
+        ├── Notepad Adapter (Fresh document creation, typing, unique save, disk verification)
+        ├── Calculator Adapter (Launches calc, sends keystrokes 4250*18=, verifies 76500)
+        ├── VS Code Adapter (Creates fresh project folder, opens code "<activeProjectPath>")
+        └── Deployment Helper (Prompts Y/n approval before external Netlify deployment)
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Web Fallback Behavior**: If a requested application (like WhatsApp or Teams) is not installed natively on Windows, Pilot will automatically launch its web version in your browser (`https://web.whatsapp.com`) so your workflow continues uninterrupted.
-> **Package / Game Installation Approval**: If you ask Pilot to install an app or game, it will check `winget`, display the package name, and require explicit `(Y/n)` approval before downloading or installing anything.
+> **Task Session & CREATE vs EDIT Intent Rules**:
+> - **CREATE Mode**: Triggered by keywords (`create`, `make`, `write a new`, `generate`). Always generates a fresh unique filename (`story.txt`, `story-2.txt`) and fresh document state. Never silently overwrites an existing user file.
+> - **EDIT Mode**: Triggered by keywords (`edit`, `modify`, `update`, `continue`, `change`, `append`). Targets the existing active task artifact or user-specified file.
+
+> [!NOTE]
+> **Deployment Approval**: External deployments to Netlify require explicit `(y/n)` approval before execution.
 
 ---
 
 ## Proposed Changes
 
-### 1. App Discovery & Web Fallback Map
-#### [MODIFY] [app-discovery.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/app-discovery.js)
-- Add web fallback URLs for WhatsApp (`https://web.whatsapp.com`), Microsoft (`https://microsoft.com`), Teams (`https://teams.microsoft.com`), Spotify (`https://open.spotify.com`), Discord (`https://discord.com/app`), Zoom (`https://zoom.us`), etc.
-- Add installer package lookup via `winget`.
+### 1. Task Session & Intent Isolation
+#### [NEW] [task-session.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/task-session.js)
+- Manages `taskId`, `mode` (`CREATE` vs `EDIT`), `activeArtifactPath`, and unique filename generation (`story-2.txt`).
 
-### 2. File Save & Menu Automation Adapter
-#### [NEW] [notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js)
-- Handles Notepad text creation, typing, triggering `Ctrl+S`, typing target file path (`Desktop/notes.txt`), saving, and verifying file existence.
+### 2. Calculator & Math Automation Adapter
+#### [NEW] [calculator-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/calculator-adapter.js)
+- Handles Calculator launching, window focus, typing calculation keystrokes (`4250*18=`), evaluating math expressions, and reporting verified results.
 
-### 3. Application / Game Installer Helper
-#### [NEW] [installer-helper.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/installer-helper.js)
-- Searches `winget search <app>` on Windows.
-- Prompts user: `Install package '<app>' using winget? (Y/n):`
-- Executes `winget install <app>` only after `Y` approval.
+### 3. Deployment Helper
+#### [NEW] [deployment-helper.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/deployment-helper.js)
+- Handles Netlify deployment requests with explicit user approval `(y/n)`.
 
-### 4. Pilot Controller Integration
+### 4. Adapter & Controller Upgrades
+#### [MODIFY] [notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js)
+- Uses `TaskSession` to resolve fresh unique filenames (`story.txt`, `story-2.txt`) and enforce fresh document state.
+
+#### [MODIFY] [capability-registry.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/capability-registry.js)
+- Adds intent detection for `CALCULATOR_MATH` and `DEPLOY_NETLIFY`.
+
 #### [MODIFY] [pilot-controller.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/pilot-controller.js)
-- Integrates web fallback routing, Notepad file save automation, and installer prompts into `codez48 pilot`.
+- Integrates `TaskSession` and new capability adapters.
 
 ---
 
 ## Verification Plan
 
 ### Test Scenarios
-1. **App Web Fallback Test**:
-   - Prompt: `"Open WhatsApp"`
-   - Verification: If native app found -> launches native app; else opens `https://web.whatsapp.com` in default browser.
-2. **Notepad Type & Save Test**:
-   - Prompt: *"Open Notepad, type 'Codez48 Pilot Notes Test', and save it as 'pilot_notes.txt' on my Desktop."*
-   - Verification: Launches Notepad, types text, triggers save, verifies `pilot_notes.txt` exists on Desktop.
-3. **App Installation Prompt Test**:
-   - Prompt: *"Install Spotify"*
-   - Verification: Prompts `Install Spotify using winget? (Y/n):` before attempting execution.
+1. **Task Isolation & Unique Filenames Test**:
+   - Goal 1: *"Open Notepad and write a story about a robot."* -> Saves `story.txt` on Desktop.
+   - Goal 2: *"Write a new story about space exploration."* -> Saves `story-2.txt` on Desktop (`story.txt` remains unchanged).
+2. **Calculator Math Automation Test**:
+   - Goal: *"Open Calculator and calculate 4250 * 18"* -> Launches Calculator, inputs keystrokes, verifies math result `76500`.
+3. **VS Code Fresh Project Test**:
+   - Goal: *"Open VS Code and create a JavaScript calculator program"* -> Opens exact child directory `Desktop/Codez48 Preview/js-calculator`.

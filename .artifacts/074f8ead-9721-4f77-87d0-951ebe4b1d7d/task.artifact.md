@@ -1,18 +1,17 @@
-# Codez48 Pilot Advanced Application Automation Task Tracker
+# Codez48 Pilot Task Session & Desktop Worker Upgrade Task Tracker
 
-- `[x]` **Step 1: Native / Web App Resolution & Official Fallback**
-    - [x] Update `src/pilot/app-discovery.js` with official web fallback URLs (WhatsApp, Teams, Spotify, Discord, Zoom)
-    - [x] Update `src/pilot/adapters/general-desktop-adapter.js` to launch native app if present, or open official web URL if absent
-    - [x] Test native vs web fallback resolution
-- `[x]` **Step 2: Notepad Typing & File Save Automation**
-    - [x] Create `src/pilot/adapters/notepad-adapter.js`
-    - [x] Implement `Ctrl+S` / File Save dialog automation & dynamic file path resolution
-    - [x] Test: Open Notepad -> type text -> save as `pilot_notes.txt` on Desktop -> verify file exists on disk
-- `[x]` **Step 3: Software / Game Installer Approval (`Y/n`)**
-    - [x] Create `src/pilot/installer-helper.js`
-    - [x] Implement `winget` package search and strict `y` / `yes` user approval prompt (rejecting empty input/Enter as No)
-    - [x] Test installer approval logic in dry-run mode
-- `[x]` **Step 4: Pilot Controller Integration & Verification**
-    - [x] Wire new capabilities into `src/pilot/pilot-controller.js`
-    - [x] Validate syntax across all modules (`node -c`)
-    - [x] Test all three workflows end-to-end
+- `[x]` **Step 1: Task Session Manager & Intent Isolation**
+    - [x] Create `src/pilot/task-session.js` with CREATE vs EDIT intent detection & unique filename generator (`story-2.txt`)
+    - [x] Update `src/pilot/adapters/notepad-adapter.js` to enforce fresh document state
+- `[x]` **Step 2: Calculator Math Automation Adapter**
+    - [x] Create `src/pilot/adapters/calculator-adapter.js`
+    - [x] Test Calculator launching, keystroke entry (`4250*18=`), and math result verification
+- `[x]` **Step 3: External Deployment Approval Helper**
+    - [x] Create `src/pilot/deployment-helper.js` for Netlify deployments with `y/n` user approval
+- `[ ]` **Step 4: Capability Registry & Controller Upgrades**
+    - [ ] Update `src/pilot/capability-registry.js` & `src/pilot/pilot-controller.js`
+- `[ ]` **Step 5: Testing & Final Verification**
+    - [ ] Run `node --check` across all JavaScript modules (0 errors)
+    - [ ] Test consecutive Notepad story creation (verifying `story.txt` and `story-2.txt`)
+    - [ ] Test Calculator calculation (`4250 * 18`)
+    - [ ] Test VS Code fresh project opening

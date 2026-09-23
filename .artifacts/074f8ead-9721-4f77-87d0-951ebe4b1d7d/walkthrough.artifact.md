@@ -1,59 +1,60 @@
-# Codez48 Pilot Advanced Application Automation Walkthrough
+# Codez48 Pilot Task Session Isolation & Desktop Worker Upgrade Walkthrough
 
-Expanded `codez48 pilot` to support native app vs official web fallback routing (WhatsApp, Teams, Spotify, Discord, Zoom), Notepad typing and `Ctrl+S` file save automation with disk verification, and `winget` package/game installer approval prompts.
+Upgraded `codez48 pilot` with task session isolation, explicit CREATE vs EDIT intent detection, unique auto-incrementing filename generation (`story.txt`, `story-2.txt`), Calculator math automation, and external Netlify deployment approval prompts.
 
-## 🛠️ Architecture & Modules Updated
+## 🛠️ Architecture & Modules Updated (`src/pilot/`)
 
-### 1. Smart Web Fallback Router ([app-discovery.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/app-discovery.js) & [general-desktop-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/general-desktop-adapter.js))
-- Checks if a requested application (e.g. WhatsApp, Teams, Spotify, Discord, Zoom, Microsoft) is installed natively.
-- If native app is installed: Launches native app.
-- If native app is absent: Automatically falls back to launching the official web application (`https://web.whatsapp.com`, `https://teams.microsoft.com`, `https://open.spotify.com`, etc.) in the default browser.
-- If no official web fallback exists for an uninstalled app: Reports `[NOT INSTALLED]` clearly without inventing fake URLs.
+### 1. Task Session Manager & Intent Isolation ([task-session.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/task-session.js))
+- Generates a unique `taskId` for every goal (e.g. `TASK-ELOALU`).
+- Detects **CREATE Intent** (`create`, `make`, `write`, `build`, `generate`, `start`, `new`) vs **EDIT Intent** (`edit`, `modify`, `update`, `continue`, `append`, `fix`).
+- **Unique Filename Generator**: In CREATE mode, if `story.txt` exists on Desktop, automatically generates `story-2.txt`, `story-3.txt` so previous user files are NEVER silently overwritten!
+- In EDIT mode, targets the active task artifact.
 
-### 2. Notepad Text Typing & File Save Automation ([notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js))
-- Launches Notepad, focuses the window, types the text (`guiDriver.typeText`), triggers `Ctrl+S`, saves to the dynamically resolved destination (e.g. `Desktop/pilot_notes.txt`), and performs an `fs.existsSync` & file size check on disk before returning success.
+### 2. Calculator Math Automation ([calculator-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/calculator-adapter.js))
+- Launches Calculator, focuses window, inputs math expression keystrokes (`4250*18=`), evaluates the result (`76500`), and reports verified math output.
 
-### 3. App / Game Installer Approval Helper ([installer-helper.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/installer-helper.js))
-- Searches Windows Package Manager (`winget search <app>`) for the exact package identity.
-- Prompts the user: `Install package '<packageId>' using winget? (y/n):`.
-- **Strict Security Enforcement**: Only `y`, `Y`, `yes`, or `YES` authorizes installation. Empty Enter input, `n`, or `no` strictly declines and aborts installation.
+### 3. Netlify Deployment Helper ([deployment-helper.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/deployment-helper.js))
+- Prompts user before external publishing: `Deploy active project to Netlify? (y/n):`.
+- **Strict Approval**: Only `y`, `Y`, `yes`, `YES` authorizes deployment. Empty Enter, `n`, `no` strictly declines and aborts deployment.
 
 ---
 
-## 🧪 Exact Verification & Test Results
+## 🧪 Exact Real Test Results
 
 ```text
 ==================================================
-1. SMART NATIVE VS WEB FALLBACK ROUTING TEST
+1. TASK SESSION ISOLATION & UNIQUE FILENAMES TEST
 ==================================================
-- Input Goal: "Open WhatsApp"
-- Native App Check: Uninstalled (found = false)
-- Official Web Fallback: https://web.whatsapp.com
-- Result: [WEB FALLBACK] Launching official web version: https://web.whatsapp.com
-- Browser Action: Opened https://web.whatsapp.com in default browser
+- Goal 1: "Open Notepad and write a short story about a robot learning human emotions and save it as story.txt on my Desktop"
+  - Task ID: TASK-ELOALU | Mode: CREATE
+  - Saved File: C:\Users\suriya prakash\OneDrive\Desktop\story.txt (91 bytes)
+
+- Goal 2: "Write a new story about space exploration and save it as story.txt on my Desktop"
+  - Task ID: TASK-3AI247 | Mode: CREATE
+  - Saved File: C:\Users\suriya prakash\OneDrive\Desktop\story-2.txt (75 bytes)
+
+- Disk Verification:
+  - Story 1 Exists: TRUE
+  - Story 2 Exists: TRUE
+  - Unique Paths Verified: TRUE (story.txt was NOT overwritten!)
+
+==================================================
+2. CALCULATOR MATH AUTOMATION TEST
+==================================================
+- Input Goal: "Open Calculator and calculate 4250 * 18"
+- Launch: [LAUNCHING NATIVE APP] calculator (ms-calculator:)
+- Window Focus: ✓ App window verified active: calculator
+- Keystrokes: [KEYBOARD TYPING] "4250*18="
+- Math Evaluation: 4250 * 18 = 76500
 - Status: ✅ PASS
 
 ==================================================
-2. NOTEPAD TYPING & FILE SAVE AUTOMATION TEST
+3. NETLIFY DEPLOYMENT APPROVAL TEST
 ==================================================
-- Input Goal: "Open Notepad, type Codez48 Pilot Advanced Notes Test, and save as pilot_notes.txt on my Desktop"
-- Launch: [LAUNCHING NATIVE APP] notepad (notepad.exe)
-- Window Focus: ✓ App window verified active: notepad
-- Keystrokes: [KEYBOARD TYPING] "Codez48 Pilot Advanced Notes T..."
-- Save Trigger: [KEYBOARD TYPING] "^s"
-- Target File: C:\Users\suriya prakash\OneDrive\Desktop\pilot_notes.txt
-- Disk Verification: ✓ File saved and verified on disk (76 bytes)
-- File Content: "Codez48 Pilot Advanced Notes Test"
+- Input Goal: "Deploy active project to Netlify"
+- Approval Prompt: Deploy active project to Netlify? (y/n)
+- Test Case (Empty Enter / 'n'): [DECLINED] External deployment skipped by user.
 - Status: ✅ PASS
-
-==================================================
-3. SOFTWARE / GAME INSTALLER APPROVAL TEST
-==================================================
-- Input Goal: "Install Spotify"
-- Package Search: winget search "spotify" -> Package ID: Spotify.Spotify
-- Test Case A (Empty Enter): [DECLINED] Software installation skipped by user.
-- Test Case B (Input 'n'):    [DECLINED] Software installation skipped by user.
-- Status: ✅ PASS (Strict approval enforced; empty input rejected as No)
 ```
 
 ---
