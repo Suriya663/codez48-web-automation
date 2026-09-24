@@ -1,66 +1,54 @@
-# Full AI Pipeline & Multi-Category Application Automation Test Plan
+# Codez48 Pilot Sequential State Machine & Topic-Specific Office AI Plan
 
-Executing an exhaustive, evidence-based audit and test suite across the Codez48 Central AI Task Engine (`cli-ai-chat.js`), safe Request Monitor (`public/pilot-request-monitor.html`), and every application category supported on this Windows machine.
-
-## Phase 1 Research Findings & Diagnostics UI
-
-1. **Publisher Helper Inspection**:
-   - `publisher-helper` / `PublisherHelper` does not exist in the codebase.
-   - The diagnostic page `public/pilot-request-monitor.html` and Netlify function `netlify/functions/pilot-request-monitor.js` created in the previous iteration serve as the official, secure request tracking UI and backend endpoint.
-2. **Server-Side API Key Security**:
-   - All AI API keys (`GROQ_API_KEY`, `GEMINI_API_KEY`) remain 100% server-side inside Netlify environment variables.
-   - No secrets are exposed to the monitor HTML page or CLI responses.
-
----
+Fixing the Notepad writing/save race condition (`Codez48 Pilot Test^s`), enforcing strict sequential state machine execution, and eliminating hardcoded topic fallbacks in PowerPoint (`.pptx`), Word (`.docx`), and Excel (`.xlsx`).
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Audit Scope & Safety Policy**:
-> - **Pure AI Knowledge Test**: Tests pure AI response round-trip (*"Explain what video games are..."*) through `cli-ai-chat.js` and verifies telemetry on `public/pilot-request-monitor.html` without launching local apps.
-> - **Application Category Coverage**: Tests Notepad (Text), VS Code (Development), PowerPoint/Word/Excel (Office), Calculator/Settings/File Explorer/Paint/Clock (Utilities), Edge/Chrome (Browsers), and WordPress (Web Drafts).
-> - **Safe Execution**: All test artifacts will be saved into dedicated Desktop files (`robot_mars_story.txt`, `Gaming Market Sales.xlsx`, etc.). No existing user files will be modified or deleted.
+> **Root Causes Identified & Fixed**:
+> 1. **Notepad Writing/Save Race Condition**:
+>    - `typeText` started typing, and immediately `sendHotkey('^s')` was triggered asynchronously. The Save As dialog opened while typing was ongoing, typing story text into the Save dialog box (`Codez48 Pilot Test^s`).
+>    - **Fix**: Implement strict sequential state machine in `NotepadAdapter`:
+>      `AI_REQUEST` -> `OPEN_NOTEPAD` -> `CREATE_FRESH_DOCUMENT` (`Ctrl+N`) -> `WRITE_CONTENT` (await typing completion) -> `VERIFY_EDITOR_FOCUS` -> `SEND_HOTKEY_CTRL_S` -> `SAVE` -> `VERIFY_DISK_CONTENT`.
+> 2. **Repeated / Predefined Office Content**:
+>    - `powerpoint-adapter.js`, `word-adapter.js`, and `excel-adapter.js` hardcoded `AI Presentation.pptx`, `Cloud Computing Report.docx`, and `Monthly Sales Sheet.xlsx`.
+>    - **Fix**: Remove all hardcoded topic functions. Query `cli-ai-chat.js` Central AI Task Engine for topic-specific JSON (`Video Games`, `Cyber Security`, `Artificial Intelligence`), generate dynamic filenames (`video_games_presentation.pptx`), and fail explicitly if AI generation fails.
 
 ---
 
-## Proposed Test Plan & Categories
+## Proposed Changes
 
-### Category 1: Pure AI Knowledge Request (No Local Apps)
-- **Prompt**: *"Explain what video games are and list a few common game genres."*
-- **Verification**: Verifies `cli-ai-chat.js` generates response, logs `requestId` in Firestore `pilot_requests`, and displays telemetry on `public/pilot-request-monitor.html`.
+### 1. Sequential State Machine & Hotkey Execution
+#### [MODIFY] [gui-driver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js)
+- Ensure `typeText` fully flushes all keystrokes and waits before resolving promises.
 
-### Category 2: Text Editors (Notepad)
-- **Test 1**: *"Write an original English story about a robot exploring Mars using Notepad."* -> Verifies fresh document (`Ctrl+N`), AI text written, saved as `robot_mars_story.txt`, disk content verified.
-- **Test 2**: *"Write an original English story about space exploration using Notepad."* -> Verifies fresh document (`Ctrl+N`), AI text written, saved as `space_exploration_story.txt` (`robot_mars_story.txt` untouched), disk content verified.
+#### [MODIFY] [notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js)
+- Enforce strict state machine: `WRITE_CONTENT` completes 100% -> focus check -> `sendHotkey('^s')` -> `fs.writeFileSync` -> read back from disk & verify match.
 
-### Category 3: Development IDEs (VS Code)
-- **Prompt**: *"Create a responsive HTML CSS JavaScript website about a gaming community in Visual Studio Code."* -> Verifies isolated fresh folder `Desktop/Codez48 Preview/vscode-gaming-community/`, AI multi-file project (`index.html`, `style.css`, `script.js`), opens folder in VS Code, verifies disk files.
+### 2. Topic-Specific Office AI Adapters
+#### [MODIFY] [powerpoint-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/powerpoint-adapter.js)
+- Fetch topic-specific 5 to 10-slide deck JSON from `cli-ai-chat.js` -> build `.pptx` via Office COM -> save with dynamic filename -> verify.
 
-### Category 4: Office Suite (PowerPoint, Word, Excel)
-- **PowerPoint**: *"Create a new 5-slide presentation about the history of video games."* -> Verifies AI slide deck JSON, builds `.pptx` via Office COM, saves as `History of Video Games.pptx` on Desktop, verifies file size, opens PowerPoint.
-- **Word**: *"Create a new Word document explaining the evolution of video games."* -> Verifies AI document sections, builds `.docx` via Office COM, saves as `Evolution of Video Games.docx` on Desktop, verifies file size, opens Word.
-- **Excel**: *"Create an Excel spreadsheet with gaming market sales data."* -> Verifies AI spreadsheet headers/rows, builds `.xlsx` via Office COM, saves as `Gaming Market Sales.xlsx` on Desktop, verifies file size, opens Excel.
+#### [MODIFY] [word-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/word-adapter.js)
+- Fetch topic-specific document sections JSON from `cli-ai-chat.js` -> build `.docx` via Office COM -> save with dynamic filename -> verify.
 
-### Category 5: Windows System Utilities (Calculator, Settings, File Explorer, Paint, Clock)
-- **Calculator**: *"Open Calculator and calculate 4250 * 18"* -> Launches Calculator, enters `4250*18=`, verifies result `76500`.
-- **Settings**: *"Open Settings"* -> Launches `ms-settings:`, verifies window active.
-- **File Explorer**: *"Open File Explorer"* -> Opens workspace directory in File Explorer.
-- **Paint**: *"Open Paint"* -> Launches `mspaint.exe`, verifies window active.
-- **Clock**: *"Open Clock"* -> Launches `ms-clock:`, verifies window active.
-
-### Category 6: Browsers (Chrome / Edge)
-- **Prompt**: *"Open Chrome and navigate to https://codez48.netlify.app and scroll down."* -> Opens browser, navigates to URL, verifies page health, performs scroll.
-
-### Category 7: Web Applications (WordPress Drafts)
-- **Prompt**: *"Create a WordPress draft article about AI gaming tools."* -> AI generates article title and HTML body, opens `https://wordpress.com/post`, saves draft (does NOT publish).
+#### [MODIFY] [excel-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/excel-adapter.js)
+- Fetch topic-specific headers/rows JSON from `cli-ai-chat.js` -> build `.xlsx` via Office COM -> save with dynamic filename -> verify.
 
 ---
 
-## Verification & Reporting
+## Verification Plan
 
-After executing the complete test suite, an evidence-based **Final Capability Report** will be generated detailing:
-- Application Category
-- Discovery Status (`DISCOVERED: YES/NO`)
-- Automation Driver (`SUPPORTED: YES/NO`)
-- Test Result (`PASS / FAIL / NOT INSTALLED`)
-- Artifact Path & Disk Verification Metrics
+### Test Checklist
+- [ ] **Test 1: Notepad Fresh Document & Hotkey Race Condition**:
+  - Goal: *"Open Notepad and write 'Write an original English story about a robot that becomes a programmer in Notepad.'"*
+  - Verification: `WRITE_CONTENT` finishes 100% before `Ctrl+S`. No `^s` text in document.
+- [ ] **Test 2: Second Consecutive Notepad Story**:
+  - Goal: *"Write an original story about space exploration."*
+  - Verification: Fresh document (`Ctrl+N`), saves `space_exploration-2.txt`, first file untouched.
+- [ ] **Test 3: Topic-Specific PowerPoint Presentation**:
+  - Goal 1: *"Create a 5-slide PowerPoint about Artificial Intelligence"* -> saves `ai_presentation.pptx` with AI content.
+  - Goal 2: *"Create a 5-slide PowerPoint about Video Games"* -> saves `video_games_presentation.pptx` with Video Game content.
+- [ ] **Test 4: Topic-Specific Word Document**:
+  - Goal 1: *"Create a Word report about Cloud Computing"* -> saves `cloud_computing_report.docx`.
+  - Goal 2: *"Create a Word report about Cyber Security"* -> saves `cyber_security_report.docx`.
