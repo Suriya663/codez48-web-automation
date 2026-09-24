@@ -1,81 +1,66 @@
-# Codez48 Central AI Task Engine for Pilot + CLI Automation Plan
+# Full AI Pipeline & Multi-Category Application Automation Test Plan
 
-Establishing a server-side Central AI Task Engine in `netlify/functions/cli-ai-chat.js` that powers `codez48 pilot` with dynamic, un-hardcoded AI generation for Notepad stories, PowerPoint slide decks, Word reports, Excel spreadsheets, VS Code multi-file projects, and saved automation workflows (`start.json`).
+Executing an exhaustive, evidence-based audit and test suite across the Codez48 Central AI Task Engine (`cli-ai-chat.js`), safe Request Monitor (`public/pilot-request-monitor.html`), and every application category supported on this Windows machine.
 
-## Phase 1 Research Findings
+## Phase 1 Research Findings & Diagnostics UI
 
-1. **Existing Server AI Function**: `netlify/functions/cli-ai-chat.js` (backed by server-side Groq & Gemini API keys).
-2. **Existing Client Module**: `apiCall('cli-ai-chat', 'POST', payload)` in `cli.js` & `src/core/agent-controller.js`.
-3. **Current Request/Response Format**:
-   - Request: `{ messages: [{ role: "user", content: "..." }], projectId: "..." }` or `{ storePreview: true, ... }`.
-   - Response: `{ success: true, answer: "...", isAction: true, actions: [...], isWebsite: true, previewUrl: "..." }`.
-4. **Where Predefined Content Was Introduced**:
-   - `powerpoint-adapter.js`: Hardcoded `generateAiSlideDeck()` function.
-   - `word-adapter.js`: Hardcoded `generateDocSections()` function.
-   - `excel-adapter.js`: Hardcoded `generateSpreadsheetData()` function.
-   - `notepad-adapter.js`: Fallback string `'Codez48 Pilot Story Output'`.
-5. **Minimal Architecture Change Required**:
-   - Add structured `PILOT_TASK` capability to `cli-ai-chat.js` system prompt so the AI server returns dynamic JSON for requested content (`taskType: "TEXT|PRESENTATION|DOCUMENT|SPREADSHEET|PROJECT|WORKFLOW"`).
-   - Update all Pilot adapters (`notepad`, `powerpoint`, `word`, `excel`, `vscode`) to query `cli-ai-chat` for real AI-generated content before executing local file creation and application automation.
+1. **Publisher Helper Inspection**:
+   - `publisher-helper` / `PublisherHelper` does not exist in the codebase.
+   - The diagnostic page `public/pilot-request-monitor.html` and Netlify function `netlify/functions/pilot-request-monitor.js` created in the previous iteration serve as the official, secure request tracking UI and backend endpoint.
+2. **Server-Side API Key Security**:
+   - All AI API keys (`GROQ_API_KEY`, `GEMINI_API_KEY`) remain 100% server-side inside Netlify environment variables.
+   - No secrets are exposed to the monitor HTML page or CLI responses.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Complete Removal of Hardcoded / Predefined Content**:
-> - All hardcoded slide deck arrays, document section templates, spreadsheet rows, and fallback story strings in Pilot adapters will be replaced with real-time server-side AI model responses from `cli-ai-chat.js`.
-> - **Saved Workflows**: Reusable Pilot routines will be stored safely in `~/.codez48/pilot/workflows/start.json` (using `os.homedir()`, never hardcoding Windows usernames or secrets). Typing `start` in `codez48 pilot` loads the user's saved workflow, plans actions via AI, executes local application/browser steps, and summarizes live observations.
+> **Audit Scope & Safety Policy**:
+> - **Pure AI Knowledge Test**: Tests pure AI response round-trip (*"Explain what video games are..."*) through `cli-ai-chat.js` and verifies telemetry on `public/pilot-request-monitor.html` without launching local apps.
+> - **Application Category Coverage**: Tests Notepad (Text), VS Code (Development), PowerPoint/Word/Excel (Office), Calculator/Settings/File Explorer/Paint/Clock (Utilities), Edge/Chrome (Browsers), and WordPress (Web Drafts).
+> - **Safe Execution**: All test artifacts will be saved into dedicated Desktop files (`robot_mars_story.txt`, `Gaming Market Sales.xlsx`, etc.). No existing user files will be modified or deleted.
 
 ---
 
-## Proposed Changes
+## Proposed Test Plan & Categories
 
-### 1. Server-Side Central AI Task Engine
-#### [MODIFY] [cli-ai-chat.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-ai-chat.js)
-- Add Capability 5: `PILOT DESKTOP TASK ENGINE`.
-- Structured JSON output for Pilot content generation:
-  - `taskType: "TEXT"` -> `{ content: "..." }`
-  - `taskType: "PRESENTATION"` -> `{ title: "...", slides: [{ title: "...", bullets: [...] }] }`
-  - `taskType: "DOCUMENT"` -> `{ title: "...", sections: [{ heading: "...", body: "..." }] }`
-  - `taskType: "SPREADSHEET"` -> `{ title: "...", headers: [...], rows: [[...]] }`
-  - `taskType: "PROJECT"` -> `{ projectDir: "...", files: [{ path: "...", content: "..." }] }`
-  - `taskType: "WORKFLOW"` -> `{ steps: [{ action: "...", target: "...", value: "..." }] }`
+### Category 1: Pure AI Knowledge Request (No Local Apps)
+- **Prompt**: *"Explain what video games are and list a few common game genres."*
+- **Verification**: Verifies `cli-ai-chat.js` generates response, logs `requestId` in Firestore `pilot_requests`, and displays telemetry on `public/pilot-request-monitor.html`.
 
----
+### Category 2: Text Editors (Notepad)
+- **Test 1**: *"Write an original English story about a robot exploring Mars using Notepad."* -> Verifies fresh document (`Ctrl+N`), AI text written, saved as `robot_mars_story.txt`, disk content verified.
+- **Test 2**: *"Write an original English story about space exploration using Notepad."* -> Verifies fresh document (`Ctrl+N`), AI text written, saved as `space_exploration_story.txt` (`robot_mars_story.txt` untouched), disk content verified.
 
-### 2. Pilot Adapters & AI Integration (`src/pilot/`)
-#### [MODIFY] [notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js)
-- Queries `cli-ai-chat` for dynamic story/text content -> writes to fresh document -> saves unique `.txt` file -> verifies disk content.
+### Category 3: Development IDEs (VS Code)
+- **Prompt**: *"Create a responsive HTML CSS JavaScript website about a gaming community in Visual Studio Code."* -> Verifies isolated fresh folder `Desktop/Codez48 Preview/vscode-gaming-community/`, AI multi-file project (`index.html`, `style.css`, `script.js`), opens folder in VS Code, verifies disk files.
 
-#### [MODIFY] [powerpoint-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/powerpoint-adapter.js)
-- Queries `cli-ai-chat` for dynamic slide deck JSON -> builds 10-slide `.pptx` via Office COM -> saves to Desktop -> verifies `.pptx` -> opens PowerPoint.
+### Category 4: Office Suite (PowerPoint, Word, Excel)
+- **PowerPoint**: *"Create a new 5-slide presentation about the history of video games."* -> Verifies AI slide deck JSON, builds `.pptx` via Office COM, saves as `History of Video Games.pptx` on Desktop, verifies file size, opens PowerPoint.
+- **Word**: *"Create a new Word document explaining the evolution of video games."* -> Verifies AI document sections, builds `.docx` via Office COM, saves as `Evolution of Video Games.docx` on Desktop, verifies file size, opens Word.
+- **Excel**: *"Create an Excel spreadsheet with gaming market sales data."* -> Verifies AI spreadsheet headers/rows, builds `.xlsx` via Office COM, saves as `Gaming Market Sales.xlsx` on Desktop, verifies file size, opens Excel.
 
-#### [MODIFY] [word-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/word-adapter.js)
-- Queries `cli-ai-chat` for dynamic document sections JSON -> builds `.docx` via Office COM -> saves to Desktop -> verifies `.docx` -> opens Word.
+### Category 5: Windows System Utilities (Calculator, Settings, File Explorer, Paint, Clock)
+- **Calculator**: *"Open Calculator and calculate 4250 * 18"* -> Launches Calculator, enters `4250*18=`, verifies result `76500`.
+- **Settings**: *"Open Settings"* -> Launches `ms-settings:`, verifies window active.
+- **File Explorer**: *"Open File Explorer"* -> Opens workspace directory in File Explorer.
+- **Paint**: *"Open Paint"* -> Launches `mspaint.exe`, verifies window active.
+- **Clock**: *"Open Clock"* -> Launches `ms-clock:`, verifies window active.
 
-#### [MODIFY] [excel-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/excel-adapter.js)
-- Queries `cli-ai-chat` for dynamic headers/rows JSON -> builds `.xlsx` via Office COM -> saves to Desktop -> verifies `.xlsx` -> opens Excel.
+### Category 6: Browsers (Chrome / Edge)
+- **Prompt**: *"Open Chrome and navigate to https://codez48.netlify.app and scroll down."* -> Opens browser, navigates to URL, verifies page health, performs scroll.
 
-#### [MODIFY] [vscode-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/vscode-adapter.js)
-- Queries `cli-ai-chat` for dynamic multi-file project JSON (`index.html`, `style.css`, `script.js`) -> writes project files -> opens VS Code -> verifies.
-
----
-
-### 3. Saved Workflow System (`src/pilot/workflow-system.js`)
-#### [NEW] [workflow-system.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/workflow-system.js)
-- Manages saved user workflows in `~/.codez48/pilot/workflows/start.json`.
-- Supports `codez48 pilot workflow create` and typing `start` in `codez48 pilot`.
-- Converts natural language instructions into executable local app & browser steps via Central AI Task Engine.
+### Category 7: Web Applications (WordPress Drafts)
+- **Prompt**: *"Create a WordPress draft article about AI gaming tools."* -> AI generates article title and HTML body, opens `https://wordpress.com/post`, saves draft (does NOT publish).
 
 ---
 
-## Verification Plan
+## Verification & Reporting
 
-### Test Checklist
-- [ ] Phase 1: Server AI function `cli-ai-chat.js` inspection & structured Pilot task output response verification.
-- [ ] Phase 2: Notepad story test ("Write a story about a space explorer") -> verifies AI-generated text content written and saved on disk.
-- [ ] Phase 3: PowerPoint test ("Create a 10-slide presentation about Quantum Computing") -> verifies AI-generated 10-slide deck JSON build & `.pptx` file.
-- [ ] Phase 4: VS Code multi-file project test ("Create a responsive restaurant website with HTML, CSS, JS") -> verifies `index.html`, `style.css`, `script.js` created and opened in VS Code.
-- [ ] Phase 5: Saved Workflow test (`start-test` workflow) -> verifies workflow execution, browser navigation, and observation summary.
-- [ ] 0 syntax errors across all JavaScript modules (`node -c`).
+After executing the complete test suite, an evidence-based **Final Capability Report** will be generated detailing:
+- Application Category
+- Discovery Status (`DISCOVERED: YES/NO`)
+- Automation Driver (`SUPPORTED: YES/NO`)
+- Test Result (`PASS / FAIL / NOT INSTALLED`)
+- Artifact Path & Disk Verification Metrics

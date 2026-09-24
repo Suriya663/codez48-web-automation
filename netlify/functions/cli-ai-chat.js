@@ -83,6 +83,19 @@ exports.handler = async (event, context) => {
     try {
         const parsedBody = JSON.parse(event.body || '{}');
 
+        // Pilot Client Acknowledgement Endpoint
+        if (parsedBody.ackRequestId) {
+            const reqId = parsedBody.ackRequestId;
+            const ackStatus = parsedBody.status || 'LOCAL_EXECUTION_COMPLETED';
+            await db.collection('pilot_requests').doc(reqId).set({
+                requestId: reqId,
+                status: ackStatus,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+
+            return jsonResponse(200, { success: true, acknowledged: reqId, status: ackStatus });
+        }
+
         // Direct Preview Persistence Endpoint
         if (parsedBody.storePreview && parsedBody.htmlContent) {
             const projectId = parsedBody.projectId || 'web-' + Math.random().toString(36).substring(2, 8);
@@ -102,6 +115,7 @@ exports.handler = async (event, context) => {
             });
         }
 
+        const requestId = 'req-' + Math.random().toString(36).substring(2, 10);
         const { messages, projectId: existingProjectId } = parsedBody;
 
         if (!messages || !Array.isArray(messages)) {
@@ -255,6 +269,19 @@ exports.handler = async (event, context) => {
             // Check if it's a JSON response
             const parsed = JSON.parse(aiResponse.trim().replace(/^```json/, '').replace(/```$/, ''));
 
+            // Record status in Firestore pilot_requests for Request Monitor tracking
+            try {
+                await db.collection('pilot_requests').doc(requestId).set({
+                    requestId,
+                    timestamp: new Date().toISOString(),
+                    prompt: messages[messages.length - 1].content,
+                    taskType: parsed.taskType || (parsed.isWebsite ? 'WEBSITE' : (parsed.isAction ? 'ACTION' : 'CHAT')),
+                    status: 'SENT_TO_PILOT',
+                    responseLength: aiResponse.length,
+                    artifactsCount: (parsed.actions ? parsed.actions.length : 0) + (parsed.files ? parsed.files.length : 0) + (parsed.slides ? parsed.slides.length : 0)
+                }, { merge: true });
+            } catch (e) {}
+
             // 1. Handle Website Generation (Public Preview)
             if (parsed.isWebsite && parsed.html) {
                 const projectId = existingProjectId || 'web-' + Math.random().toString(36).substring(2, 8);
@@ -268,6 +295,7 @@ exports.handler = async (event, context) => {
 
                 return jsonResponse(200, {
                     success: true,
+                    requestId: requestId,
                     isWebsite: true,
                     projectId: projectId,
                     previewUrl: `https://codez48.netlify.app/preview/${projectId}`,
@@ -279,6 +307,7 @@ exports.handler = async (event, context) => {
             if (parsed.isAction && Array.isArray(parsed.actions)) {
                 return jsonResponse(200, {
                     success: true,
+                    requestId: requestId,
                     isAction: true,
                     actions: parsed.actions,
                     answer: parsed.explanation || "Action(s) prepared."
@@ -289,6 +318,7 @@ exports.handler = async (event, context) => {
             if (parsed.isPilotTask) {
                 return jsonResponse(200, {
                     success: true,
+                    requestId: requestId,
                     isPilotTask: true,
                     taskType: parsed.taskType,
                     data: parsed,
