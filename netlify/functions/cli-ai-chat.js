@@ -166,13 +166,22 @@ exports.handler = async (event, context) => {
            - find_folder: { "type": "find_folder", "query": "foldername" }
            Return as JSON: {"isAction": true, "actions": [...], "explanation": "..."}
 
-        5. GENERAL CHAT: Respond with plain text.
+        5. PILOT DESKTOP TASK ENGINE: Generate structured content for Codez48 Pilot Desktop Automation Agent requests.
+           Return as JSON based on request:
+           - TEXT/STORY: {"isPilotTask": true, "taskType": "TEXT", "content": "Full story/text content...", "explanation": "..."}
+           - PRESENTATION: {"isPilotTask": true, "taskType": "PRESENTATION", "title": "...", "slides": [{"title": "...", "bullets": ["..."]}], "explanation": "..."}
+           - DOCUMENT: {"isPilotTask": true, "taskType": "DOCUMENT", "title": "...", "sections": [{"heading": "...", "body": "..."}], "explanation": "..."}
+           - SPREADSHEET: {"isPilotTask": true, "taskType": "SPREADSHEET", "title": "...", "headers": ["..."], "rows": [["..."]], "explanation": "..."}
+           - PROJECT: {"isPilotTask": true, "taskType": "PROJECT", "projectDir": "...", "files": [{"path": "...", "content": "..."}], "explanation": "..."}
+
+        6. GENERAL CHAT: Respond with plain text.
 
         RULES:
         - If generating a website preview for the public web, use "isWebsite": true.
         - If performing local file/app actions or building local projects, use "isAction": true.
+        - If generating structured content for desktop tasks (stories, slides, docs, spreadsheets), use "isPilotTask": true.
         - For local coding, ALWAYS use relative paths.
-        - Always write FULL usable code without TODOs or placeholders.
+        - Always write FULL usable code and text without TODOs, fake functions, or placeholder stubs.
         - If the user asks to "Open in VS Code", always trigger "open_vscode".`;
 
         let aiResponse = null;
@@ -273,6 +282,24 @@ exports.handler = async (event, context) => {
                     isAction: true,
                     actions: parsed.actions,
                     answer: parsed.explanation || "Action(s) prepared."
+                });
+            }
+
+            // 3. Handle Pilot Desktop Task Engine Structured Responses
+            if (parsed.isPilotTask) {
+                return jsonResponse(200, {
+                    success: true,
+                    isPilotTask: true,
+                    taskType: parsed.taskType,
+                    data: parsed,
+                    content: parsed.content,
+                    title: parsed.title,
+                    slides: parsed.slides,
+                    sections: parsed.sections,
+                    headers: parsed.headers,
+                    rows: parsed.rows,
+                    files: parsed.files,
+                    answer: parsed.explanation || "Pilot task content generated successfully."
                 });
             }
         } catch (e) {
