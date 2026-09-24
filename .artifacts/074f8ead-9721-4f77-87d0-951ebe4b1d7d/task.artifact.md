@@ -1,16 +1,36 @@
-# Codez48 Pilot Sequential State Machine & Topic-Specific Office AI Task Tracker
+# Codez48 Pilot 17-Phase End-to-End System Execution & Audit Tracker
 
-- `[x]` **Step 1: Notepad Sequential State Machine & Hotkey Execution**
-    - [x] Update `src/pilot/drivers/gui-driver.js` to ensure SendKeys keystrokes flush completely
-    - [x] Update `src/pilot/adapters/notepad-adapter.js` with strict sequential state machine
-    - [x] Test 1: Notepad fresh document (`Ctrl+N`) -> write story -> save (`Ctrl+S`) -> verify NO `^s` text in file and disk content matches
-    - [x] Test 2: Second Notepad story file isolation (`story-2.txt`)
-- `[x]` **Step 2: Topic-Specific Office AI Adapters**
-    - [x] Update `src/pilot/adapters/powerpoint-adapter.js` to fetch topic-specific slide deck JSON & dynamic `.pptx` filename
-    - [x] Update `src/pilot/adapters/word-adapter.js` to fetch topic-specific document sections JSON & dynamic `.docx` filename
-    - [x] Update `src/pilot/adapters/excel-adapter.js` to fetch topic-specific headers/rows JSON & dynamic `.xlsx` filename
-    - [x] Test 3: PowerPoint Artificial Intelligence vs Video Games topic-specific presentation test
-    - [x] Test 4: Word Cloud Computing vs Cyber Security topic-specific report test
-- `[x]` **Step 3: Syntax Check & Verification Testing**
-    - [x] Run `node --check` across all JavaScript modules (0 errors)
-    - [x] Execute full end-to-end verification suite
+- `[x]` **Phase 1: Architecture Inspection**
+    - [x] Map and verify source files across all 10 architecture layers
+- `[x]` **Phase 2: Real Pilot CLI Startup**
+    - [x] Execute `node cli.js pilot` and verify startup banner & prompt
+- `[x]` **Phase 3: AI-Only Communication Test**
+    - [x] Test pure AI knowledge query through `cli-ai-chat.js` and verify Request Monitor telemetry
+- `[x]` **Phase 4: Notepad Complete Test (Robot Programmer Story)**
+    - [x] Test Notepad story creation, 100% write completion before `Ctrl+S`, `robot-programmer-story.txt` save, and disk read-back verification
+- `[x]` **Phase 5: Second Notepad Test (Mars Scientist Story Isolation)**
+    - [x] Test `mars-scientist-story.txt` creation, verifying fresh document (`Ctrl+N`) and file isolation from first story
+- `[x]` **Phase 6: VS Code Gaming Website Project Test**
+    - [x] Test VS Code gaming website project creation (`vscode-gaming-website/`, `index.html`, `style.css`, `script.js`), open in VS Code, and verify disk files
+- `[x]` **Phase 7: Second VS Code Restaurant Project Test**
+    - [x] Test VS Code restaurant website project creation (`vscode-restaurant-website/`), verifying workspace isolation
+- `[x]` **Phase 8: PowerPoint Presentation Test**
+    - [x] Test 5-slide History of Video Games presentation creation (`History of Video Games.pptx`), save on Desktop, and verify file
+- `[x]` **Phase 9: Word Document Test**
+    - [x] Test Evolution of Video Games report creation (`Evolution of Video Games.docx`), save on Desktop, and verify file
+- `[x]` **Phase 10: Calculator Math Automation Test**
+    - [x] Test Calculator launching, keystroke entry `4250*18=`, and math result verification `76500`
+- `[x]` **Phase 11: Browser Navigation & Scroll Test**
+    - [x] Test browser launch, URL navigation, and page scrolling
+- `[x]` **Phase 12: WordPress Draft Post Test**
+    - [x] Test AI article generation and WordPress draft creation (`https://wordpress.com/post`) without auto-publishing
+- `[x]` **Phase 13: Request Monitor Telemetry Verification**
+    - [x] Verify `public/pilot-request-monitor.html` request logging and status acknowledgements
+- `[x]` **Phase 14: Application Capability Classification & Discovery Audit**
+    - [x] Audit all installed Windows applications across categories
+- `[x]` **Phase 15: Error Inspection & Patching**
+    - [x] Diagnose and patch any failures layer-by-layer
+- `[x]` **Phase 16: No-Fake-Success Validation**
+    - [x] Confirm all PASS results are backed by real disk/window verification
+- `[x]` **Phase 17: Final Architecture Report & Capability Table**
+    - [x] Compile evidence-based capability table and architecture summary

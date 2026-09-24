@@ -1,54 +1,62 @@
-# Codez48 Pilot Sequential State Machine & Topic-Specific Office AI Plan
+# Codez48 Pilot 17-Phase End-to-End Architecture Verification & System Audit Plan
 
-Fixing the Notepad writing/save race condition (`Codez48 Pilot Test^s`), enforcing strict sequential state machine execution, and eliminating hardcoded topic fallbacks in PowerPoint (`.pptx`), Word (`.docx`), and Excel (`.xlsx`).
+Executing a comprehensive 17-phase system execution, debugging, and verification audit across Codez48 Pilot, Central AI Task Engine, Request Monitor, and every application capability adapter.
 
-## User Review Required
+## Phase 1 Architecture Verification Summary
 
-> [!IMPORTANT]
-> **Root Causes Identified & Fixed**:
-> 1. **Notepad Writing/Save Race Condition**:
->    - `typeText` started typing, and immediately `sendHotkey('^s')` was triggered asynchronously. The Save As dialog opened while typing was ongoing, typing story text into the Save dialog box (`Codez48 Pilot Test^s`).
->    - **Fix**: Implement strict sequential state machine in `NotepadAdapter`:
->      `AI_REQUEST` -> `OPEN_NOTEPAD` -> `CREATE_FRESH_DOCUMENT` (`Ctrl+N`) -> `WRITE_CONTENT` (await typing completion) -> `VERIFY_EDITOR_FOCUS` -> `SEND_HOTKEY_CTRL_S` -> `SAVE` -> `VERIFY_DISK_CONTENT`.
-> 2. **Repeated / Predefined Office Content**:
->    - `powerpoint-adapter.js`, `word-adapter.js`, and `excel-adapter.js` hardcoded `AI Presentation.pptx`, `Cloud Computing Report.docx`, and `Monthly Sales Sheet.xlsx`.
->    - **Fix**: Remove all hardcoded topic functions. Query `cli-ai-chat.js` Central AI Task Engine for topic-specific JSON (`Video Games`, `Cyber Security`, `Artificial Intelligence`), generate dynamic filenames (`video_games_presentation.pptx`), and fail explicitly if AI generation fails.
+```text
+                  CODEZ48 WEBSITE / BACKEND
+         ┌────────────────────────────────────────┐
+         │  Diagnostic UI:                        │
+         │  public/pilot-request-monitor.html     │
+         └───────────────────▲────────────────────┘
+                             │ Safe Status Metadata
+         ┌───────────────────┴────────────────────┐
+         │  Server Netlify AI Function:           │
+         │  netlify/functions/cli-ai-chat.js      │
+         └───────────────────▲────────────────────┘
+                             │ HTTPS API Call
+                             │
+                  CODEZ48 PILOT (LOCAL)
+         ┌───────────────────┴────────────────────┐
+         │  CLI Entry: cli.js (handlePilot)       │
+         │  Controller: src/pilot/pilot-controller│
+         │  Session: src/pilot/task-session.js    │
+         │  Router: src/pilot/capability-registry │
+         │  Discovery: src/pilot/app-discovery.js │
+         │  GUI Driver: src/pilot/drivers/gui-driver│
+         └───────────────────┬────────────────────┘
+                             │
+     ┌───────────────────────┼───────────────────────┐
+     ▼                       ▼                       ▼
+Text Editors            Office Suite             Development / Utilities
+(Notepad Adapter)      (PowerPoint/Word/Excel)  (VS Code, Calc, Browser, WP)
+```
 
 ---
 
-## Proposed Changes
+## 17-Phase Execution & Audit Roadmap
 
-### 1. Sequential State Machine & Hotkey Execution
-#### [MODIFY] [gui-driver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js)
-- Ensure `typeText` fully flushes all keystrokes and waits before resolving promises.
-
-#### [MODIFY] [notepad-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/notepad-adapter.js)
-- Enforce strict state machine: `WRITE_CONTENT` completes 100% -> focus check -> `sendHotkey('^s')` -> `fs.writeFileSync` -> read back from disk & verify match.
-
-### 2. Topic-Specific Office AI Adapters
-#### [MODIFY] [powerpoint-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/powerpoint-adapter.js)
-- Fetch topic-specific 5 to 10-slide deck JSON from `cli-ai-chat.js` -> build `.pptx` via Office COM -> save with dynamic filename -> verify.
-
-#### [MODIFY] [word-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/word-adapter.js)
-- Fetch topic-specific document sections JSON from `cli-ai-chat.js` -> build `.docx` via Office COM -> save with dynamic filename -> verify.
-
-#### [MODIFY] [excel-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/excel-adapter.js)
-- Fetch topic-specific headers/rows JSON from `cli-ai-chat.js` -> build `.xlsx` via Office COM -> save with dynamic filename -> verify.
+1. **Phase 1: Architecture Inspection**: Verify layer mapping (`cli.js`, `pilot-controller.js`, `cli-ai-chat.js`, `gui-driver.js`, adapters).
+2. **Phase 2: CLI Startup Test**: Execute `node cli.js pilot` and verify startup banner and `You:` prompt.
+3. **Phase 3: AI-Only Communication Test**: Test pure AI knowledge query (*"Write a story about a robot programmer"*) -> verify response returned and logged in Request Monitor.
+4. **Phase 4: Notepad Complete Test**: Test Notepad story creation (*"Open Notepad and write a story about a robot..."*) -> verify `WRITE_CONTENT` finishes 100% before `Ctrl+S`, no `^s` in text, file saved as `robot-programmer-story.txt`, disk content verified.
+5. **Phase 5: Second Notepad Test**: Test space story (*"Open Notepad and write a story about a scientist exploring Mars..."*) -> verify fresh document (`Ctrl+N`), saves `mars-scientist-story.txt`, first file untouched.
+6. **Phase 6: VS Code Complete Test (Gaming Website)**: Test VS Code gaming website project creation (`vscode-gaming-website/`, `index.html`, `style.css`, `script.js`) -> open in VS Code, run/verify.
+7. **Phase 7: Second VS Code Project (Restaurant Website)**: Test VS Code restaurant website project creation (`vscode-restaurant-website/`) -> verify workspace isolation.
+8. **Phase 8: PowerPoint Test**: Test AI topic (`History of Video Games.pptx`) -> verify 5-slide deck, `.pptx` file creation on Desktop, launch in PowerPoint.
+9. **Phase 9: Word Test**: Test AI topic (`Evolution of Video Games.docx`) -> verify report sections, `.docx` file creation on Desktop, launch in Word.
+10. **Phase 10: Calculator Test**: Test math calculation `4250 * 18` -> verify `76500`.
+11. **Phase 11: Browser Test**: Test Chrome/Edge navigation to `https://codez48.netlify.app` and page scroll.
+12. **Phase 12: WordPress Test**: Test WordPress draft creation (`wordpress_draft_games.html`), open `https://wordpress.com/post`, save draft (no auto-publish).
+13. **Phase 13: Request Monitor Verification**: Verify `public/pilot-request-monitor.html` telemetry.
+14. **Phase 14: Application Capability Classification**: Classify all discovered Windows applications.
+15. **Phase 15: Error Inspection & Patching**: Diagnose and patch any failures layer-by-layer.
+16. **Phase 16: No-Fake-Success Validation**: Ensure every PASS is backed by real disk/UI verification.
+17. **Phase 17: Final Architecture Report & Capability Table**.
 
 ---
 
 ## Verification Plan
 
-### Test Checklist
-- [ ] **Test 1: Notepad Fresh Document & Hotkey Race Condition**:
-  - Goal: *"Open Notepad and write 'Write an original English story about a robot that becomes a programmer in Notepad.'"*
-  - Verification: `WRITE_CONTENT` finishes 100% before `Ctrl+S`. No `^s` text in document.
-- [ ] **Test 2: Second Consecutive Notepad Story**:
-  - Goal: *"Write an original story about space exploration."*
-  - Verification: Fresh document (`Ctrl+N`), saves `space_exploration-2.txt`, first file untouched.
-- [ ] **Test 3: Topic-Specific PowerPoint Presentation**:
-  - Goal 1: *"Create a 5-slide PowerPoint about Artificial Intelligence"* -> saves `ai_presentation.pptx` with AI content.
-  - Goal 2: *"Create a 5-slide PowerPoint about Video Games"* -> saves `video_games_presentation.pptx` with Video Game content.
-- [ ] **Test 4: Topic-Specific Word Document**:
-  - Goal 1: *"Create a Word report about Cloud Computing"* -> saves `cloud_computing_report.docx`.
-  - Goal 2: *"Create a Word report about Cyber Security"* -> saves `cyber_security_report.docx`.
+All phases will be executed sequentially using Node.js child process scripts, verifying real file creation, file size, disk content, and application window handles before reporting PASS.
