@@ -7,7 +7,7 @@ Replacing generic abstract 3-circle diagram fallbacks with a real multi-source i
 1. **Abstract Diagram Fallback**:
    When `powerpoint-adapter.js` failed to obtain a local image file, line 187 called `slideImageGenerator.generateSlideImage()`. `slideImageGenerator.generateSlideImage()` was hardcoded to draw a 3-circle node diagram BMP image. Every slide receiving a visual layout ended up displaying that identical 3-circle node graphic regardless of the slide's topic.
 2. **Search Endpoint Deprecation**:
-   `source.unsplash.com` deprecated its anonymous redirect endpoint, causing image fetch HEAD/GET checks to time out or fail.
+   `source.unsplash.com` deprecated its anonymous redirect service, causing image fetch HEAD/GET checks to time out or fail.
 
 ---
 
@@ -55,7 +55,7 @@ USER PPT REQUEST ("Create a 15-slide presentation about Human Values and Ethics"
 > **Eradication of Generic Abstract Diagrams**:
 > - The hardcoded 3-circle node diagram generator in `slide-image-generator.js` will be completely replaced.
 > - Slides will only feature **real, relevant photographic or illustrative images** downloaded from the backend search provider (Wikimedia Commons API / Unsplash).
-> - If an image search returns no relevant results for a slide, the slide will gracefully render as a clean `full_text` layout. **Unrelated fallback graphics are strictly forbidden.**
+> - If an image search returns no relevant results for a slide, the slide will gracefully render as a clean `full_text` layout. **Unrelated abstract fallback graphics are strictly forbidden.**
 
 ---
 
@@ -85,4 +85,5 @@ USER PPT REQUEST ("Create a 15-slide presentation about Human Values and Ethics"
    - [ ] Slide 4 ("Integrity & Honesty"): Real topic-specific image downloaded and inserted.
    - [ ] Slide 8 ("Environmental Sustainability"): Real nature/ecology photograph inserted.
    - [ ] 0 abstract diagram `.bmp` fallbacks used across all 15 slides.
-   - [ ] 15-slide audit table generated and saved as `.pptx` on Desktop.
+   - [ ] 15-slide audit table generated.
+   - [ ] Presentation saved as `.pptx` and opened in PowerPoint.
