@@ -1,36 +1,13 @@
-# Codez48 Pilot 17-Phase End-to-End System Execution & Audit Tracker
+# PowerPoint Per-Slide Real Image Search & Relevance Engine Task Tracker
 
-- `[x]` **Phase 1: Architecture Inspection**
-    - [x] Map and verify source files across all 10 architecture layers
-- `[x]` **Phase 2: Real Pilot CLI Startup**
-    - [x] Execute `node cli.js pilot` and verify startup banner & prompt
-- `[x]` **Phase 3: AI-Only Communication Test**
-    - [x] Test pure AI knowledge query through `cli-ai-chat.js` and verify Request Monitor telemetry
-- `[x]` **Phase 4: Notepad Complete Test (Robot Programmer Story)**
-    - [x] Test Notepad story creation, 100% write completion before `Ctrl+S`, `robot-programmer-story.txt` save, and disk read-back verification
-- `[x]` **Phase 5: Second Notepad Test (Mars Scientist Story Isolation)**
-    - [x] Test `mars-scientist-story.txt` creation, verifying fresh document (`Ctrl+N`) and file isolation from first story
-- `[x]` **Phase 6: VS Code Gaming Website Project Test**
-    - [x] Test VS Code gaming website project creation (`vscode-gaming-website/`, `index.html`, `style.css`, `script.js`), open in VS Code, and verify disk files
-- `[x]` **Phase 7: Second VS Code Restaurant Project Test**
-    - [x] Test VS Code restaurant website project creation (`vscode-restaurant-website/`), verifying workspace isolation
-- `[x]` **Phase 8: PowerPoint Presentation Test**
-    - [x] Test 5-slide History of Video Games presentation creation (`History of Video Games.pptx`), save on Desktop, and verify file
-- `[x]` **Phase 9: Word Document Test**
-    - [x] Test Evolution of Video Games report creation (`Evolution of Video Games.docx`), save on Desktop, and verify file
-- `[x]` **Phase 10: Calculator Math Automation Test**
-    - [x] Test Calculator launching, keystroke entry `4250*18=`, and math result verification `76500`
-- `[x]` **Phase 11: Browser Navigation & Scroll Test**
-    - [x] Test browser launch, URL navigation, and page scrolling
-- `[x]` **Phase 12: WordPress Draft Post Test**
-    - [x] Test AI article generation and WordPress draft creation (`https://wordpress.com/post`) without auto-publishing
-- `[x]` **Phase 13: Request Monitor Telemetry Verification**
-    - [x] Verify `public/pilot-request-monitor.html` request logging and status acknowledgements
-- `[x]` **Phase 14: Application Capability Classification & Discovery Audit**
-    - [x] Audit all installed Windows applications across categories
-- `[x]` **Phase 15: Error Inspection & Patching**
-    - [x] Diagnose and patch any failures layer-by-layer
-- `[x]` **Phase 16: No-Fake-Success Validation**
-    - [x] Confirm all PASS results are backed by real disk/window verification
-- `[x]` **Phase 17: Final Architecture Report & Capability Table**
-    - [x] Compile evidence-based capability table and architecture summary
+- `[x]` **Phase 1: Multi-Source Backend Image Search API**
+    - [x] Update `netlify/functions/image-search.js` to query Wikimedia Commons API and return real JPEG/PNG image URLs
+- `[x]` **Phase 2: Per-Slide Visual Intent Planner & Downloader**
+    - [x] Update `src/pilot/adapters/powerpoint-adapter.js` to download real JPEG/PNG image assets
+    - [x] Eliminate hardcoded 3-circle abstract diagram fallback (use clean `full_text` layout if no image found)
+- `[x]` **Phase 3: Syntax Check & 15-Slide Audit Test**
+    - [x] Run `node --check` across all JavaScript modules (0 errors)
+    - [x] Execute real 15-slide PowerPoint test: *"Create a professional 15-slide PowerPoint presentation about Human Values and Ethics"*
+    - [x] Verify real photographs/illustrations are inserted onto slides (0 abstract diagrams)
+- `[x]` **Phase 4: Verification Report Generation**
+    - [x] Generate final evidence report and walkthrough

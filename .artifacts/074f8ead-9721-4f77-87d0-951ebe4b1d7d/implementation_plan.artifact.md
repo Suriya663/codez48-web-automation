@@ -1,62 +1,88 @@
-# Codez48 Pilot 17-Phase End-to-End Architecture Verification & System Audit Plan
+# Real Content-Aware PPT Image Intelligence Architecture Plan
 
-Executing a comprehensive 17-phase system execution, debugging, and verification audit across Codez48 Pilot, Central AI Task Engine, Request Monitor, and every application capability adapter.
+Replacing generic abstract 3-circle diagram fallbacks with a real multi-source image search pipeline (Wikimedia Commons API + Unsplash photography endpoints), per-slide visual intent planning, relevance ranking, safe image downloading, and non-overlapping slide layout placement.
 
-## Phase 1 Architecture Verification Summary
+## Root Cause Analysis
+
+1. **Abstract Diagram Fallback**:
+   When `powerpoint-adapter.js` failed to obtain a local image file, line 187 called `slideImageGenerator.generateSlideImage()`. `slideImageGenerator.generateSlideImage()` was hardcoded to draw a 3-circle node diagram BMP image. Every slide receiving a visual layout ended up displaying that identical 3-circle node graphic regardless of the slide's topic.
+2. **Search Endpoint Deprecation**:
+   `source.unsplash.com` deprecated its anonymous redirect endpoint, causing image fetch HEAD/GET checks to time out or fail.
+
+---
+
+## Proposed Solution Architecture
 
 ```text
-                  CODEZ48 WEBSITE / BACKEND
-         ┌────────────────────────────────────────┐
-         │  Diagnostic UI:                        │
-         │  public/pilot-request-monitor.html     │
-         └───────────────────▲────────────────────┘
-                             │ Safe Status Metadata
-         ┌───────────────────┴────────────────────┐
-         │  Server Netlify AI Function:           │
-         │  netlify/functions/cli-ai-chat.js      │
-         └───────────────────▲────────────────────┘
-                             │ HTTPS API Call
+USER PPT REQUEST ("Create a 15-slide presentation about Human Values and Ethics")
                              │
-                  CODEZ48 PILOT (LOCAL)
-         ┌───────────────────┴────────────────────┐
-         │  CLI Entry: cli.js (handlePilot)       │
-         │  Controller: src/pilot/pilot-controller│
-         │  Session: src/pilot/task-session.js    │
-         │  Router: src/pilot/capability-registry │
-         │  Discovery: src/pilot/app-discovery.js │
-         │  GUI Driver: src/pilot/drivers/gui-driver│
-         └───────────────────┬────────────────────┘
+                             ▼
+1. AI Generates Complete Presentation (Title & Bullets for All 15 Slides)
                              │
-     ┌───────────────────────┼───────────────────────┐
-     ▼                       ▼                       ▼
-Text Editors            Office Suite             Development / Utilities
-(Notepad Adapter)      (PowerPoint/Word/Excel)  (VS Code, Calc, Browser, WP)
+                             ▼
+2. Per-Slide Visual Intent Planner (powerpoint-adapter.js)
+   - Analyzes Slide 3: "Empathy, Compassion & Human Connection"
+   - Visual Intent: "People supportive conversation empathy listening"
+   - Search Query: "empathy compassion"
+                             │
+                             ▼
+3. Backend Multi-Source Image Search API (netlify/functions/image-search.js)
+   - Queries Wikimedia Commons API & Unsplash Photography API
+   - Returns candidate photographic & illustrative image URLs + metadata
+                             │
+                             ▼
+4. Relevance Ranker & Image Downloader
+   - Ranks candidate images against slide keywords
+   - Downloads top-ranked image to assets/slide_img_3.jpg
+   - Verifies file integrity (JPEG/PNG, size > 0)
+                             │
+                             ▼
+5. PowerPoint COM Non-Overlapping Layout Engine
+   - Calculates isolated bounding boxes (text_left, image_left, image_top)
+   - Inserts picture shape with LockAspectRatio = msoTrue
+   - If image search fails: Uses clean full_text layout (ZERO abstract diagrams)
+                             │
+                             ▼
+6. 15-Slide Audit Report & Verification
+   - Audits all 15 slides and verifies real photographic/topic images
 ```
 
 ---
 
-## 17-Phase Execution & Audit Roadmap
+## User Review Required
 
-1. **Phase 1: Architecture Inspection**: Verify layer mapping (`cli.js`, `pilot-controller.js`, `cli-ai-chat.js`, `gui-driver.js`, adapters).
-2. **Phase 2: CLI Startup Test**: Execute `node cli.js pilot` and verify startup banner and `You:` prompt.
-3. **Phase 3: AI-Only Communication Test**: Test pure AI knowledge query (*"Write a story about a robot programmer"*) -> verify response returned and logged in Request Monitor.
-4. **Phase 4: Notepad Complete Test**: Test Notepad story creation (*"Open Notepad and write a story about a robot..."*) -> verify `WRITE_CONTENT` finishes 100% before `Ctrl+S`, no `^s` in text, file saved as `robot-programmer-story.txt`, disk content verified.
-5. **Phase 5: Second Notepad Test**: Test space story (*"Open Notepad and write a story about a scientist exploring Mars..."*) -> verify fresh document (`Ctrl+N`), saves `mars-scientist-story.txt`, first file untouched.
-6. **Phase 6: VS Code Complete Test (Gaming Website)**: Test VS Code gaming website project creation (`vscode-gaming-website/`, `index.html`, `style.css`, `script.js`) -> open in VS Code, run/verify.
-7. **Phase 7: Second VS Code Project (Restaurant Website)**: Test VS Code restaurant website project creation (`vscode-restaurant-website/`) -> verify workspace isolation.
-8. **Phase 8: PowerPoint Test**: Test AI topic (`History of Video Games.pptx`) -> verify 5-slide deck, `.pptx` file creation on Desktop, launch in PowerPoint.
-9. **Phase 9: Word Test**: Test AI topic (`Evolution of Video Games.docx`) -> verify report sections, `.docx` file creation on Desktop, launch in Word.
-10. **Phase 10: Calculator Test**: Test math calculation `4250 * 18` -> verify `76500`.
-11. **Phase 11: Browser Test**: Test Chrome/Edge navigation to `https://codez48.netlify.app` and page scroll.
-12. **Phase 12: WordPress Test**: Test WordPress draft creation (`wordpress_draft_games.html`), open `https://wordpress.com/post`, save draft (no auto-publish).
-13. **Phase 13: Request Monitor Verification**: Verify `public/pilot-request-monitor.html` telemetry.
-14. **Phase 14: Application Capability Classification**: Classify all discovered Windows applications.
-15. **Phase 15: Error Inspection & Patching**: Diagnose and patch any failures layer-by-layer.
-16. **Phase 16: No-Fake-Success Validation**: Ensure every PASS is backed by real disk/UI verification.
-17. **Phase 17: Final Architecture Report & Capability Table**.
+> [!IMPORTANT]
+> **Eradication of Generic Abstract Diagrams**:
+> - The hardcoded 3-circle node diagram generator in `slide-image-generator.js` will be completely replaced.
+> - Slides will only feature **real, relevant photographic or illustrative images** downloaded from the backend search provider (Wikimedia Commons API / Unsplash).
+> - If an image search returns no relevant results for a slide, the slide will gracefully render as a clean `full_text` layout. **Unrelated fallback graphics are strictly forbidden.**
+
+---
+
+## Proposed Changes
+
+### 1. Multi-Source Backend Image Search API
+#### [MODIFY] [netlify/functions/image-search.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/image-search.js)
+- Integrate Wikimedia Commons API (`https://commons.wikimedia.org/w/api.php`) & Unsplash Photography endpoints.
+- Returns candidate image URLs with titles, MIME types, and dimensions.
+
+### 2. Per-Slide Visual Intent Planner & Downloader
+#### [MODIFY] [powerpoint-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/powerpoint-adapter.js)
+- Extracts visual intent and query for each slide.
+- Calls `image-search.js` endpoint and ranks candidates.
+- Downloads JPEG/PNG images to `Codez48 Preview/assets/slide_img_<index>.jpg`.
+- Binds downloaded `slide.imagePath` or sets `full_text` layout if no high-relevance image found.
 
 ---
 
 ## Verification Plan
 
-All phases will be executed sequentially using Node.js child process scripts, verifying real file creation, file size, disk content, and application window handles before reporting PASS.
+### Test Scenario: 15-Slide "Human Values and Ethics" Real Presentation Test
+1. **Command**:
+   `codez48 pilot` -> *"Create a professional 15-slide PowerPoint presentation about Human Values and Ethics. Generate complete AI content for all 15 slides and add relevant images where appropriate."*
+2. **Verification Checklist**:
+   - [ ] Slide 3 ("Empathy & Compassion"): Real photograph/illustration downloaded and inserted (0 abstract 3-circle diagrams).
+   - [ ] Slide 4 ("Integrity & Honesty"): Real topic-specific image downloaded and inserted.
+   - [ ] Slide 8 ("Environmental Sustainability"): Real nature/ecology photograph inserted.
+   - [ ] 0 abstract diagram `.bmp` fallbacks used across all 15 slides.
+   - [ ] 15-slide audit table generated and saved as `.pptx` on Desktop.
