@@ -1,65 +1,66 @@
-# Codez48 Pilot On-Screen Text Area Highlight Overlay & Text Copy Engine Plan
+# Live Webpage Text Find + Scroll + Real Mouse Drag Selection Plan
 
-Building a transparent Windows Forms **On-Screen Text Area Visual Highlight Overlay** (`showVisualTextHighlightOverlay(x, y, w, h, label)`) and implementing `COPY_TEXT` / `SELECT_TEXT` actions in Codez48 Pilot (`src/pilot/drivers/gui-driver.js` and `src/pilot/browser/action-executor.js`).
+Building a real **Physical Windows Mouse Drag Text Selection Engine** (`guiDriver.moveCursorAndDrag(startX, startY, endX, endY)`) that finds target text/phrases on live webpages, purposeful scrolling if off-screen, recalculating fresh bounds, and dragging the physical laptop cursor across the text range to create genuine native browser text selection highlights.
 
 ## Architectural Flow
 
 ```text
-USER WEBPAGE TEXT SELECTION / COPY REQUEST ("Select and copy the Developer Program text on https://codez48.netlify.app/")
-                                  │
-                                  ▼
-1. Web Page DOM & Element Resolution (page-observer.js & element-resolver.js)
-   ├── Observes page state and locates target text/heading element (e.g. "Developer Program")
-   └── Calculates exact screen coordinates & bounding rectangle (x, y, width, height)
-                                  │
-                                  ▼
-2. On-Screen Visual Text Area Highlight Overlay (gui-driver.js)
-   ├── Renders a top-most transparent Windows Forms highlight box directly over target text on screen:
-   │   ┌────────────────────────────────────────────────────────┐
-   │   │  🟨 YELLOW TRANSLUCENT HIGHLIGHT BOUNDING BOX          │
-   │   │  ✨ AI HIGHLIGHTED CONTENT                             │
-   │   │  "Developer Program - Earn Commissions on Referrals"   │
-   │   └────────────────────────────────────────────────────────┘
-   └── Moves native mouse cursor to highlight start position
-                                  │
-                                  ▼
-3. Text Selection & Clipboard Copy Execution (action-executor.js)
-   ├── Clicks text start position and selects text (guiDriver.sendHotkey("^c"))
-   ├── Copies text content to clipboard & session artifact
-   └── Verifies copied text integrity
+USER PROMPT ("Select the text 'Bring Your Business Online'")
+                          │
+                          ▼
+1. Live Webpage State Observation & Exact Text Matching (page-observer.js & element-resolver.js)
+   ├── Searches DOM snapshot for target string/phrase/paragraph
+   └── Checks if target text is currently inside viewport bounds
+                          │
+                          ▼
+2. Purposeful Scroll to Off-Screen Text (browser-controller.js)
+   ├── If target is below viewport: Focuses content body, sends {PGDN} hotkeys
+   └── Re-observes webpage DOM to capture fresh post-scroll element bounds
+                          │
+                          ▼
+3. Text Range Bounds & Screen Coordinate Conversion (element-resolver.js)
+   ├── Calculates text start coordinates (startX, startY) and end coordinates (endX, endY)
+   └── Converts viewport bounds dynamically to Windows screen coordinates
+                          │
+                          ▼
+4. Smooth Physical Mouse Drag Selection (gui-driver.js)
+   ├── Moves physical laptop mouse cursor smoothly to (startX, startY)
+   ├── Glides cursor across 15 interpolated drag steps to (endX, endY)
+   └── User physically sees native blue/cyan browser text selection highlight on screen
+                          │
+                          ▼
+5. Post-Selection Verification & Optional Copy
+   └── Verifies selected text matches prompt and saves output to Desktop/browser_control_session.json
 ```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **On-Screen Translucent Yellow Bounding Box & Status Box**:
-> - Replaces small dark boxes with a **live translucent yellow highlight bounding box** directly around the target website text area on screen.
-> - A cyan/black status label box (*"✨ AI HIGHLIGHTED CONTENT: Developer Program"*) showcases the exact question, heading, or copied content clearly on the main website layer.
-> - **`COPY_TEXT` / `SELECT_TEXT` Actions**: Automatically reads, highlights, selects, and copies website content when requested.
+> **Real Native Browser Text Selection**:
+> - Replaces static bounding box overlays with **real physical mouse dragging** across character bounds.
+> - Moves physical Windows laptop cursor to text start `(startX, startY)` and glides smoothly across the characters to `(endX, endY)`, creating genuine native browser text selection highlights.
+> - **Off-Screen Text Discovery**: Purposeful scrolling (`{PGDN}`) brings lower text into view before dragging.
 
 ---
 
 ## Proposed Changes
 
-### 1. On-Screen Text Area Visual Highlight Overlay
+### 1. Physical Mouse Drag Selection Method
 #### [MODIFY] [gui-driver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js)
-- Implements `showVisualTextHighlightOverlay(x, y, width, height, labelText)` drawing a yellow translucent highlight box and cyan status label.
+- Implements `moveCursorAndDrag(startX, startY, endX, endY, actionText)` performing smooth 15-step cursor dragging.
 
-### 2. Action Executor `COPY_TEXT` & `SELECT_TEXT` Support
+### 2. Action Executor Text Selection & Range Dragging
 #### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/browser/action-executor.js)
-- Implements `COPY_TEXT` and `SELECT_TEXT` actions.
-- Triggers `showVisualTextHighlightOverlay`, selects text, and copies to clipboard.
+- Updates `SELECT_TEXT` and `SELECT_CONTENT` to compute `startX`, `endX` character bounds and invoke `moveCursorAndDrag`.
 
 ---
 
-## Verification Plan
+## Staged Verification Plan
 
-### Test Scenario: Website Text Highlight & Copy Acceptance Test
-1. **Command**:
-   `codez48 pilot` -> *"Open https://codez48.netlify.app/ and copy the Developer Program heading text"*
-2. **Verification Checklist**:
-   - [ ] Navigates to `https://codez48.netlify.app/`.
-   - [ ] Locates "Developer Program" text.
-   - [ ] On-screen yellow highlight box renders directly over the "Developer Program" text on screen.
-   - [ ] Text selected and copied (`Ctrl+C`).
-   - [ ] Copied text verified and logged in session record (`Desktop/browser_control_session.json`).
+### Test Suite Checklist
+- [ ] **Test 1: Single Word Selection**:
+  - Command: `codez48 pilot` -> *"Open https://codez48.netlify.app/ and select the text Codez48"*
+- [ ] **Test 2: Heading & Sentence Selection**:
+  - Command: `codez48 pilot` -> *"Open https://codez48.netlify.app/ and select Bring Your Business Online"*
+- [ ] **Test 3: Off-Screen Text Find + Scroll + Select**:
+  - Command: `codez48 pilot` -> *"Open https://codez48.netlify.app/, scroll down to Developer Program and select High Commission"*
