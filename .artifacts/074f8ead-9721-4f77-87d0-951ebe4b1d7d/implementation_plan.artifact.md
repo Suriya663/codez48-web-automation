@@ -1,89 +1,67 @@
-# Real Content-Aware PPT Image Intelligence Architecture Plan
+# Fix Blender 'Missing DNA block' Error Implementation Plan
 
-Replacing generic abstract 3-circle diagram fallbacks with a real multi-source image search pipeline (Wikimedia Commons API + Unsplash photography endpoints), per-slide visual intent planning, relevance ranking, safe image downloading, and non-overlapping slide layout placement.
+Resolving the Blender `.blend` file format error (`Failed to read blend file: Missing DNA block`) by embedding a pre-compiled native Blender base template file (`base_template.blend`) with complete `DNA1` C-struct blocks and updating deep Windows path resolution for `blender.exe`.
 
 ## Root Cause Analysis
 
-1. **Abstract Diagram Fallback**:
-   When `powerpoint-adapter.js` failed to obtain a local image file, line 187 called `slideImageGenerator.generateSlideImage()`. `slideImageGenerator.generateSlideImage()` was hardcoded to draw a 3-circle node diagram BMP image. Every slide receiving a visual layout ended up displaying that identical 3-circle node graphic regardless of the slide's topic.
-2. **Search Endpoint Deprecation**:
-   `source.unsplash.com` deprecated its anonymous redirect service, causing image fetch HEAD/GET checks to time out or fail.
+In [`src/pilot/3d/adapters/blender-adapter.js`](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/adapters/blender-adapter.js) lines 188–193:
+When `blender.exe` was not in system PATH, `execSync('blender --background ...')` threw a command error. The adapter's fallback handler wrote 1024 dummy bytes with a fake 12-byte `BLENDER-v400` header.
+
+In Blender's C++ database specification:
+All valid `.blend` files require a File Header, Data Blocks, and a **`DNA1` Block** at the end defining all C-struct definitions. Because the dummy fallback lacked a `DNA1` block, dragging-and-dropping or opening `scene.blend` in Blender triggered:
+`Failed to read blend file '...scene.blend': Missing DNA block`.
 
 ---
 
-## Proposed Solution Architecture
+## Proposed Solution Strategy
 
-```text
-USER PPT REQUEST ("Create a 15-slide presentation about Human Values and Ethics")
-                             │
-                             ▼
-1. AI Generates Complete Presentation (Title & Bullets for All 15 Slides)
-                             │
-                             ▼
-2. Per-Slide Visual Intent Planner (powerpoint-adapter.js)
-   - Analyzes Slide 3: "Empathy, Compassion & Human Connection"
-   - Visual Intent: "People supportive conversation empathy listening"
-   - Search Query: "empathy compassion"
-                             │
-                             ▼
-3. Backend Multi-Source Image Search API (netlify/functions/image-search.js)
-   - Queries Wikimedia Commons API & Unsplash Photography API
-   - Returns candidate photographic & illustrative image URLs + metadata
-                             │
-                             ▼
-4. Relevance Ranker & Image Downloader
-   - Ranks candidate images against slide keywords
-   - Downloads top-ranked image to assets/slide_img_3.jpg
-   - Verifies file integrity (JPEG/PNG, size > 0)
-                             │
-                             ▼
-5. PowerPoint COM Non-Overlapping Layout Engine
-   - Calculates isolated bounding boxes (text_left, image_left, image_top)
-   - Inserts picture shape with LockAspectRatio = msoTrue
-   - If image search fails: Uses clean full_text layout (ZERO abstract diagrams)
-                             │
-                             ▼
-6. 15-Slide Audit Report & Verification
-   - Audits all 15 slides and verifies real photographic/topic images
-```
+### 1. Pre-Compiled Native Base Template (`base_template.blend`)
+#### [NEW] [src/pilot/3d/assets/base_template.blend](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/assets/base_template.blend)
+- Create and include a real, 100% valid pre-compiled native Blender binary template (`base_template.blend`) containing complete `DNA1` blocks, camera, lighting, and mesh objects.
+- When `blender-adapter.js` creates a new project workspace, `base_template.blend` is copied to `blendFilePath` (`scene.blend`) as the foundational native project file.
+- Guarantees **100% error-free drag-and-drop / double-click opening** in Blender with **zero `Missing DNA block` errors**.
+
+### 2. Blender Executable Path Resolution
+#### [MODIFY] [app-selector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/app-selector.js)
+- Deep-searches `C:\Program Files\Blender Foundation\*`, `AppData\Local\Programs\Blender Foundation\*`, Registry `HKLM App Paths`, and PATH.
+- If `blender.exe` is present on the computer, invokes `blender.exe --background --python scene_builder.py` to append project objects directly into `scene.blend`.
+
+### 3. File Integrity Verification Gate
+#### [MODIFY] [blender-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/adapters/blender-adapter.js)
+- Verifies that `scene.blend` contains a valid `DNA1` block and file size > 10 KB before completing task execution.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Eradication of Generic Abstract Diagrams**:
-> - The hardcoded 3-circle node diagram generator in `slide-image-generator.js` will be completely replaced.
-> - Slides will only feature **real, relevant photographic or illustrative images** downloaded from the backend search provider (Wikimedia Commons API / Unsplash).
-> - If an image search returns no relevant results for a slide, the slide will gracefully render as a clean `full_text` layout. **Unrelated abstract fallback graphics are strictly forbidden.**
+> **Complete Eradication of `Missing DNA block` Error**:
+> - All `.blend` project files created by Codez48 Pilot will originate from a 100% valid native Blender binary template containing complete `DNA1` C-struct blocks.
+> - Dragging and dropping or double-clicking `scene.blend` in Blender will open **100% perfectly without any errors or warnings**.
 
 ---
 
 ## Proposed Changes
 
-### 1. Multi-Source Backend Image Search API
-#### [MODIFY] [netlify/functions/image-search.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/image-search.js)
-- Integrate Wikimedia Commons API (`https://commons.wikimedia.org/w/api.php`) & Unsplash Photography endpoints.
-- Returns candidate image URLs with titles, MIME types, and dimensions.
+### 1. Embedded Base `.blend` Template Asset
+#### [NEW] [base_template.blend](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/assets/base_template.blend)
+- Real native Blender binary template containing valid `DNA1` blocks.
 
-### 2. Per-Slide Visual Intent Planner & Downloader
-#### [MODIFY] [powerpoint-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/adapters/powerpoint-adapter.js)
-- Extracts visual intent and query for each slide.
-- Calls `image-search.js` endpoint and ranks candidates.
-- Downloads JPEG/PNG images to `Codez48 Preview/assets/slide_img_<index>.jpg`.
-- Binds downloaded `slide.imagePath` or sets `full_text` layout if no high-relevance image found.
+### 2. Blender Adapter Native Copy & Python Builder
+#### [MODIFY] [blender-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/adapters/blender-adapter.js)
+- Copies `base_template.blend` to `scene.blend` during project workspace initialization.
+- Runs `blender.exe --background --python scene_builder.py` to update `scene.blend`.
+- Verifies `DNA1` block existence on disk.
 
 ---
 
 ## Verification Plan
 
-### Test Scenario: 15-Slide "Human Values and Ethics" Real Presentation Test
+### Test Scenario: Drag-and-Drop `.blend` File Verification Test
 1. **Command**:
-   `codez48 pilot` -> *"Create a professional 15-slide PowerPoint presentation about Human Values and Ethics. Generate complete AI content for all 15 slides and add relevant images where appropriate."*
+   `codez48 pilot` -> *"Create a 3D model of a low-poly futuristic robot in Blender."*
 2. **Verification Checklist**:
-   - [ ] Slide 3 ("Empathy & Compassion"): Real photograph/illustration downloaded and inserted (0 abstract 3-circle diagrams).
-   - [ ] Slide 4 ("Integrity & Honesty"): Real topic-specific image downloaded and inserted.
-   - [ ] Slide 8 ("Environmental Sustainability"): Real nature/ecology photograph inserted.
-   - [ ] 0 abstract diagram `.bmp` fallbacks used across all 15 slides.
-   - [ ] 15-slide audit table generated.
-   - [ ] Presentation saved as `.pptx` and opened in PowerPoint.
+   - [ ] `scene.blend` saved in `Desktop/Codez48 Preview/blender-futuristic-robot-xxxx/`.
+   - [ ] File size > 10 KB (contains real `DNA1` binary block).
+   - [ ] Opening `scene.blend` in Blender produces 0 errors.
+   - [ ] `Missing DNA block` error is 100% resolved.
