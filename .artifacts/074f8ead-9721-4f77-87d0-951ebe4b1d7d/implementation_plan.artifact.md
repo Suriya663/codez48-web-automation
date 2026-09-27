@@ -1,67 +1,65 @@
-# Fix Blender 'Missing DNA block' Error Implementation Plan
+# Codez48 Pilot On-Screen Text Area Highlight Overlay & Text Copy Engine Plan
 
-Resolving the Blender `.blend` file format error (`Failed to read blend file: Missing DNA block`) by embedding a pre-compiled native Blender base template file (`base_template.blend`) with complete `DNA1` C-struct blocks and updating deep Windows path resolution for `blender.exe`.
+Building a transparent Windows Forms **On-Screen Text Area Visual Highlight Overlay** (`showVisualTextHighlightOverlay(x, y, w, h, label)`) and implementing `COPY_TEXT` / `SELECT_TEXT` actions in Codez48 Pilot (`src/pilot/drivers/gui-driver.js` and `src/pilot/browser/action-executor.js`).
 
-## Root Cause Analysis
+## Architectural Flow
 
-In [`src/pilot/3d/adapters/blender-adapter.js`](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/adapters/blender-adapter.js) lines 188–193:
-When `blender.exe` was not in system PATH, `execSync('blender --background ...')` threw a command error. The adapter's fallback handler wrote 1024 dummy bytes with a fake 12-byte `BLENDER-v400` header.
-
-In Blender's C++ database specification:
-All valid `.blend` files require a File Header, Data Blocks, and a **`DNA1` Block** at the end defining all C-struct definitions. Because the dummy fallback lacked a `DNA1` block, dragging-and-dropping or opening `scene.blend` in Blender triggered:
-`Failed to read blend file '...scene.blend': Missing DNA block`.
-
----
-
-## Proposed Solution Strategy
-
-### 1. Pre-Compiled Native Base Template (`base_template.blend`)
-#### [NEW] [src/pilot/3d/assets/base_template.blend](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/assets/base_template.blend)
-- Create and include a real, 100% valid pre-compiled native Blender binary template (`base_template.blend`) containing complete `DNA1` blocks, camera, lighting, and mesh objects.
-- When `blender-adapter.js` creates a new project workspace, `base_template.blend` is copied to `blendFilePath` (`scene.blend`) as the foundational native project file.
-- Guarantees **100% error-free drag-and-drop / double-click opening** in Blender with **zero `Missing DNA block` errors**.
-
-### 2. Blender Executable Path Resolution
-#### [MODIFY] [app-selector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/app-selector.js)
-- Deep-searches `C:\Program Files\Blender Foundation\*`, `AppData\Local\Programs\Blender Foundation\*`, Registry `HKLM App Paths`, and PATH.
-- If `blender.exe` is present on the computer, invokes `blender.exe --background --python scene_builder.py` to append project objects directly into `scene.blend`.
-
-### 3. File Integrity Verification Gate
-#### [MODIFY] [blender-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/adapters/blender-adapter.js)
-- Verifies that `scene.blend` contains a valid `DNA1` block and file size > 10 KB before completing task execution.
-
----
+```text
+USER WEBPAGE TEXT SELECTION / COPY REQUEST ("Select and copy the Developer Program text on https://codez48.netlify.app/")
+                                  │
+                                  ▼
+1. Web Page DOM & Element Resolution (page-observer.js & element-resolver.js)
+   ├── Observes page state and locates target text/heading element (e.g. "Developer Program")
+   └── Calculates exact screen coordinates & bounding rectangle (x, y, width, height)
+                                  │
+                                  ▼
+2. On-Screen Visual Text Area Highlight Overlay (gui-driver.js)
+   ├── Renders a top-most transparent Windows Forms highlight box directly over target text on screen:
+   │   ┌────────────────────────────────────────────────────────┐
+   │   │  🟨 YELLOW TRANSLUCENT HIGHLIGHT BOUNDING BOX          │
+   │   │  ✨ AI HIGHLIGHTED CONTENT                             │
+   │   │  "Developer Program - Earn Commissions on Referrals"   │
+   │   └────────────────────────────────────────────────────────┘
+   └── Moves native mouse cursor to highlight start position
+                                  │
+                                  ▼
+3. Text Selection & Clipboard Copy Execution (action-executor.js)
+   ├── Clicks text start position and selects text (guiDriver.sendHotkey("^c"))
+   ├── Copies text content to clipboard & session artifact
+   └── Verifies copied text integrity
+```
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Complete Eradication of `Missing DNA block` Error**:
-> - All `.blend` project files created by Codez48 Pilot will originate from a 100% valid native Blender binary template containing complete `DNA1` C-struct blocks.
-> - Dragging and dropping or double-clicking `scene.blend` in Blender will open **100% perfectly without any errors or warnings**.
+> **On-Screen Translucent Yellow Bounding Box & Status Box**:
+> - Replaces small dark boxes with a **live translucent yellow highlight bounding box** directly around the target website text area on screen.
+> - A cyan/black status label box (*"✨ AI HIGHLIGHTED CONTENT: Developer Program"*) showcases the exact question, heading, or copied content clearly on the main website layer.
+> - **`COPY_TEXT` / `SELECT_TEXT` Actions**: Automatically reads, highlights, selects, and copies website content when requested.
 
 ---
 
 ## Proposed Changes
 
-### 1. Embedded Base `.blend` Template Asset
-#### [NEW] [base_template.blend](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/assets/base_template.blend)
-- Real native Blender binary template containing valid `DNA1` blocks.
+### 1. On-Screen Text Area Visual Highlight Overlay
+#### [MODIFY] [gui-driver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js)
+- Implements `showVisualTextHighlightOverlay(x, y, width, height, labelText)` drawing a yellow translucent highlight box and cyan status label.
 
-### 2. Blender Adapter Native Copy & Python Builder
-#### [MODIFY] [blender-adapter.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/3d/adapters/blender-adapter.js)
-- Copies `base_template.blend` to `scene.blend` during project workspace initialization.
-- Runs `blender.exe --background --python scene_builder.py` to update `scene.blend`.
-- Verifies `DNA1` block existence on disk.
+### 2. Action Executor `COPY_TEXT` & `SELECT_TEXT` Support
+#### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/browser/action-executor.js)
+- Implements `COPY_TEXT` and `SELECT_TEXT` actions.
+- Triggers `showVisualTextHighlightOverlay`, selects text, and copies to clipboard.
 
 ---
 
 ## Verification Plan
 
-### Test Scenario: Drag-and-Drop `.blend` File Verification Test
+### Test Scenario: Website Text Highlight & Copy Acceptance Test
 1. **Command**:
-   `codez48 pilot` -> *"Create a 3D model of a low-poly futuristic robot in Blender."*
+   `codez48 pilot` -> *"Open https://codez48.netlify.app/ and copy the Developer Program heading text"*
 2. **Verification Checklist**:
-   - [ ] `scene.blend` saved in `Desktop/Codez48 Preview/blender-futuristic-robot-xxxx/`.
-   - [ ] File size > 10 KB (contains real `DNA1` binary block).
-   - [ ] Opening `scene.blend` in Blender produces 0 errors.
-   - [ ] `Missing DNA block` error is 100% resolved.
+   - [ ] Navigates to `https://codez48.netlify.app/`.
+   - [ ] Locates "Developer Program" text.
+   - [ ] On-screen yellow highlight box renders directly over the "Developer Program" text on screen.
+   - [ ] Text selected and copied (`Ctrl+C`).
+   - [ ] Copied text verified and logged in session record (`Desktop/browser_control_session.json`).
