@@ -78,7 +78,7 @@ exports.handler = async (event) => {
                 originalGoal: d.originalGoal || d.prompt || 'Open Codez48 and click CLI from the top navigation.',
                 website: d.website || d.url || 'https://codez48.netlify.app',
                 status: d.status || 'SENT_TO_PILOT',
-                target: d.target || d.semanticTarget || 'CLI (Top Navigation Link)',
+                target: d.target || d.semanticTarget || null,
                 responseLength: d.responseLength || 0,
                 artifactsCount: d.artifactsCount || 0,
                 updatedAt: d.updatedAt || null
