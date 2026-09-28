@@ -1,44 +1,32 @@
-# Final Codez48 Pilot Walkthrough & Evidence Report
+# Fail-Closed Action Verifier & E2 Semantics Walkthrough
 
-Successfully completed and verified the complete Codez48 Pilot architecture, including correct state ordering, actual-cursor hit testing, physical mouse click (`mouse_event` left down/up with zero Enter fallback), and warning-free closed-loop cursor convergence.
+Successfully investigated E2 / CLI semantics, eliminated false-positive verification, implemented a strict fail-closed Action Verifier, and verified both negative control and real CLI runtime behavior.
 
 ---
 
-## 📋 Required Final Raw Evidence
+## 📋 Inspection & Verification Results
 
-- **REQUEST ID:** `TASK-3QO2WX`
-- **REQUEST TYPE:** `browser_automation`
-- **ORIGINAL GOAL:** `Open Codez48 and click CLI from the top navigation.`
-- **CLI REQUEST CREATED:** `YES`
-- **FIREBASE/BACKEND RECEIVED:** `YES`
-- **HTML MONITOR SAME REQUEST:** `YES`
-- **PAGE URL:** `https://codez48.netlify.app/`
-- **PAGE TITLE:** `CODEZ48 | High-Performance Business Network`
-- **OBSERVED INTERACTIVE ELEMENT COUNT:** `41`
-- **CLI TARGET:**
-  - **ID:** `E2`
-  - **ROLE:** `link`
-  - **NAME:** `CLI`
-- **BACKEND REQUEST SENT:** `YES`
-- **AI RESPONSE:**
-  - **ACTION:** `CLICK_ELEMENT`
-  - **TARGET ID:** `E2`
-- **CLI RESPONSE RECEIVED:** `YES`
-- **LOCAL TARGET REVALIDATED:** `YES`
-- **FRESH TARGET RECT:** `left=630, top=140, right=710, bottom=180`
-- **CURSOR START:** `x=618, y=669`
-- **TARGET SCREEN POINT:** `x=670, y=160`
-- **INITIAL DISTANCE:** `511.6 px`
-- **CLOSED-LOOP MOVEMENT:** 10 iterations converging smoothly to `0.0 px`
-- **CURSOR ARRIVAL:** `x=670, y=160`
-- **ACTUAL-CURSOR HIT TEST:** `PASS` (Verified over E2 / CLI)
-- **PHYSICAL MOUSE DOWN:** `PASS` (`mouse_event` LEFT DOWN)
-- **PHYSICAL MOUSE UP:** `PASS` (`mouse_event` LEFT UP)
-- **ENTER FALLBACK:** `NO`
-- **EXPECTED RESULT:** `CLI navigation / state change`
-- **ACTUAL POST-CLICK RESULT:** `State change verified successfully`
-- **RESULT VERIFIED:** `PASS`
-- **FINAL FIREBASE STATUS:** `completed`
-- **FINAL HTML MONITOR STATUS:** `completed`
+### 1. E2 / CLI Semantics
+- **ID:** `E2`
+- **Tag Name:** `A`
+- **Role:** `link`
+- **Accessible Name:** `CLI`
+- **Href Attribute:** `/cli`
+- **Resolved Href:** `https://codez48.netlify.app/cli`
+- **Classification:** `NORMAL_LINK` (Expected destination: `/cli`)
 
-Status: ✅ **[SUCCESS] Task completed.**
+### 2. Negative Control Test (`tests/negative_control_test.js`)
+- Executed without clicking E2.
+- **Result:** `RESULT VERIFIED: FAIL` (Verified that unclicked states never produce a false positive).
+
+### 3. Real Runtime Execution (`node cli.js pilot "Open Codez48 and click CLI from the top navigation."`)
+- **Cursor Start:** `x = 922, y = 274`
+- **Target Point:** `x = 670, y = 160`
+- **Initial Distance:** `276.6 px`
+- **Closed-Loop Movement:** 7 ease glide iterations + 2 precision mode steps converging to `0.0 px`
+- **Cursor Arrival:** `x = 670, y = 160`
+- **Actual-Cursor Hit Test:** `PASS` (Verified over E2 / CLI)
+- **Physical Click:** `PASS` (`mouse_event` LEFT DOWN & UP)
+- **Fail-Closed Verification:** Detected unchanged URL/path (`URL Changed: false`), correctly halting with `[VERIFICATION FAILED] Expected state transition was not proven (Status: FAIL). Task FAILED.`
+
+Status: ✅ **Fail-closed verifier successfully prevents false-positive task success.**
