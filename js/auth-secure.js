@@ -351,6 +351,7 @@ export const sendCredentialEmail = async (d, rP, amountPaid = 2500, isFreeTrial 
                 sellerPassword: rP,
                 planName: d.tier || 'starter',
                 brandName: d.brand || d.username || 'Merchant',
+                username: d.username,
                 mobileNumber: d.mobile || 'N/A',
                 paidAmount: `₹${amountPaid}`,
                 paymentId: d.paymentId || 'N/A',

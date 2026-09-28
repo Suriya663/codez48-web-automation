@@ -456,19 +456,27 @@ exports.handler = async (event, context) => {
             const sellerPassword = data.sellerPassword || 'N/A';
             const planName = data.planName || 'STARTER';
             const brandName = data.brandName || data.userName || 'Merchant Node';
+            const username = data.username || sellerId;
             const mobileNumber = data.mobileNumber || 'N/A';
             const paidAmount = data.paidAmount || '₹2,500';
             const isFreeTrial = data.isFreeTrial || false;
 
+            const planExtension = planName.toLowerCase() === 'premium' ? '' : '.codeez';
+            const profileUrl = `https://codez48.netlify.app/seller/index.html?s=${username}${planExtension}`;
+            const devUrl = `https://codez48.netlify.app/seller/developer.html`;
+
             const trialMessage = isFreeTrial ?
                 '<div style="background-color: #EBF8FF; border-left: 4px solid #3182CE; padding: 12px; margin-bottom: 24px;"><p style="margin: 0; font-size: 13px; color: #2B6CB0; font-weight: 700;">🎁 Special Offer: Your service is FREE for the first month! Access to your Medium plan has been activated without any payment.</p></div>' : '';
 
-            // Email 1: To Seller (Credentials & Homepage Login Instructions)
+            const displayAmount = isFreeTrial ?
+                '<span style="text-decoration: line-through; color: #718096; margin-right: 6px;">₹2,500</span> <span style="color: #38A169;">₹0</span>' : escapeHtml(String(paidAmount));
+
+            // Email 1: To Seller (Credentials & Homepage Login Instructions + Invoice)
             if (sellerEmail && sellerEmail.includes('@')) {
                 await transporter.sendMail({
                     from: smtpFrom,
                     to: sellerEmail,
-                    subject: `Welcome to CODEZ48 - Your Merchant Node Credentials`,
+                    subject: `Welcome to CODEZ48 - Your Merchant Node Credentials & Invoice`,
                     html: `
                         <div style="font-family: system-ui, sans-serif; padding: 36px; background-color: #ffffff; color: #000000; border: 2px solid #000000; max-width: 560px; margin: 0 auto;">
                             <div style="text-align: center; margin-bottom: 24px; border-b: 2px solid #000000; padding-bottom: 16px;">
@@ -496,14 +504,58 @@ exports.handler = async (event, context) => {
                                 </tr>
                                 <tr style="border-b: 1px solid #000000;">
                                     <td style="padding: 12px 0; font-weight: 800; color: #000000; text-transform: uppercase; font-size: 10px;">Chosen Plan:</td>
-                                    <td style="padding: 12px 0; font-weight: 700; color: #000000;">${escapeHtml(planName.toUpperCase())} (${escapeHtml(String(paidAmount))})</td>
+                                    <td style="padding: 12px 0; font-weight: 700; color: #000000;">${escapeHtml(planName.toUpperCase())} (${displayAmount})</td>
                                 </tr>
                             </table>
 
                             <div style="text-align: center; margin-bottom: 24px;">
-                                <a href="https://codez48.netlify.app/" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 32px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
-                                    Login On Home Page →
+                                <a href="${profileUrl}" style="display: inline-block; background-color: #000000; color: #ffffff; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 14px 32px; border-radius: 99px; text-decoration: none; border: 2px solid #000000; margin-bottom: 12px; width: 80%; max-width: 300px;">
+                                    Go to Profile Page →
                                 </a>
+                            </div>
+
+                            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 12px; margin-bottom: 32px; text-align: center;">
+                                <p style="margin: 0 0 12px 0; font-size: 12px; color: #475569; font-weight: 600;">To add and manage your products, please access the Product Addition Portal.</p>
+                                <a href="${devUrl}" style="display: inline-block; background-color: #ffffff; color: #000000; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 24px; border-radius: 99px; text-decoration: none; border: 2px solid #000000;">
+                                    Add Products / Admin Login
+                                </a>
+                            </div>
+
+                            <!-- INVOICE SECTION -->
+                            <div style="border-top: 2px dashed #cbd5e1; padding-top: 24px; margin-top: 32px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                    <div>
+                                        <img src="${OFFICIAL_LOGO_URL}" style="height: 30px; width: auto; margin-bottom: 8px;" alt="CODEZ48 Logo" />
+                                        <div style="font-size: 11px; font-weight: 800; text-transform: uppercase;">CODEZ48 Network</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <h3 style="margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; color: #000000; letter-spacing: 2px;">INVOICE</h3>
+                                        <div style="font-size: 10px; color: #64748b; font-family: monospace;">INV-${Math.floor(100000 + Math.random() * 900000)}</div>
+                                        <div style="font-size: 10px; color: #64748b;">${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                    </div>
+                                </div>
+
+                                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #000000; background-color: #f8fafc;">
+                                            <th style="padding: 10px; text-align: left; text-transform: uppercase; font-size: 10px;">Description</th>
+                                            <th style="padding: 10px; text-align: right; text-transform: uppercase; font-size: 10px;">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">CODEZ48 ${escapeHtml(planName.toUpperCase())} Plan Subscription<br><span style="font-size: 10px; color: #64748b; font-weight: 400;">Activation of Merchant Node (${escapeHtml(sellerId)})</span></td>
+                                            <td style="padding: 12px 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 800; font-family: monospace;">${isFreeTrial ? '₹0.00' : escapeHtml(String(paidAmount))}</td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td style="padding: 12px 10px; text-align: right; font-weight: 800; font-size: 14px; text-transform: uppercase;">Total Paid:</td>
+                                            <td style="padding: 12px 10px; text-align: right; font-weight: 900; font-size: 16px; color: #38A169;">${isFreeTrial ? '₹0.00' : escapeHtml(String(paidAmount))}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <p style="text-align: center; font-size: 10px; color: #94a3b8; margin-top: 24px;">This is a computer-generated invoice and does not require a signature.</p>
                             </div>
                         </div>
                     `
