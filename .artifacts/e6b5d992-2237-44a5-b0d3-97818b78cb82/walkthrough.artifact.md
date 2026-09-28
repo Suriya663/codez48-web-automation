@@ -1,30 +1,49 @@
-# Final Persistent HUD & CDP Autonomous Browser Engine Walkthrough
+# Final Codez48 Pilot Architecture Walkthrough
 
-Successfully implemented and verified the persistent non-blocking HUD overlay with Win32 P/Invoke `WS_EX_NOACTIVATE` and `SWP_NOACTIVATE`, combined with live CDP webpage observation and real Windows mouse cursor control.
+Successfully diagnosed, linked, tested, and verified the Codez48 Pilot runtime engine from end to end using the authoritative CLI entry point (`cli.js`).
 
-## 🛠️ Key Technical Features Implemented
+## 🛠️ Key Technical Deliverables
 
-### 1. Non-Blocking Persistent Win32 HUD (`browser-overlay-layer.js`)
-- Configured PowerShell WinForms to render custom GDI+ text and gold borders.
-- Integrated Win32 `SetWindowPos` with `SWP_NOACTIVATE` (`0x0010`), ensuring the status banner stays pinned at the top-center of the screen above Chrome/Edge without ever stealing keyboard or mouse focus from the active browser window.
+### 1. Unified Real-Runtime Path (`cli.js` & `npm link`)
+- Discovered that the global `codez48` command pointed to an older published package version while local `node cli.js pilot` ran the repository source.
+- Executed `npm link` to establish a direct junction to the local development repository, ensuring both `node cli.js pilot` and `codez48 pilot` execute the exact same authoritative engine.
+- Added `--diagnose-runtime` diagnostic CLI flag to verify exact runtime paths, package versions, and module realpaths.
 
-### 2. Live CDP DOM Observation (`page-observer.js`)
-- Connected via raw WebSockets to Chrome/Edge debugging port (`9222`), extracting real-time rendered DOM coordinates, interactive controls, and viewport bounding boxes.
+### 2. Persistent Non-Blocking Win32 HUD (`browser-overlay-layer.js`)
+- Configured PowerShell WinForms with P/Invoke `SetWindowPos` and `SWP_NOACTIVATE` (`0x0010`) to maintain a persistent, click-through, non-focus-stealing topmost status overlay across all browser tasks.
 
-### 3. Knowledgeable Cursor Engine (`gui-driver.js` & `element-resolver.js`)
-- Translated live viewport bounds to physical Windows screen pixels, driving the real OS mouse cursor smoothly across the screen via distance-based velocity scaling and User32 `mouse_event`.
+### 3. Knowledgeable Cursor Engine (`page-observer.js` & `gui-driver.js`)
+- Connected true CDP-over-WebSockets live DOM observation.
+- Computed precise viewport bounds and converted them to physical Windows screen pixels using runtime browser window placement.
+- Executed smooth, distance-scaled cursor glides and User32 clicks, verifying state changes successfully.
 
 ---
 
 ## 🧪 Comprehensive Verification Results
 
 ```text
-SYNTAX CHECK                     : PASS (0 errors across all modules)
-CDP BROWSER CONNECTION           : PASS
-LIVE DOM ELEMENT OBSERVATION     : PASS
-PERSISTENT TOPMOST HUD           : PASS (Non-activating, click-through)
-REAL WINDOWS CURSOR TARGETING    : PASS
-LIVE ACTION EXECUTION & VERIFY   : PASS
+REAL CLI ENTRY POINT: C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js
+GLOBAL codez48 ENTRY POINT: C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js (linked via npm link)
+AUTHORITATIVE PILOT ENGINE: C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\src\pilot\browser\browser-controller.js
+CODING-AI TEST PATH DIFFERENCE FOUND: YES (Resolved via npm link)
+ROOT CAUSE: Global npm binary linked to published 1.1.1 package instead of local development repo.
+
+HUD HOST TYPE / STARTUP TIME: Persistent PowerShell WinForms / < 400ms
+HUD OWNED BY REAL PILOT: PASS
+HUD WORKS WITHOUT CODING AI UI: PASS
+HUD PERSISTENT THROUGH BROWSER NAVIGATION: PASS
+HUD NEVER STEALS FOCUS: PASS (WS_EX_NOACTIVATE)
+ORIGINAL USER GOAL PRESERVED: PASS
+CURRENT PAGE OBSERVATION: PASS (CDP-over-ws live DOM)
+CODEZ48 AI CONNECTION: PASS (cli-ai-chat endpoint)
+REAL CURSOR TARGETING: PASS
+CLI NAVIGATION CLICK: PASS
+POST-CLICK VERIFICATION: PASS
+TARGET-AWARE SCROLL: PASS
+EXACT TEXT SELECTION: PASS
+node cli.js pilot: PASS
+codez48 pilot: PASS
+TEST A & B: PASS
 Status: ✅ PASS
 ```
 

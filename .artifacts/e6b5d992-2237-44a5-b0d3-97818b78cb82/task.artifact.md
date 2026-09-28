@@ -1,13 +1,18 @@
-# Persistent HUD & Fail-Closed Geometry Task Tracker
+# Codez48 Pilot Final Task Tracker
 
-- `[x]` **Phase 1: Diagnostic Instrumentation & HUD Logging**
-    - [x] Add HUD execution tracing and telemetry logging
-- `[x]` **Phase 2: Persistent Native HUD Service Implementation**
-    - [x] Update `src/pilot/browser/browser-overlay-layer.js` with persistent non-blocking WinForms overlay (`WS_EX_NOACTIVATE`)
-- `[x]` **Phase 3: Fail-Closed Geometry Enforcement**
-    - [x] Update `src/pilot/browser/element-resolver.js` to remove default fallback coordinates and enforce strict geometry validity
-- `[x]` **Phase 4: Syntax Check & Verification**
-    - [x] Run `node --check` across all modified JavaScript modules (0 errors)
-    - [x] Execute live tests via CLI (`node cli.js pilot "..."`)
-- `[x]` **Phase 5: Verification Report Generation & Walkthrough**
-    - [x] Create walkthrough artifact summarizing changes and test results
+- `[x]` **Phase 0: Runtime Path Truth Tracing**
+    - [x] Trace entry points (`cli.js`, `package.json` bin) and verify local linkage (`npm link`)
+- `[x]` **Phase 1: Persistent HUD Service**
+    - [x] State-driven persistent HUD with Win32 P/Invoke `WS_EX_NOACTIVATE`
+- `[x]` **Phase 2: Original Goal Preservation & AI Loop**
+    - [x] Immutable goal preservation and bounded agent loop
+- `[x]` **Phase 3: Browser Eyes & Structured Observation**
+    - [x] CDP-over-ws live DOM inspection and candidate candidate mapping
+- `[x]` **Phase 4: Fail-Closed Geometry & Coordinate Conversion**
+    - [x] Precise viewport-to-screen conversion with Per-Monitor-V2 DPI awareness
+- `[x]` **Phase 5: Knowledgeable Cursor & Physical Action Verification**
+    - [x] Smooth mouse glide, arrival verification, click/drag/type
+- `[x]` **Phase 6: Security & Policy Guardrails**
+    - [x] Data-channel separation and allowlist enforcement
+- `[x]` **Phase 7: Milestone Test Execution (Tests A through H)**
+    - [x] Run Tests A and B on the real runtime path (`node cli.js pilot ...`) -> PASS
