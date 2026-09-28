@@ -187,8 +187,9 @@ exports.handler = async (event, context) => {
             const seller = sDoc.data();
             const sId = sDoc.id;
 
-            const dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
-            const currentWallet = Number(seller.walletBalance) || 0;
+            let dailyFee = seller.dailyFee || (seller.tier === 'premium' ? 133 : 83);
+            let currentWallet = Number(seller.walletBalance) || 0;
+            let tier = seller.tier || 'starter';
 
             // Strict Idempotency Check: Did we already process this seller today?
             const idempotencyKey = `DAILY_FEE_${sId}_${todayDateStr}`;
@@ -199,11 +200,38 @@ exports.handler = async (event, context) => {
                 continue;
             }
 
+            // Free Trial Logic Check
+            if (seller.freeTrialActive && seller.freeTrialEndsAt) {
+                const trialEndsAt = new Date(seller.freeTrialEndsAt);
+                if (now < trialEndsAt) {
+                    console.log(`[FREE TRIAL SKIP] Seller ${sId} is on free trial until ${trialEndsAt.toISOString()}.`);
+                    continue; // Skip deduction
+                } else {
+                    // Trial ended. Remove free trial flag so normal billing resumes
+                    console.log(`[FREE TRIAL ENDED] Seller ${sId}'s free trial ended. Checking wallet for downgrade/pause.`);
+                    await sDoc.ref.update({
+                        freeTrialActive: false
+                    });
+                    seller.freeTrialActive = false; // update local object
+                }
+            }
+
+            // Wallet Check & Downgrade Logic
+            if (currentWallet >= 133) {
+                tier = 'premium';
+                dailyFee = 133;
+            } else if (currentWallet >= 83) {
+                tier = 'starter';
+                dailyFee = 83;
+            }
+
             if (currentWallet >= dailyFee) {
                 const newBalance = currentWallet - dailyFee;
                 await sDoc.ref.update({
                     walletBalance: newBalance,
                     status: 'active',
+                    tier: tier,
+                    dailyFee: dailyFee,
                     lastActivatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
 

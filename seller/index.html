@@ -1827,6 +1827,24 @@
                     currentSellerId = sellerDoc.id;
                     currentSellerData = data;
 
+                    if (data.status === 'deactivated_insufficient_funds') {
+                        document.body.innerHTML = `
+                            <div class="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+                                <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-lg w-full border border-slate-100">
+                                    <div class="w-20 h-20 bg-rose-100 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
+                                        <i class="fa-solid fa-store-slash"></i>
+                                    </div>
+                                    <h1 class="text-3xl font-black text-slate-900 uppercase tracking-tight mb-4">Store Paused</h1>
+                                    <p class="text-slate-500 font-medium mb-8 leading-relaxed">This merchant's website is currently paused due to a pending daily plan fee. Once the wallet is recharged, the store will be back online instantly.</p>
+                                    <button onclick="window.location.href='/'" class="bg-black text-white hover:bg-slate-800 text-[10px] font-black uppercase tracking-widest px-8 py-4 rounded-full transition shadow-lg w-full">
+                                        Return to Home
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+
                     // AI Assistant Visibility Control
                     if (data.aiAssistantEnabled === false) {
                         const toast = document.getElementById('voice-activation-toast');

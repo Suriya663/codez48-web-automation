@@ -842,12 +842,25 @@ export const showPublicProfile = async (sellerId, currentUser) => {
         const target = document.getElementById('profile-render-target');
         if (target) {
             target.className = `view-active ${template === 'templateA' ? 'template-a' : 'template-b'}`;
+
+            if (isInactive && !isOwner) {
+                target.innerHTML = `
+                    <div class="max-w-4xl mx-auto my-20 p-12 bg-white border border-slate-100 rounded-[3rem] text-center shadow-2xl">
+                        <div class="w-20 h-20 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center mx-auto mb-6 font-bold text-4xl"><i class="fa-solid fa-ban"></i></div>
+                        <h3 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Profile Unavailable</h3>
+                        <p class="text-sm text-slate-500 font-medium mt-4 max-w-lg mx-auto leading-relaxed">This merchant website has been temporarily paused by the platform.</p>
+                    </div>
+                `;
+                return;
+            }
+
             target.innerHTML = `
-                ${isInactive ? `
+                ${isInactive && isOwner ? `
                     <div class="max-w-4xl mx-auto my-8 p-8 bg-rose-50 border-2 border-rose-300 rounded-[2.5rem] text-center shadow-lg">
                         <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 font-bold text-2xl">⚠️</div>
-                        <h3 class="text-2xl font-black text-rose-900 uppercase tracking-tight">Website Temporarily Paused</h3>
-                        <p class="text-xs text-rose-700 font-medium mt-2 max-w-md mx-auto">This merchant website is currently inactive due to pending daily plan fee. Please recharge wallet to bring online.</p>
+                        <h3 class="text-2xl font-black text-rose-900 uppercase tracking-tight">Your Profile is Blocked</h3>
+                        <p class="text-xs text-rose-700 font-medium mt-2 max-w-md mx-auto">Your payment cycle has ended and your account is paused. Please pay to reactivate.</p>
+                        <button onclick="window.openMerchantWalletModal('${sellerId}')" class="mt-4 bg-rose-600 hover:bg-rose-700 text-white font-black uppercase text-[10px] px-8 py-3 rounded-full tracking-widest shadow-lg">Pay Now</button>
                     </div>
                 ` : ''}
 

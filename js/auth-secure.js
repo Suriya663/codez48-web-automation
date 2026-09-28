@@ -239,6 +239,9 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
         } catch (e) {}
     }
 
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 30);
+
     const nodeData = {
         sellerId,
         username,
@@ -257,6 +260,8 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
         walletBalance: amountPaid,
         lastActivatedAt: new Date().toISOString(),
         paymentId,
+        freeTrialActive: paymentId === 'FREE_TRIAL',
+        freeTrialEndsAt: paymentId === 'FREE_TRIAL' ? trialEnd.toISOString() : null,
         followersCount: 0,
         followingCount: 0,
         followers: [],
@@ -298,7 +303,7 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
         }
 
         // Send Credential Email to Seller and Alert to Developer
-        await sendCredentialEmail(nodeData, assignedPass, amountPaid);
+        await sendCredentialEmail(nodeData, assignedPass, amountPaid, paymentId === 'FREE_TRIAL');
 
         // Trigger My Network Member Registered Email Workflow
         if (validRefCode && referrerEmail) {
@@ -333,7 +338,7 @@ export const activateNewNode = async (paymentId, isApproved = false, isDaily = f
     }
 };
 
-export const sendCredentialEmail = async (d, rP, amountPaid = 2500) => {
+export const sendCredentialEmail = async (d, rP, amountPaid = 2500, isFreeTrial = false) => {
     try {
         await fetch('/.netlify/functions/send-login-notification', {
             method: 'POST',
@@ -348,7 +353,8 @@ export const sendCredentialEmail = async (d, rP, amountPaid = 2500) => {
                 brandName: d.brand || d.username || 'Merchant',
                 mobileNumber: d.mobile || 'N/A',
                 paidAmount: `₹${amountPaid}`,
-                paymentId: d.paymentId || 'N/A'
+                paymentId: d.paymentId || 'N/A',
+                isFreeTrial: isFreeTrial
             })
         });
     } catch (err) {
@@ -384,40 +390,14 @@ export const handleAuth = async () => {
                 return alert("Username already taken.");
             }
 
-            // Generate Temporary Seller ID
-            const tempSellerId = 'SLR-' + Math.floor(100000 + Math.random() * 900000);
+            // Bypass payment step and activate with 1 month free trial on the Medium (starter) plan
+            selectedPlan = 'starter';
 
-            // Save Registration Data to pending_registrations collection FIRST
-            const pendingRegData = {
-                sellerId: tempSellerId,
-                username: username,
-                brandName: brand,
-                productDescription: prodDesc,
-                servicesDescription: servDesc,
-                email: loginInput,
-                mobile: document.getElementById('auth-mobile')?.value || 'N/A', // If you have a mobile input
-                timestamp: new Date().toISOString(),
-                paymentStatus: 'PENDING'
-            };
-
-            await setDoc(doc(db, "pending_registrations", tempSellerId), pendingRegData);
-
-            // Trigger the Isolated Profile Registration Payment Pending Email Module
-            fetch('/.netlify/functions/registrationPending', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    event: 'PROFILE_REGISTRATION_PAYMENT_PENDING',
-                    ...pendingRegData
-                })
-            }).catch(() => {});
+            // Activate directly
+            await activateNewNode('FREE_TRIAL', true, false, 0);
 
             if (loader) loader.classList.add('hidden');
             trackPotentialLead(); // Record accuracy data
-
-            // Pass the generated ID to the next step so it can be used during payment
-            localStorage.setItem('temp_tori_seller_id', tempSellerId);
-            setWizardStep(2);
         } catch (err) {
             if (loader) loader.classList.add('hidden');
             alert(err.message);

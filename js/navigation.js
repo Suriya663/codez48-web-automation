@@ -170,22 +170,40 @@ export const openNodeSettings = async (id) => {
         const activationDate = d.approvedAt || d.date;
         if (activationDate) {
             const dateObj = new Date(activationDate);
-            document.getElementById('settings-res-date').innerText = dateObj.toLocaleDateString('en-IN', {
-                day: 'numeric', month: 'long', year: 'numeric'
-            });
 
-            const now = new Date();
-            const diffMs = now - dateObj;
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            const remaining = Math.max(0, 30 - diffDays);
+            if (d.freeTrialActive && d.freeTrialEndsAt) {
+                const trialEnd = new Date(d.freeTrialEndsAt);
+                const now = new Date();
+                const diffMs = trialEnd - now;
+                const remaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 
-            document.getElementById('settings-res-days').innerText = `${remaining} Days`;
-            const progress = (remaining / 30) * 100;
-            const progressEl = document.getElementById('settings-res-progress');
-            if (progressEl) progressEl.style.width = `${progress}%`;
+                document.getElementById('settings-res-date').innerText = 'Free Version (1 Month Trial)';
+                document.getElementById('settings-res-days').innerText = `${remaining} Days (Trial)`;
 
-            const rechargeContainer = document.getElementById('recharge-node-container');
-            if (rechargeContainer) rechargeContainer.classList.toggle('hidden', remaining > 3);
+                const progress = (remaining / 30) * 100;
+                const progressEl = document.getElementById('settings-res-progress');
+                if (progressEl) progressEl.style.width = `${progress}%`;
+
+                const rechargeContainer = document.getElementById('recharge-node-container');
+                if (rechargeContainer) rechargeContainer.classList.add('hidden'); // Hide during free trial
+            } else {
+                document.getElementById('settings-res-date').innerText = dateObj.toLocaleDateString('en-IN', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+
+                const now = new Date();
+                const diffMs = now - dateObj;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const remaining = Math.max(0, 30 - diffDays);
+
+                document.getElementById('settings-res-days').innerText = `${remaining} Days`;
+                const progress = (remaining / 30) * 100;
+                const progressEl = document.getElementById('settings-res-progress');
+                if (progressEl) progressEl.style.width = `${progress}%`;
+
+                const rechargeContainer = document.getElementById('recharge-node-container');
+                if (rechargeContainer) rechargeContainer.classList.toggle('hidden', remaining > 3);
+            }
         }
 
         switchSettingsTab('details');

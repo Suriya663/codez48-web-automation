@@ -458,6 +458,10 @@ exports.handler = async (event, context) => {
             const brandName = data.brandName || data.userName || 'Merchant Node';
             const mobileNumber = data.mobileNumber || 'N/A';
             const paidAmount = data.paidAmount || '₹2,500';
+            const isFreeTrial = data.isFreeTrial || false;
+
+            const trialMessage = isFreeTrial ?
+                '<div style="background-color: #EBF8FF; border-left: 4px solid #3182CE; padding: 12px; margin-bottom: 24px;"><p style="margin: 0; font-size: 13px; color: #2B6CB0; font-weight: 700;">🎁 Special Offer: Your service is FREE for the first month! Access to your Medium plan has been activated without any payment.</p></div>' : '';
 
             // Email 1: To Seller (Credentials & Homepage Login Instructions)
             if (sellerEmail && sellerEmail.includes('@')) {
@@ -472,6 +476,8 @@ exports.handler = async (event, context) => {
                                 <h2 style="margin: 0; font-size: 22px; font-weight: 900; color: #000000; text-transform: uppercase;">Welcome to CODEZ48</h2>
                                 <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #000000; text-transform: uppercase;">Merchant Registration Confirmed</p>
                             </div>
+
+                            ${trialMessage}
 
                             <div style="background-color: #ffffff; border: 1px solid #000000; padding: 20px; border-radius: 16px; margin-bottom: 24px;">
                                 <p style="margin: 0; font-size: 14px; font-weight: 700; color: #000000;">
