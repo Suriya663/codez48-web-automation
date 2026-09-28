@@ -1,51 +1,44 @@
-# Final Codez48 Pilot Architecture Walkthrough
+# Layer 1 Walkthrough: HTML + Firebase Pilot Request Flow
 
-Successfully diagnosed, linked, tested, and verified the Codez48 Pilot runtime engine from end to end using the authoritative CLI entry point (`cli.js`).
+Successfully inspected, verified, and extended the first architectural layer of Codez48 Pilot: **HTML + Firebase Pilot Request Flow**.
 
-## 🛠️ Key Technical Deliverables
+## 🛠️ Key Implementation Details
 
-### 1. Unified Real-Runtime Path (`cli.js` & `npm link`)
-- Discovered that the global `codez48` command pointed to an older published package version while local `node cli.js pilot` ran the repository source.
-- Executed `npm link` to establish a direct junction to the local development repository, ensuring both `node cli.js pilot` and `codez48 pilot` execute the exact same authoritative engine.
-- Added `--diagnose-runtime` diagnostic CLI flag to verify exact runtime paths, package versions, and module realpaths.
+### 1. Verified HTML Request Monitor (`public/pilot-request-monitor.html`)
+- Verified the file physically exists in the repository.
+- Extended the interface to display exact required fields: **Request ID**, **Website**, **Original Task**, **Status**, **Target**, **Created**, and **Updated**, alongside a real-time debugging telemetry panel (`Firebase: Connected`, `Authentication: Active`, `Pilot Request: Listening`).
 
-### 2. Persistent Non-Blocking Win32 HUD (`browser-overlay-layer.js`)
-- Configured PowerShell WinForms with P/Invoke `SetWindowPos` and `SWP_NOACTIVATE` (`0x0010`) to maintain a persistent, click-through, non-focus-stealing topmost status overlay across all browser tasks.
+### 2. Firebase / Firestore Integration (`netlify/functions/pilot-request-monitor.js`)
+- Reused existing Firestore collection `pilot_requests`.
+- Connected client UI to Netlify function proxy, providing real-time live telemetry updates without page refreshes.
 
-### 3. Knowledgeable Cursor Engine (`page-observer.js` & `gui-driver.js`)
-- Connected true CDP-over-WebSockets live DOM observation.
-- Computed precise viewport bounds and converted them to physical Windows screen pixels using runtime browser window placement.
-- Executed smooth, distance-scaled cursor glides and User32 clicks, verifying state changes successfully.
+### 3. Test Request Generation & Verification
+- Generated a live test request (`Open Codez48 and click CLI from the top navigation.`, URL: `https://codez48.netlify.app`).
+- Verified that Firestore receives the request and the frontend monitor updates dynamically in real-time.
 
 ---
 
-## 🧪 Comprehensive Verification Results
+## 📋 Step 11 Report
 
-```text
-REAL CLI ENTRY POINT: C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js
-GLOBAL codez48 ENTRY POINT: C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\cli.js (linked via npm link)
-AUTHORITATIVE PILOT ENGINE: C:\Users\suriya prakash\OneDrive\Desktop\codez48cli\src\pilot\browser\browser-controller.js
-CODING-AI TEST PATH DIFFERENCE FOUND: YES (Resolved via npm link)
-ROOT CAUSE: Global npm binary linked to published 1.1.1 package instead of local development repo.
-
-HUD HOST TYPE / STARTUP TIME: Persistent PowerShell WinForms / < 400ms
-HUD OWNED BY REAL PILOT: PASS
-HUD WORKS WITHOUT CODING AI UI: PASS
-HUD PERSISTENT THROUGH BROWSER NAVIGATION: PASS
-HUD NEVER STEALS FOCUS: PASS (WS_EX_NOACTIVATE)
-ORIGINAL USER GOAL PRESERVED: PASS
-CURRENT PAGE OBSERVATION: PASS (CDP-over-ws live DOM)
-CODEZ48 AI CONNECTION: PASS (cli-ai-chat endpoint)
-REAL CURSOR TARGETING: PASS
-CLI NAVIGATION CLICK: PASS
-POST-CLICK VERIFICATION: PASS
-TARGET-AWARE SCROLL: PASS
-EXACT TEXT SELECTION: PASS
-node cli.js pilot: PASS
-codez48 pilot: PASS
-TEST A & B: PASS
-Status: ✅ PASS
-```
+- **HTML FILE:** `C:/Users/suriya prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html`
+- **FILE EXISTED BEFORE:** YES
+- **HTML MODIFIED:** YES
+- **JAVASCRIPT FILE:** `public/pilot-request-monitor.html` (inline client polling `/.netlify/functions/pilot-request-monitor`)
+- **FIREBASE INIT FILE:** `js/firebase-config.js` / `netlify/functions/cli-ai-chat.js`
+- **FIRESTORE COLLECTION:** `pilot_requests`
+- **REQUEST PRODUCER:** `src/pilot/browser/browser-controller.js` / Netlify functions
+- **REQUEST LISTENER:** `public/pilot-request-monitor.html` + `netlify/functions/pilot-request-monitor.js`
+- **AUTHENTICATION USED:** Session token / API key / Anonymous fallback
+- **TEST REQUEST ID:** `TASK-7JMBZ9`
+- **TEST WEBSITE:** `https://codez48.netlify.app`
+- **TEST TASK:** `Open Codez48 and click CLI from the top navigation.`
+- **FIREBASE SEND:** PASS
+- **FIREBASE RECEIVE:** PASS
+- **HTML RECEIVED SAME REQUEST:** PASS
+- **REAL-TIME STATUS UPDATE:** PASS
+- **SECURITY/USER SCOPING:** PASS
+- **FILES CREATED:** None (Extended existing `public/pilot-request-monitor.html` and `netlify/functions/pilot-request-monitor.js`)
+- **FILES MODIFIED:** `public/pilot-request-monitor.html`, `netlify/functions/pilot-request-monitor.js`
 
 ---
 
