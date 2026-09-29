@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codez48 Pilot - Request Monitor & Stage 7 Application Diagnostics</title>
+    <title>Codez48 Pilot - Request Monitor & Live Screen Visual Analysis</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body { background-color: #0b0f19; color: #f1f5f9; padding: 2rem; min-height: 100vh; }
@@ -37,14 +37,14 @@
         .empty-state { text-align: center; padding: 3rem; color: #64748b; background: #131c2e; border-radius: 8px; border: 1px dashed #1e293b; }
         .visual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
         @media(max-width: 900px) { .visual-grid { grid-template-columns: 1fr; } }
-        .preview-box { background: #080c14; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem; position: relative; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+        .preview-box { background: #080c14; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem; position: relative; min-height: 200px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">
             <span>Codez48 Pilot</span>
-            <span class="badge">Request Monitor & Stage 7 Application Diagnostics</span>
+            <span class="badge">Request Monitor & Live Screen Visual Analysis</span>
         </div>
         <div class="controls">
             <button class="btn" onclick="fetchRequests()">Refresh Now</button>
@@ -60,7 +60,7 @@
         <div class="debug-item">Website: <span id="latestWebsite">None</span></div>
     </div>
 
-    <div class="section-title">Stage 7: Application Discovery & Launch Diagnostics</div>
+    <div class="section-title">Stage 7-12: Application Discovery & Launch Diagnostics</div>
     <div class="requests-container" id="appDiagnosticsList">
         <div class="empty-state">Application discovery telemetry active. Ready for intent resolution.</div>
     </div>
@@ -145,10 +145,7 @@
                                     </div>
                                 </div>
                                 <div class="preview-box">
-                                    <div style="text-align: center; color: #64748b; font-size: 0.85rem;">
-                                        <div>Live Screen Screenshot Preview</div>
-                                        <div style="font-family: monospace; font-size: 0.75rem; margin-top: 0.25rem;">[ ${vr.elementsCount || 0} Bounding Boxes Active ]</div>
-                                    </div>
+                                    ${vr.screenshotData ? `<img src="${vr.screenshotData}" style="max-width: 100%; max-height: 250px; border-radius: 4px; object-fit: contain;" />` : `<div style="text-align: center; color: #64748b; font-size: 0.85rem;"><div>Live Screen Screenshot Preview</div><div style="font-family: monospace; font-size: 0.75rem; margin-top: 0.25rem;">[ ${vr.elementsCount || 0} Bounding Boxes Active ]</div></div>`}
                                 </div>
                             </div>
                             <div class="meta-row">
