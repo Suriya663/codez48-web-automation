@@ -1,31 +1,30 @@
-# Implementation Plan - Stage 10: AI Task Understanding & Intelligent Workflow Orchestrator
+# Implementation Plan - Stage 11: Autonomous Multi-Application Task Execution Engine
 
-Build the AI Task Understanding & Intelligent Workflow Orchestration layer (`task-understanding-engine.js`, `capability-analyzer.js`, `ai-provider.js`, `intelligent-workflow-orchestrator.js`) that sits above Stage 9, converting natural-language goals into structured intents, entities, constraints, and capability requirements, validating plans, executing them via Stage 9, and providing dynamic replanning, adaptive recovery, and Request Monitor telemetry.
+Build the Autonomous Multi-Application Task Execution layer (`autonomous-task-executor.js`, `task-graph.js`, `application-session-manager.js`, `intermediate-result-manager.js`, `checkpoint-manager.js`, `recovery-manager.js`) that orchestrates multi-app tasks, task graphs, session management, data transfer, checkpoints, and autonomous recovery above Stages 2–10.
 
 ## Proposed Changes
 
-### 1. AI Provider Abstraction (`src/pilot/ai/ai-provider.js`)
-- Pluggable AI provider interface with safe deterministic fallback for offline/testing operation.
+### 1. Task Graph (`src/pilot/autonomous/task-graph.js`)
+- Directed execution graph supporting task nodes and typed edges (`SUCCESS`, `FAILURE`, `RECOVERABLE_FAILURE`, `REPLAN_REQUIRED`, `CLARIFICATION_REQUIRED`).
 
-### 2. Task Understanding Engine (`src/pilot/ai/task-understanding-engine.js`)
-- Converts natural-language requests into structured understanding (`intent`, `mode`, `entities`, `constraints`, `requestedOutput`, `ambiguity`, `confidence`).
-- Supports CREATE vs EDIT distinction and ambiguity detection (`MULTIPLE_CANDIDATES`, `requiresClarification`).
+### 2. Application Session Manager (`src/pilot/autonomous/application-session-manager.js`)
+- Tracks launched applications, active windows, window ownership, process health, and context preservation across application switches.
 
-### 3. Capability Analyzer (`src/pilot/ai/capability-analyzer.js`)
-- Analyzes task requirements and determines required application capabilities using Stage 7 metadata.
+### 3. Intermediate Result Manager (`src/pilot/autonomous/intermediate-result-manager.js`)
+- Validates and transfers intermediate outputs (text, numbers, files, clipboard) safely between applications.
 
-### 4. Intelligent Workflow Orchestrator (`src/pilot/ai/intelligent-workflow-orchestrator.js`)
-- Main Stage 10 orchestrator: Goal → Understand → Capability Analysis → Application Selection → Workflow Generation (Stage 9) → Plan Validation → Execution (Stage 9/8/6) → Adaptive Replanning → Verification.
+### 4. Checkpoint & Recovery Manager (`src/pilot/autonomous/checkpoint-manager.js`, `recovery-manager.js`)
+- Creates checkpoints after major successful phases and coordinates bounded autonomous recovery/replanning.
 
-### 5. Request Monitor Extension (`public/pilot-request-monitor.html`, Netlify function)
-- Adds Stage 10 diagnostics (Task ID, original goal, understanding status, intent, mode, extracted entities, constraints, ambiguity status, clarification required, capability requirements, selected application, AI provider / deterministic fallback, workflow ID, workflow status, current step, replanning count, verification status, final result).
+### 5. Autonomous Task Executor (`src/pilot/autonomous/autonomous-task-executor.js`)
+- Main Stage 11 execution controller linking task understanding, task graphs, sessions, intermediate results, checkpoints, and execution.
 
-### 6. Comprehensive Test Suite (`tests/stage10_test.js`)
-- Implements and executes all 34 Stage 10 test cases plus Stage 2–9 regressions.
+### 6. Comprehensive Test Suite (`tests/stage11_test.js`)
+- Implements and executes Stage 11 test cases plus Stage 2–10 regressions.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-1. Run `node tests/stage10_test.js` to execute all 34 Stage 10 test cases and regressions.
+1. Run `node tests/stage11_test.js` to execute Stage 11 test cases and regressions.
