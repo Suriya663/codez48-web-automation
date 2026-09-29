@@ -1,26 +1,23 @@
-# Implementation Plan - Complete Codez48 Pilot Data Path Verification & Refinement
+# Implementation Plan - Visual-Analysis / OCR & Screenshot-Based Vision Fallback Pipeline
 
-Verify and fix the complete end-to-end data flow for Codez48 Pilot, ensuring precise state ordering, removal of Enter fallback, physical mouse clicks via `clickPhysicalMouse()`, strong result verification, request type scoping (`browser_automation`), and live Firebase/HTML request monitor telemetry.
+Implement a full visual-analysis and screenshot verification pipeline for Codez48 Pilot: capturing full screen snapshots, sending them to the Codez48 visual-analysis/OCR service, receiving bounding boxes for UI elements (Text, Buttons, Images, Inputs, Links, Menus, Icons), converting screenshot coordinates to screen coordinates, executing real mouse movement / click / type / scroll via the existing robust motor driver, capturing post-action screenshots, and verifying action success visually.
 
-## Proposed Changes
+## Component Architecture
 
-### 1. State Ordering & Physical Click (`action-executor.js`, `gui-driver.js`)
-- Fix execution order: `[CURSOR] Moving to target...` -> closed-loop movement -> arrival check -> `[CURSOR] Target reached` -> actual-cursor hit test -> `[ACTION] Clicking...` -> physical mouse click (`guiDriver.clickPhysicalMouse()`).
-- **Remove** `{ENTER}` hotkey fallback from `CLICK_ELEMENT`.
-- Implement strict failure propagation if cursor arrival fails (do not run hit test or click, return task failure).
-
-### 2. Strong Action Verification (`action-verifier.js`)
-- Replace weak `Elements Count > 0` checks with specific expected destination/state verification (e.g., expected route/URL or target-specific observable state change).
-- Ensure top-level controller returns task failure if goal completion condition is not verified.
-
-### 3. Request Types & Monitor Telemetry (`cli-ai-chat.js`, `pilot-request-monitor.js`, `pilot-request-monitor.html`)
-- Enforce explicit `requestType = browser_automation` for browser tasks.
-- Ensure monitor page displays real-time request attributes without hardcoded fallback targets.
+1. **Screen Capture Utility (`src/pilot/browser/screen-capture.js`)**:
+   - Captures full-screen desktop / active browser window screenshots using Node native screenshot capabilities or PowerShell / CDP page screenshot APIs.
+2. **Visual Analysis Service Adapter (`src/pilot/browser/visual-analyzer.js`)**:
+   - Integrates with Codez48 visual-analysis backend service (or AI multimodal vision model) to perform OCR and visual element detection, returning structured bounding boxes.
+3. **Coordinate Transformer & Motor Integration (`src/pilot/browser/element-resolver.js` & `gui-driver.js`)**:
+   - Maps screenshot bounding box coordinates to real Windows screen coordinates, accounting for DPI, scaling, and window bounds.
+4. **Action & Verification Loop (`browser-controller.js` & `action-verifier.js`)**:
+   - Executes physical mouse/keyboard action, captures post-action screenshot, and performs visual/OCR verification.
 
 ---
 
 ## Verification Plan
 
-### Automated Runtime Tests
-- Run `node cli.js pilot "Open Codez48 and click CLI from the top navigation."`
-- Verify exact state ordering, physical mouse click execution (no Enter key), actual-cursor hit test, and strong result verification.
+### Automated Tests
+1. Test screen capture utility execution.
+2. Test visual analysis element detection and bounding box coordinate mapping.
+3. End-to-end test via CLI: `codez48 pilot "Open Codez48 and click CLI from the top navigation using visual analysis."`
