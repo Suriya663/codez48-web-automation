@@ -49,7 +49,7 @@ exports.handler = async (event) => {
             headers: {
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "GET, OPTIONS"
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
             }
         };
     }
@@ -59,16 +59,32 @@ exports.handler = async (event) => {
     }
 
     try {
-        // Fetch last 30 requests from Firestore pilot_requests collection
+        if (event.httpMethod === "POST") {
+            const body = JSON.parse(event.body || '{}');
+            const requestId = body.requestId || `VISUAL-${Date.now()}`;
+
+            await db.collection('visual_analysis_requests').doc(requestId).set({
+                ...body,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+
+            return jsonResponse(200, { success: true, requestId, message: "Visual analysis request recorded successfully" });
+        }
+
+        // GET request: Fetch requests from pilot_requests and visual_analysis_requests
         const snapshot = await db.collection('pilot_requests')
             .orderBy('timestamp', 'desc')
-            .limit(30)
+            .limit(20)
+            .get();
+
+        const visualSnapshot = await db.collection('visual_analysis_requests')
+            .orderBy('createdAt', 'desc')
+            .limit(20)
             .get();
 
         const requests = [];
         snapshot.forEach(doc => {
             const d = doc.data();
-            // EXCLUDE all secrets, headers, and keys for 100% security
             requests.push({
                 requestId: d.requestId || doc.id,
                 timestamp: d.timestamp || new Date().toISOString(),
@@ -85,10 +101,30 @@ exports.handler = async (event) => {
             });
         });
 
+        const visualRequests = [];
+        visualSnapshot.forEach(doc => {
+            const d = doc.data();
+            visualRequests.push({
+                requestId: d.requestId || doc.id,
+                type: d.type || 'SCREEN_ANALYSIS',
+                status: d.status || 'COMPLETED',
+                screenshotWidth: d.screenshotWidth || 0,
+                screenshotHeight: d.screenshotHeight || 0,
+                ocrCount: d.ocrCount || (d.ocr ? d.ocr.length : 0),
+                elementsCount: d.elementsCount || (d.elements ? d.elements.length : 0),
+                targetElement: d.targetElement || null,
+                createdAt: d.createdAt || new Date().toISOString(),
+                updatedAt: d.updatedAt || null,
+                ocr: d.ocr || [],
+                elements: d.elements || []
+            });
+        });
+
         return jsonResponse(200, {
             success: true,
             totalRequests: requests.length,
-            requests
+            requests,
+            visualRequests
         });
     } catch (error) {
         console.error("Pilot Monitor Error:", error.message);

@@ -1,23 +1,25 @@
-# Implementation Plan - Visual-Analysis / OCR & Screenshot-Based Vision Fallback Pipeline
+# Implementation Plan - Live Screen Visual Analysis & Extended Pilot Request Monitor
 
-Implement a full visual-analysis and screenshot verification pipeline for Codez48 Pilot: capturing full screen snapshots, sending them to the Codez48 visual-analysis/OCR service, receiving bounding boxes for UI elements (Text, Buttons, Images, Inputs, Links, Menus, Icons), converting screenshot coordinates to screen coordinates, executing real mouse movement / click / type / scroll via the existing robust motor driver, capturing post-action screenshots, and verifying action success visually.
+Extend the existing Codez48 Pilot Request Monitor (`public/pilot-request-monitor.html`) and backend (`netlify/functions/pilot-request-monitor.js`) to support **Live Screen Visual Analysis** and real-time tracking of visual requests, screenshots, OCR, element bounding boxes, coordinate mapping, mouse actions, and verification status.
 
-## Component Architecture
+## Proposed Changes
 
-1. **Screen Capture Utility (`src/pilot/browser/screen-capture.js`)**:
-   - Captures full-screen desktop / active browser window screenshots using Node native screenshot capabilities or PowerShell / CDP page screenshot APIs.
-2. **Visual Analysis Service Adapter (`src/pilot/browser/visual-analyzer.js`)**:
-   - Integrates with Codez48 visual-analysis backend service (or AI multimodal vision model) to perform OCR and visual element detection, returning structured bounding boxes.
-3. **Coordinate Transformer & Motor Integration (`src/pilot/browser/element-resolver.js` & `gui-driver.js`)**:
-   - Maps screenshot bounding box coordinates to real Windows screen coordinates, accounting for DPI, scaling, and window bounds.
-4. **Action & Verification Loop (`browser-controller.js` & `action-verifier.js`)**:
-   - Executes physical mouse/keyboard action, captures post-action screenshot, and performs visual/OCR verification.
+### 1. Backend Extension (`netlify/functions/pilot-request-monitor.js`)
+- Support `visual_analysis_requests` Firestore collection alongside existing pilot requests.
+- Handle storing/fetching visual analysis requests and responses containing screenshot URLs, OCR text count, detected elements, bounding boxes, and clickable coordinates.
+
+### 2. Frontend Monitor Extension (`public/pilot-request-monitor.html`)
+- Add a new **LIVE SCREEN VISUAL ANALYSIS** dashboard section.
+- Display Visual Request ID, Screenshot Status, Screenshot Preview with visual bounding boxes overlay, Analysis Status, Detected Elements Count, OCR Text Count, Target Element, Target Bounding Box, Clickable X/Y, Confidence, Coordinate Mapping, Mouse Action, Verification Status, and Last Updated.
+
+### 3. Local CLI Visual Analysis & Storage Pipeline (`C:/Users/suriya prakash/OneDrive/Desktop/codez48cli`)
+- Integrate screenshot capture, Firebase Storage upload, Firestore metadata logging, and visual response polling into Codez48 CLI / Pilot.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-1. Test screen capture utility execution.
-2. Test visual analysis element detection and bounding box coordinate mapping.
-3. End-to-end test via CLI: `codez48 pilot "Open Codez48 and click CLI from the top navigation using visual analysis."`
+1. Verify Netlify function returns visual analysis requests.
+2. Verify local CLI script successfully captures screenshot, uploads metadata, receives visual analysis response, performs coordinate mapping, and moves cursor.
+3. Verify monitor page renders live visual telemetry and screenshot overlays in real-time.
