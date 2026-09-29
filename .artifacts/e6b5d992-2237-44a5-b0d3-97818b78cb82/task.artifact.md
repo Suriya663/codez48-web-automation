@@ -1,17 +1,12 @@
-# Live Screen Visual Analysis Task Tracker (Stage 5 Complete)
+# Live Screen Visual Analysis Task Tracker (Stage 6 Complete)
 
-- `[x]` **Phase 1: Backend & Firestore Integration**
-    - [x] Update `pilot-request-monitor.js` Netlify function to handle `visual_analysis_requests`.
-- `[x]` **Phase 2: Frontend Monitor Extension**
-    - [x] Extend `public/pilot-request-monitor.html` with LIVE SCREEN VISUAL ANALYSIS section, screenshot preview, bounding box overlay, and coordinate telemetry.
-- `[x]` **Phase 3: Local CLI Pipeline Integration**
-    - [x] Connect CLI screenshot capture (`desktopScreen` mode, 1536x864, DPI 96, DPR 1.0) and visual analysis request submission.
-- `[x]` **Phase 4: Stage 3 Visual Analysis & OCR Tests**
-    - [x] Test 1-4 (Capture, OCR, element detection, and monitor sync) -> PASS.
-- `[x]` **Phase 5: Stage 4 Real Local Mouse Control & Verification**
-    - [x] Test 1-6 (Coordinate mapping, real mouse movement, click, post-action screenshot, verification) -> PASS.
-- `[x]` **Phase 6: Stage 5 Scroll + Text Input + Multi-Step Interaction + Failure Handling**
-    - [x] Test 1 (Scroll workflow) -> PASS.
-    - [x] Test 2 (Text input workflow & OCR verification) -> PASS.
-    - [x] Test 3 (Multi-step form interaction: Click input -> Type -> Click Submit) -> PASS.
-    - [x] Test 4 (Failure handling for nonexistent target) -> **STAGE 5 PASS**.
+- `[x]` **Phase 1: Visual Element Intelligence Engine (`visual-element-engine.js`)**
+    - [x] Normalized element schema & text normalization (Tests 1-3) -> PASS
+    - [x] Scoring-based target matching & ambiguity handling (`TARGET_AMBIGUOUS`) (Test 4) -> PASS
+    - [x] Safe click-point calculation & disabled/low-confidence filtering (Tests 5, 9, 10) -> PASS
+- `[x]` **Phase 2: Coordinate Mapper & Monitor Extension**
+    - [x] Multi-monitor metadata & DPI/scaling support (Tests 11-13) -> PASS
+    - [x] Request Monitor UI diagnostics & schema extension (Test 14) -> PASS
+- `[x]` **Phase 3: Stage 6 Test Suite & Regressions (`tests/stage6_test.js`)**
+    - [x] Executed all 18 Stage 6 test cases (Passed=18, Failed=0) -> PASS
+    - [x] Stage 2–5 Regressions (Desktop capture, OCR, coordinate mapping, motor scroll) -> **STAGE 6 PASS**.

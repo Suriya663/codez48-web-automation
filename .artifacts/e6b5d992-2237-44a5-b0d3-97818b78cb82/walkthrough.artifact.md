@@ -1,18 +1,30 @@
-# Stage 5 Scroll + Text Input + Multi-Step Interaction Walkthrough
+# Stage 6 Visual Element Intelligence & Coordinate Accuracy Walkthrough
 
-Successfully implemented and verified **Stage 5: Scroll + Text Input + Multi-Step Visual Interaction + Failure Handling** for Codez48 Pilot.
+Successfully implemented and verified **Stage 6: Visual Element Intelligence + Coordinate Accuracy** for Codez48 Pilot.
 
 ---
 
-## 📋 Test Results Summary (Stage 5)
+## 📋 Test Results Summary (Stage 6)
 
-1. **Test 1 (Scroll Workflow)**: PASS
-   - Executed bounded physical mouse scroll (`deltaY: -300`) and captured fresh desktop screenshot.
-2. **Test 2 (Text Input Workflow)**: PASS
-   - Detected input field, mapped coordinates, moved real Windows mouse, performed click, and typed `"Suriya Prakash"` via native Win32 keyboard injection.
-3. **Test 3 (Multi-Step Form Interaction)**: PASS
-   - Executed multi-step sequence (Click Name input -> Type text -> Capture fresh screenshot -> Locate Submit button -> Click Submit) with zero stale coordinate reuse.
-4. **Test 4 (Failure Handling)**: PASS
-   - Nonexistent target successfully triggered bounded search and returned FAILED / target-not-found state without random clicks or infinite loops.
+- **Test Suite Results:** `PASSED=18, FAILED=0`
+- **Tests Executed:**
+  1. Normal text target -> PASS
+  2. Case-insensitive text matching -> PASS
+  3. Repeated whitespace normalization -> PASS
+  4. Multiple identical text targets (ambiguity detected `TARGET_AMBIGUOUS`) -> PASS
+  5. Button detection and safe click point -> PASS
+  6. Text inside image (`image-text`) -> PASS
+  7. Partially visible target penalty/handling -> PASS
+  8. Scrollable panel coordinate mapping -> PASS
+  9. Disabled-looking target rejection -> PASS
+  10. Low-confidence icon rejection -> PASS
+  11. Coordinate mapping -> PASS
+  12. Multi-monitor metadata detection -> PASS
+  13. DPI/scaling metadata -> PASS
+  14. Request monitor diagnostics schema -> PASS
+  15. Stage 2 Regression (Desktop Screen Capture) -> PASS
+  16. Stage 3 Regression (OCR & Element Detection) -> PASS
+  17. Stage 4 Regression (Coordinate Mapping) -> PASS
+  18. Stage 5 Regression (Scroll & Motor Driver) -> PASS
 
-Status: ✅ **STAGE 5: PASS**
+Status: ✅ **STAGE 6: PASS**

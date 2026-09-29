@@ -1,25 +1,27 @@
-# Implementation Plan - Live Screen Visual Analysis & Extended Pilot Request Monitor
+# Implementation Plan - Stage 6: Visual Element Intelligence & Coordinate Accuracy
 
-Extend the existing Codez48 Pilot Request Monitor (`public/pilot-request-monitor.html`) and backend (`netlify/functions/pilot-request-monitor.js`) to support **Live Screen Visual Analysis** and real-time tracking of visual requests, screenshots, OCR, element bounding boxes, coordinate mapping, mouse actions, and verification status.
+Implement advanced visual element intelligence, robust text normalization, scoring-based target matching, ambiguity handling, safe click-point calculation, multi-monitor metadata, DPI/scaling handling, disabled element rejection, and Request Monitor diagnostics.
 
 ## Proposed Changes
 
-### 1. Backend Extension (`netlify/functions/pilot-request-monitor.js`)
-- Support `visual_analysis_requests` Firestore collection alongside existing pilot requests.
-- Handle storing/fetching visual analysis requests and responses containing screenshot URLs, OCR text count, detected elements, bounding boxes, and clickable coordinates.
+### 1. Visual Element Intelligence (`src/pilot/browser/visual-element-engine.js`)
+- Implement normalized visual element schema (`id`, `type`, `text`, `normalizedText`, `bbox`, `center`, `clickablePoint`, `confidence`, `visible`, `enabled`, `source`, `parentId`).
+- Implement robust text normalization (case-insensitive, whitespace normalization, punctuation differences).
+- Implement scoring-based target matching (exact match, normalized match, element type, visibility, enabled state, confidence, penalties for partial visibility or disabled state).
+- Handle multiple matches and ambiguity detection (`TARGET_AMBIGUOUS`).
+- Safe click-point calculation (avoiding edges, padding, overlapping elements).
+- Disabled element detection & low-confidence rejection.
 
-### 2. Frontend Monitor Extension (`public/pilot-request-monitor.html`)
-- Add a new **LIVE SCREEN VISUAL ANALYSIS** dashboard section.
-- Display Visual Request ID, Screenshot Status, Screenshot Preview with visual bounding boxes overlay, Analysis Status, Detected Elements Count, OCR Text Count, Target Element, Target Bounding Box, Clickable X/Y, Confidence, Coordinate Mapping, Mouse Action, Verification Status, and Last Updated.
+### 2. Coordinate & Monitor Extension (`coordinate-mapper.js`, `public/pilot-request-monitor.html`, `visual-request-manager.js`)
+- Enhance coordinate mapper with multi-monitor display metadata and robust DPI/scaling handling.
+- Extend Request Monitor and Firestore schema to display element intelligence telemetry, match scores, candidates, ambiguity warnings, and bounding box overlays.
 
-### 3. Local CLI Visual Analysis & Storage Pipeline (`C:/Users/suriya prakash/OneDrive/Desktop/codez48cli`)
-- Integrate screenshot capture, Firebase Storage upload, Firestore metadata logging, and visual response polling into Codez48 CLI / Pilot.
+### 3. Test Suite (`tests/stage6_test.js`)
+- Comprehensive test suite covering all 18 Stage 6 test cases (normal text, case-insensitive, whitespace, multiple matches, button click-point, image text, partially visible, scrollable panel, disabled target, low-confidence icon, coordinate mapping, DPI/scaling, multi-monitor, Request Monitor diagnostics, and Stage 2–5 regressions).
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-1. Verify Netlify function returns visual analysis requests.
-2. Verify local CLI script successfully captures screenshot, uploads metadata, receives visual analysis response, performs coordinate mapping, and moves cursor.
-3. Verify monitor page renders live visual telemetry and screenshot overlays in real-time.
+1. Run `node tests/stage6_test.js` to execute all 18 Stage 6 test cases and regression tests.
