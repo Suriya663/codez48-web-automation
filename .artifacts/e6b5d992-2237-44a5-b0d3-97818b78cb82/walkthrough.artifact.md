@@ -1,36 +1,49 @@
-# Stage 7 Application Discovery + Resolver + Capability Detection Walkthrough
+# Stage 9 Workflow / Task Planning Engine Walkthrough
 
-Successfully implemented and verified **Stage 7: Application Discovery + Resolver + Capability Detection** for Codez48 Pilot.
+Successfully implemented and verified **Stage 9: Workflow / Task Planning Engine** for Codez48 Pilot.
 
 ---
 
-## 📋 Test Results Summary (Stage 7)
+## 📋 Test Results Summary (Stage 9)
 
-- **Test Suite Results:** `PASSED=24, FAILED=0`
+- **Test Suite Results:** `PASSED=37, FAILED=0`
 - **Tests Executed:**
-  1. Application discovery module loads -> PASS
-  2. Installed applications can be discovered -> PASS
-  3. Duplicate applications are normalized -> PASS
-  4. Application category resolution works -> PASS
-  5. 3D category intent resolves correctly -> PASS
-  6. Presentation category intent resolves correctly -> PASS
-  7. Code-editor category intent resolves correctly -> PASS
-  8. Capability matching works -> PASS
-  9. `DISCOVERED != SUPPORTED != TESTED` enforcement -> PASS
-  10. Unsupported application is rejected -> PASS
-  11. Untested application is rejected for automation -> PASS
-  12. Multiple valid candidates are ranked deterministically -> PASS
-  13. Application ambiguity is handled -> PASS
-  14. No-supported-application case is handled -> PASS
-  15. Application launch validation works -> PASS
-  16. Running application detection works -> PASS
-  17. Application window verification works -> PASS
-  18. Readiness state machine works -> PASS
-  19. Request Monitor Stage 7 diagnostics work -> PASS
-  20. Stage 2 Regression (Desktop Screen Capture) -> PASS
-  21. Stage 3 Regression (OCR & Element Detection) -> PASS
-  22. Stage 4 Regression (Coordinate Mapping) -> PASS
-  23. Stage 5 Regression (Scroll & Motor Driver) -> PASS
-  24. Stage 6 Regression (Visual Element Intelligence) -> PASS
+  1. Workflow Planner Loads -> PASS
+  2. Workflow Executor Loads -> PASS
+  3. Natural Language Goal Parsing -> PASS
+  4. Structured Plan Generation -> PASS
+  5. Plan Schema Validation -> PASS
+  6. CREATE vs EDIT distinction -> PASS
+  7. Application Intent Resolution -> PASS
+  8. Application Resolver Integration -> PASS
+  9. Unsupported Application Rejection -> PASS
+  10. Untested Application Rejection -> PASS
+  11. Application Launch Integration -> PASS
+  12. Application Readiness Integration -> PASS
+  13. Workflow State Machine -> PASS
+  14. Observe Step -> PASS
+  15. Target Resolution -> PASS
+  16. Click Step -> PASS
+  17. Type Step -> PASS
+  18. Keyboard Step -> PASS
+  19. Scroll Step -> PASS
+  20. Dialog Handling -> PASS
+  21. Fresh Observation Between Actions -> PASS
+  22. Action Verification -> PASS
+  23. Adaptive Recovery -> PASS
+  24. Bounded Retry -> PASS
+  25. Timeout Handling -> PASS
+  26. Wrong-Window Protection -> PASS
+  27. Final Result Verification -> PASS
+  28. Workflow Completion -> PASS
+  29. Workflow Failure Handling -> PASS
+  30. Request Monitor Stage 9 Diagnostics -> PASS
+  31. Stage 2 Regression (Desktop Screen Capture) -> PASS
+  32. Stage 3 Regression (OCR & Detection) -> PASS
+  33. Stage 4 Regression (Coordinate Mapping) -> PASS
+  34. Stage 5 Regression (Scroll & Motor) -> PASS
+  35. Stage 6 Regression (Visual Intelligence) -> PASS
+  36. Stage 7 Regression (App Discovery & Resolver) -> PASS
+  37. Stage 8 Regression (Interaction Engine & Adapters) -> PASS
 
-Status: ✅ **STAGE 7: PASS**
+Status: ✅ **STAGE 9: PASS**
