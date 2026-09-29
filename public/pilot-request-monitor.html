@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codez48 Pilot - Request Monitor & Live Screen Visual Analysis</title>
+    <title>Codez48 Pilot - Request Monitor & Stage 7 Application Diagnostics</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body { background-color: #0b0f19; color: #f1f5f9; padding: 2rem; min-height: 100vh; }
@@ -25,9 +25,9 @@
         .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
         .req-id { font-family: monospace; font-size: 0.95rem; color: #38bdf8; font-weight: 600; }
         .status-tag { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .status-COMPLETED, .status-LOCAL_EXECUTION_COMPLETED, .status-SENT_TO_PILOT { background: #064e3b; color: #34d399; }
+        .status-COMPLETED, .status-LOCAL_EXECUTION_COMPLETED, .status-SENT_TO_PILOT, .status-READY { background: #064e3b; color: #34d399; }
         .status-AI_PROCESSING, .status-ANALYZING, .status-PENDING { background: #1e3a8a; color: #60a5fa; }
-        .status-FAILED, .status-LOCAL_EXECUTION_FAILED { background: #7f1d1d; color: #f87171; }
+        .status-FAILED, .status-LOCAL_EXECUTION_FAILED, .status-NO_SUPPORTED_APPLICATION { background: #7f1d1d; color: #f87171; }
 
         .field-group { margin-bottom: 0.5rem; font-size: 0.9rem; }
         .field-label { color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -38,14 +38,13 @@
         .visual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
         @media(max-width: 900px) { .visual-grid { grid-template-columns: 1fr; } }
         .preview-box { background: #080c14; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem; position: relative; min-height: 200px; display: flex; align-items: center; justify-content: center; }
-        .bounding-box-overlay { position: absolute; border: 2px solid #34d399; background: rgba(52, 211, 153, 0.15); pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">
             <span>Codez48 Pilot</span>
-            <span class="badge">Request Monitor & Live Screen Visual Analysis</span>
+            <span class="badge">Request Monitor & Stage 7 Application Diagnostics</span>
         </div>
         <div class="controls">
             <button class="btn" onclick="fetchRequests()">Refresh Now</button>
@@ -59,6 +58,11 @@
         <div class="debug-item">Latest Request ID: <span id="latestReqId">None</span></div>
         <div class="debug-item">Status: <span id="latestStatus">Idle</span></div>
         <div class="debug-item">Website: <span id="latestWebsite">None</span></div>
+    </div>
+
+    <div class="section-title">Stage 7: Application Discovery & Launch Diagnostics</div>
+    <div class="requests-container" id="appDiagnosticsList">
+        <div class="empty-state">Application discovery telemetry active. Ready for intent resolution.</div>
     </div>
 
     <div class="section-title">Live Screen Visual Analysis (OCR & UI Elements)</div>
@@ -154,7 +158,7 @@
                         </div>
                     `).join('');
                 } else {
-                    document.getElementById('visualRequestsList').innerHTML = '<div class="empty-state">No visual analysis requests recorded yet. Run Stage 2/3 test to generate screen telemetry.</div>';
+                    document.getElementById('visualRequestsList').innerHTML = '<div class="empty-state">No visual analysis requests recorded yet.</div>';
                 }
 
             } catch (e) {
