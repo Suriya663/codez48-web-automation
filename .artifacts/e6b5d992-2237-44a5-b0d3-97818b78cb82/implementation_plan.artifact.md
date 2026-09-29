@@ -1,30 +1,30 @@
-# Implementation Plan - Stage 11: Autonomous Multi-Application Task Execution Engine
+# Implementation Plan - Task-Aware Verification Routing & Desktop Verification Engine
 
-Build the Autonomous Multi-Application Task Execution layer (`autonomous-task-executor.js`, `task-graph.js`, `application-session-manager.js`, `intermediate-result-manager.js`, `checkpoint-manager.js`, `recovery-manager.js`) that orchestrates multi-app tasks, task graphs, session management, data transfer, checkpoints, and autonomous recovery above Stages 2–10.
+Build a task-aware verification routing system that distinguishes between browser automation tasks (requiring DOM/URL path transition verification via `ActionVerifier`) and Windows desktop application tasks (requiring desktop state verification such as `APPLICATION_LAUNCHED`, `WINDOW_VISIBLE`, `WINDOW_ACTIVE`, `APPLICATION_READY`, `TARGET_VISIBLE`, `ACTION_COMPLETED`, `EXPECTED_UI_STATE`, `FINAL_RESULT_VERIFIED` via `InteractionVerifier` and visual desktop screen analysis).
 
 ## Proposed Changes
 
-### 1. Task Graph (`src/pilot/autonomous/task-graph.js`)
-- Directed execution graph supporting task nodes and typed edges (`SUCCESS`, `FAILURE`, `RECOVERABLE_FAILURE`, `REPLAN_REQUIRED`, `CLARIFICATION_REQUIRED`).
+### 1. Unified Task-Aware Verifier (`src/pilot/browser/unified-verifier.js`)
+- Inspects task type and application context (Browser vs Windows Desktop Apps like Notepad, Calculator).
+- Routes browser tasks to browser state differential verifier (`ActionVerifier`).
+- Routes Windows desktop tasks to desktop verification engine (`InteractionVerifier` + desktop screenshot analysis verifying process/window visibility and activity).
+- Provides rich diagnostics: Task Type, Application, Verification Strategy, Expected State, Observed State, Verification Evidence, Confidence, Verification Result.
 
-### 2. Application Session Manager (`src/pilot/autonomous/application-session-manager.js`)
-- Tracks launched applications, active windows, window ownership, process health, and context preservation across application switches.
+### 2. Integration with Pilot Controller & Workflows
+- Connect `pilot-controller.js`, `autonomous-task-executor.js`, and workflow executors to use the unified verifier.
 
-### 3. Intermediate Result Manager (`src/pilot/autonomous/intermediate-result-manager.js`)
-- Validates and transfers intermediate outputs (text, numbers, files, clipboard) safely between applications.
-
-### 4. Checkpoint & Recovery Manager (`src/pilot/autonomous/checkpoint-manager.js`, `recovery-manager.js`)
-- Creates checkpoints after major successful phases and coordinates bounded autonomous recovery/replanning.
-
-### 5. Autonomous Task Executor (`src/pilot/autonomous/autonomous-task-executor.js`)
-- Main Stage 11 execution controller linking task understanding, task graphs, sessions, intermediate results, checkpoints, and execution.
-
-### 6. Comprehensive Test Suite (`tests/stage11_test.js`)
-- Implements and executes Stage 11 test cases plus Stage 2–10 regressions.
+### 3. Comprehensive Test Suite (`tests/verification_routing_test.js`)
+- Implements Tests A through E for verification routing:
+  - Test A: "Open Notepad" → Desktop verification strategy.
+  - Test B: "Open Calculator" → Desktop verification strategy.
+  - Test C: Open Notepad and type "Hello World" → Desktop visual/state verification.
+  - Test D: Real browser task → Browser verification.
+  - Test E: Unknown application/task → Safe fallback / UNVERIFIED.
+- Runs all Stage 2–11 regressions.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-1. Run `node tests/stage11_test.js` to execute Stage 11 test cases and regressions.
+1. Run `node tests/verification_routing_test.js` to execute verification routing tests and regressions.
