@@ -1,9 +1,8 @@
-# Real-Time Core Flow Task Tracker
+# Continuous Real-Time Loop Task Tracker
 
-- `[ ]` **Phase 1: Request Monitor UI & Bounding Box Overlay (`pilot-request-monitor.html`)**
-    - [ ] Actual screenshot image rendering + visual bounding box overlay canvas.
-    - [ ] Complete request lifecycle status tracking.
-- `[ ]` **Phase 2: Backend Netlify Function (`pilot-request-monitor.js`)**
-    - [ ] Full payload persistence & streaming.
-- `[ ]` **Phase 3: End-to-End Core Flow Test Suite (`tests/core_flow_test.js`)**
-    - [ ] Implement & run real-time pipeline test.
+- `[ ]` **Phase 1: Base64 Data URI Normalization (`visual-request-manager.js`, `pilot-request-monitor.html`)**
+    - [ ] Fix `net::ERR_INVALID_URL` by properly formatting `data:image/png;base64,...`.
+- `[ ]` **Phase 2: Continuous Loop Engine (`continuous-loop-engine.js`)**
+    - [ ] Implement multi-cycle observe → analyze → act → observe loop with unique `requestId`s and latency measurements.
+- `[ ]` **Phase 3: Continuous Loop Test Suite (`tests/continuous_loop_test.js`)**
+    - [ ] Implement & run 3-cycle test + regressions.

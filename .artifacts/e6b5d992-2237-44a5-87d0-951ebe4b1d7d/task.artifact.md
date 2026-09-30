@@ -1,8 +1,8 @@
-# Live Screen Visual Analysis Task Tracker (Core Flow Complete)
+# Production Fix Task Tracker
 
-- `[x]` **Phase 1: Real-Time Pipeline Hardening (`visual-request-manager.js`, `pilot-request-monitor.js`)**
-    - [x] Untruncated full screenshot base64 transmission and Netlify function GET response inclusion -> PASS
-- `[x]` **Phase 2: Request Monitor UI & Preview Overlay (`pilot-request-monitor.html`)**
-    - [x] Live screenshot preview image rendering and live status updates -> PASS
-- `[x]` **Phase 3: Core Flow Acceptance Test Suite (`tests/core_flow_test.js`)**
-    - [x] Executed all 12 core flow acceptance checklist items (Passed=12, Failed=0) -> **PASS**.
+- `[ ]` **Phase 1: Canonical Base64 Normalization (`screen-capture.js`, `visual-request-manager.js`)**
+    - [ ] Strip newlines/whitespace and ensure single `data:image/png;base64,...` prefix to eliminate `net::ERR_INVALID_URL`.
+- `[ ]` **Phase 2: Continuous Loop Latency Optimization (`continuous-loop-engine.js`)**
+    - [ ] Fast observe → act → observe stream with detailed boundary latency metrics.
+- `[ ]` **Phase 3: Production Fix Test Suite (`tests/production_fix_test.js`)**
+    - [ ] Implement & run production fix acceptance test + Stage 2–13 regressions.

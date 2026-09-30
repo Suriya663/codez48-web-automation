@@ -1,22 +1,22 @@
-# Implementation Plan - Real-Time Core Flow Hardening & Bounding Box Overlay Integration
+# Implementation Plan - Critical Production Fix: Real-Time Visual Observation & Fast Streaming Pipeline
 
-Hardening the core real-time pipeline: `Real Windows Screenshot → Complete PNG Base64 Payload → Firebase/Firestore → Live Request Monitor → Actual Screenshot Preview with Bounding Box Overlay → OCR/UI Element Detection → Coordinate Mapping → Local CLI Response → Real Windows Cursor Movement → Fresh Screenshot Verification`.
+Production-grade hardening of the real-time visual observation, fast screenshot streaming, accurate text/image OCR, coordinate detection, and real cursor control pipeline.
 
-## Proposed Changes
+## Identified Root Causes & Proposed Fixes
 
-### 1. Request Monitor UI Overlay (`public/pilot-request-monitor.html`)
-- Enhance the preview box to render the actual screenshot image (`<img src="${vr.screenshotData}" ... />`) alongside an HTML canvas / absolute overlay layer rendering bounding boxes for detected OCR text and UI elements with labels, confidence scores, and target markers.
-- Display complete lifecycle status progression (`PENDING → RECEIVED → ANALYZING → ANALYZED → RESPONSE_READY → ACTION_STARTED → ACTION_COMPLETED → VERIFYING → COMPLETED`).
+1. **`net::ERR_INVALID_URL` Base64 Data URI Malformation**:
+   - *Issue*: PowerShell base64 output can contain newline/carriage-return characters (`\r\n`) or duplicate `data:image/png;base64,` prefixes, causing browsers to reject data URIs with `net::ERR_INVALID_URL`.
+   - *Fix*: Implement robust data URI normalization in `screen-capture.js` and `visual-request-manager.js` that strips all newlines/whitespace and guarantees a single canonical `data:image/png;base64,<cleanBase64>` representation. Validate PNG base64 before transmission and rendering.
 
-### 2. Netlify Function & Firestore Schema (`netlify/functions/pilot-request-monitor.js`)
-- Ensure full propagation of `screenshotData`, `ocr`, `elements`, `targetElement`, `status`, and telemetry timestamps.
+2. **Latency Optimization & Fast Continuous Loop**:
+   - Streamline the observe → analyze → respond → act → observe loop in `continuous-loop-engine.js` with structured latency metrics (capture, upload, Firebase write, analysis, response, cursor move, total) and zero arbitrary blocking sleeps.
 
-### 3. End-to-End Real-Time Pipeline Test (`tests/core_flow_test.js`)
-- Implements and executes the complete core flow acceptance test verifying live screenshot transmission, monitor preview display, OCR, coordinate mapping, and physical cursor movement.
+3. **Request Monitor Live Streaming & Bounding Box Overlays**:
+   - Ensure `pilot-request-monitor.html` renders live request streams with unique `requestId`s, timestamps, and active visual bounding box overlays.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-1. Run `node tests/core_flow_test.js` to verify end-to-end real-time core flow execution.
+1. Run a dedicated test script (`tests/production_fix_test.js`) validating canonical base64 normalization, clean data URI rendering, latency measurement, and Stage 2–13 regressions.
