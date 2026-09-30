@@ -1,26 +1,22 @@
-# Implementation Plan - Stage 12: Autonomous Goal Completion & Adaptive Execution Engine
+# Implementation Plan - Real-Time Visual Analysis Pipeline Hardening & Diagnostics
 
-Build the Autonomous Goal Completion & Adaptive Execution layer (`goal-completion-engine.js`, `adaptive-execution-engine.js`, `goal-state-manager.js`, `execution-context-manager.js`, `dynamic-replanner.js`, `recovery-orchestrator.js`, `final-goal-verifier.js`) that unifies Task Understanding (Stage 10), Task Graph / Session / Checkpoints (Stage 11), Visual Intelligence (Stage 6), Application Launch (Stage 7), Interaction Engine (Stage 8), and Task-Aware Verification Routing into a complete, end-to-end goal completion system with adaptive replanning, partial success handling, and final global verification.
+Hardening and end-to-end debugging of the Real-Time Full Windows Screen Capture → Upload → Visual Analysis → OCR/UI Detection → Firestore → Request Monitor pipeline.
 
-## Proposed Changes
+## Identified Root Causes & Proposed Fixes
 
-### 1. Autonomous Goal Modules (`src/pilot/autonomous/`)
-- `goal-state-manager.js`: Manages structured goal state lifecycle (`CREATED`, `UNDERSTANDING`, `PLANNING`, `EXECUTING`, `VERIFYING`, `COMPLETED`, `FAILED`, etc.).
-- `execution-context-manager.js`: Manages context survival across multi-app transitions.
-- `dynamic-replanner.js`: Handles adapting remaining task graph when UI deviates or unexpected dialogs appear.
-- `recovery-orchestrator.js`: Coordinates bounded recovery and checkpoints.
-- `final-goal-verifier.js`: Evaluates complete original user goal against observed outcomes, returning structured global verification (`VERIFIED`, `PARTIALLY_VERIFIED`, `UNVERIFIED`, `FAILED`).
-- `goal-completion-engine.js` & `adaptive-execution-engine.js`: Main Stage 12 orchestration engine.
+1. **Missing Screenshot Data in Netlify Function GET Response (`netlify/functions/pilot-request-monitor.js`)**:
+   - *Issue*: The GET handler omitted `screenshotData` (base64 image payload) when returning `visualRequests` to the Request Monitor frontend, causing screenshot previews to remain empty/black.
+   - *Fix*: Include `screenshotData: d.screenshotData || null` in the `visualRequests` response mapping.
 
-### 2. Request Monitor Extension (`public/pilot-request-monitor.html`)
-- Adds Stage 12 workflow progress, goal state, step progression, recovery attempts, replanning counts, and final verification diagnostics.
+2. **Pipeline Telemetry & Structured Diagnostics**:
+   - Add structured logging at every boundary (`SCREEN_CAPTURE_CREATED`, `FIREBASE_REQUEST_CREATED`, `FIREBASE_REQUEST_READ`, `MONITOR_REQUEST_RECEIVED`, `SCREENSHOT_RENDERED`, `ANALYSIS_STARTED`, `ANALYSIS_COMPLETED`, `RESPONSE_WRITTEN`, `PILOT_RESPONSE_RECEIVED`, `TARGET_SELECTED`, `CURSOR_MOVE_STARTED`, `CURSOR_MOVE_COMPLETED`, `CLICK_COMPLETED`, `VERIFICATION_STARTED`, `VERIFICATION_COMPLETED`).
 
-### 3. Comprehensive Test Suite (`tests/stage12_test.js`)
-- Implements and executes all 35 Stage 12 test cases plus Stage 2–11 regressions and Verification Routing regression.
+3. **Request Monitor UI (`public/pilot-request-monitor.html`)**:
+   - Ensure live rendering of `screenshotData` (`<img src="${vr.screenshotData}" ... />`), bounding boxes overlay, OCR counts, element counts, target coordinates, and live status progression without manual refresh.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-1. Run `node tests/stage12_test.js` to execute all 35 Stage 12 test cases, regressions, and acceptance tests.
+1. Run a comprehensive end-to-end pipeline verification test script (`tests/realtime_pipeline_test.js`) verifying screen capture, full PNG generation, Firestore transmission, Netlify function ingestion, screenshot preview rendering, OCR/element detection, coordinate mapping, and local cursor action.

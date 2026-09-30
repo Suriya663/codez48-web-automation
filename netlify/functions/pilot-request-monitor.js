@@ -63,6 +63,8 @@ exports.handler = async (event) => {
             const body = JSON.parse(event.body || '{}');
             const requestId = body.requestId || `VISUAL-${Date.now()}`;
 
+            console.log(`[FIREBASE_REQUEST_CREATED] requestId=${requestId}, size=${body.fileSize || 'unknown'} bytes`);
+
             await db.collection('visual_analysis_requests').doc(requestId).set({
                 ...body,
                 updatedAt: new Date().toISOString()
@@ -110,6 +112,7 @@ exports.handler = async (event) => {
                 status: d.status || 'COMPLETED',
                 screenshotWidth: d.screenshotWidth || 0,
                 screenshotHeight: d.screenshotHeight || 0,
+                screenshotData: d.screenshotData || null, // INCLUDE COMPLETE SCREENSHOT DATA FOR LIVE PREVIEW
                 ocrCount: d.ocrCount || (d.ocr ? d.ocr.length : 0),
                 elementsCount: d.elementsCount || (d.elements ? d.elements.length : 0),
                 targetElement: d.targetElement || null,
