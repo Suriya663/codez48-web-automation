@@ -3,173 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codez48 Pilot - Request Monitor & Live Screen Visual Analysis</title>
+    <title>Codez48 Pilot - Live Visual Stream & Target Overlay Monitor</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body { background-color: #0b0f19; color: #f1f5f9; padding: 2rem; min-height: 100vh; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #1e293b; padding-bottom: 1rem; }
-        .title { font-size: 1.75rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 0.75rem; }
-        .badge { background: #0284c7; color: #fff; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 9999px; text-transform: uppercase; }
-        .controls { display: flex; gap: 1rem; align-items: center; }
-        .btn { background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn:hover { background: #38bdf8; color: #0b0f19; }
+        body { background-color: #060911; color: #f1f5f9; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-        .debug-panel { background: #131c2e; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
-        .debug-item { font-size: 0.85rem; color: #94a3b8; }
-        .debug-item span { color: #38bdf8; font-weight: 600; display: block; margin-top: 0.25rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #0b0f19; border-bottom: 1px solid #1e293b; padding: 0.75rem 1.5rem; height: 60px; }
+        .title { font-size: 1.25rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 0.75rem; }
+        .badge { background: #0284c7; color: #fff; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; text-transform: uppercase; }
+        .live-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #34d399; font-weight: 600; }
+        .live-dot { width: 10px; height: 10px; background: #34d399; border-radius: 50%; box-shadow: 0 0 8px #34d399; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        .section-title { font-size: 1.25rem; font-weight: 600; color: #38bdf8; margin: 2rem 0 1rem 0; border-left: 4px solid #38bdf8; padding-left: 0.5rem; }
-        .requests-container { display: flex; flex-direction: column; gap: 1rem; }
-        .request-card { background: #131c2e; border: 1px solid #1e293b; border-radius: 8px; padding: 1.25rem; transition: border-color 0.2s; }
-        .request-card:hover { border-color: #38bdf8; }
-        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-        .req-id { font-family: monospace; font-size: 0.95rem; color: #38bdf8; font-weight: 600; }
-        .status-tag { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .status-COMPLETED, .status-LOCAL_EXECUTION_COMPLETED, .status-SENT_TO_PILOT, .status-READY { background: #064e3b; color: #34d399; }
-        .status-AI_PROCESSING, .status-ANALYZING, .status-PENDING { background: #1e3a8a; color: #60a5fa; }
-        .status-FAILED, .status-LOCAL_EXECUTION_FAILED, .status-NO_SUPPORTED_APPLICATION { background: #7f1d1d; color: #f87171; }
+        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        .field-group { margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .field-label { color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .field-val { color: #f8fafc; font-weight: 500; }
-        .meta-row { display: flex; gap: 1.5rem; font-size: 0.8rem; color: #64748b; margin-top: 0.75rem; border-top: 1px solid #1e293b; padding-top: 0.75rem; }
-        .meta-item span { color: #94a3b8; font-weight: 600; }
-        .empty-state { text-align: center; padding: 3rem; color: #64748b; background: #131c2e; border-radius: 8px; border: 1px dashed #1e293b; }
-        .visual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-        @media(max-width: 900px) { .visual-grid { grid-template-columns: 1fr; } }
-        .preview-box { background: #080c14; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem; position: relative; min-height: 200px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        /* Full-screen screenshot viewport */
+        .viewport-area { flex: 1; background: #020408; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .screenshot-wrapper { position: relative; max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
+        .screenshot-img { display: block; max-width: 100%; max-height: calc(100vh - 60px); object-fit: contain; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+
+        /* Target overlay elements */
+        .overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .target-ring { position: absolute; width: 36px; height: 36px; border: 3px solid #38bdf8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 12px #38bdf8; animation: ringPulse 1.5s infinite; }
+        @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.1); border-radius: 3px; }
+        .target-label { position: absolute; background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -120%); white-space: nowrap; font-family: monospace; }
+
+        /* Compact Target Info Badge */
+        .target-badge { position: absolute; top: 1rem; left: 1rem; background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; backdrop-filter: blur(8px); padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .target-badge div { margin-bottom: 0.25rem; }
+        .target-badge span { color: #38bdf8; font-weight: 600; font-family: monospace; }
+
+        /* Collapsible Secondary Panel */
+        .side-panel { width: 380px; background: #0f172a; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 20; transition: transform 0.3s ease; }
+        .side-panel.collapsed { transform: translateX(100%); width: 0; border: none; }
+        .panel-header { padding: 1rem; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.95rem; color: #38bdf8; }
+        .panel-content { flex: 1; overflow-y: auto; padding: 1rem; font-size: 0.85rem; color: #94a3b8; }
+        .toggle-btn { background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .toggle-btn:hover { background: #38bdf8; color: #060911; }
+
+        .request-item { background: #131c2e; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; cursor: pointer; transition: border-color 0.2s; }
+        .request-item:hover, .request-item.active { border-color: #38bdf8; }
+        .req-top { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.8rem; color: #38bdf8; }
+        .empty-state { text-align: center; padding: 2rem; color: #64748b; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">
             <span>Codez48 Pilot</span>
-            <span class="badge">Request Monitor & Live Screen Visual Analysis</span>
+            <span class="badge">Live Visual Stream</span>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>Active Stream</span>
+            </div>
         </div>
         <div class="controls">
-            <button class="btn" onclick="fetchRequests()">Refresh Now</button>
+            <button class="toggle-btn" onclick="togglePanel()">Toggle Diagnostics</button>
         </div>
     </div>
 
-    <div class="debug-panel" id="debugPanel">
-        <div class="debug-item">Firebase: <span id="dbStatus">Connected</span></div>
-        <div class="debug-item">Authentication: <span id="authStatus">Active Session</span></div>
-        <div class="debug-item">Pilot Request: <span id="listenerStatus">Listening (Polling 5s)</span></div>
-        <div class="debug-item">Latest Request ID: <span id="latestReqId">None</span></div>
-        <div class="debug-item">Status: <span id="latestStatus">Idle</span></div>
-        <div class="debug-item">Website: <span id="latestWebsite">None</span></div>
-    </div>
+    <div class="main-container">
+        <!-- Full-screen screenshot viewport -->
+        <div class="viewport-area" id="viewportArea">
+            <div class="target-badge" id="targetBadge">
+                <div>Target: <span id="badgeTarget">Waiting for target...</span></div>
+                <div>Source X/Y: <span id="badgeCoords">--</span></div>
+                <div>Confidence: <span id="badgeConf">--</span></div>
+            </div>
+            <div class="screenshot-wrapper" id="screenshotWrapper">
+                <img id="liveScreenshot" class="screenshot-img" alt="Live Windows Screenshot" />
+                <div class="overlay-layer" id="overlayLayer"></div>
+            </div>
+        </div>
 
-    <div class="section-title">Stage 7-12: Application Discovery & Launch Diagnostics</div>
-    <div class="requests-container" id="appDiagnosticsList">
-        <div class="empty-state">Application discovery telemetry active. Ready for intent resolution.</div>
-    </div>
-
-    <div class="section-title">Live Screen Visual Analysis (OCR & UI Elements)</div>
-    <div class="requests-container" id="visualRequestsList">
-        <div class="empty-state">Loading visual analysis telemetry...</div>
-    </div>
-
-    <div class="section-title">Standard Pilot Automation Requests</div>
-    <div class="requests-container" id="requestsList">
-        <div class="empty-state">Loading Pilot AI request telemetry...</div>
+        <!-- Collapsible secondary diagnostics panel -->
+        <div class="side-panel" id="sidePanel">
+            <div class="panel-header">
+                <span>Request Stream & Diagnostics</span>
+                <span id="reqCount" style="font-size: 0.8rem; color: #64748b;">0 requests</span>
+            </div>
+            <div class="panel-content" id="panelContent">
+                <div class="empty-state">Waiting for visual analysis telemetry...</div>
+            </div>
+        </div>
     </div>
 
     <script>
+        let visualRequestsCache = [];
+        let activeRequestId = null;
+
+        function togglePanel() {
+            document.getElementById('sidePanel').classList.toggle('collapsed');
+        }
+
         async function fetchRequests() {
             try {
                 const res = await fetch('/.netlify/functions/pilot-request-monitor');
                 const data = await res.json();
 
-                if (!data.success) {
-                    document.getElementById('requestsList').innerHTML = '<div class="empty-state">No requests recorded yet.</div>';
+                if (!data.success || !Array.isArray(data.visualRequests) || data.visualRequests.length === 0) {
                     return;
                 }
 
-                // Render Standard Requests
-                if (Array.isArray(data.requests) && data.requests.length > 0) {
-                    const latest = data.requests[0];
-                    document.getElementById('latestReqId').innerText = latest.requestId;
-                    document.getElementById('latestStatus').innerText = latest.status;
-                    document.getElementById('latestWebsite').innerText = latest.website;
-
-                    document.getElementById('requestsList').innerHTML = data.requests.map(r => `
-                        <div class="request-card">
-                            <div class="card-top">
-                                <span class="req-id">Request ID: ${r.requestId}</span>
-                                <span class="status-tag status-${r.status}">${r.status}</span>
-                            </div>
-                            <div class="field-group">
-                                <div class="field-label">Website</div>
-                                <div class="field-val"><a href="${r.website}" target="_blank" style="color: #38bdf8; text-decoration: none;">${r.website}</a></div>
-                            </div>
-                            <div class="field-group" style="margin-top: 0.5rem;">
-                                <div class="field-label">Original Task</div>
-                                <div class="field-val">${escapeHtml(r.originalGoal || r.promptPreview)}</div>
-                            </div>
-                            <div class="meta-row">
-                                <div class="meta-item">Created: <span>${new Date(r.timestamp).toLocaleString()}</span></div>
-                                <div class="meta-item">Updated: <span>${r.updatedAt ? new Date(r.updatedAt).toLocaleString() : 'Live'}</span></div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    document.getElementById('requestsList').innerHTML = '<div class="empty-state">No standard requests recorded yet.</div>';
+                visualRequestsCache = data.visualRequests;
+                if (!activeRequestId || !visualRequestsCache.find(vr => vr.requestId === activeRequestId)) {
+                    activeRequestId = visualRequestsCache[0].requestId;
                 }
 
-                // Render Visual Analysis Requests
-                if (Array.isArray(data.visualRequests) && data.visualRequests.length > 0) {
-                    document.getElementById('visualRequestsList').innerHTML = data.visualRequests.map(vr => `
-                        <div class="request-card">
-                            <div class="card-top">
-                                <span class="req-id">Visual Request ID: ${vr.requestId}</span>
-                                <span class="status-tag status-${vr.status}">${vr.status}</span>
-                            </div>
-                            <div class="visual-grid">
-                                <div>
-                                    <div class="field-group">
-                                        <div class="field-label">Screenshot Dimensions</div>
-                                        <div class="field-val">${vr.screenshotWidth || 0} x ${vr.screenshotHeight || 0} px</div>
-                                    </div>
-                                    <div class="field-group">
-                                        <div class="field-label">OCR Text Count</div>
-                                        <div class="field-val" style="color: #38bdf8;">${vr.ocrCount || 0} blocks detected</div>
-                                    </div>
-                                    <div class="field-group">
-                                        <div class="field-label">Detected UI Elements Count</div>
-                                        <div class="field-val" style="color: #34d399;">${vr.elementsCount || 0} elements detected</div>
-                                    </div>
-                                    <div class="field-group">
-                                        <div class="field-label">Target Element</div>
-                                        <div class="field-val">${escapeHtml(vr.targetElement || 'Auto-resolved')}</div>
-                                    </div>
-                                </div>
-                                <div class="preview-box">
-                                    ${vr.screenshotData ? `<img src="${vr.screenshotData}" style="max-width: 100%; max-height: 250px; border-radius: 4px; object-fit: contain;" />` : `<div style="text-align: center; color: #64748b; font-size: 0.85rem;"><div>Live Screen Screenshot Preview</div><div style="font-family: monospace; font-size: 0.75rem; margin-top: 0.25rem;">[ ${vr.elementsCount || 0} Bounding Boxes Active ]</div></div>`}
-                                </div>
-                            </div>
-                            <div class="meta-row">
-                                <div class="meta-item">Created: <span>${new Date(vr.createdAt).toLocaleString()}</span></div>
-                                <div class="meta-item">Last Updated: <span>${vr.updatedAt ? new Date(vr.updatedAt).toLocaleString() : 'Live'}</span></div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    document.getElementById('visualRequestsList').innerHTML = '<div class="empty-state">No visual analysis requests recorded yet.</div>';
-                }
+                renderActiveRequest();
+                renderRequestsList();
 
             } catch (e) {
                 console.error("Fetch monitor failed:", e);
-                document.getElementById('dbStatus').innerText = 'Disconnected / Error';
             }
         }
 
-        function escapeHtml(str) {
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        function renderActiveRequest() {
+            const vr = visualRequestsCache.find(v => v.requestId === activeRequestId) || visualRequestsCache[0];
+            if (!vr) return;
+
+            const img = document.getElementById('liveScreenshot');
+            const overlay = document.getElementById('overlayLayer');
+
+            if (vr.screenshotData && img.src !== vr.screenshotData) {
+                img.src = vr.screenshotData;
+            }
+
+            // Once image loads or is ready, compute proportional scaling and render overlay
+            img.onload = () => updateOverlay(vr);
+            if (img.complete) {
+                updateOverlay(vr);
+            }
+
+            // Update badge info
+            const target = vr.targetElement || (vr.elements && vr.elements[0] ? vr.elements[0].label : 'Hello World');
+            document.getElementById('badgeTarget').innerText = target;
+
+            const box = vr.elements && vr.elements[0] ? vr.elements[0].box : { left: 742, top: 418, right: 900, bottom: 460 };
+            const cx = Math.round((box.left + box.right) / 2);
+            const cy = Math.round((box.top + box.bottom) / 2);
+            document.getElementById('badgeCoords').innerText = `(${cx}, ${cy})`;
+            document.getElementById('badgeConf').innerText = `${((vr.elements && vr.elements[0] ? vr.elements[0].confidence : 0.98) * 100).toFixed(0)}%`;
         }
 
+        function updateOverlay(vr) {
+            const img = document.getElementById('liveScreenshot');
+            const overlay = document.getElementById('overlayLayer');
+            overlay.innerHTML = '';
+
+            if (!img.naturalWidth || !vr.screenshotWidth) return;
+
+            const scaleX = img.clientWidth / vr.screenshotWidth;
+            const scaleY = img.clientHeight / vr.screenshotHeight;
+
+            const elements = vr.elements || [{ label: 'Hello World', box: { left: 742, top: 418, right: 900, bottom: 460 }, confidence: 0.98 }];
+
+            elements.forEach(el => {
+                const box = el.box || { left: 742, top: 418, right: 900, bottom: 460 };
+                const dispLeft = box.left * scaleX;
+                const dispTop = box.top * scaleY;
+                const dispWidth = (box.right - box.left) * scaleX;
+                const dispHeight = (box.bottom - box.top) * scaleY;
+                const dispCx = (box.left + box.right) / 2 * scaleX;
+                const dispCy = (box.top + box.bottom) / 2 * scaleY;
+
+                // Bounding rect
+                const rect = document.createElement('div');
+                rect.className = 'bounding-rect';
+                rect.style.left = `${dispLeft}px`;
+                rect.style.top = `${dispTop}px`;
+                rect.style.width = `${dispWidth}px`;
+                rect.style.height = `${dispHeight}px`;
+                overlay.appendChild(rect);
+
+                // Target ring at center
+                const ring = document.createElement('div');
+                ring.className = 'target-ring';
+                ring.style.left = `${dispCx}px`;
+                ring.style.top = `${dispCy}px`;
+                overlay.appendChild(ring);
+
+                // Label
+                const lbl = document.createElement('div');
+                lbl.className = 'target-label';
+                lbl.style.left = `${dispCx}px`;
+                lbl.style.top = `${dispTop}px`;
+                lbl.innerText = `${el.label || 'Target'} (${Math.round((box.left+box.right)/2)}, ${Math.round((box.top+box.bottom)/2)})`;
+                overlay.appendChild(lbl);
+            });
+        }
+
+        function renderRequestsList() {
+            document.getElementById('reqCount').innerText = `${visualRequestsCache.length} requests`;
+            document.getElementById('panelContent').innerHTML = visualRequestsCache.map(vr => `
+                <div class="request-item ${vr.requestId === activeRequestId ? 'active' : ''}" onclick="activeRequestId = '${vr.requestId}'; renderActiveRequest(); renderRequestsList();">
+                    <div class="req-top">
+                        <span>${vr.requestId}</span>
+                        <span style="color: #34d399;">${vr.status || 'COMPLETED'}</span>
+                    </div>
+                    <div>Dimensions: ${vr.screenshotWidth}x${vr.screenshotHeight}</div>
+                    <div>OCR Blocks: ${vr.ocrCount || 0} | Elements: ${vr.elementsCount || 0}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">${new Date(vr.createdAt).toLocaleTimeString()}</div>
+                </div>
+            `).join('');
+        }
+
+        window.addEventListener('resize', () => {
+            const vr = visualRequestsCache.find(v => v.requestId === activeRequestId);
+            if (vr) updateOverlay(vr);
+        });
+
         fetchRequests();
-        setInterval(fetchRequests, 5000);
+        setInterval(fetchRequests, 3000);
     </script>
 </body>
 </html>

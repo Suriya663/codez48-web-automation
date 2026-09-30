@@ -1,22 +1,18 @@
-# Implementation Plan - Critical Production Fix: Real-Time Visual Observation & Fast Streaming Pipeline
+# Implementation Plan - Full-Screen Live Screenshot + Target Overlay UI
 
-Production-grade hardening of the real-time visual observation, fast screenshot streaming, accurate text/image OCR, coordinate detection, and real cursor control pipeline.
+Redesigning the Request Monitor frontend (`public/pilot-request-monitor.html`) to deliver a screenshot-first, full-screen live visual streaming interface with proportional target bounding box overlays, target coordinate callouts (`X`, `Y`, `Confidence`), hidden secondary logs, and automatic live updates.
 
-## Identified Root Causes & Proposed Fixes
+## Proposed Changes
 
-1. **`net::ERR_INVALID_URL` Base64 Data URI Malformation**:
-   - *Issue*: PowerShell base64 output can contain newline/carriage-return characters (`\r\n`) or duplicate `data:image/png;base64,` prefixes, causing browsers to reject data URIs with `net::ERR_INVALID_URL`.
-   - *Fix*: Implement robust data URI normalization in `screen-capture.js` and `visual-request-manager.js` that strips all newlines/whitespace and guarantees a single canonical `data:image/png;base64,<cleanBase64>` representation. Validate PNG base64 before transmission and rendering.
-
-2. **Latency Optimization & Fast Continuous Loop**:
-   - Streamline the observe → analyze → respond → act → observe loop in `continuous-loop-engine.js` with structured latency metrics (capture, upload, Firebase write, analysis, response, cursor move, total) and zero arbitrary blocking sleeps.
-
-3. **Request Monitor Live Streaming & Bounding Box Overlays**:
-   - Ensure `pilot-request-monitor.html` renders live request streams with unique `requestId`s, timestamps, and active visual bounding box overlays.
+### 1. Request Monitor Redesign (`public/pilot-request-monitor.html`)
+- **Full-Screen Viewport**: Feature the latest captured Windows screenshot as the primary full-size visual viewport with contain-style scaling.
+- **Bounding Box & Target Overlay**: Overlay canvas/HTML elements scaled accurately from source screenshot coordinates (`1536x864`) to display dimensions, drawing target rings/circles and bounding rectangles.
+- **Collapsible Diagnostics Panel**: Move verbose logs, JSON dumps, and OCR text lists into a collapsible secondary drawer.
+- **Live Stream Streamlined Header**: Display compact live status (`LIVE`, `Request ID`, `Sequence`, `Timestamp`).
 
 ---
 
 ## Verification Plan
 
-### Automated Tests
-1. Run a dedicated test script (`tests/production_fix_test.js`) validating canonical base64 normalization, clean data URI rendering, latency measurement, and Stage 2–13 regressions.
+### Automated & Visual Tests
+1. Verify HTML template updates and ensure seamless rendering of screenshot previews and coordinate mapping overlays.
