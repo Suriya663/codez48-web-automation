@@ -32,14 +32,17 @@
         .diag-trigger:hover { background: #38bdf8; color: #020408; border-color: #38bdf8; }
 
         /* Collapsible Diagnostics Drawer */
-        .diag-drawer { position: absolute; bottom: 0; right: 0; width: 420px; height: 100vh; background: #0b0f19; border-left: 1px solid #1e293b; z-index: 100; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.8); }
+        .diag-drawer { position: absolute; bottom: 0; right: 0; width: 450px; height: 100vh; background: #0b0f19; border-left: 1px solid #1e293b; z-index: 100; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.8); }
         .diag-drawer.open { transform: translateX(0); }
         .drawer-header { padding: 1rem 1.25rem; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #38bdf8; background: #060911; }
         .drawer-body { flex: 1; overflow-y: auto; padding: 1.25rem; font-size: 0.8rem; color: #94a3b8; }
         .close-drawer { background: none; border: none; color: #94a3b8; font-size: 1.25rem; cursor: pointer; }
         .close-drawer:hover { color: #f1f5f9; }
 
-        .request-card { background: #131c2e; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; }
+        .debug-section { background: #131c2e; border: 1px solid #1e293b; border-radius: 6px; padding: 0.85rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.75rem; }
+        .debug-section h4 { color: #38bdf8; margin-bottom: 0.35rem; font-size: 0.8rem; }
+        .request-card { background: #131c2e; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; cursor: pointer; }
+        .request-card:hover { border-color: #38bdf8; }
         .req-top { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.8rem; color: #38bdf8; }
         .empty-state { text-align: center; padding: 2rem; color: #64748b; }
     </style>
@@ -68,11 +71,17 @@
         <!-- Collapsible Diagnostics Drawer -->
         <div class="diag-drawer" id="diagDrawer">
             <div class="drawer-header">
-                <span>Technical Diagnostics & Request Stream</span>
+                <span>Technical Diagnostics & Visual Debug</span>
                 <button class="close-drawer" onclick="toggleDiagnostics()">&times;</button>
             </div>
             <div class="drawer-body" id="drawerBody">
-                <div class="empty-state">Waiting for telemetry...</div>
+                <div class="debug-section" id="visualDebugSection">
+                    <h4>Visual Debug Mode</h4>
+                    <div id="debugContent">No active target analyzed yet.</div>
+                </div>
+                <div id="panelContent">
+                    <div class="empty-state">Waiting for telemetry...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -124,14 +133,14 @@
             }
 
             // Update Response Panel
-            const target = vr.targetElement || (vr.elements && vr.elements[0] ? vr.elements[0].label : 'Hello World');
+            const target = vr.targetElement || (vr.elements && vr.elements[0] ? vr.elements[0].label : 'Target');
             document.getElementById('respTarget').innerText = target;
 
-            const box = vr.elements && vr.elements[0] ? vr.elements[0].box : { left: 742, top: 418, right: 900, bottom: 460 };
-            const cx = Math.round((box.left + box.right) / 2);
-            const cy = Math.round((box.top + box.bottom) / 2);
-            document.getElementById('respX').innerText = cx;
-            document.getElementById('respY').innerText = cy;
+            const box = vr.elements && vr.elements[0] ? vr.elements[0].box : { left: 0, top: 0, right: 0, bottom: 0 };
+            const sourceCenterX = Math.round((box.left + box.right) / 2);
+            const sourceCenterY = Math.round((box.top + box.bottom) / 2);
+            document.getElementById('respX').innerText = sourceCenterX;
+            document.getElementById('respY').innerText = sourceCenterY;
             document.getElementById('respConf').innerText = `${((vr.elements && vr.elements[0] ? vr.elements[0].confidence : 0.98) * 100).toFixed(0)}%`;
             document.getElementById('respStatus').innerText = vr.status || 'TARGET DETECTED';
         }
@@ -143,72 +152,90 @@
 
             if (!img.naturalWidth || !vr.screenshotWidth) return;
 
-            // Calculate precise object-fit: contain display rectangle and offsets inside img element bounds
-            const imgRect = img.getBoundingClientRect();
-            const natRatio = vr.screenshotWidth / vr.screenshotHeight;
-            const domRatio = imgRect.width / imgRect.height;
+            const container = document.getElementById('screenshotContainer');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const sourceWidth = vr.screenshotWidth;
+            const sourceHeight = vr.screenshotHeight;
 
-            let dispW, dispH, offsetX, offsetY;
-            if (domRatio > natRatio) {
-                dispH = imgRect.height;
-                dispW = dispH * natRatio;
-                offsetX = (imgRect.width - dispW) / 2 + imgRect.left - window.innerWidth / 2 + imgRect.width / 2; // relative to container
-                offsetY = 0;
-            } else {
-                dispW = imgRect.width;
-                dispH = dispW / natRatio;
-                offsetX = 0;
-                offsetY = (imgRect.height - dispH) / 2;
-            }
+            // Non-negotiable uniform proportional scaling math
+            const scale = Math.min(
+                containerWidth / sourceWidth,
+                containerHeight / sourceHeight
+            );
+
+            const renderedW = sourceWidth * scale;
+            const renderedH = sourceHeight * scale;
+
+            const imageOffsetX = (containerWidth - renderedW) / 2;
+            const imageOffsetY = (containerHeight - renderedH) / 2;
 
             // Position overlay-layer exactly over the rendered image rectangle
-            overlay.style.left = `${img.offsetLeft + (img.offsetWidth - dispW) / 2}px`;
-            overlay.style.top = `${img.offsetTop + (img.offsetHeight - dispH) / 2}px`;
-            overlay.style.width = `${dispW}px`;
-            overlay.style.height = `${dispH}px`;
+            overlay.style.left = `${imageOffsetX}px`;
+            overlay.style.top = `${imageOffsetY}px`;
+            overlay.style.width = `${renderedW}px`;
+            overlay.style.height = `${renderedH}px`;
 
-            const scaleX = dispW / vr.screenshotWidth;
-            const scaleY = dispH / vr.screenshotHeight;
-
-            const elements = vr.elements || [{ label: 'Hello World', box: { left: 742, top: 418, right: 900, bottom: 460 }, confidence: 0.98 }];
+            const elements = vr.elements || [];
 
             elements.forEach(el => {
-                const box = el.box || { left: 742, top: 418, right: 900, bottom: 460 };
-                const dispLeft = box.left * scaleX;
-                const dispTop = box.top * scaleY;
-                const dispWidth = (box.right - box.left) * scaleX;
-                const dispHeight = (box.bottom - box.top) * scaleY;
-                const dispCx = (box.left + box.right) / 2 * scaleX;
-                const dispCy = (box.top + box.bottom) / 2 * scaleY;
+                const box = el.box || { left: 0, top: 0, right: 0, bottom: 0 };
+                const sourceLeft = box.left;
+                const sourceTop = box.top;
+                const sourceRight = box.right;
+                const sourceBottom = box.bottom;
+
+                const displayLeft = sourceLeft * scale;
+                const displayTop = sourceTop * scale;
+                const displayWidth = (sourceRight - sourceLeft) * scale;
+                const displayHeight = (sourceBottom - sourceTop) * scale;
+
+                const sourceCenterX = (sourceLeft + sourceRight) / 2;
+                const sourceCenterY = (sourceTop + sourceBottom) / 2;
+
+                const displayCenterX = sourceCenterX * scale;
+                const displayCenterY = sourceCenterY * scale;
 
                 // Bounding rect
                 const rect = document.createElement('div');
                 rect.className = 'bounding-rect';
-                rect.style.left = `${dispLeft}px`;
-                rect.style.top = `${dispTop}px`;
-                rect.style.width = `${dispWidth}px`;
-                rect.style.height = `${dispHeight}px`;
+                rect.style.left = `${displayLeft}px`;
+                rect.style.top = `${displayTop}px`;
+                rect.style.width = `${displayWidth}px`;
+                rect.style.height = `${displayHeight}px`;
                 overlay.appendChild(rect);
 
                 // Target ring at center
                 const ring = document.createElement('div');
                 ring.className = 'target-ring';
-                ring.style.left = `${dispCx}px`;
-                ring.style.top = `${dispCy}px`;
+                ring.style.left = `${displayCenterX}px`;
+                ring.style.top = `${displayCenterY}px`;
                 overlay.appendChild(ring);
 
                 // Label
                 const lbl = document.createElement('div');
                 lbl.className = 'target-label';
-                lbl.style.left = `${dispCx}px`;
-                lbl.style.top = `${dispTop}px`;
-                lbl.innerText = `${el.label || 'Target'} (X: ${Math.round((box.left+box.right)/2)}, Y: ${Math.round((box.top+box.bottom)/2)})`;
+                lbl.style.left = `${displayCenterX}px`;
+                lbl.style.top = `${displayTop}px`;
+                lbl.innerText = `${el.label || 'Target'} (X: ${Math.round(sourceCenterX)}, Y: ${Math.round(sourceCenterY)})`;
                 overlay.appendChild(lbl);
+
+                // Populate Visual Debug Mode inside Diagnostics Drawer
+                document.getElementById('debugContent').innerHTML = `
+                    <div>Source Dimensions: ${sourceWidth} x ${sourceHeight}</div>
+                    <div>Source Box: [L:${sourceLeft}, T:${sourceTop}, R:${sourceRight}, B:${sourceBottom}]</div>
+                    <div>Source Center: X=${Math.round(sourceCenterX)}, Y=${Math.round(sourceCenterY)}</div>
+                    <div>Scale: ${scale.toFixed(4)}</div>
+                    <div>Rendered Size: ${Math.round(renderedW)} x ${Math.round(renderedH)}</div>
+                    <div>Image Offset: X=${Math.round(imageOffsetX)}, Y=${Math.round(imageOffsetY)}</div>
+                    <div>Display Box: [L:${Math.round(displayLeft)}, T:${Math.round(displayTop)}, R:${Math.round(displayLeft+displayWidth)}, B:${Math.round(displayTop+displayHeight)}]</div>
+                    <div>Display Center: X=${Math.round(displayCenterX)}, Y=${Math.round(displayCenterY)}</div>
+                `;
             });
         }
 
         function renderDiagnosticsDrawer() {
-            document.getElementById('drawerBody').innerHTML = visualRequestsCache.map(vr => `
+            document.getElementById('panelContent').innerHTML = visualRequestsCache.map(vr => `
                 <div class="request-card" onclick="activeRequestId = '${vr.requestId}'; renderActiveRequest(); toggleDiagnostics();">
                     <div class="req-top">
                         <span>${vr.requestId}</span>
