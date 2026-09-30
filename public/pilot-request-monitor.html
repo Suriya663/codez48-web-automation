@@ -3,88 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codez48 Pilot - Live Visual Stream & Target Overlay Monitor</title>
+    <title>Codez48 Pilot - Real-Time Visual Computer Control Screen</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body { background-color: #060911; color: #f1f5f9; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { background-color: #020408; color: #f1f5f9; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; background: #0b0f19; border-bottom: 1px solid #1e293b; padding: 0.75rem 1.5rem; height: 60px; }
-        .title { font-size: 1.25rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 0.75rem; }
-        .badge { background: #0284c7; color: #fff; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; text-transform: uppercase; }
-        .live-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #34d399; font-weight: 600; }
-        .live-dot { width: 10px; height: 10px; background: #34d399; border-radius: 50%; box-shadow: 0 0 8px #34d399; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
-
-        /* Full-screen screenshot viewport */
-        .viewport-area { flex: 1; background: #020408; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .screenshot-wrapper { position: relative; max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
-        .screenshot-img { display: block; max-width: 100%; max-height: calc(100vh - 60px); object-fit: contain; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        /* Full-screen viewport dominating the entire screen */
+        .viewport-screen { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; background: #000; overflow: hidden; }
+        .screenshot-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .screenshot-img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
 
         /* Target overlay elements */
-        .overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .target-ring { position: absolute; width: 36px; height: 36px; border: 3px solid #38bdf8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 12px #38bdf8; animation: ringPulse 1.5s infinite; }
-        @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-        .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.1); border-radius: 3px; }
-        .target-label { position: absolute; background: rgba(15, 23, 42, 0.85); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -120%); white-space: nowrap; font-family: monospace; }
+        .overlay-layer { position: absolute; pointer-events: none; }
+        .target-ring { position: absolute; width: 32px; height: 32px; border: 2.5px solid #38bdf8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #38bdf8; animation: ringPulse 1.5s infinite; }
+        @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.12); border-radius: 3px; }
+        .target-label { position: absolute; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -130%); white-space: nowrap; font-family: monospace; font-weight: 600; }
 
-        /* Compact Target Info Badge */
-        .target-badge { position: absolute; top: 1rem; left: 1rem; background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; backdrop-filter: blur(8px); padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        .target-badge div { margin-bottom: 0.25rem; }
-        .target-badge span { color: #38bdf8; font-weight: 600; font-family: monospace; }
+        /* Compact Floating Response Panel */
+        .response-panel { position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(15, 23, 42, 0.88); border: 1px solid #334155; backdrop-filter: blur(10px); padding: 0.85rem 1.15rem; border-radius: 8px; font-size: 0.85rem; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.6); min-width: 220px; }
+        .response-panel .panel-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.35rem; font-weight: 700; border-bottom: 1px solid #1e293b; padding-bottom: 0.25rem; }
+        .response-panel div { margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
+        .response-panel span { color: #38bdf8; font-weight: 600; font-family: monospace; }
+        .status-val { color: #34d399 !important; font-weight: 700 !important; text-transform: uppercase; }
 
-        /* Collapsible Secondary Panel */
-        .side-panel { width: 380px; background: #0f172a; border-left: 1px solid #1e293b; display: flex; flex-direction: column; z-index: 20; transition: transform 0.3s ease; }
-        .side-panel.collapsed { transform: translateX(100%); width: 0; border: none; }
-        .panel-header { padding: 1rem; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.95rem; color: #38bdf8; }
-        .panel-content { flex: 1; overflow-y: auto; padding: 1rem; font-size: 0.85rem; color: #94a3b8; }
-        .toggle-btn { background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
-        .toggle-btn:hover { background: #38bdf8; color: #060911; }
+        /* Minimal Discrete Diagnostics Trigger */
+        .diag-trigger { position: absolute; bottom: 1.25rem; right: 1.25rem; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; z-index: 50; transition: all 0.2s; }
+        .diag-trigger:hover { background: #38bdf8; color: #020408; border-color: #38bdf8; }
 
-        .request-item { background: #131c2e; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; cursor: pointer; transition: border-color 0.2s; }
-        .request-item:hover, .request-item.active { border-color: #38bdf8; }
+        /* Collapsible Diagnostics Drawer */
+        .diag-drawer { position: absolute; bottom: 0; right: 0; width: 420px; height: 100vh; background: #0b0f19; border-left: 1px solid #1e293b; z-index: 100; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.8); }
+        .diag-drawer.open { transform: translateX(0); }
+        .drawer-header { padding: 1rem 1.25rem; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #38bdf8; background: #060911; }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 1.25rem; font-size: 0.8rem; color: #94a3b8; }
+        .close-drawer { background: none; border: none; color: #94a3b8; font-size: 1.25rem; cursor: pointer; }
+        .close-drawer:hover { color: #f1f5f9; }
+
+        .request-card { background: #131c2e; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; }
         .req-top { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.8rem; color: #38bdf8; }
         .empty-state { text-align: center; padding: 2rem; color: #64748b; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">
-            <span>Codez48 Pilot</span>
-            <span class="badge">Live Visual Stream</span>
-            <div class="live-indicator">
-                <div class="live-dot"></div>
-                <span>Active Stream</span>
-            </div>
-        </div>
-        <div class="controls">
-            <button class="toggle-btn" onclick="togglePanel()">Toggle Diagnostics</button>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <!-- Full-screen screenshot viewport -->
-        <div class="viewport-area" id="viewportArea">
-            <div class="target-badge" id="targetBadge">
-                <div>Target: <span id="badgeTarget">Waiting for target...</span></div>
-                <div>Source X/Y: <span id="badgeCoords">--</span></div>
-                <div>Confidence: <span id="badgeConf">--</span></div>
-            </div>
-            <div class="screenshot-wrapper" id="screenshotWrapper">
-                <img id="liveScreenshot" class="screenshot-img" alt="Live Windows Screenshot" />
-                <div class="overlay-layer" id="overlayLayer"></div>
-            </div>
+    <div class="viewport-screen" id="viewportScreen">
+        <!-- Compact Floating Response Panel -->
+        <div class="response-panel" id="responsePanel">
+            <div class="panel-title">Current Event / Response</div>
+            <div><span>Target:</span> <span id="respTarget">Detecting...</span></div>
+            <div><span>Source X:</span> <span id="respX">--</span></div>
+            <div><span>Source Y:</span> <span id="respY">--</span></div>
+            <div><span>Confidence:</span> <span id="respConf">--</span></div>
+            <div><span>Status:</span> <span id="respStatus" class="status-val">OBSERVING</span></div>
         </div>
 
-        <!-- Collapsible secondary diagnostics panel -->
-        <div class="side-panel" id="sidePanel">
-            <div class="panel-header">
-                <span>Request Stream & Diagnostics</span>
-                <span id="reqCount" style="font-size: 0.8rem; color: #64748b;">0 requests</span>
+        <!-- Full Viewport Screenshot & Overlay -->
+        <div class="screenshot-container" id="screenshotContainer">
+            <img id="liveScreenshot" class="screenshot-img" alt="Live Windows Screenshot" />
+            <div class="overlay-layer" id="overlayLayer"></div>
+        </div>
+
+        <!-- Discrete Diagnostics Trigger -->
+        <button class="diag-trigger" onclick="toggleDiagnostics()">Diagnostics</button>
+
+        <!-- Collapsible Diagnostics Drawer -->
+        <div class="diag-drawer" id="diagDrawer">
+            <div class="drawer-header">
+                <span>Technical Diagnostics & Request Stream</span>
+                <button class="close-drawer" onclick="toggleDiagnostics()">&times;</button>
             </div>
-            <div class="panel-content" id="panelContent">
-                <div class="empty-state">Waiting for visual analysis telemetry...</div>
+            <div class="drawer-body" id="drawerBody">
+                <div class="empty-state">Waiting for telemetry...</div>
             </div>
         </div>
     </div>
@@ -93,8 +81,8 @@
         let visualRequestsCache = [];
         let activeRequestId = null;
 
-        function togglePanel() {
-            document.getElementById('sidePanel').classList.toggle('collapsed');
+        function toggleDiagnostics() {
+            document.getElementById('diagDrawer').classList.toggle('open');
         }
 
         async function fetchRequests() {
@@ -107,12 +95,14 @@
                 }
 
                 visualRequestsCache = data.visualRequests;
-                if (!activeRequestId || !visualRequestsCache.find(vr => vr.requestId === activeRequestId)) {
-                    activeRequestId = visualRequestsCache[0].requestId;
+                const latest = visualRequestsCache[0];
+
+                if (!activeRequestId || activeRequestId !== latest.requestId) {
+                    activeRequestId = latest.requestId;
+                    renderActiveRequest();
                 }
 
-                renderActiveRequest();
-                renderRequestsList();
+                renderDiagnosticsDrawer();
 
             } catch (e) {
                 console.error("Fetch monitor failed:", e);
@@ -124,27 +114,26 @@
             if (!vr) return;
 
             const img = document.getElementById('liveScreenshot');
-            const overlay = document.getElementById('overlayLayer');
-
             if (vr.screenshotData && img.src !== vr.screenshotData) {
                 img.src = vr.screenshotData;
             }
 
-            // Once image loads or is ready, compute proportional scaling and render overlay
             img.onload = () => updateOverlay(vr);
             if (img.complete) {
                 updateOverlay(vr);
             }
 
-            // Update badge info
+            // Update Response Panel
             const target = vr.targetElement || (vr.elements && vr.elements[0] ? vr.elements[0].label : 'Hello World');
-            document.getElementById('badgeTarget').innerText = target;
+            document.getElementById('respTarget').innerText = target;
 
             const box = vr.elements && vr.elements[0] ? vr.elements[0].box : { left: 742, top: 418, right: 900, bottom: 460 };
             const cx = Math.round((box.left + box.right) / 2);
             const cy = Math.round((box.top + box.bottom) / 2);
-            document.getElementById('badgeCoords').innerText = `(${cx}, ${cy})`;
-            document.getElementById('badgeConf').innerText = `${((vr.elements && vr.elements[0] ? vr.elements[0].confidence : 0.98) * 100).toFixed(0)}%`;
+            document.getElementById('respX').innerText = cx;
+            document.getElementById('respY').innerText = cy;
+            document.getElementById('respConf').innerText = `${((vr.elements && vr.elements[0] ? vr.elements[0].confidence : 0.98) * 100).toFixed(0)}%`;
+            document.getElementById('respStatus').innerText = vr.status || 'TARGET DETECTED';
         }
 
         function updateOverlay(vr) {
@@ -154,8 +143,32 @@
 
             if (!img.naturalWidth || !vr.screenshotWidth) return;
 
-            const scaleX = img.clientWidth / vr.screenshotWidth;
-            const scaleY = img.clientHeight / vr.screenshotHeight;
+            // Calculate precise object-fit: contain display rectangle and offsets inside img element bounds
+            const imgRect = img.getBoundingClientRect();
+            const natRatio = vr.screenshotWidth / vr.screenshotHeight;
+            const domRatio = imgRect.width / imgRect.height;
+
+            let dispW, dispH, offsetX, offsetY;
+            if (domRatio > natRatio) {
+                dispH = imgRect.height;
+                dispW = dispH * natRatio;
+                offsetX = (imgRect.width - dispW) / 2 + imgRect.left - window.innerWidth / 2 + imgRect.width / 2; // relative to container
+                offsetY = 0;
+            } else {
+                dispW = imgRect.width;
+                dispH = dispW / natRatio;
+                offsetX = 0;
+                offsetY = (imgRect.height - dispH) / 2;
+            }
+
+            // Position overlay-layer exactly over the rendered image rectangle
+            overlay.style.left = `${img.offsetLeft + (img.offsetWidth - dispW) / 2}px`;
+            overlay.style.top = `${img.offsetTop + (img.offsetHeight - dispH) / 2}px`;
+            overlay.style.width = `${dispW}px`;
+            overlay.style.height = `${dispH}px`;
+
+            const scaleX = dispW / vr.screenshotWidth;
+            const scaleY = dispH / vr.screenshotHeight;
 
             const elements = vr.elements || [{ label: 'Hello World', box: { left: 742, top: 418, right: 900, bottom: 460 }, confidence: 0.98 }];
 
@@ -189,22 +202,21 @@
                 lbl.className = 'target-label';
                 lbl.style.left = `${dispCx}px`;
                 lbl.style.top = `${dispTop}px`;
-                lbl.innerText = `${el.label || 'Target'} (${Math.round((box.left+box.right)/2)}, ${Math.round((box.top+box.bottom)/2)})`;
+                lbl.innerText = `${el.label || 'Target'} (X: ${Math.round((box.left+box.right)/2)}, Y: ${Math.round((box.top+box.bottom)/2)})`;
                 overlay.appendChild(lbl);
             });
         }
 
-        function renderRequestsList() {
-            document.getElementById('reqCount').innerText = `${visualRequestsCache.length} requests`;
-            document.getElementById('panelContent').innerHTML = visualRequestsCache.map(vr => `
-                <div class="request-item ${vr.requestId === activeRequestId ? 'active' : ''}" onclick="activeRequestId = '${vr.requestId}'; renderActiveRequest(); renderRequestsList();">
+        function renderDiagnosticsDrawer() {
+            document.getElementById('drawerBody').innerHTML = visualRequestsCache.map(vr => `
+                <div class="request-card" onclick="activeRequestId = '${vr.requestId}'; renderActiveRequest(); toggleDiagnostics();">
                     <div class="req-top">
                         <span>${vr.requestId}</span>
                         <span style="color: #34d399;">${vr.status || 'COMPLETED'}</span>
                     </div>
-                    <div>Dimensions: ${vr.screenshotWidth}x${vr.screenshotHeight}</div>
-                    <div>OCR Blocks: ${vr.ocrCount || 0} | Elements: ${vr.elementsCount || 0}</div>
-                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">${new Date(vr.createdAt).toLocaleTimeString()}</div>
+                    <div>Source Dimensions: ${vr.screenshotWidth} x ${vr.screenshotHeight} px</div>
+                    <div>OCR Blocks: ${vr.ocrCount || 0} | UI Elements: ${vr.elementsCount || 0}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">${new Date(vr.createdAt).toLocaleString()}</div>
                 </div>
             `).join('');
         }
