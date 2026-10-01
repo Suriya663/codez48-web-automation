@@ -1,33 +1,21 @@
-# Implementation Plan - Pilot Capability and Quality Pack (PPT, Permissions, Documents, Websites, Applications)
+# Implementation Plan - AI Mode + Pilot Mode Skill Training Pack
 
-Expanding the Code-Based Pilot engine into a fully polished capability and quality pack covering structured style briefs, style-pack libraries, multi-axis image scoring, centralized permission management, document reading/editing, learned website profiling, application capability profiling, and acceptance tests Q1–Q5, R1–R4, and S1–S10.
-
-## Step 0 Audit Summary
-- **PPT Style & Images**: `powerpoint-adapter.js` handles slide text and Wikimedia image search. Needs upgrade for multi-axis image scoring (content + style + technical) and style-pack libraries.
-- **Permissions**: Task session tracks artifacts, but a dedicated centralized `PermissionManager` (scope/capability/audit log) is needed.
-- **Document & App Tasks**: COM Office drivers (`com-office-driver.js`), adapters (`notepad-adapter.js`, `excel-adapter.js`, `word-adapter.js`), and app discovery (`application-launcher.js`, `app-discovery.js`) exist. Needs unification under the Action Router and capability profiling.
-- **Website Profiling**: `page-observer.js` and `element-resolver.js` exist. Needs learned site profiles with revalidation.
-
----
+Implementing the AI Mode + Pilot Mode Skill Training Pack across conversational AI skills (message drafting, code writing) and Pilot mode skills (PowerPoint, Word, Text files, Calculator, and Additional Apps), along with golden evaluation sets and acceptance tests TP-R through TP-Z.
 
 ## Proposed Changes
 
-### 1. Style-Pack Library & Style Brief (`src/pilot/autonomous/style-pack-manager.js`)
-- Implements structured Style Briefs and editable data-driven style profiles (corporate-clean, tech-dark, startup-bold, academic-minimal, creative-editorial).
-- Multi-axis image scoring (Content relevance, Style fit, Technical fit).
+### 1. Skill Framework & Mode Router (`src/pilot/ai/skill-framework.js`)
+- Unified mode classification (AI / PILOT / HYBRID) and data-driven skill specifications (spec, prompt template, exemplars, validator, rubric).
 
-### 2. Central Permission Manager (`src/pilot/autonomous/permission-manager.js`)
-- Least-privilege capability grants (`READ_SCREEN`, `READ_WEB`, `CLICK_WEB`, `TYPE_WEB`, `READ_FILES`, `WRITE_FILES`, `CONTROL_APP`, `RUN_COMMANDS`, `INSTALL_SOFTWARE`, `NETWORK_EXTERNAL`), scoped per site/app/folder with audit logging and prompt-injection defense.
+### 2. AI-Mode & Pilot-Mode Skills
+- Message drafting, code writing, PowerPoint presentations, Word documents, text file manipulation, and two-path calculator arithmetic.
 
-### 3. Application Capability Profiling & Learned Website Profiles (`src/pilot/autonomous/app-profile-manager.js`, `site-profile-manager.js`)
-- Dynamic capability profiling per application and revalidated site inventory profiles.
-
-### 4. Comprehensive Acceptance Tests (`tests/pilot_quality_pack_test.js`)
-- Implement tests Q1–Q5 (PPT quality), R1–R4 (Permissions), and S1–S10 (Documents/Apps/Web/Recovery/Regression).
+### 3. Comprehensive Acceptance Test Suite (`tests/skill_training_acceptance_test.js`)
+- Implements test suites TP-R1–R3, TP-M1–M5, TP-C1–C6, TP-P1–P5, TP-W1–W6, TP-X1–X5, TP-K1–K8, TP-G1, TP-E1–E9, TP-S1–S3, and TP-Z1.
 
 ---
 
 ## Verification Plan
 
 ### Automated & Runtime Tests
-1. Run `node tests/pilot_quality_pack_test.js` to execute acceptance tests Q1–Q5, R1–R4, and S1–S10 on the real runtime.
+1. Run `node tests/skill_training_acceptance_test.js` to execute all acceptance tests and generate `FINAL_REPORT.md`.
