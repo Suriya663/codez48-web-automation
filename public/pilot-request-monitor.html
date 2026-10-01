@@ -113,6 +113,7 @@
 
         let visualRequestsCache = [];
         let activeRequestId = null;
+        let activeScreenshotLength = 0;
 
         function toggleDiagnostics() {
             document.getElementById('diagDrawer').classList.toggle('open');
@@ -182,8 +183,10 @@
             visualRequestsCache = combined;
             const latest = visualRequestsCache[0];
 
-            if (!activeRequestId || activeRequestId !== latest.requestId) {
+            const currentScreenshotLength = latest.screenshotData ? latest.screenshotData.length : 0;
+            if (!activeRequestId || activeRequestId !== latest.requestId || currentScreenshotLength !== activeScreenshotLength) {
                 activeRequestId = latest.requestId;
+                activeScreenshotLength = currentScreenshotLength;
                 await processActiveRequest(latest);
             }
 
@@ -201,10 +204,20 @@
                 src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Waiting+for+Firebase+Screenshot...';
             }
 
-            img.onload = async () => {
+            // Remove any previous event listeners to prevent double-firing
+            img.onload = null;
+            img.onerror = null;
+            let overlayTriggered = false;
+
+            const triggerOverlay = async () => {
+                if (overlayTriggered) return;
+                overlayTriggered = true;
                 console.log('[FIREBASE IMAGE LOADED] Screenshot rendered successfully.');
                 await analyzeAndOverlay(vr);
             };
+
+            img.onload = triggerOverlay;
+
             img.onerror = () => {
                 console.warn('[IMAGE LOAD ERROR] Firebase screenshot load failed. Using placeholder.');
                 img.src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Firebase+Image+Load+Error';
@@ -212,7 +225,7 @@
 
             img.src = src;
             if (img.complete && img.naturalWidth > 0) {
-                await analyzeAndOverlay(vr);
+                triggerOverlay();
             }
         }
 

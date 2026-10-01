@@ -67,6 +67,7 @@ exports.handler = async (event) => {
             console.log(`[FIREBASE_REQUEST_CREATED] requestId=${requestId}, size=${body.fileSize || 'unknown'} bytes`);
 
             await db.collection('visual_analysis_requests').doc(requestId).set({
+                createdAt: new Date().toISOString(),
                 ...body,
                 updatedAt: new Date().toISOString()
             }, { merge: true });
@@ -114,9 +115,9 @@ exports.handler = async (event) => {
                 status: d.status || 'COMPLETED',
                 screenshotWidth: d.screenshotWidth || 0,
                 screenshotHeight: d.screenshotHeight || 0,
-                // Only send large base64 payload for the most recent 1 or 2 requests to avoid HTTP 500 payload limit crash
-                screenshotData: index < 2 ? d.screenshotData : null,
-                domContent: index < 2 ? (d.domContent ? d.domContent.substring(0, 10000) : null) : null,
+                // Only send large base64 payload for the most recent request to avoid HTTP 500 payload limit crash
+                screenshotData: index < 1 ? d.screenshotData : null,
+                domContent: index < 1 ? (d.domContent ? d.domContent.substring(0, 10000) : null) : null,
                 ocrCount: d.ocrCount || (d.ocr ? d.ocr.length : 0),
                 elementsCount: d.elementsCount || (d.elements ? d.elements.length : 0),
                 targetElement: d.targetElement || null,
