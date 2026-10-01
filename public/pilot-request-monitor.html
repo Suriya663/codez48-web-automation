@@ -324,7 +324,7 @@
 
         function renderDiagnosticsDrawer() {
             document.getElementById('panelContent').innerHTML = visualRequestsCache.map(vr => `
-                <div class="request-card" onclick="activeRequestId = '${vr.requestId}'; processActiveRequest(vr); toggleDiagnostics();">
+                <div class="request-card" onclick="selectRequest('${vr.requestId}')">
                     <div class="req-top">
                         <span>${vr.requestId}</span>
                         <span style="color: #34d399;">${vr.status || 'COMPLETED'}</span>
@@ -333,6 +333,17 @@
                     <div>OCR Blocks: ${vr.ocrCount || 0} | UI Elements: ${vr.elementsCount || 0}</div>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">${new Date(vr.createdAt).toLocaleString()}</div>
                 </div>
+            `).join('');
+        }
+
+        function selectRequest(reqId) {
+            const found = visualRequestsCache.find(v => v.requestId === reqId);
+            if (found) {
+                activeRequestId = found.requestId;
+                processActiveRequest(found);
+                toggleDiagnostics();
+            }
+        }
             `).join('');
         }
 
