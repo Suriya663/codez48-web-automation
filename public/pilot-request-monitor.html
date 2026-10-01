@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codez48 Pilot - Real-Time Visual Computer Control Screen</title>
+    <title>Codez48 Pilot - Real-Time Visual Computer Control Screen & Selectable OCR</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body { background-color: #020408; color: #f1f5f9; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
@@ -13,10 +13,24 @@
         .screenshot-img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
 
         .overlay-layer { position: absolute; pointer-events: none; }
-        .target-ring { position: absolute; width: 32px; height: 32px; border: 2.5px solid #38bdf8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #38bdf8; animation: ringPulse 1.5s infinite; }
+        .target-ring { position: absolute; width: 32px; height: 32px; border: 2.5px solid #38bdf8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #38bdf8; animation: ringPulse 1.5s infinite; z-index: 10; }
         @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-        .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.12); border-radius: 3px; }
-        .target-label { position: absolute; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -130%); white-space: nowrap; font-family: monospace; font-weight: 600; }
+        .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.12); border-radius: 3px; z-index: 5; }
+        .target-label { position: absolute; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -130%); white-space: nowrap; font-family: monospace; font-weight: 600; z-index: 15; }
+
+        /* Interactive Selectable OCR Text Overlays */
+        .ocr-selectable-text {
+            position: absolute;
+            color: transparent;
+            user-select: text;
+            cursor: text;
+            white-space: nowrap;
+            z-index: 8;
+        }
+        .ocr-selectable-text::selection {
+            background: rgba(56, 189, 248, 0.4);
+            color: #ffffff;
+        }
 
         .response-panel { position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(15, 23, 42, 0.88); border: 1px solid #334155; backdrop-filter: blur(10px); padding: 0.85rem 1.15rem; border-radius: 8px; font-size: 0.85rem; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.6); min-width: 220px; }
         .response-panel .panel-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.35rem; font-weight: 700; border-bottom: 1px solid #1e293b; padding-bottom: 0.25rem; }
@@ -71,8 +85,8 @@
             </div>
             <div class="drawer-body" id="drawerBody">
                 <div class="debug-section" id="visualDebugSection">
-                    <h4>Visual Debug Mode (Tesseract Pixel OCR Active)</h4>
-                    <div id="debugContent">Scanning screenshot pixels for target...</div>
+                    <h4>Visual Debug Mode (Selectable OCR Active)</h4>
+                    <div id="debugContent">Scanning screenshot pixels for copyable text...</div>
                 </div>
                 <div id="panelContent">
                     <div class="empty-state">Waiting for telemetry...</div>
@@ -81,7 +95,7 @@
         </div>
     </div>
 
-    <!-- Include Tesseract.js CDN for robust browser-side direct image OCR fallback -->
+    <!-- Include Tesseract.js CDN for robust browser-side direct image OCR fallback & selectable text -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         let visualRequestsCache = [];
@@ -134,32 +148,11 @@
 
             if (!img.naturalWidth || !vr.screenshotWidth) return;
 
-            // STRICT REAL PIXEL OCR: Always run Tesseract.js directly on current screenshot pixels
-            let elements = [];
+            let allWords = [];
             try {
-                console.log('[TESSERACT PIXEL OCR] Extracting text directly from current screenshot pixels...');
+                console.log('[SELECTABLE OCR] Extracting all word bounding boxes for copyable overlay...');
                 const result = await Tesseract.recognize(img.src, 'eng');
-                const words = result.data.words || [];
-
-                const targetQuery = (vr.targetElement || 'business').toLowerCase().trim().replace(/[^\w]/g, '');
-                console.log(`[TESSERACT PIXEL OCR] Searching for target word: "${targetQuery}" among ${words.length} detected words.`);
-
-                const matches = words.filter(w => {
-                    const text = (w.text || '').toLowerCase().trim().replace(/[^\w]/g, '');
-                    return text.includes(targetQuery) || targetQuery.includes(text);
-                });
-
-                if (matches.length > 0) {
-                    elements = matches.map(w => ({
-                        label: w.text,
-                        box: { left: w.bbox.x0, top: w.bbox.y0, right: w.bbox.x1, bottom: w.bbox.y1 },
-                        confidence: w.confidence / 100.0,
-                        sourceType: 'IMAGE_OCR'
-                    }));
-                    console.log(`[TESSERACT PIXEL OCR] Successfully located ${elements.length} match(es) for "${targetQuery}" from screenshot pixels.`);
-                } else {
-                    console.warn(`[TESSERACT PIXEL OCR WARNING] Target "${targetQuery}" not found in current screenshot pixels.`);
-                }
+                allWords = result.data.words || [];
             } catch (err) {
                 console.warn('[TESSERACT OCR ERROR]', err.message);
             }
@@ -170,7 +163,6 @@
             const sourceWidth = vr.screenshotWidth;
             const sourceHeight = vr.screenshotHeight;
 
-            // Non-negotiable uniform proportional scaling math
             const scale = Math.min(
                 containerWidth / sourceWidth,
                 containerHeight / sourceHeight
@@ -181,11 +173,35 @@
             const imageOffsetX = (containerWidth - renderedW) / 2;
             const imageOffsetY = (containerHeight - renderedH) / 2;
 
-            // Position overlay-layer exactly over the rendered image rectangle
             overlay.style.left = `${imageOffsetX}px`;
             overlay.style.top = `${imageOffsetY}px`;
             overlay.style.width = `${renderedW}px`;
             overlay.style.height = `${renderedH}px`;
+
+            // 1. Render interactive copyable spans for ALL detected OCR words
+            allWords.forEach(w => {
+                const span = document.createElement('span');
+                span.className = 'ocr-selectable-text';
+                span.innerText = w.text + ' ';
+                span.style.left = `${w.bbox.x0 * scale}px`;
+                span.style.top = `${w.bbox.y0 * scale}px`;
+                span.style.fontSize = `${(w.bbox.y1 - w.bbox.y0) * scale * 0.85}px`;
+                overlay.appendChild(span);
+            });
+
+            // 2. Filter target matches for highlighting
+            const targetQuery = (vr.targetElement || 'business').toLowerCase().trim().replace(/[^\w]/g, '');
+            const matches = allWords.filter(w => {
+                const text = (w.text || '').toLowerCase().trim().replace(/[^\w]/g, '');
+                return text.includes(targetQuery) || targetQuery.includes(text);
+            });
+
+            const elements = matches.length > 0 ? matches.map(w => ({
+                label: w.text,
+                box: { left: w.bbox.x0, top: w.bbox.y0, right: w.bbox.x1, bottom: w.bbox.y1 },
+                confidence: w.confidence / 100.0,
+                sourceType: 'IMAGE_OCR'
+            })) : (vr.elements || []);
 
             if (elements.length > 0) {
                 const el = elements[0];
@@ -248,6 +264,7 @@
                     <div>Display Box: [L:${Math.round(displayLeft)}, T:${Math.round(displayTop)}, R:${Math.round(displayLeft+displayWidth)}, B:${Math.round(displayTop+displayHeight)}]</div>
                     <div>Display Center: X=${Math.round(displayCenterX)}, Y=${Math.round(displayCenterY)}</div>
                     <div>Source Type: ${el.sourceType || 'IMAGE_OCR'}</div>
+                    <div>Total Copyable Words: ${allWords.length}</div>
                 `;
 
                 // Dispatch Cursor Request to CLI / Backend if needed

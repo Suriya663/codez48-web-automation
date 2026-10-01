@@ -1,21 +1,16 @@
-# Implementation Plan - Direct Image-Text OCR Integration & Precise Bounding Box Alignment
+# Implementation Plan - Interactive Selectable Text OCR Overlays & Full-Screen Live Stream
 
-Integrating direct image-text OCR capabilities (`visual-analyzer.js` and Tesseract.js / robust pixel text localization) into the Codez48 Pilot visual intelligence pipeline. This ensures text embedded inside images, banners, buttons, canvas, and graphical UI is detected from actual screenshot pixels with word-level pixel bounding boxes (`left`, `top`, `right`, `bottom`, `centerX`, `centerY`, `confidence`, `sourceType: "IMAGE_OCR"`).
+Enhancing the Request Monitor (`public/pilot-request-monitor.html`) so that all detected OCR words and text elements from the screenshot are rendered as interactive, transparent, copyable/selectable text spans positioned precisely over their exact screenshot pixel locations (`sourceLeft`, `sourceTop`, `sourceRight`, `sourceBottom` mapped via proportional contain scaling `scale`, `imageOffsetX`, `imageOffsetY`), allowing users to click and copy any text directly from the visual stream while maintaining pixel-perfect target highlighting.
 
 ## Proposed Changes
 
-### 1. Visual Analyzer OCR Enhancement (`src/pilot/browser/visual-analyzer.js`)
-- Upgrade `VisualAnalyzer` to support robust image-text OCR and pixel-based text localization, returning structured word-level bounding boxes and `sourceType: "IMAGE_OCR"` / `"NATIVE_OCR"`.
-
-### 2. Request Monitor Overlay Geometry (`public/pilot-request-monitor.html`)
-- Ensure precise display transformation using `img.getBoundingClientRect()` and proportional contain scaling (`scale`, `imageOffsetX`, `imageOffsetY`) so markers sit exactly over target text.
-
-### 3. Acceptance Test Suite (`tests/image_text_ocr_acceptance_test.js`)
-- Implements and executes Test A (Native Text - Notepad "20") and Test B (Image Text - Banner "BRING YOUR BUSINESS ONLINE"), proving end-to-end pixel-accurate detection, overlay alignment, source X/Y transfer, and real cursor action.
+### 1. Interactive Selectable Text Overlay (`public/pilot-request-monitor.html`)
+- Update `updateOverlay(vr)` to render interactive, transparent `<span class="ocr-selectable-text">` elements for all detected words from Tesseract.js / visual analysis, allowing users to select and copy text directly from the screenshot overlay layer.
+- Ensure the primary target (`"business"`, etc.) is highlighted with a precise target ring and bounding rectangle, while all surrounding OCR words are interactive and copyable.
 
 ---
 
 ## Verification Plan
 
-### Automated & Runtime Tests
-1. Run `node tests/image_text_ocr_acceptance_test.js` to execute both Test A and Test B and verify image-text OCR detection, bounding box accuracy, and Stage 2–14 regressions.
+### Automated & Visual Tests
+1. Verify HTML template updates for interactive copyable text overlays and proportional contain scaling.
