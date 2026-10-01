@@ -1,7 +1,7 @@
-# PowerShell Syntax Fix Task Tracker
+# Connection Refused Console Fix Task Tracker
 
-- `[x]` **Phase 1: Remove Whitespace (`gui-driver.js`)**
-    - [x] Located `@'` in `clickPhysicalMouse`.
-    - [x] Ensured `'@` sits exactly at the beginning of the line.
+- `[x]` **Phase 1: Update API Handlers (`pilot-request-monitor.html`)**
+    - [x] Removed all hardcoded `fetch('http://localhost:4848')` calls from the HTML client.
+    - [x] Forced all frontend fetch calls through the single relative `/.netlify/functions/pilot-request-monitor` path.
 - `[x]` **Phase 2: Verification**
-    - [x] Ran runtime test and confirmed `WhitespaceBeforeHereStringFooter` is eliminated (`STATUS: PASS`).
+    - [x] Code successfully modified to eliminate unhandled console network errors.

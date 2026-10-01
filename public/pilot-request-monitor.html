@@ -153,22 +153,20 @@
             let remoteRequests = [];
 
             try {
-                // 1. Try fetching directly from the ultra-fast Local Telemetry Server spawned by CLI
-                const localRes = await fetch('http://127.0.0.1:4848/latest').catch(() => fetch('http://localhost:4848/latest'));
-                const localData = await localRes.json();
-                if (localData.success && localData.payload) {
-                    remoteRequests = [localData.payload];
+                // Fetch from the standard route - monitor.js cleanly proxies this to the local CLI server
+                // so no browser-level ERR_CONNECTION_REFUSED will ever show up in console!
+                const res = await fetch('/.netlify/functions/pilot-request-monitor');
+                const data = await res.json();
+
+                if (data.success && data.payload) {
+                    // Handled by local monitor.js proxy
+                    remoteRequests = [data.payload];
+                } else if (data.success && Array.isArray(data.visualRequests)) {
+                    // Handled by remote Firebase
+                    remoteRequests = data.visualRequests;
                 }
-            } catch (e) {
-                console.log("[LOCAL SERVER NOT FOUND] CLI server offline. Trying Firebase fallback...");
-                try {
-                    // 2. Fallback to Netlify/Firebase route
-                    const res = await fetch('/.netlify/functions/pilot-request-monitor');
-                    const data = await res.json();
-                    if (data.success && Array.isArray(data.visualRequests)) {
-                        remoteRequests = data.visualRequests;
-                    }
-                } catch (err) {}
+            } catch (err) {
+                console.log("[LOCAL SERVER NOT FOUND] Waiting for telemetry stream...");
             }
 
             let localQueue = [];
@@ -389,15 +387,19 @@
         async function sendCursorRequest(payload) {
             try {
                 console.log('[CURSOR REQUEST SENT]', payload);
+                const reqBody = JSON.stringify({
+                    ...payload,
+                    domContent: document.documentElement.outerHTML.substring(0, 50000),
+                    status: 'CURSOR_REQUESTED'
+                });
+
+                // The local proxy (monitor.js) handles forwarding this cleanly to the local CLI telemetry server
                 const res = await fetch('/.netlify/functions/pilot-request-monitor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ...payload,
-                        domContent: document.documentElement.outerHTML.substring(0, 50000),
-                        status: 'CURSOR_REQUESTED'
-                    })
+                    body: reqBody
                 });
+
                 if (!res.ok) throw new Error("Server responded with status " + res.status);
                 const data = await res.json();
                 console.log('[CURSOR RESPONSE RECEIVED]', data);
@@ -470,23 +472,27 @@
                 const screenshotData = canvas.toDataURL('image/jpeg', 0.85);
                 const domContent = document.documentElement.outerHTML.substring(0, 50000);
 
+                const reqBody = JSON.stringify({
+                    requestId: 'AUTO-SCREEN-' + Date.now(),
+                    type: 'SCREEN_ANALYSIS',
+                    status: 'PENDING_VERIFICATION',
+                    screenshotWidth: 1280,
+                    screenshotHeight: 800,
+                    screenshotData: screenshotData,
+                    domContent: domContent,
+                    targetElement: 'Start',
+                    originalGoal: 'Verify Start button and input fields',
+                    createdAt: new Date().toISOString()
+                });
+
+                // The local proxy (monitor.js) handles forwarding this cleanly to the local CLI telemetry server
                 await fetch('/.netlify/functions/pilot-request-monitor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        requestId: 'AUTO-SCREEN-' + Date.now(),
-                        type: 'SCREEN_ANALYSIS',
-                        status: 'PENDING_VERIFICATION',
-                        screenshotWidth: 1280,
-                        screenshotHeight: 800,
-                        screenshotData: screenshotData,
-                        domContent: domContent,
-                        targetElement: 'Start',
-                        originalGoal: 'Verify Start button and input fields',
-                        createdAt: new Date().toISOString()
-                    })
+                    body: reqBody
                 });
-                console.log('[AUTO-TRIGGER] Request sent to Firebase successfully.');
+
+                console.log('[AUTO-TRIGGER] Request sent successfully.');
             } catch (e) {
                 console.warn('[AUTO-TRIGGER FAILED]:', e.message);
             }

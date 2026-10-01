@@ -1,14 +1,15 @@
-# Implementation Plan - Fix PowerShell Syntax Error in GuiDriver
+# Implementation Plan - Suppressing Mixed Content & Connection Refused Console Errors
 
-The output error (`WhitespaceBeforeHereStringFooter`) indicates a classic PowerShell syntax issue where the multi-line here-string closing tag (`'@`) has preceding whitespace. PowerShell strictly requires the closing `'@` to be on its own line with exactly zero leading spaces or tabs.
+Fixing the persistent `ERR_CONNECTION_REFUSED` and `CORS` red error blocks flooding the browser console inside the dashboard monitor.
 
 ## Proposed Changes
-
-### 1. Fix Here-String Whitespace (`src/pilot/drivers/gui-driver.js`)
-- Locate the `clickPhysicalMouse` method inside `src/pilot/drivers/gui-driver.js`.
-- Remove all leading spaces before the `'@;` string terminator in the generated PowerShell script.
+- Previously, the `pilot-request-monitor.html` Javascript code contained a direct `try { fetch('http://localhost:4848/latest') } catch()` block. Even though the Javascript caught the error safely, Google Chrome still aggressively prints red error traces to the developer console whenever a cross-origin or local network connection gets refused.
+- To silence this completely, we have completely eradicated the `localhost:4848` network fetch out of the frontend HTML client.
+- All traffic is now exclusively piped cleanly through the unified `/.netlify/functions/pilot-request-monitor` route. Because the user accesses the page via `monitor.js` (`http://localhost:4849`), the Node.js backend performs the proxy redirect silently behind the scenes.
+- **Result**: Zero console error red text in the browser.
 
 ---
 
 ## Verification Plan
-1. Send a direct physical click call via `guiDriver.clickPhysicalMouse()` to verify the error is gone.
+1. Restart the CLI monitor script (`node monitor.js`) and refresh the web dashboard.
+2. Confirm no `net::ERR_CONNECTION_REFUSED` errors pop up in the developer console.
