@@ -180,6 +180,24 @@ exports.handler = async (event, context) => {
             const { screenshotData, goal, pageState } = body;
             if (!goal) return jsonResponse(400, { success: false, error: "Missing goal" });
 
+            // Record visual analysis request to Firebase if screenshot data provided
+            if (screenshotData) {
+                try {
+                    await db.collection('visual_analysis_requests').add({
+                        requestId: 'VISUAL-CLI-' + Date.now(),
+                        type: 'CLI_SCREEN_ANALYSIS',
+                        status: 'ANALYZING',
+                        screenshotData: screenshotData,
+                        screenshotWidth: 1280,
+                        screenshotHeight: 800,
+                        originalGoal: goal,
+                        createdAt: new Date().toISOString()
+                    });
+                } catch (dbErr) {
+                    console.warn('[DB WARNING] Failed to record visual analysis request:', dbErr.message);
+                }
+            }
+
             // Cross-check screenshot text / DOM state for target elements (e.g., input box, "Start" button)
             const buttons = pageState?.buttons || [];
             const inputs = pageState?.inputs || [];

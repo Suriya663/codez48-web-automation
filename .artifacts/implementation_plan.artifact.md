@@ -1,44 +1,36 @@
-# Implementation Plan: Full-Loop Visual OCR, DOM Cross-Checking, and CLI Automation Integration
+# Implementation Plan: Automatic Screenshot Request Trigger, OCR Verification, and CLI Multi-Page Navigation Loop
 
-This implementation plan outlines the integration of automated screenshot capture, OCR text extraction, backend DOM cross-checking, AI element identification (such as "Start" buttons and input fields), scrolling verification, and direct CLI response/interaction for our full automation setup.
+This implementation plan addresses the requirement to ensure that page-load screenshot capture requests are automatically triggered and sent to Firebase, processed with OCR/AI verification against user queries, scrolled if elements are off-screen, and interacted with via DOM actions across both the HTML monitor page (`pilot-request-monitor.html`) and the CLI (`cli-automation-manager.js`).
 
 ## User Review Required
 
 > [!IMPORTANT]
-> This plan establishes an end-to-end autonomous loop:
-> 1. Immediate screenshot capture upon page load/transition.
-> 2. OCR and backend DOM structure cross-checking.
-> 3. Automatic viewport scrolling if elements are outside the current view.
-> 4. AI-driven element identification for progression (e.g., clicking "Start").
-> 5. Direct response streaming and execution in the CLI automation manager.
+> This plan ensures the complete end-to-end trigger loop:
+> 1. **Auto-Trigger on Page Load**: Automatically capture a full screenshot of the screen upon HTML page load and POST it to Firebase (`/.netlify/functions/pilot-request-monitor`).
+> 2. **OCR & AI Content Verification**: Run OCR and query the AI to check if user-requested content (or target element) is present in the extracted text.
+> 3. **Viewport Scrolling & Re-Verification**: If the element is not immediately visible, scroll down, take a new screenshot, and re-verify.
+> 4. **DOM Interaction & Progression**: Acknowledge found elements (e.g., buttons, input fields, "Start") and execute DOM actions (clicking/navigating to next page).
+> 5. **CLI Integration**: Expose and mirror these visual verification and action steps in the CLI automation manager.
 
 ## Open Questions
 
-- None. The core architecture (Playwright worker, Tesseract OCR, Firebase telemetry, and Netlify CLI managers) is already established; we are refining and wiring the screenshot verification, OCR cross-checking, AI element targeting, and CLI loop.
+- None. The architecture uses Netlify serverless functions, Firestore, Tesseract OCR, and Playwright worker services.
 
 ## Proposed Changes
 
-### Web Automation & Playwright Worker
-#### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-executor.js)
-- Enhance action execution to verify element visibility and scroll if necessary before interacting.
+### HTML Page Monitor & Auto-Trigger
+#### [MODIFY] [pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html)
+- Add auto-screenshot capture upon page load using HTML5 canvas / snapshot and send a POST request to `/.netlify/functions/pilot-request-monitor` with `screenshotData`, dimensions, and OCR telemetry.
+- Add AI verification and scrolling logic to automatically check for user-requested content and trigger interaction.
 
-#### [MODIFY] [page-inspector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/page-inspector.js)
-- Ensure layout sections, buttons, inputs, and screenshot frame captures are robustly indexed and cross-checked.
-
-#### [MODIFY] [server.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/server.js)
-- Ensure screenshot broadcasting and telemetry events synchronize correctly with Firebase and UI monitors.
-
-### CLI Automation & Management
+### CLI Automation Manager
 #### [MODIFY] [cli-automation-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-automation-manager.js)
-- Update CLI automation manager to receive screenshot/OCR results, query AI for next-page progression elements (e.g., "Start"), and return execution steps directly to the CLI interface.
-
-#### [MODIFY] [ai-automation.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/js/ai-automation.js)
-- Wire front-end automation steps to handle OCR validation, viewport scrolling checks, and iterative multi-page navigation.
+- Enhance the `VISUAL_VERIFY` handler to accept screenshot payloads, perform OCR/AI validation against user goals, handle scrolling recommendations, and stream direct execution responses back to the CLI.
 
 ## Verification Plan
 
 ### Automated Tests
-- Validate automated execution scripts and server health endpoints.
+- Run test script validating screenshot request payload structure and OCR/AI response verification logic.
 
 ### Manual Verification
-- Deploy/run automation task in the web app and CLI, verifying screenshot capture, OCR/DOM cross-checking, element detection (like "Start"), and multi-page progression.
+- Open the HTML monitor page and CLI, verifying that initial page-load requests are successfully triggered, sent to Firebase, verified via OCR/AI, scrolled if needed, and interacted with.
