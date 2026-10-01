@@ -137,7 +137,7 @@
                     x.fillText('Codez48 Pilot Automation Monitor', 80, 120);
                     x.fillStyle = '#34d399';
                     x.font = 'bold 28px sans-serif';
-                    x.fillText('Business Dashboard & Start Automation', 80, 200);
+                    x.fillText('Waiting for local CLI server on port 4848...', 80, 200);
                     x.fillStyle = '#ffffff';
                     x.font = '24px monospace';
                     x.fillText('Target Element: Business', 80, 300);
@@ -151,14 +151,24 @@
             };
 
             let remoteRequests = [];
+
             try {
-                const res = await fetch('/.netlify/functions/pilot-request-monitor');
-                const data = await res.json();
-                if (data.success && Array.isArray(data.visualRequests)) {
-                    remoteRequests = data.visualRequests;
+                // 1. Try fetching directly from the ultra-fast Local Telemetry Server spawned by CLI
+                const localRes = await fetch('http://localhost:4848/latest');
+                const localData = await localRes.json();
+                if (localData.success && localData.payload) {
+                    remoteRequests = [localData.payload];
                 }
             } catch (e) {
-                console.log("[LOCAL FALLBACK MODE] Netlify function unreachable. Using local storage queue.");
+                console.log("[LOCAL SERVER NOT FOUND] CLI server offline. Trying Firebase fallback...");
+                try {
+                    // 2. Fallback to Netlify/Firebase route
+                    const res = await fetch('/.netlify/functions/pilot-request-monitor');
+                    const data = await res.json();
+                    if (data.success && Array.isArray(data.visualRequests)) {
+                        remoteRequests = data.visualRequests;
+                    }
+                } catch (err) {}
             }
 
             let localQueue = [];
