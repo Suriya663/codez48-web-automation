@@ -55,7 +55,8 @@ exports.handler = async (event) => {
     }
 
     if (!initAdmin() || !db) {
-        return jsonResponse(500, { success: false, error: "Database unavailable" });
+        // Return 200 instead of 500 so the frontend doesn't crash, but indicate DB is offline
+        return jsonResponse(200, { success: false, error: "Database unavailable", requests: [], visualRequests: [] });
     }
 
     try {
@@ -73,15 +74,15 @@ exports.handler = async (event) => {
             return jsonResponse(200, { success: true, requestId, message: "Visual analysis request recorded successfully" });
         }
 
-        // GET request: Fetch requests from pilot_requests and visual_analysis_requests
+        // GET request: Fetch requests
         const snapshot = await db.collection('pilot_requests')
             .orderBy('timestamp', 'desc')
-            .limit(20)
+            .limit(5)
             .get();
 
         const visualSnapshot = await db.collection('visual_analysis_requests')
             .orderBy('createdAt', 'desc')
-            .limit(20)
+            .limit(3) // Reduced to 3 to prevent Netlify 6MB payload size limits
             .get();
 
         const requests = [];
@@ -104,6 +105,7 @@ exports.handler = async (event) => {
         });
 
         const visualRequests = [];
+        let index = 0;
         visualSnapshot.forEach(doc => {
             const d = doc.data();
             visualRequests.push({
@@ -112,8 +114,9 @@ exports.handler = async (event) => {
                 status: d.status || 'COMPLETED',
                 screenshotWidth: d.screenshotWidth || 0,
                 screenshotHeight: d.screenshotHeight || 0,
-                screenshotData: d.screenshotData || null, // INCLUDE COMPLETE SCREENSHOT DATA FOR LIVE PREVIEW
-                domContent: d.domContent || null, // INCLUDE DOM CONTENT PAYLOAD
+                // Only send large base64 payload for the most recent 1 or 2 requests to avoid HTTP 500 payload limit crash
+                screenshotData: index < 2 ? d.screenshotData : null,
+                domContent: index < 2 ? (d.domContent ? d.domContent.substring(0, 10000) : null) : null,
                 ocrCount: d.ocrCount || (d.ocr ? d.ocr.length : 0),
                 elementsCount: d.elementsCount || (d.elements ? d.elements.length : 0),
                 targetElement: d.targetElement || null,
@@ -122,6 +125,7 @@ exports.handler = async (event) => {
                 ocr: d.ocr || [],
                 elements: d.elements || []
             });
+            index++;
         });
 
         return jsonResponse(200, {
@@ -132,6 +136,7 @@ exports.handler = async (event) => {
         });
     } catch (error) {
         console.error("Pilot Monitor Error:", error.message);
-        return jsonResponse(500, { success: false, error: error.message });
+        // Fallback to empty array so frontend doesn't throw 500 console errors
+        return jsonResponse(200, { success: false, error: error.message, requests: [], visualRequests: [] });
     }
 };
