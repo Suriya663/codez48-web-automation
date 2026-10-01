@@ -1,7 +1,7 @@
-# Connection Refused Console Fix Task Tracker
+# AI Chat Backend Fix Task Tracker
 
-- `[x]` **Phase 1: Update API Handlers (`pilot-request-monitor.html`)**
-    - [x] Removed all hardcoded `fetch('http://localhost:4848')` calls from the HTML client.
-    - [x] Forced all frontend fetch calls through the single relative `/.netlify/functions/pilot-request-monitor` path.
-- `[x]` **Phase 2: Verification**
-    - [x] Code successfully modified to eliminate unhandled console network errors.
+- `[x]` **Phase 1: Backend Error Handling (`cli-ai-chat.js`)**
+    - [x] Wrapped `verifyApiKey` in try/catch to prevent unhandled rejection crashes.
+    - [x] Wrapped `pilot_requests` and `generated_websites` Firestore writes in try/catch blocks.
+- `[ ]` **Phase 2: Verification**
+    - [ ] Run `node cli.js ai` and confirm normal conversational response.

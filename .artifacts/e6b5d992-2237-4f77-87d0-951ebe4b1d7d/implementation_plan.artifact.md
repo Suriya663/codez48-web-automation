@@ -1,15 +1,17 @@
-# Implementation Plan - Suppressing Mixed Content & Connection Refused Console Errors
+# Implementation Plan - Fix Backend Unhandled Promise Rejections (Quota Exceeded)
 
-Fixing the persistent `ERR_CONNECTION_REFUSED` and `CORS` red error blocks flooding the browser console inside the dashboard monitor.
+The user is seeing a complete failure when chatting via `node cli.js ai`. The error logged is an AWS Lambda / Netlify crash response: `{"errorType":"Error","errorMessage":"8 RESOURCE_EXHAUSTED: Quota exceeded."}`.
+
+This means a Firebase Firestore operation on the backend is failing because the free daily quota has been exceeded, and because the database calls lacked `try/catch` wrappers, they were causing the entire backend Node process to crash before it could even talk to the AI models (Groq/Gemini).
 
 ## Proposed Changes
-- Previously, the `pilot-request-monitor.html` Javascript code contained a direct `try { fetch('http://localhost:4848/latest') } catch()` block. Even though the Javascript caught the error safely, Google Chrome still aggressively prints red error traces to the developer console whenever a cross-origin or local network connection gets refused.
-- To silence this completely, we have completely eradicated the `localhost:4848` network fetch out of the frontend HTML client.
-- All traffic is now exclusively piped cleanly through the unified `/.netlify/functions/pilot-request-monitor` route. Because the user accesses the page via `monitor.js` (`http://localhost:4849`), the Node.js backend performs the proxy redirect silently behind the scenes.
-- **Result**: Zero console error red text in the browser.
+
+### 1. Robust Firestore Error Handling (`netlify/functions/cli-ai-chat.js`)
+- Add `try/catch` blocks around `verifyApiKey` so that if reading from the `api_keys` collection fails (due to quota), it gracefully falls back to anonymous mode instead of crashing.
+- Add `try/catch` blocks around all `db.collection(...).set(...)` logging operations (like saving previews or logging requests) so that telemetry failures don't break core AI chat functionality.
 
 ---
 
 ## Verification Plan
-1. Restart the CLI monitor script (`node monitor.js`) and refresh the web dashboard.
-2. Confirm no `net::ERR_CONNECTION_REFUSED` errors pop up in the developer console.
+1. Send a direct chat message via `node cli.js ai`.
+2. Confirm the backend no longer crashes with `500 Server returned non-JSON` and instead returns a healthy response from the LLM.

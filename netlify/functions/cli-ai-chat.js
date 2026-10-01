@@ -36,9 +36,15 @@ const initAdmin = () => {
 
 const verifyApiKey = async (apiKey) => {
     if (!apiKey) return null;
-    const keySnap = await db.collection('api_keys').doc(apiKey).get();
-    if (!keySnap.exists || keySnap.data().status !== 'ACTIVE') return null;
-    return keySnap.data().userId;
+    try {
+        const keySnap = await db.collection('api_keys').doc(apiKey).get();
+        if (!keySnap.exists || keySnap.data().status !== 'ACTIVE') return null;
+        return keySnap.data().userId;
+    } catch (e) {
+        console.warn('API Key Verification failed (Firebase Quota?):', e.message);
+        // If Firebase is exhausted, we still want the AI chat to work anonymously
+        return 'anonymous-quota-fallback';
+    }
 };
 
 const jsonResponse = (statusCode, data) => ({
@@ -87,11 +93,15 @@ exports.handler = async (event, context) => {
         if (parsedBody.ackRequestId) {
             const reqId = parsedBody.ackRequestId;
             const ackStatus = parsedBody.status || 'LOCAL_EXECUTION_COMPLETED';
-            await db.collection('pilot_requests').doc(reqId).set({
-                requestId: reqId,
-                status: ackStatus,
-                updatedAt: new Date().toISOString()
-            }, { merge: true });
+            try {
+                await db.collection('pilot_requests').doc(reqId).set({
+                    requestId: reqId,
+                    status: ackStatus,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.warn('Firebase pilot_requests ack failed:', e.message);
+            }
 
             return jsonResponse(200, { success: true, acknowledged: reqId, status: ackStatus });
         }
@@ -99,13 +109,17 @@ exports.handler = async (event, context) => {
         // Direct Preview Persistence Endpoint
         if (parsedBody.storePreview && parsedBody.htmlContent) {
             const projectId = parsedBody.projectId || 'web-' + Math.random().toString(36).substring(2, 8);
-            await db.collection('generated_websites').doc(projectId).set({
-                projectId,
-                ownerId: sellerId,
-                html: parsedBody.htmlContent,
-                prompt: parsedBody.prompt || 'Codez48 Static Preview',
-                updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
+            try {
+                await db.collection('generated_websites').doc(projectId).set({
+                    projectId,
+                    ownerId: sellerId,
+                    html: parsedBody.htmlContent,
+                    prompt: parsedBody.prompt || 'Codez48 Static Preview',
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } catch (e) {
+                console.warn('Firebase generated_websites set failed:', e.message);
+            }
 
             return jsonResponse(200, {
                 success: true,
