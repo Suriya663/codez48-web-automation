@@ -71,8 +71,8 @@
             </div>
             <div class="drawer-body" id="drawerBody">
                 <div class="debug-section" id="visualDebugSection">
-                    <h4>Visual Debug Mode (Tesseract OCR Active)</h4>
-                    <div id="debugContent">Analyzing screenshot pixels...</div>
+                    <h4>Visual Debug Mode (Tesseract Pixel OCR Active)</h4>
+                    <div id="debugContent">Scanning screenshot pixels for target...</div>
                 </div>
                 <div id="panelContent">
                     <div class="empty-state">Waiting for telemetry...</div>
@@ -134,28 +134,34 @@
 
             if (!img.naturalWidth || !vr.screenshotWidth) return;
 
-            // Direct Tesseract.js Browser-Side Image OCR Fallback
-            let elements = vr.elements || [];
-            if (elements.length === 0 && img.src) {
-                try {
-                    console.log('[TESSERACT BROWSER OCR] Running direct OCR on screenshot pixels...');
-                    const result = await Tesseract.recognize(img.src, 'eng');
-                    const words = result.data.words || [];
+            // STRICT REAL PIXEL OCR: Always run Tesseract.js directly on current screenshot pixels
+            let elements = [];
+            try {
+                console.log('[TESSERACT PIXEL OCR] Extracting text directly from current screenshot pixels...');
+                const result = await Tesseract.recognize(img.src, 'eng');
+                const words = result.data.words || [];
 
-                    const targetText = (vr.targetElement || 'business').toLowerCase().trim().replace(/[^\w]/g, '');
-                    const matches = words.filter(w => (w.text || '').toLowerCase().trim().replace(/[^\w]/g, '') === targetText);
+                const targetQuery = (vr.targetElement || 'business').toLowerCase().trim().replace(/[^\w]/g, '');
+                console.log(`[TESSERACT PIXEL OCR] Searching for target word: "${targetQuery}" among ${words.length} detected words.`);
 
-                    if (matches.length > 0) {
-                        elements = matches.map(w => ({
-                            label: w.text,
-                            box: { left: w.bbox.x0, top: w.bbox.y0, right: w.bbox.x1, bottom: w.bbox.y1 },
-                            confidence: w.confidence / 100.0,
-                            sourceType: 'IMAGE_OCR'
-                        }));
-                    }
-                } catch (err) {
-                    console.warn('[TESSERACT OCR WARNING]', err.message);
+                const matches = words.filter(w => {
+                    const text = (w.text || '').toLowerCase().trim().replace(/[^\w]/g, '');
+                    return text.includes(targetQuery) || targetQuery.includes(text);
+                });
+
+                if (matches.length > 0) {
+                    elements = matches.map(w => ({
+                        label: w.text,
+                        box: { left: w.bbox.x0, top: w.bbox.y0, right: w.bbox.x1, bottom: w.bbox.y1 },
+                        confidence: w.confidence / 100.0,
+                        sourceType: 'IMAGE_OCR'
+                    }));
+                    console.log(`[TESSERACT PIXEL OCR] Successfully located ${elements.length} match(es) for "${targetQuery}" from screenshot pixels.`);
+                } else {
+                    console.warn(`[TESSERACT PIXEL OCR WARNING] Target "${targetQuery}" not found in current screenshot pixels.`);
                 }
+            } catch (err) {
+                console.warn('[TESSERACT OCR ERROR]', err.message);
             }
 
             const container = document.getElementById('screenshotContainer');
@@ -257,6 +263,9 @@
                     requestId: vr.requestId,
                     sequence: vr.sequence || 1
                 });
+            } else {
+                document.getElementById('respTarget').innerText = 'Not Found';
+                document.getElementById('respStatus').innerText = 'SAFE STOP';
             }
         }
 
