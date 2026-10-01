@@ -1,17 +1,12 @@
-# Walkthrough - Firebase Monitor 500 Error Fix
+# Walkthrough - Local Dashboard Image Loading Fix
 
-We have successfully resolved the `500 Internal Server Error` in `pilot-request-monitor.html` occurring during backend API requests.
+We have successfully resolved the Mixed Content routing block preventing `pilot-request-monitor.html` from loading the live screenshot stream. The local server (`monitor.js`) now acts as a direct proxy for all Firebase API requests.
 
 ## Changes & Fix Details
 
-### 1. Graceful Connection Degradation (`netlify/functions/pilot-request-monitor.js`)
-- Previously, if the database wasn't correctly initialized (e.g., missing credentials on Netlify instance), the function abruptly returned a `500` error code, causing frontend crashes.
-- It now returns a clean `200 OK` status with `success: false` and empty arrays (`requests: [], visualRequests: []`) so the HTML front-end can gracefully fall back to local queue management without throwing resource load errors in the browser console.
-
-### 2. Payload Size Limits & AWS Gateway Timeout Protection
-- Querying 20 documents containing multiple megabytes of Base64 encoded screenshot and DOM data simultaneously breached AWS/Netlify lambda payload limits (usually ~6MB).
-- Limited the GET query to fetch only the latest **3** visual requests, and truncated `domContent` lengths.
-- Base64 `screenshotData` is now exclusively transmitted for the 2 most recent elements, drastically shrinking the JSON payload weight and averting silent HTTP 500 crashes.
+### 1. Unified Telemetry Proxy Routing (`monitor.js`)
+- Updated the local monitor server to seamlessly proxy any requests destined for `/.netlify/functions/pilot-request-monitor` directly over to `http://127.0.0.1:4848/latest` where the CLI telemetry stream lives.
+- The dashboard HTML script now thinks it's talking to Firebase in the cloud, but behind the scenes, `monitor.js` feeds it the raw, unthrottled local screenshot stream, instantly bypassing the 404 and Connection Refused errors.
 
 > [!NOTE]
-> The automation monitor at `https://codez48.netlify.app/public/pilot-request-monitor.html` will now load reliably and gracefully switch to displaying local runtime telemetry without throwing server errors.
+> To view the live monitor, make sure you leave the terminal running `node monitor.js` open while performing your automation tests in another terminal window. The browser will automatically load the real screenshots from `http://localhost:4849` with zero lag or quota limits.

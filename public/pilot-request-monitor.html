@@ -154,7 +154,7 @@
 
             try {
                 // 1. Try fetching directly from the ultra-fast Local Telemetry Server spawned by CLI
-                const localRes = await fetch('http://localhost:4848/latest');
+                const localRes = await fetch('http://127.0.0.1:4848/latest').catch(() => fetch('http://localhost:4848/latest'));
                 const localData = await localRes.json();
                 if (localData.success && localData.payload) {
                     remoteRequests = [localData.payload];
