@@ -78,19 +78,22 @@ class PageInspector {
                 });
 
                 const inputs = [];
-                document.querySelectorAll('input, textarea, select').forEach((i, idx) => {
+                document.querySelectorAll('input, textarea, select, div[contenteditable="true"], [role="textbox"]').forEach((i, idx) => {
                     if (isVisible(i)) {
-                        const type = i.getAttribute('type') || (i.tagName.toLowerCase() === 'textarea' ? 'textarea' : 'text');
-                        const isSecret = /password|otp|secret|token|apikey/i.test(i.name || i.id || i.getAttribute('placeholder') || '');
+                        const tag = i.tagName.toLowerCase();
+                        const isEditable = tag === 'div' || i.getAttribute('contenteditable') === 'true' || i.getAttribute('role') === 'textbox';
+                        const type = i.getAttribute('type') || (tag === 'textarea' ? 'textarea' : isEditable ? 'contenteditable' : 'text');
+                        const isSecret = /password|otp|secret|token|apikey/i.test(i.name || i.id || i.getAttribute('placeholder') || i.getAttribute('aria-label') || '');
+                        const val = isEditable ? (i.innerText || i.textContent || '') : (i.value || '');
                         inputs.push({
                             index: idx,
                             type,
                             id: i.id || '',
                             name: i.name || '',
-                            placeholder: i.getAttribute('placeholder') || '',
-                            label: i.getAttribute('aria-label') || i.labels?.[0]?.innerText?.trim() || '',
-                            value: isSecret ? '****' : (i.value || ''),
-                            disabled: i.disabled
+                            placeholder: i.getAttribute('placeholder') || i.getAttribute('aria-placeholder') || '',
+                            label: i.getAttribute('aria-label') || i.labels?.[0]?.innerText?.trim() || i.getAttribute('title') || '',
+                            value: isSecret ? '****' : val,
+                            disabled: i.disabled || i.getAttribute('aria-disabled') === 'true'
                         });
                     }
                 });

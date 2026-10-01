@@ -99,7 +99,12 @@ class ActionExecutor {
                     break;
 
                 case 'fill':
-                    await locator.fill(value || '', { timeout: 5000 });
+                    try {
+                        await locator.fill(value || '', { timeout: 5000 });
+                    } catch (fillErr) {
+                        await locator.click({ timeout: 3000 }).catch(() => {});
+                        await locator.pressSequentially(value || '', { delay: 30 });
+                    }
                     break;
 
                 case 'type':
