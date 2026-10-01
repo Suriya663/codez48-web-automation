@@ -1,6 +1,8 @@
-# Full Visual Agent Task Tracker
+# Full Visual Agent & Image-Text OCR Task Tracker
 
-- `[ ]` **Phase 1: Full Visual Agent Orchestrator (`src/pilot/autonomous/full-visual-agent.js`)**
-    - [ ] Implement multi-step agent flow (discovery, activation, fresh capture, OCR localization, coordinate mapping, real cursor action, post-action verification).
-- `[ ]` **Phase 2: Full Visual Agent Acceptance Test (`tests/full_visual_agent_test.js`)**
-    - [ ] Implement & run real Windows Notepad test selecting ONLY "20".
+- `[ ]` **Phase 1: Visual Analyzer Image-Text Enhancement (`visual-analyzer.js`)**
+    - [ ] Update prompt for image-text OCR (`IMAGE_OCR`, `NATIVE_OCR`).
+- `[ ]` **Phase 2: Request Monitor Render Rect Overlay (`pilot-request-monitor.html`)**
+    - [ ] Align `.overlay-layer` exactly with rendered image box.
+- `[ ]` **Phase 3: Acceptance Test Suite (`tests/full_visual_agent_acceptance_test.js`)**
+    - [ ] Implement & run acceptance test + regressions.

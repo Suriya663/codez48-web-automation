@@ -1,26 +1,24 @@
-# Implementation Plan - Full Visual Agent + Exact Target Detection & Cursor Control
+# Implementation Plan - Full Visual Agent & Precise Image-Text OCR Alignment
 
-Implementing the Full Visual Agent (`src/pilot/autonomous/full-visual-agent.js`) that orchestrates the complete runtime flow:
-1. User Request & Target Application Understanding (e.g. "Select 20 in Notepad")
-2. Real Desktop Observation & Current Application Identification
-3. Target Application Activation / Switching (without redundant launching)
-4. Fresh Screenshot Capture & Transmission to Firebase / Request Monitor
-5. Precise Visual + OCR Analysis & Exact Target Localization (`left`, `top`, `right`, `bottom`, `centerX`, `centerY`)
-6. Proportional Overlay Synchronization & Source-to-Display Mapping
-7. Real Windows Cursor Movement (`screenX`, `screenY`) & Precise Action Execution (`mouseDrag`)
-8. Fresh Post-Action Screenshot Capture & Verification
+Hardening the Full Visual Agent pipeline to guarantee:
+1. **Precise Image-Text OCR Detection**: Enhancing `visual-analyzer.js` prompts and parsing to explicitly detect text embedded inside images, banners, buttons, and pixel graphics (`IMAGE_OCR`, `NATIVE_OCR`, `VISION`).
+2. **Exact Rendered Image Rect Overlay (`public/pilot-request-monitor.html`)**: Positioning the `.overlay-layer` precisely over the exact rendered image bounding rectangle (`imageOffsetX`, `imageOffsetY`, `renderedWidth`, `renderedH`) matching `object-fit: contain` without any viewport offset discrepancies.
+3. **Canonical Target Geometry & Real Cursor Flow**: Ensuring source X/Y coordinates flow accurately from the visual analysis bounding box to the real Windows cursor controller (`guiDriver`).
 
 ## Proposed Changes
 
-### 1. Full Visual Agent (`src/pilot/autonomous/full-visual-agent.js`)
-- Orchestrates the full 14-step visual agent workflow with strict request-response correlation (`requestId`, sequence, timestamp) and safe stopping.
+### 1. Visual Analyzer Enhancement (`src/pilot/browser/visual-analyzer.js`)
+- Update prompt instructions to explicitly request OCR and image-text detection for text inside images, banners, buttons, canvas, and graphical UI, returning source classification (`IMAGE_OCR`, `NATIVE_OCR`).
 
-### 2. Full Visual Agent Acceptance Test (`tests/full_visual_agent_test.js`)
-- Runs the real runtime acceptance test against Windows Notepad ("SURYA PRAKASH\n10 20 30 40", target "20"), proving exact target detection, overlay alignment, source coordinate transfer, real cursor movement, and post-action verification.
+### 2. Request Monitor Overlay Geometry (`public/pilot-request-monitor.html`)
+- Align `.overlay-layer` dimensions and offsets precisely with the DOM image's rendered bounding box (`getBoundingClientRect()` or proportional contain rect), ensuring pixel-perfect overlay alignment.
+
+### 3. Acceptance Test Suite (`tests/full_visual_agent_acceptance_test.js`)
+- Runs the full visual agent acceptance test verifying image-text OCR detection, proportional overlay mapping, source X/Y calculation, and real cursor action.
 
 ---
 
 ## Verification Plan
 
 ### Automated & Runtime Tests
-1. Run `node tests/full_visual_agent_test.js` to execute the full visual agent acceptance test against real Windows Notepad and verify all 31 acceptance criteria and Stage 2–14 regressions.
+1. Run acceptance test script proving image-text detection, exact overlay alignment, and Stage 2–14 regressions.

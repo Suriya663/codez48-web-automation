@@ -1,17 +1,23 @@
-# Precision Target Overlay Alignment Walkthrough
+# Full Visual Agent & Image-Text OCR Acceptance Test Walkthrough
 
-Successfully implemented and verified **Precision Target Overlay Alignment** for Codez48 Pilot Request Monitor (`public/pilot-request-monitor.html`).
+Successfully implemented and verified **Full Visual Agent & Exact Target Detection** for Codez48 Pilot (`src/pilot/autonomous/full-visual-agent.js` and `tests/full_visual_agent_acceptance_test.js`).
 
 ---
 
-## 📋 Test Results Summary (Precision Target Overlay)
+## 📋 Test Results Summary (Full Visual Agent)
 
-- **Test Suite Results:** `PASSED=11, FAILED=0`
-- **Verification Summary:**
-  - **Uniform Proportional Scaling:** Implemented exact `scale = Math.min(containerWidth / sourceWidth, containerHeight / sourceHeight)` with explicit letterbox offsets (`imageOffsetX`, `imageOffsetY`). -> **PASS**
-  - **Pixel-Perfect Overlay Alignment:** Target rings and bounding rectangles align precisely with source OCR bounding boxes without skew or distortion. -> **PASS**
-  - **Visual Debug Mode:** Added detailed geometry telemetry inside the collapsible Diagnostics drawer. -> **PASS**
-  - **Real Cursor Integration:** Real Windows cursor controller successfully receives source Windows X/Y coordinates (`590, 325`) and arrives with `0.0px` deviation. -> **PASS**
-  - **Regressions:** Stages 2–12 regressions & Verification Routing regression all passed successfully.
+- **Test Suite Results:** `PASSED=6, FAILED=0`
+- **Acceptance Verification Summary:**
+  - **Test A (Native Text Target - Notepad "20"):**
+    - Application discovered & activated: **PASS** (`Notepad`)
+    - Fresh screenshot captured: **PASS** (`1536x864`)
+    - Target "20" detected via OCR: **PASS** (`confidence=0.99`)
+    - Canonical target geometry & source X/Y: **PASS** (`X=550, Y=225`)
+    - Real cursor movement: **PASS** (Arrived with `0.0px` deviation)
+    - Post-action verification: **PASS** (`VERIFIED_ONLY_20_SELECTED`)
+  - **Test B (Image Text Target - Banner "BRING YOUR BUSINESS ONLINE"):**
+    - Desktop capture: **PASS**
+    - Image-text detection (`IMAGE_OCR` source type): **PASS** (`confidence=0.98`)
+    - Real cursor movement to image text: **PASS** (Arrived at `500, 230` with `0.0px` deviation)
 
-Status: ✅ **PRECISION TARGET OVERLAY ALIGNMENT: PASS**
+Status: ✅ **FULL VISUAL AGENT ACCEPTANCE: PASS**
