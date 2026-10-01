@@ -1,6 +1,5 @@
-# Task List: Fix Firebase Screenshot Rendering & Full OCR + DOM Grounding Workflow
+# Task List: Hybrid Local Storage & Simulation Fallback
 
-- [x] Update `processActiveRequest()` in `public/pilot-request-monitor.html` for reliable Firebase image rendering
-- [x] Ensure `triggerInitialScreenCapture()` and `sendCursorRequest()` transmit both screenshot and DOM content
-- [x] Refine OCR text reading, DOM grounding, and scroll-to-locate action execution loop
+- [x] Update `public/pilot-request-monitor.html` with local storage and memory request/response simulation queue
+- [x] Ensure `fetchRequests()` and `sendCursorRequest()` handle offline/static fallback gracefully
 - [x] Verify functionality and create walkthrough artifact

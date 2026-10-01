@@ -150,39 +150,36 @@
                 ]
             };
 
+            let remoteRequests = [];
             try {
                 const res = await fetch('/.netlify/functions/pilot-request-monitor');
                 const data = await res.json();
-
-                if (!data.success || !Array.isArray(data.visualRequests) || data.visualRequests.length === 0) {
-                    if (visualRequestsCache.length === 0) {
-                        visualRequestsCache = [fallbackRequest];
-                        activeRequestId = fallbackRequest.requestId;
-                        await processActiveRequest(fallbackRequest);
-                        renderDiagnosticsDrawer();
-                    }
-                    return;
+                if (data.success && Array.isArray(data.visualRequests)) {
+                    remoteRequests = data.visualRequests;
                 }
-
-                visualRequestsCache = data.visualRequests;
-                const latest = visualRequestsCache[0];
-
-                if (!activeRequestId || activeRequestId !== latest.requestId) {
-                    activeRequestId = latest.requestId;
-                    await processActiveRequest(latest);
-                }
-
-                renderDiagnosticsDrawer();
-
             } catch (e) {
-                console.warn("Fetch monitor failed, using local fallback telemetry:", e.message);
-                if (visualRequestsCache.length === 0) {
-                    visualRequestsCache = [fallbackRequest];
-                    activeRequestId = fallbackRequest.requestId;
-                    await processActiveRequest(fallbackRequest);
-                    renderDiagnosticsDrawer();
-                }
+                console.log("[LOCAL FALLBACK MODE] Netlify function unreachable. Using local storage queue.");
             }
+
+            let localQueue = [];
+            try {
+                localQueue = JSON.parse(localStorage.getItem('codez48_local_requests') || '[]');
+            } catch (err) {}
+
+            const combined = [...remoteRequests, ...localQueue];
+            if (combined.length === 0) {
+                combined.push(fallbackRequest);
+            }
+
+            visualRequestsCache = combined;
+            const latest = visualRequestsCache[0];
+
+            if (!activeRequestId || activeRequestId !== latest.requestId) {
+                activeRequestId = latest.requestId;
+                await processActiveRequest(latest);
+            }
+
+            renderDiagnosticsDrawer();
         }
 
         async function processActiveRequest(vr) {
@@ -382,7 +379,7 @@
         async function sendCursorRequest(payload) {
             try {
                 console.log('[CURSOR REQUEST SENT]', payload);
-                await fetch('/.netlify/functions/pilot-request-monitor', {
+                const res = await fetch('/.netlify/functions/pilot-request-monitor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -391,8 +388,27 @@
                         status: 'CURSOR_REQUESTED'
                     })
                 });
+                if (!res.ok) throw new Error("Server responded with status " + res.status);
+                const data = await res.json();
+                console.log('[CURSOR RESPONSE RECEIVED]', data);
             } catch (e) {
-                console.warn('[CURSOR REQUEST NOTICE]', e.message);
+                console.warn('[LOCAL QUEUE FALLBACK] Request simulated locally:', e.message);
+                const localReq = {
+                    requestId: payload.requestId || 'REQ-' + Date.now(),
+                    type: payload.type || 'CURSOR_TARGET',
+                    status: 'CURSOR_REQUESTED',
+                    screenshotWidth: 1280,
+                    screenshotHeight: 800,
+                    screenshotData: document.getElementById('liveScreenshot')?.src || '',
+                    targetElement: payload.targetText || 'Business',
+                    createdAt: new Date().toISOString(),
+                    elements: [{ label: payload.targetText || 'Business', box: { left: payload.sourceLeft || 100, top: payload.sourceTop || 100, right: payload.sourceRight || 300, bottom: payload.sourceBottom || 150 }, confidence: 0.99 }]
+                };
+                let queue = [];
+                try { queue = JSON.parse(localStorage.getItem('codez48_local_requests') || '[]'); } catch (err) {}
+                queue.unshift(localReq);
+                if (queue.length > 20) queue = queue.slice(0, 20);
+                localStorage.setItem('codez48_local_requests', JSON.stringify(queue));
             }
         }
 
