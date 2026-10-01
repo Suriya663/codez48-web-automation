@@ -1,24 +1,21 @@
-# Implementation Plan - Full Visual Agent & Precise Image-Text OCR Alignment
+# Implementation Plan - Direct Image-Text OCR Integration & Precise Bounding Box Alignment
 
-Hardening the Full Visual Agent pipeline to guarantee:
-1. **Precise Image-Text OCR Detection**: Enhancing `visual-analyzer.js` prompts and parsing to explicitly detect text embedded inside images, banners, buttons, and pixel graphics (`IMAGE_OCR`, `NATIVE_OCR`, `VISION`).
-2. **Exact Rendered Image Rect Overlay (`public/pilot-request-monitor.html`)**: Positioning the `.overlay-layer` precisely over the exact rendered image bounding rectangle (`imageOffsetX`, `imageOffsetY`, `renderedWidth`, `renderedH`) matching `object-fit: contain` without any viewport offset discrepancies.
-3. **Canonical Target Geometry & Real Cursor Flow**: Ensuring source X/Y coordinates flow accurately from the visual analysis bounding box to the real Windows cursor controller (`guiDriver`).
+Integrating direct image-text OCR capabilities (`visual-analyzer.js` and Tesseract.js / robust pixel text localization) into the Codez48 Pilot visual intelligence pipeline. This ensures text embedded inside images, banners, buttons, canvas, and graphical UI is detected from actual screenshot pixels with word-level pixel bounding boxes (`left`, `top`, `right`, `bottom`, `centerX`, `centerY`, `confidence`, `sourceType: "IMAGE_OCR"`).
 
 ## Proposed Changes
 
-### 1. Visual Analyzer Enhancement (`src/pilot/browser/visual-analyzer.js`)
-- Update prompt instructions to explicitly request OCR and image-text detection for text inside images, banners, buttons, canvas, and graphical UI, returning source classification (`IMAGE_OCR`, `NATIVE_OCR`).
+### 1. Visual Analyzer OCR Enhancement (`src/pilot/browser/visual-analyzer.js`)
+- Upgrade `VisualAnalyzer` to support robust image-text OCR and pixel-based text localization, returning structured word-level bounding boxes and `sourceType: "IMAGE_OCR"` / `"NATIVE_OCR"`.
 
 ### 2. Request Monitor Overlay Geometry (`public/pilot-request-monitor.html`)
-- Align `.overlay-layer` dimensions and offsets precisely with the DOM image's rendered bounding box (`getBoundingClientRect()` or proportional contain rect), ensuring pixel-perfect overlay alignment.
+- Ensure precise display transformation using `img.getBoundingClientRect()` and proportional contain scaling (`scale`, `imageOffsetX`, `imageOffsetY`) so markers sit exactly over target text.
 
-### 3. Acceptance Test Suite (`tests/full_visual_agent_acceptance_test.js`)
-- Runs the full visual agent acceptance test verifying image-text OCR detection, proportional overlay mapping, source X/Y calculation, and real cursor action.
+### 3. Acceptance Test Suite (`tests/image_text_ocr_acceptance_test.js`)
+- Implements and executes Test A (Native Text - Notepad "20") and Test B (Image Text - Banner "BRING YOUR BUSINESS ONLINE"), proving end-to-end pixel-accurate detection, overlay alignment, source X/Y transfer, and real cursor action.
 
 ---
 
 ## Verification Plan
 
 ### Automated & Runtime Tests
-1. Run acceptance test script proving image-text detection, exact overlay alignment, and Stage 2–14 regressions.
+1. Run `node tests/image_text_ocr_acceptance_test.js` to execute both Test A and Test B and verify image-text OCR detection, bounding box accuracy, and Stage 2–14 regressions.

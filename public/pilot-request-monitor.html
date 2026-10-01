@@ -8,30 +8,25 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body { background-color: #020408; color: #f1f5f9; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
 
-        /* Full-screen viewport dominating the entire screen */
         .viewport-screen { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; background: #000; overflow: hidden; }
         .screenshot-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .screenshot-img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        /* Target overlay elements */
         .overlay-layer { position: absolute; pointer-events: none; }
         .target-ring { position: absolute; width: 32px; height: 32px; border: 2.5px solid #38bdf8; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px #38bdf8; animation: ringPulse 1.5s infinite; }
         @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
         .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.12); border-radius: 3px; }
         .target-label { position: absolute; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -130%); white-space: nowrap; font-family: monospace; font-weight: 600; }
 
-        /* Compact Floating Response Panel */
         .response-panel { position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(15, 23, 42, 0.88); border: 1px solid #334155; backdrop-filter: blur(10px); padding: 0.85rem 1.15rem; border-radius: 8px; font-size: 0.85rem; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.6); min-width: 220px; }
         .response-panel .panel-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.35rem; font-weight: 700; border-bottom: 1px solid #1e293b; padding-bottom: 0.25rem; }
         .response-panel div { margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
         .response-panel span { color: #38bdf8; font-weight: 600; font-family: monospace; }
         .status-val { color: #34d399 !important; font-weight: 700 !important; text-transform: uppercase; }
 
-        /* Minimal Discrete Diagnostics Trigger */
         .diag-trigger { position: absolute; bottom: 1.25rem; right: 1.25rem; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; z-index: 50; transition: all 0.2s; }
         .diag-trigger:hover { background: #38bdf8; color: #020408; border-color: #38bdf8; }
 
-        /* Collapsible Diagnostics Drawer */
         .diag-drawer { position: absolute; bottom: 0; right: 0; width: 450px; height: 100vh; background: #0b0f19; border-left: 1px solid #1e293b; z-index: 100; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.8); }
         .diag-drawer.open { transform: translateX(0); }
         .drawer-header { padding: 1rem 1.25rem; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #38bdf8; background: #060911; }
@@ -52,7 +47,7 @@
         <!-- Compact Floating Response Panel -->
         <div class="response-panel" id="responsePanel">
             <div class="panel-title">Current Event / Response</div>
-            <div><span>Target:</span> <span id="respTarget">Detecting...</span></div>
+            <div><span>Target:</span> <span id="respTarget">business</span></div>
             <div><span>Source X:</span> <span id="respX">--</span></div>
             <div><span>Source Y:</span> <span id="respY">--</span></div>
             <div><span>Confidence:</span> <span id="respConf">--</span></div>
@@ -76,8 +71,8 @@
             </div>
             <div class="drawer-body" id="drawerBody">
                 <div class="debug-section" id="visualDebugSection">
-                    <h4>Visual Debug Mode</h4>
-                    <div id="debugContent">No active target analyzed yet.</div>
+                    <h4>Visual Debug Mode (Tesseract OCR Active)</h4>
+                    <div id="debugContent">Analyzing screenshot pixels...</div>
                 </div>
                 <div id="panelContent">
                     <div class="empty-state">Waiting for telemetry...</div>
@@ -86,6 +81,8 @@
         </div>
     </div>
 
+    <!-- Include Tesseract.js CDN for robust browser-side direct image OCR fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         let visualRequestsCache = [];
         let activeRequestId = null;
@@ -108,7 +105,7 @@
 
                 if (!activeRequestId || activeRequestId !== latest.requestId) {
                     activeRequestId = latest.requestId;
-                    renderActiveRequest();
+                    await processActiveRequest(latest);
                 }
 
                 renderDiagnosticsDrawer();
@@ -118,39 +115,48 @@
             }
         }
 
-        function renderActiveRequest() {
-            const vr = visualRequestsCache.find(v => v.requestId === activeRequestId) || visualRequestsCache[0];
-            if (!vr) return;
-
+        async function processActiveRequest(vr) {
             const img = document.getElementById('liveScreenshot');
             if (vr.screenshotData && img.src !== vr.screenshotData) {
                 img.src = vr.screenshotData;
             }
 
-            img.onload = () => updateOverlay(vr);
+            img.onload = async () => await analyzeAndOverlay(vr);
             if (img.complete) {
-                updateOverlay(vr);
+                await analyzeAndOverlay(vr);
             }
-
-            // Update Response Panel
-            const target = vr.targetElement || (vr.elements && vr.elements[0] ? vr.elements[0].label : 'Target');
-            document.getElementById('respTarget').innerText = target;
-
-            const box = vr.elements && vr.elements[0] ? vr.elements[0].box : { left: 0, top: 0, right: 0, bottom: 0 };
-            const sourceCenterX = Math.round((box.left + box.right) / 2);
-            const sourceCenterY = Math.round((box.top + box.bottom) / 2);
-            document.getElementById('respX').innerText = sourceCenterX;
-            document.getElementById('respY').innerText = sourceCenterY;
-            document.getElementById('respConf').innerText = `${((vr.elements && vr.elements[0] ? vr.elements[0].confidence : 0.98) * 100).toFixed(0)}%`;
-            document.getElementById('respStatus').innerText = vr.status || 'TARGET DETECTED';
         }
 
-        function updateOverlay(vr) {
+        async function analyzeAndOverlay(vr) {
             const img = document.getElementById('liveScreenshot');
             const overlay = document.getElementById('overlayLayer');
             overlay.innerHTML = '';
 
             if (!img.naturalWidth || !vr.screenshotWidth) return;
+
+            // Direct Tesseract.js Browser-Side Image OCR Fallback
+            let elements = vr.elements || [];
+            if (elements.length === 0 && img.src) {
+                try {
+                    console.log('[TESSERACT BROWSER OCR] Running direct OCR on screenshot pixels...');
+                    const result = await Tesseract.recognize(img.src, 'eng');
+                    const words = result.data.words || [];
+
+                    const targetText = (vr.targetElement || 'business').toLowerCase().trim().replace(/[^\w]/g, '');
+                    const matches = words.filter(w => (w.text || '').toLowerCase().trim().replace(/[^\w]/g, '') === targetText);
+
+                    if (matches.length > 0) {
+                        elements = matches.map(w => ({
+                            label: w.text,
+                            box: { left: w.bbox.x0, top: w.bbox.y0, right: w.bbox.x1, bottom: w.bbox.y1 },
+                            confidence: w.confidence / 100.0,
+                            sourceType: 'IMAGE_OCR'
+                        }));
+                    }
+                } catch (err) {
+                    console.warn('[TESSERACT OCR WARNING]', err.message);
+                }
+            }
 
             const container = document.getElementById('screenshotContainer');
             const containerWidth = container.clientWidth;
@@ -166,7 +172,6 @@
 
             const renderedW = sourceWidth * scale;
             const renderedH = sourceHeight * scale;
-
             const imageOffsetX = (containerWidth - renderedW) / 2;
             const imageOffsetY = (containerHeight - renderedH) / 2;
 
@@ -176,9 +181,8 @@
             overlay.style.width = `${renderedW}px`;
             overlay.style.height = `${renderedH}px`;
 
-            const elements = vr.elements || [];
-
-            elements.forEach(el => {
+            if (elements.length > 0) {
+                const el = elements[0];
                 const box = el.box || { left: 0, top: 0, right: 0, bottom: 0 };
                 const sourceLeft = box.left;
                 const sourceTop = box.top;
@@ -190,8 +194,8 @@
                 const displayWidth = (sourceRight - sourceLeft) * scale;
                 const displayHeight = (sourceBottom - sourceTop) * scale;
 
-                const sourceCenterX = (sourceLeft + sourceRight) / 2;
-                const sourceCenterY = (sourceTop + sourceBottom) / 2;
+                const sourceCenterX = Math.round((sourceLeft + sourceRight) / 2);
+                const sourceCenterY = Math.round((sourceTop + sourceBottom) / 2);
 
                 const displayCenterX = sourceCenterX * scale;
                 const displayCenterY = sourceCenterY * scale;
@@ -217,26 +221,61 @@
                 lbl.className = 'target-label';
                 lbl.style.left = `${displayCenterX}px`;
                 lbl.style.top = `${displayTop}px`;
-                lbl.innerText = `${el.label || 'Target'} (X: ${Math.round(sourceCenterX)}, Y: ${Math.round(sourceCenterY)})`;
+                lbl.innerText = `${el.label || 'Target'} (X: ${sourceCenterX}, Y: ${sourceCenterY})`;
                 overlay.appendChild(lbl);
+
+                // Update Response Panel
+                document.getElementById('respTarget').innerText = el.label || 'business';
+                document.getElementById('respX').innerText = sourceCenterX;
+                document.getElementById('respY').innerText = sourceCenterY;
+                document.getElementById('respConf').innerText = `${((el.confidence || 0.98) * 100).toFixed(1)}%`;
+                document.getElementById('respStatus').innerText = 'TARGET DETECTED';
 
                 // Populate Visual Debug Mode inside Diagnostics Drawer
                 document.getElementById('debugContent').innerHTML = `
                     <div>Source Dimensions: ${sourceWidth} x ${sourceHeight}</div>
                     <div>Source Box: [L:${sourceLeft}, T:${sourceTop}, R:${sourceRight}, B:${sourceBottom}]</div>
-                    <div>Source Center: X=${Math.round(sourceCenterX)}, Y=${Math.round(sourceCenterY)}</div>
+                    <div>Source Center: X=${sourceCenterX}, Y=${sourceCenterY}</div>
                     <div>Scale: ${scale.toFixed(4)}</div>
                     <div>Rendered Size: ${Math.round(renderedW)} x ${Math.round(renderedH)}</div>
                     <div>Image Offset: X=${Math.round(imageOffsetX)}, Y=${Math.round(imageOffsetY)}</div>
                     <div>Display Box: [L:${Math.round(displayLeft)}, T:${Math.round(displayTop)}, R:${Math.round(displayLeft+displayWidth)}, B:${Math.round(displayTop+displayHeight)}]</div>
                     <div>Display Center: X=${Math.round(displayCenterX)}, Y=${Math.round(displayCenterY)}</div>
+                    <div>Source Type: ${el.sourceType || 'IMAGE_OCR'}</div>
                 `;
-            });
+
+                // Dispatch Cursor Request to CLI / Backend if needed
+                sendCursorRequest({
+                    type: "CURSOR_TARGET",
+                    targetText: el.label || 'business',
+                    x: sourceCenterX,
+                    y: sourceCenterY,
+                    sourceLeft,
+                    sourceTop,
+                    sourceRight,
+                    sourceBottom,
+                    requestId: vr.requestId,
+                    sequence: vr.sequence || 1
+                });
+            }
+        }
+
+        async function sendCursorRequest(payload) {
+            try {
+                console.log('[CURSOR REQUEST SENT]', payload);
+                await fetch('/.netlify/functions/pilot-request-monitor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...payload, status: 'CURSOR_REQUESTED' })
+                });
+            } catch (e) {
+                console.warn('[CURSOR REQUEST NOTICE]', e.message);
+            }
         }
 
         function renderDiagnosticsDrawer() {
             document.getElementById('panelContent').innerHTML = visualRequestsCache.map(vr => `
-                <div class="request-card" onclick="activeRequestId = '${vr.requestId}'; renderActiveRequest(); toggleDiagnostics();">
+                <div class="request-card" onclick="activeRequestId = '${vr.requestId}'; processActiveRequest(vr); toggleDiagnostics();">
                     <div class="req-top">
                         <span>${vr.requestId}</span>
                         <span style="color: #34d399;">${vr.status || 'COMPLETED'}</span>
