@@ -1,6 +1,6 @@
-# Task List: Complete Request-Response & DOM/Screenshot Grounding Loop in `public/pilot-request-monitor.html`
+# Task List: Fix Firebase Screenshot Rendering & Full OCR + DOM Grounding Workflow
 
-- [x] Review `public/pilot-request-monitor.html` request-response handling and DOM transmission
-- [x] Implement scroll-to-locate & full-screen scan logic for off-screen elements
-- [x] Enhance cursor request dispatch and action execution feedback
+- [x] Update `processActiveRequest()` in `public/pilot-request-monitor.html` for reliable Firebase image rendering
+- [x] Ensure `triggerInitialScreenCapture()` and `sendCursorRequest()` transmit both screenshot and DOM content
+- [x] Refine OCR text reading, DOM grounding, and scroll-to-locate action execution loop
 - [x] Verify functionality and create walkthrough artifact

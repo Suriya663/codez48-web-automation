@@ -187,23 +187,25 @@
 
         async function processActiveRequest(vr) {
             const img = document.getElementById('liveScreenshot');
-            if (vr.screenshotData) {
-                let src = vr.screenshotData;
+            let src = vr.screenshotData;
+            if (src) {
                 if (!src.startsWith('data:') && !src.startsWith('http')) {
                     src = 'data:image/jpeg;base64,' + src;
                 }
-                if (img.src !== src) {
-                    img.src = src;
-                }
             } else {
-                img.src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Waiting+for+Firebase+Screenshot...';
+                src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Waiting+for+Firebase+Screenshot...';
             }
 
-            img.onload = async () => await analyzeAndOverlay(vr);
+            img.onload = async () => {
+                console.log('[FIREBASE IMAGE LOADED] Screenshot rendered successfully.');
+                await analyzeAndOverlay(vr);
+            };
             img.onerror = () => {
                 console.warn('[IMAGE LOAD ERROR] Firebase screenshot load failed. Using placeholder.');
                 img.src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Firebase+Image+Load+Error';
             };
+
+            img.src = src;
             if (img.complete && img.naturalWidth > 0) {
                 await analyzeAndOverlay(vr);
             }
@@ -440,6 +442,7 @@
                 ctx.fillText('Target: Start Button & Input Field Verification', 60, 160);
 
                 const screenshotData = canvas.toDataURL('image/jpeg', 0.85);
+                const domContent = document.documentElement.outerHTML.substring(0, 50000);
 
                 await fetch('/.netlify/functions/pilot-request-monitor', {
                     method: 'POST',
@@ -451,6 +454,7 @@
                         screenshotWidth: 1280,
                         screenshotHeight: 800,
                         screenshotData: screenshotData,
+                        domContent: domContent,
                         targetElement: 'Start',
                         originalGoal: 'Verify Start button and input fields',
                         createdAt: new Date().toISOString()

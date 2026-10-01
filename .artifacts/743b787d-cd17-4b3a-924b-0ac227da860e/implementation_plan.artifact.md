@@ -1,26 +1,29 @@
-# Implementation Plan: Complete Request-Response & DOM/Screenshot Grounding Loop in `public/pilot-request-monitor.html`
+# Implementation Plan: Fix Firebase Screenshot Rendering & Full OCR + DOM Grounding Workflow in `public/pilot-request-monitor.html`
 
-This implementation plan refines `public/pilot-request-monitor.html` to fully implement the request-response workflow requested by the user: capturing both screenshot and DOM content, sending both in requests to Firebase/Netlify functions, performing OCR & DOM grounding, handling scroll/scan loops for off-screen elements, and executing precise click/event actions.
+This implementation plan addresses the exact user requirements:
+1. Fix Firebase screenshot image rendering (ensuring `img.src` assignment and `onload` handlers correctly process base64 data URLs without getting blocked by browser cache or completion state).
+2. Implement robust OCR text reading from screenshot images via Tesseract.js.
+3. Transmit both the screenshot image and the full DOM content (`domContent`) in requests sent to Firebase/Netlify functions.
+4. Implement intelligent concept/target grounding ("It is located here"), scroll-to-locate scanning for off-screen items, and precise click/event action execution.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **DOM + Screenshot Payload**: Ensuring every request sent to `/.netlify/functions/pilot-request-monitor` includes both `screenshotData` and full `domContent`.
-> - **Scroll & Scan Loop**: Implementing automated scrolling and re-scanning if a target element is not immediately visible in the initial viewport.
-> - **Precise Action Execution**: Executing precise clicks/events on identified elements with visual confirmation overlays.
+> - **Firebase Image Loading**: Fixing image assignment order and `onload` handling to guarantee screenshots from Firebase appear instantly.
+> - **OCR & DOM Workflow**: Ensuring complete request payloads include both screenshot image and DOM tree data.
 
 ## Open Questions
 
-- None. Workflow and file target (`public/pilot-request-monitor.html`) are confirmed.
+- None.
 
 ## Proposed Changes
 
 ### Pilot Request Monitor HTML
 
 #### [MODIFY] [pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html)
-- Enhance request payload to explicitly transmit both screenshot image data and DOM content.
-- Implement scroll-to-locate and full screen scan logic for elements not immediately visible.
-- Add robust response handling and status reporting (`TARGET DETECTED`, `SCROLLING TO LOCATE`, `EXECUTING CLICK`).
+- Update `processActiveRequest()` to correctly handle image loading state, base64 MIME prefixes, and `onload`/`onerror` handlers.
+- Update `triggerInitialScreenCapture()` and `sendCursorRequest()` to robustly capture and transmit both `screenshotData` and `domContent`.
+- Refine OCR text extraction and DOM grounding loop with scroll-to-locate fallback and precise action execution.
 
 ## Verification Plan
 
@@ -28,4 +31,4 @@ This implementation plan refines `public/pilot-request-monitor.html` to fully im
 - Static inspection of HTML/JS logic.
 
 ### Manual Verification
-- Open `public/pilot-request-monitor.html` in browser, verify real-time telemetry, screenshot rendering, OCR/DOM grounding, and cursor/click request dispatch.
+- Open `public/pilot-request-monitor.html` in browser, verify image rendering, OCR text reading, DOM transmission, and telemetry updates.
