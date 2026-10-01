@@ -1,42 +1,33 @@
-# Implementation Plan - General-Purpose Windows Desktop Agent Expansion (Phase 0 Audit & Architecture)
+# Implementation Plan - Pilot Capability and Quality Pack (PPT, Permissions, Documents, Websites, Applications)
 
-Extending the existing Codez48 Pilot engine into a general-purpose Windows desktop agent that handles both browser automation and native Windows application tasks using the SAME shared loop, HUD, policy layer, and input driver (`guiDriver`).
+Expanding the Code-Based Pilot engine into a fully polished capability and quality pack covering structured style briefs, style-pack libraries, multi-axis image scoring, centralized permission management, document reading/editing, learned website profiling, application capability profiling, and acceptance tests Q1–Q5, R1–R4, and S1–S10.
 
-## Phase 0 - Mandatory Read-Only Repository Audit (Architecture-Truth Table)
-
-| CAPABILITY | STATUS | FILE(S) | NOTES |
-| :--- | :--- | :--- | :--- |
-| **Desktop Capture** | REAL | `src/pilot/browser/screen-capture.js` | GDI+ based full Windows screen capture |
-| **OCR / Local Vision** | REAL | `src/pilot/browser/visual-analyzer.js`, `tesseract-integration.js` | Multimodal AI + Tesseract.js word-level bounding boxes |
-| **App Discovery / Launcher** | REAL | `src/pilot/apps/application-launcher.js`, `application-resolver.js` | Resolves and launches Windows applications (Notepad, VS Code, etc.) |
-| **Workflow Planner / System** | REAL | `src/pilot/workflows/workflow-planner.js`, `workflow-system.js` | Goal parsing and step execution |
-| **Recovery / Checkpoint** | REAL | `src/pilot/autonomous/recovery-manager.js`, `goal-state-manager.js` | Bounded recovery and state tracking |
-| **Coordinate Mapper** | REAL | `src/pilot/browser/coordinate-mapper.js` | Maps normalized/pixel screen coordinates to Windows mouse |
-| **GUI Driver** | REAL | `src/pilot/drivers/gui-driver.js` | DPI-aware SendInput mouse/keyboard driver with closed-loop feedback |
-| **Continuous Loop** | REAL | `src/pilot/autonomous/goal-completion-engine.js` | Observe -> Understand -> Act -> Verify loop |
-| **Capability Registry** | REAL | `src/pilot/capability-registry.js` | Intent and entity extraction |
-| **Request Monitor / Firebase** | REAL | `public/pilot-request-monitor.html`, `netlify/functions/pilot-request-monitor.js` | Live telemetry HUD (optional monitoring path) |
-| **3D Automation** | NOT FOUND | N/A | Explicitly out of scope per Section 10 |
+## Step 0 Audit Summary
+- **PPT Style & Images**: `powerpoint-adapter.js` handles slide text and Wikimedia image search. Needs upgrade for multi-axis image scoring (content + style + technical) and style-pack libraries.
+- **Permissions**: Task session tracks artifacts, but a dedicated centralized `PermissionManager` (scope/capability/audit log) is needed.
+- **Document & App Tasks**: COM Office drivers (`com-office-driver.js`), adapters (`notepad-adapter.js`, `excel-adapter.js`, `word-adapter.js`), and app discovery (`application-launcher.js`, `app-discovery.js`) exist. Needs unification under the Action Router and capability profiling.
+- **Website Profiling**: `page-observer.js` and `element-resolver.js` exist. Needs learned site profiles with revalidation.
 
 ---
 
-## Proposed Changes for Desktop Agent Expansion
+## Proposed Changes
 
-### 1. Desktop UIA Observer (`src/pilot/desktop/uia-observer.js`)
-- Persistent native host (PowerShell + in-memory C# using `System.Windows.Automation`) to inspect the active window's UI Automation tree and normalize elements into the shared Candidate shape.
+### 1. Style-Pack Library & Style Brief (`src/pilot/autonomous/style-pack-manager.js`)
+- Implements structured Style Briefs and editable data-driven style profiles (corporate-clean, tech-dark, startup-bold, academic-minimal, creative-editorial).
+- Multi-axis image scoring (Content relevance, Style fit, Technical fit).
 
-### 2. App Discovery Expansion (`src/pilot/desktop/app-discovery.js`)
-- Dynamic Start Menu shortcut resolution (.lnk), PATH scanning, and process enumeration with a known/tested-app registry (`Notepad`, `Calculator`, `File Explorer`, `Chrome`, `Edge`).
+### 2. Central Permission Manager (`src/pilot/autonomous/permission-manager.js`)
+- Least-privilege capability grants (`READ_SCREEN`, `READ_WEB`, `CLICK_WEB`, `TYPE_WEB`, `READ_FILES`, `WRITE_FILES`, `CONTROL_APP`, `RUN_COMMANDS`, `INSTALL_SOFTWARE`, `NETWORK_EXTERNAL`), scoped per site/app/folder with audit logging and prompt-injection defense.
 
-### 3. Policy & Confirmation Gate (`src/pilot/autonomous/desktop-policy.js` / `core/policy.js`)
-- Enforces non-bypassable confirmation prompts for OS settings changes, file overwrites, software installations, unnamed/ambiguous app launches, and out-of-scope actions.
+### 3. Application Capability Profiling & Learned Website Profiles (`src/pilot/autonomous/app-profile-manager.js`, `site-profile-manager.js`)
+- Dynamic capability profiling per application and revalidated site inventory profiles.
 
-### 4. Acceptance Tests J–S (`tests/desktop_agent_acceptance_test.js`)
-- Real runtime acceptance tests covering Notepad operations, File Explorer folder creation, scroll-until-found, image-text OCR, ambiguity handling, confirmation gates, create vs edit, recovery, and SIGINT clean stop.
+### 4. Comprehensive Acceptance Tests (`tests/pilot_quality_pack_test.js`)
+- Implement tests Q1–Q5 (PPT quality), R1–R4 (Permissions), and S1–S10 (Documents/Apps/Web/Recovery/Regression).
 
 ---
 
 ## Verification Plan
 
 ### Automated & Runtime Tests
-1. Run acceptance test suite proving desktop agent capabilities and Stage 2–14 regressions.
+1. Run `node tests/pilot_quality_pack_test.js` to execute acceptance tests Q1–Q5, R1–R4, and S1–S10 on the real runtime.
