@@ -185,7 +185,7 @@ exports.handler = async (event, context) => {
             const inputs = pageState?.inputs || [];
 
             let foundStartButton = buttons.find(b => /start|proceed|next|submit|continue/i.test(b.name));
-            let foundInput = inputs.find(i => /search|input|email|query/i.test(i.placeholder || i.name || i.label));
+            let foundInput = inputs.find(i => /search|input|email|query|prompt|name|text|what/i.test(i.placeholder || i.name || i.label || i.id));
 
             let analysisMessage = "";
             let recommendedAction = {};
