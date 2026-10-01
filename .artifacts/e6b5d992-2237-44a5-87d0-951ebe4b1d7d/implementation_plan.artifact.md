@@ -1,16 +1,19 @@
-# Implementation Plan - Interactive Selectable Text OCR Overlays & Full-Screen Live Stream
+# Implementation Plan - Robust Target Disambiguation & Precise Pixel OCR Highlighting
 
-Enhancing the Request Monitor (`public/pilot-request-monitor.html`) so that all detected OCR words and text elements from the screenshot are rendered as interactive, transparent, copyable/selectable text spans positioned precisely over their exact screenshot pixel locations (`sourceLeft`, `sourceTop`, `sourceRight`, `sourceBottom` mapped via proportional contain scaling `scale`, `imageOffsetX`, `imageOffsetY`), allowing users to click and copy any text directly from the visual stream while maintaining pixel-perfect target highlighting.
+Fixing the target misidentification bug where Tesseract OCR or visual analysis matched top-left artifacts (like `®` at X: 71, Y: 26) instead of the actual requested target text (e.g. `"business"` in "BRING YOUR BUSINESS ONLINE" or "BUSINESS NETWORK").
 
 ## Proposed Changes
 
-### 1. Interactive Selectable Text Overlay (`public/pilot-request-monitor.html`)
-- Update `updateOverlay(vr)` to render interactive, transparent `<span class="ocr-selectable-text">` elements for all detected words from Tesseract.js / visual analysis, allowing users to select and copy text directly from the screenshot overlay layer.
-- Ensure the primary target (`"business"`, etc.) is highlighted with a precise target ring and bounding rectangle, while all surrounding OCR words are interactive and copyable.
+### 1. Robust Target Filtering & Scoring Engine (`public/pilot-request-monitor.html`)
+- Update `analyzeAndOverlay(vr)` to filter out non-alphanumeric noise and tiny symbols (`®`, punctuation, icons).
+- Implement intelligent keyword scoring and filtering for `vr.targetElement` (defaulting to `"business"` when requested):
+  - Prioritize exact word matches (e.g. `"business"`).
+  - Filter out words located in the extreme top-left browser chrome header zone (`top < 50` or `left < 50`) unless no other match exists, ensuring page-content text like `"BRING YOUR BUSINESS ONLINE"` or `"BUSINESS NETWORK"` is selected.
+  - Sort matches by confidence and vertical position to guarantee the most relevant instance of `"business"` is highlighted.
 
 ---
 
 ## Verification Plan
 
-### Automated & Visual Tests
-1. Verify HTML template updates for interactive copyable text overlays and proportional contain scaling.
+### Automated & Runtime Tests
+1. Run acceptance test suite `tests/codez48_business_target_test.js` to verify that `"business"` is detected at the correct content coordinates (`X=495, Y=298` or similar page content location) and never in the top-left browser chrome.
