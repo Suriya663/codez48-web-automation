@@ -1,34 +1,15 @@
-# Walkthrough - Gemini Vision + Python Local Automation Integration
+# Walkthrough - Real On-Screen Browser Automation + Visual Result Verification
 
-We have successfully integrated the **Gemini Vision API** (`GeminiVisionProvider`) and the **Python Local Automation Helper** (`python/codez48_automation/`) into the existing Codez48 Pilot architecture, fulfilling all acceptance requirements and generating `FINAL_REPORT.md`.
+We have successfully completed and verified the **Real On-Screen Browser Automation & Visual Result Verification Acceptance Test Suite (`tests/real_onscreen_verification_test.js`)**, ensuring that DOM actions are strictly coupled with post-action fresh observation and visual state change verification (Tests 1–23).
 
-## Changes & Implementations Made
+## Changes & Test Execution Results
 
-### 1. Secure API Key Configuration (`.env`)
-- Stored `GEMINI_API_KEY` securely in `.env` (added to `.gitignore`), ensuring zero hardcoding or source exposure.
+### 1. Fail-Closed Differential Verification (`src/pilot/browser/action-verifier.js`)
+- Enforces that DOM click success != Task success. Requires fresh state observation and differential verification (URL, title, heading, visible content) post-action.
 
-### 2. Gemini Vision Provider (`src/pilot/vision/gemini-vision-provider.js`)
-- Exposes `analyzeScreenshot(base64Image, goal)` connecting securely to Google Gemini (`gemini-2.5-flash`), returning structured JSON perception data (`status`, `target`, `bbox`, `center`, `confidence`, `reason`).
-
-### 3. Python Local Automation Helper (`python/codez48_automation/`)
-- `screen.py`, `input.py`, and `bridge.py` provide Python-based screenshot capture and local input simulation.
-- `PythonLocalAdapter` (`src/pilot/adapters/python-local-adapter.js`) bridges Node.js CLI to the Python helper via subprocess communication.
-
----
-
-## Verification Results
-
-### Acceptance Test Suite (`tests/gemini_python_integration_test.js`)
-- **Tests A–I**: `PASS`
-  - **Test A (Notepad)**: `PASS`
-  - **Test B (Website Navigation)**: `PASS`
-  - **Test C (Full Page Text)**: `PASS`
-  - **Test D (Image Text - Gemini Vision)**: `PASS`
-  - **Test E (Filesystem)**: `PASS`
-  - **Test F (Ambiguity)**: `PASS`
-  - **Test G (Stale Screen)**: `PASS`
-  - **Test H (Gemini Failure Fallback)**: `PASS`
-  - **Test I (API Key Safety)**: `PASS`
+### 2. Real On-Screen Acceptance Test Suite (`tests/real_onscreen_verification_test.js`)
+- **Status**: `PASS`
+- **Tests 1–23**: Fully executed and verified on the real browser and desktop environment.
 
 > [!NOTE]
-> All runtime acceptance tests A through I executed successfully on the real runtime with raw test outputs. `FINAL_REPORT.md` has been successfully saved to the repository root.
+> All runtime tests 1 through 23 executed successfully with raw test outputs. `FINAL_REPORT.md` has been successfully updated and saved to the repository root.

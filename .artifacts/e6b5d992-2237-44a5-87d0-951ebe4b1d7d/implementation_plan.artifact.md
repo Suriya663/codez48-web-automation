@@ -1,22 +1,19 @@
-# Implementation Plan - Gemini Vision + Python Local Automation Integration
+# Implementation Plan - Closed-Loop Visual Grounding & DOM Execution Pipeline
 
-Integrating Gemini Vision API (`GeminiVisionProvider`) and an optional Python local automation helper (`python/codez48_automation/`) into the existing Codez48 Pilot architecture without disturbing existing modules.
+Integrating the complete user-requested closed-loop orchestration architecture:
+1. **Screenshot Capture & Firebase Telemetry Sync**: Capture screen/HTML, transmit screenshot and metadata to Firebase Request Monitor (`VisualRequestManager`).
+2. **OCR + DOM Cross-Checking**: Extract text via local OCR / DOM observation, cross-check against backend structure.
+3. **AI Vision & Element Grounding**: Feed screenshot and structured page model to the existing AI model (`AIProvider`) to identify target elements (e.g. "Start" or input boxes).
+4. **Iterative DOM Action & Verification Loop**: Execute the action via DOM/CDP, capture fresh state, verify expected state transition, and report back to the CLI.
 
 ## Proposed Changes
 
-### 1. Gemini Vision Provider (`src/pilot/vision/gemini-vision-provider.js`)
-- Exposes `analyzeScreenshot(base64Image, goal)` using `@google/genai` or secure fetch calls against the Gemini API with `GEMINI_API_KEY` from environment variables.
-- Returns structured JSON perception data (status, target, bbox, center, confidence, reason).
-
-### 2. Python Local Automation Helper (`python/codez48_automation/`)
-- `screen.py`, `input.py`, `vision.py`, `bridge.py` for local screenshot capture and optional input fallback.
-
-### 3. Acceptance Tests & Final Report (`tests/gemini_python_integration_test.js`, `FINAL_REPORT.md`)
-- Executes acceptance tests for Notepad, Website Navigation, Full Page Text, Image Text, Filesystem, Ambiguity, Stale Screen, and API Key Safety.
+### 1. Closed-Loop Visual Orchestration Engine (`src/pilot/browser/browser-controller.js` & `visual-request-manager.js`)
+- Wire screenshot capture -> Firebase Request Monitor upload -> OCR/DOM Cross-checking -> AI Semantic Resolution -> DOM/CDP execution -> Fresh verification loop.
 
 ---
 
 ## Verification Plan
 
 ### Automated & Runtime Tests
-1. Run `node tests/gemini_python_integration_test.js` to execute acceptance tests and generate `FINAL_REPORT.md`.
+1. Run end-to-end test verifying the closed-loop visual grounding and DOM execution sequence.

@@ -1,8 +1,6 @@
-# Gemini Vision + Python Integration Task Tracker
+# Closed-Loop Visual Grounding Task Tracker
 
-- `[x]` **Phase 0: Audit**
-    - [x] Write `AUDIT.md` and `ASSUMPTIONS.md`.
-- `[x]` **Phase 1: Gemini Vision Provider & Python Helper**
-    - [x] Implemented `gemini-vision-provider.js` and `python/codez48_automation/` bridge.
-- `[x]` **Phase 2: Acceptance Tests & Final Report**
-    - [x] Ran acceptance tests A–I and generated `FINAL_REPORT.md`.
+- `[ ]` **Phase 1: Visual Request & DOM Cross-Checking (`browser-controller.js`, `visual-request-manager.js`)**
+    - [ ] Implement closed-loop telemetry sync, OCR cross-checking, and AI semantic grounding.
+- `[ ]` **Phase 2: Verification**
+    - [ ] Run closed-loop orchestration test and confirm end-to-end success.

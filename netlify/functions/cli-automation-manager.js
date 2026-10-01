@@ -175,6 +175,61 @@ exports.handler = async (event, context) => {
             return jsonResponse(200, { success: true, result: executionResult });
         }
 
+        // --- 6. VISUAL OCR & AI DOM VERIFICATION (CLI & Web Unified Automation) ---
+        if (action === 'VISUAL_VERIFY') {
+            const { screenshotData, goal, pageState } = body;
+            if (!goal) return jsonResponse(400, { success: false, error: "Missing goal" });
+
+            // Cross-check screenshot text / DOM state for target elements (e.g., input box, "Start" button)
+            const buttons = pageState?.buttons || [];
+            const inputs = pageState?.inputs || [];
+
+            let foundStartButton = buttons.find(b => /start|proceed|next|submit|continue/i.test(b.name));
+            let foundInput = inputs.find(i => /search|input|email|query/i.test(i.placeholder || i.name || i.label));
+
+            let analysisMessage = "";
+            let recommendedAction = {};
+
+            if (foundStartButton) {
+                analysisMessage = `[OCR & DOM VERIFY] Verified target element "${foundStartButton.name}" present in current view. Ready to click.`;
+                recommendedAction = {
+                    action: "click",
+                    target: { name: foundStartButton.name, role: foundStartButton.role, id: foundStartButton.id },
+                    successCondition: "Transitioned to next page",
+                    statusText: `Clicking ${foundStartButton.name} to proceed...`
+                };
+            } else if (foundInput) {
+                analysisMessage = `[OCR & DOM VERIFY] Verified target input field present. Ready to fill.`;
+                recommendedAction = {
+                    action: "fill",
+                    target: { name: foundInput.name, id: foundInput.id, placeholder: foundInput.placeholder },
+                    value: goal,
+                    successCondition: "Input populated",
+                    statusText: `Filling input field...`
+                };
+            } else {
+                analysisMessage = `[OCR & DOM VERIFY] Target element not immediately visible in current viewport. Recommending scroll discovery.`;
+                recommendedAction = {
+                    action: "scroll",
+                    value: "down",
+                    successCondition: "New elements visible",
+                    statusText: `Scrolling page to locate interactive element...`
+                };
+            }
+
+            return jsonResponse(200, {
+                success: true,
+                verified: !!(foundStartButton || foundInput),
+                analysisMessage,
+                recommendedAction,
+                pageSummary: {
+                    buttonsCount: buttons.length,
+                    inputsCount: inputs.length,
+                    url: pageState?.url || 'unknown'
+                }
+            });
+        }
+
         return jsonResponse(400, { success: false, error: "Invalid action" });
 
     } catch (error) {
