@@ -1,7 +1,7 @@
-# Local Monitor Proxy Task Tracker
+# PowerShell Syntax Fix Task Tracker
 
-- `[x]` **Phase 1: Update Server Routing (`monitor.js`)**
-    - [x] Intercepted `/.netlify/functions/pilot-request-monitor` inside the local server.
-    - [x] Proxied the request seamlessly to the local screenshot telemetry stream.
+- `[x]` **Phase 1: Remove Whitespace (`gui-driver.js`)**
+    - [x] Located `@'` in `clickPhysicalMouse`.
+    - [x] Ensured `'@` sits exactly at the beginning of the line.
 - `[x]` **Phase 2: Verification**
-    - [x] Confirmed the HTTP request pipeline successfully mitigates 404 connection errors.
+    - [x] Ran runtime test and confirmed `WhitespaceBeforeHereStringFooter` is eliminated (`STATUS: PASS`).

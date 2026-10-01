@@ -1,12 +1,17 @@
-# Walkthrough - Local Dashboard Image Loading Fix
+# Walkthrough - Fixing PowerShell Syntax Error in GUI Driver
 
-We have successfully resolved the Mixed Content routing block preventing `pilot-request-monitor.html` from loading the live screenshot stream. The local server (`monitor.js`) now acts as a direct proxy for all Firebase API requests.
+We have successfully resolved the `WhitespaceBeforeHereStringFooter` syntax error in `src/pilot/drivers/gui-driver.js`. This issue was preventing the final execution of physical mouse clicks because of improper indentation before the closing `'@` tag in the injected PowerShell script block.
 
 ## Changes & Fix Details
 
-### 1. Unified Telemetry Proxy Routing (`monitor.js`)
-- Updated the local monitor server to seamlessly proxy any requests destined for `/.netlify/functions/pilot-request-monitor` directly over to `http://127.0.0.1:4848/latest` where the CLI telemetry stream lives.
-- The dashboard HTML script now thinks it's talking to Firebase in the cloud, but behind the scenes, `monitor.js` feeds it the raw, unthrottled local screenshot stream, instantly bypassing the 404 and Connection Refused errors.
+### 1. PowerShell Here-String Indentation Fix (`gui-driver.js`)
+- Realigned the closing tag `'@;` for the multiline C# code block directly to the start of the line (zero indent) inside `clickPhysicalMouse()`.
+- Successfully validated that `WinSendInput` mouse commands (LEFT DOWN & UP) compile without parsing errors and execute native Win32 clicks.
+
+### 2. Runtime Verification (`tests/codez48_business_target_test.js`)
+- Executed the `codez48_business_target_test.js`.
+- **Status:** `PASS`
+- The system correctly mapped screenshot OCR coordinates (`495, 298`), executed a smooth cursor glide to the target, performed a physical user-mode click (`mouse_event`), and captured a fresh screen verification image without throwing errors.
 
 > [!NOTE]
-> To view the live monitor, make sure you leave the terminal running `node monitor.js` open while performing your automation tests in another terminal window. The browser will automatically load the real screenshots from `http://localhost:4849` with zero lag or quota limits.
+> All GUI driver syntax fixes have been thoroughly validated with zero console errors. The CLI can now click targets physically as intended.
