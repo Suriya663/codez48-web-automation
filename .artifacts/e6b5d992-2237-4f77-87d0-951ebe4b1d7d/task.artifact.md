@@ -1,7 +1,8 @@
-# AI Chat Backend Fix Task Tracker
+# Screen Capture Stabilization Task Tracker
 
-- `[x]` **Phase 1: Backend Error Handling (`cli-ai-chat.js`)**
-    - [x] Wrapped `verifyApiKey` in try/catch to prevent unhandled rejection crashes.
-    - [x] Wrapped `pilot_requests` and `generated_websites` Firestore writes in try/catch blocks.
-- `[ ]` **Phase 2: Verification**
-    - [ ] Run `node cli.js ai` and confirm normal conversational response.
+- `[x]` **Phase 1: Hardened Screen Capture Buffer (`screen-capture.js`)**
+    - [x] Swapped direct memory base64 piping to safe `.jpeg` tmp files.
+    - [x] Expanded ChildProcess buffer size (`maxBuffer: 10MB`) to eliminate `ENOBUFS` pipeline exhaustion.
+- `[x]` **Phase 2: Verification**
+    - [x] Confirmed `codez48_business_target_test.js` executed without capturing errors.
+    - [x] Successfully verified payload transmitted to both `localhost:4848` and Firebase.

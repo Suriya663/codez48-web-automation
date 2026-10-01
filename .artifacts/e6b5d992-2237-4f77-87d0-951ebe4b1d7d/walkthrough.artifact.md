@@ -1,15 +1,15 @@
-# Walkthrough - Pilot Request Monitor HTTP 404 & Connection Refused Fix
+# Walkthrough - Screenshot Reliability & Firebase Sync Stabilization
 
-We have successfully resolved the console errors (`ERR_CONNECTION_REFUSED` and `404 Not Found`) that were plaguing the `pilot-request-monitor.html` UI when viewing the telemetry stream.
+We have successfully resolved the intermittent screenshot delivery issues (`[DESKTOP SCREEN CAPTURE ERROR] ENOBUFS / Failed to parse output`). The `pilot-request-monitor.html` dashboard now reliably displays real-time execution screenshots natively synced through both the ultra-fast Local Telemetry Server and Firebase.
 
 ## Changes & Fix Details
 
-### 1. Robust API Fallback Mechanisms (`pilot-request-monitor.html`)
-- Upgraded `sendCursorRequest` and `triggerInitialScreenCapture` network functions to intelligently try the ultra-fast direct Local Telemetry Server (`http://localhost:4848/latest`) first.
-- If the CLI telemetry stream is currently offline or unreachable, the network request gracefully degrades to fallback onto the Firebase/Netlify endpoint (`/.netlify/functions/pilot-request-monitor`) without polluting the browser console with unhandled exceptions.
+### 1. Hardened Desktop Screen Capture (`src/pilot/browser/screen-capture.js`)
+- Fixed PowerShell execution limits causing the `ENOBUFS` error by drastically increasing the child process stdout max buffer from the 1MB default to **10MB** (`maxBuffer: 1024 * 1024 * 10`).
+- Switched the memory-intensive PNG Base64 byte conversion to write heavily compressed `JPEG` images to the system's temporary directory (`os.tmpdir()`), subsequently returning file-read Base64 hashes, entirely circumventing pipe memory overflow.
 
-### 2. Network Proxy Optimization (`monitor.js`)
-- The internal API proxy seamlessly translates `/.netlify/functions/pilot-request-monitor` directly into the live high-res image stream to continuously supply the dashboard with fresh frames without hitting remote network quotas.
+### 2. Robust UI Diagnostic Integration
+- End-to-end tests (`tests/codez48_business_target_test.js`) executed seamlessly, displaying a verified visual footprint (`✓ Visual analysis payload saved to FIREBASE Dashboard`). The HTML dashboard successfully processes OCR cross-checks visually highlighting targets like "Business" cleanly without intermittent blackouts or crashes.
 
 > [!NOTE]
-> The automation monitor will now reliably render and silently recover from connectivity drops. Run `node monitor.js` in a separate terminal and open `http://localhost:4849` to view your CLI stream seamlessly!
+> The automation monitor's stability is now rock-solid. Run your `node cli.js pilot` commands while viewing `http://localhost:4849` to see all automated desktop steps executing and recording correctly!
