@@ -1,34 +1,31 @@
-# Implementation Plan: Fix Firebase Screenshot Rendering & Robust OCR/DOM Grounding Workflow
+# Implementation Plan: Complete Request-Response & DOM/Screenshot Grounding Loop in `public/pilot-request-monitor.html`
 
-This implementation plan addresses the issues with Firebase screenshot rendering in `public/pilot-request-monitor.html` and implements the robust visual computer control workflow involving screenshot analysis, OCR text extraction, DOM content integration, scroll/scan loop, and precise element interaction.
+This implementation plan refines `public/pilot-request-monitor.html` to fully implement the request-response workflow requested by the user: capturing both screenshot and DOM content, sending both in requests to Firebase/Netlify functions, performing OCR & DOM grounding, handling scroll/scan loops for off-screen elements, and executing precise click/event actions.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Firebase Screenshot Rendering**: Ensuring `screenshotData` (base64 image data URLs) is correctly sanitized, stored, and loaded with proper error handlers and MIME type checks.
-> - **OCR & DOM Grounding Workflow**: Integrating screenshot and DOM content payload exchange between the monitoring page, Firebase, and AI automation controller to support scrolling, scanning, and precise element clicking.
+> - **DOM + Screenshot Payload**: Ensuring every request sent to `/.netlify/functions/pilot-request-monitor` includes both `screenshotData` and full `domContent`.
+> - **Scroll & Scan Loop**: Implementing automated scrolling and re-scanning if a target element is not immediately visible in the initial viewport.
+> - **Precise Action Execution**: Executing precise clicks/events on identified elements with visual confirmation overlays.
 
 ## Open Questions
 
-- None. Brand details and workflow specs have been verified across Codez48 platform components.
+- None. Workflow and file target (`public/pilot-request-monitor.html`) are confirmed.
 
 ## Proposed Changes
 
-### Pilot Monitor & Automation Controller
+### Pilot Request Monitor HTML
 
 #### [MODIFY] [pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html)
-- Enhance image loading robustness for Firebase `screenshotData` (handle missing MIME prefixes, loading errors, fallback placeholders).
-- Implement enhanced DOM content transmission alongside screenshot data in analysis/action requests.
-- Add robust scroll-to-locate and visual grounding feedback loop for UI elements (buttons, inputs, text nodes).
-
-#### [MODIFY] [pilot-request-monitor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/pilot-request-monitor.js)
-- Ensure Firestore request handler correctly accepts and stores `screenshotData`, `domContent`, `elements`, and `ocr` payloads without truncation.
-- Ensure GET endpoint returns complete `screenshotData` and DOM metadata for real-time monitoring.
+- Enhance request payload to explicitly transmit both screenshot image data and DOM content.
+- Implement scroll-to-locate and full screen scan logic for elements not immediately visible.
+- Add robust response handling and status reporting (`TARGET DETECTED`, `SCROLLING TO LOCATE`, `EXECUTING CLICK`).
 
 ## Verification Plan
 
 ### Automated Tests
-- Build check / static verification of Netlify functions and HTML template.
+- Static inspection of HTML/JS logic.
 
 ### Manual Verification
-- Open `public/pilot-request-monitor.html` in browser, verify that Firebase screenshots render immediately and trigger OCR/DOM visual grounding correctly.
+- Open `public/pilot-request-monitor.html` in browser, verify real-time telemetry, screenshot rendering, OCR/DOM grounding, and cursor/click request dispatch.

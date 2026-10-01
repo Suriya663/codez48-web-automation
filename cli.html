@@ -343,6 +343,29 @@
                                 <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Open this project in VS Code"</span> to launch your editor immediately.</p>
                             </div>
                         </div>
+
+                        <!-- Interactive Live AI Chat Console -->
+                        <div class="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white space-y-4 shadow-xl">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <h4 class="text-xs font-black uppercase tracking-widest text-slate-300">Codez48 Live AI Console</h4>
+                                </div>
+                                <span class="text-[9px] font-mono text-royal bg-blue-500/10 px-2.5 py-1 rounded-full uppercase">Netlify Function Connected</span>
+                            </div>
+
+                            <div id="aiChatMessages" class="h-64 overflow-y-auto space-y-3 font-mono text-xs pr-2 custom-scrollbar">
+                                <div class="p-3 bg-slate-800/80 rounded-xl text-slate-300">
+                                    <p class="font-bold text-royal mb-1">Codez48 AI System:</p>
+                                    <p>Ready. Type a prompt below or ask me to generate code, websites, or analyze tasks.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 pt-2">
+                                <input type="text" id="aiChatInput" placeholder="e.g. Create a modern landing page for my business..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono" onkeydown="if(event.key==='Enter') window.sendCliAIChat()" />
+                                <button onclick="window.sendCliAIChat()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg">Send</button>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -521,6 +544,99 @@
                     btn.classList.remove('copied-state');
                 }, 2000);
             });
+        }
+    </script>
+
+    <!-- Firebase & AI Chat Integration -->
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                try { await signInAnonymously(auth); } catch (e) { console.warn("Anon sign-in:", e); }
+            } else {
+                console.log("Firebase Authenticated:", user.uid);
+            }
+        });
+    </script>
+
+    <script>
+        let chatHistory = [];
+        window.sendCliAIChat = async function() {
+            const inputEl = document.getElementById('aiChatInput');
+            const messagesContainer = document.getElementById('aiChatMessages');
+            const prompt = inputEl.value.trim();
+            if (!prompt) return;
+
+            inputEl.value = '';
+            chatHistory.push({ role: 'user', content: prompt });
+
+            messagesContainer.innerHTML += `
+                <div class="p-3 bg-slate-800/40 rounded-xl text-right text-white">
+                    <p class="font-bold text-emerald-400 mb-1">You:</p>
+                    <p class="font-sans">${escapeHtml(prompt)}</p>
+                </div>
+            `;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            messagesContainer.innerHTML += `
+                <div id="${loadingId}" class="p-3 bg-slate-800/80 rounded-xl text-slate-400 animate-pulse">
+                    <p class="font-bold text-royal mb-1">Codez48 AI:</p>
+                    <p>Thinking & generating response...</p>
+                </div>
+            `;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                const res = await fetch('/.netlify/functions/cli-ai-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+                const data = await res.json();
+                document.getElementById(loadingId)?.remove();
+
+                if (data.success) {
+                    const reply = data.answer || data.explanation || JSON.stringify(data);
+                    chatHistory.push({ role: 'assistant', content: reply });
+
+                    let extraHtml = '';
+                    if (data.isWebsite && data.previewUrl) {
+                        extraHtml = `<div class="mt-2 pt-2 border-t border-slate-700"><a href="${data.previewUrl}" target="_blank" class="text-royal font-bold underline">🌐 View Live Website Preview →</a></div>`;
+                    }
+
+                    messagesContainer.innerHTML += `
+                        <div class="p-3 bg-slate-800/80 rounded-xl text-slate-200">
+                            <p class="font-bold text-royal mb-1">Codez48 AI:</p>
+                            <p class="font-sans whitespace-pre-wrap">${escapeHtml(reply)}</p>
+                            ${extraHtml}
+                        </div>
+                    `;
+                } else {
+                    messagesContainer.innerHTML += `
+                        <div class="p-3 bg-rose-950/50 border border-rose-900 rounded-xl text-rose-300">
+                            <p class="font-bold mb-1">Error:</p>
+                            <p>${escapeHtml(data.error || 'Unknown error occurred')}</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                document.getElementById(loadingId)?.remove();
+                messagesContainer.innerHTML += `
+                    <div class="p-3 bg-rose-950/50 border border-rose-900 rounded-xl text-rose-300">
+                        <p class="font-bold mb-1">Network Error:</p>
+                        <p>${escapeHtml(err.message)}</p>
+                    </div>
+                `;
+            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
     </script>
 

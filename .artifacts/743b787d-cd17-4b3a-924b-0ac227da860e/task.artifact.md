@@ -1,6 +1,6 @@
-# Task List: Fix Firebase Screenshot Rendering & Robust OCR/DOM Grounding Workflow
+# Task List: Complete Request-Response & DOM/Screenshot Grounding Loop in `public/pilot-request-monitor.html`
 
-- [x] Review and fix Firebase screenshot rendering and error handling in `public/pilot-request-monitor.html`
-- [x] Update `netlify/functions/pilot-request-monitor.js` to ensure robust storage and retrieval of screenshot data and DOM payloads
-- [x] Implement robust OCR + DOM grounding, scrolling/scanning loop, and precise click/event execution in the monitoring interface
+- [x] Review `public/pilot-request-monitor.html` request-response handling and DOM transmission
+- [x] Implement scroll-to-locate & full-screen scan logic for off-screen elements
+- [x] Enhance cursor request dispatch and action execution feedback
 - [x] Verify functionality and create walkthrough artifact

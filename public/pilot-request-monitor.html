@@ -317,8 +317,20 @@
                     sequence: vr.sequence || 1
                 });
             } else {
-                document.getElementById('respTarget').innerText = 'Not Found';
-                document.getElementById('respStatus').innerText = 'SAFE STOP';
+                document.getElementById('respTarget').innerText = 'Not Found - Scrolling';
+                document.getElementById('respStatus').innerText = 'SCROLLING TO LOCATE';
+                console.log('[SCROLL-TO-LOCATE] Target not immediately visible. Scrolling down to scan screen...');
+                window.scrollBy({ top: 400, behavior: 'smooth' });
+                setTimeout(async () => {
+                    await sendCursorRequest({
+                        type: "SCROLL_SCAN",
+                        targetText: vr.targetElement || 'business',
+                        scrollX: window.scrollX,
+                        scrollY: window.scrollY,
+                        requestId: vr.requestId,
+                        status: 'SCROLLED_AND_SCANNING'
+                    });
+                }, 1000);
             }
         }
 
