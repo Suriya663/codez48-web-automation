@@ -202,8 +202,8 @@ exports.handler = async (event, context) => {
             const buttons = pageState?.buttons || [];
             const inputs = pageState?.inputs || [];
 
-            let foundStartButton = buttons.find(b => /start|proceed|next|submit|continue/i.test(b.name));
-            let foundInput = inputs.find(i => /search|input|email|query|prompt|name|text|what/i.test(i.placeholder || i.name || i.label || i.id));
+            let foundStartButton = buttons.find(b => /start|proceed|next|submit|continue|send/i.test(b.name));
+            let foundInput = inputs.find(i => /search|input|email|query|prompt|name|text|what|idea|chat|message|textbox/i.test(i.placeholder || i.name || i.label || i.id || i.type));
 
             let analysisMessage = "";
             let recommendedAction = {};

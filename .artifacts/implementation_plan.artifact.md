@@ -1,27 +1,29 @@
-# Implementation Plan: Contenteditable & Role-Textbox Support in Page Inspector for AI Studio Agent
+# Implementation Plan: AI Studio Screenshot, Firebase Sync, and CLI Response Integration
 
-This implementation plan addresses the real-world test failure where modern AI platforms (such as Google AI Studio at `aistudio.google.com`) use `div[contenteditable="true"]` and `[role="textbox"]` instead of standard `<input>` or `<textarea>` elements for message input boxes.
+This implementation plan addresses the verification and reinforcement of the end-to-end data pipeline: ensuring that AI Studio browser automation tasks capture high-resolution screenshots, synchronize them with Firebase (`visual_analysis_requests` / `pilot_requests`), perform AI DOM and OCR analysis, and stream responses and action results directly to the CLI and web interface.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> This fix enables the AI browser agent to correctly inspect, target, and type into modern rich-text chat prompt boxes (`div[contenteditable="true"]`, `[role="textbox"]`) on Google AI Studio and similar web apps.
+> This plan ensures robust synchronization across AI Studio tasks, Firebase telemetry, OCR/AI visual analysis, and CLI response streaming.
 
 ## Open Questions
 
-- None. The fix directly extends `PageInspector` to detect `div[contenteditable="true"]` and `[role="textbox"]` elements as interactive inputs.
+- None. The architecture involves Netlify functions, Firestore, Playwright browser workers, and Tesseract OCR.
 
 ## Proposed Changes
 
-### Playwright Worker Page Inspector
-#### [MODIFY] [page-inspector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/page-inspector.js)
-- Extend the `inputs` query selector in `PageInspector` to include `div[contenteditable="true"], [role="textbox"], textarea, input, select`.
-- Capture placeholder or aria-label/text content for `contenteditable` and `[role="textbox"]` elements so the AI planner can precisely identify the chat message input box.
+### Automation & Firebase Telemetry Sync
+#### [MODIFY] [cli-automation-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-automation-manager.js)
+- Ensure `VISUAL_VERIFY` and automation triggers robustly write and read screenshot payloads and OCR analysis results to/from Firestore collections (`visual_analysis_requests`, `service_automations`).
+
+#### [MODIFY] [server.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/server.js)
+- Verify that `PAGE_SCREENSHOT` and agent execution loops correctly broadcast screenshot imagery and action execution status.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run validation scripts simulating page inspection on AI Studio DOM structures.
+- Run validation scripts confirming Firebase integration and screenshot payload round-trip success.
 
 ### Manual Verification
-- Re-run the Google AI Studio test task: open AI Studio, find the message input box, type "Hi, I'm code 48", press Enter, and verify submission.
+- Execute an automation or CLI command targeting AI Studio (`https://aistudio.google.com`), verifying that screenshots appear in Firebase, AI DOM analysis executes successfully, and responses return correctly to the CLI.
