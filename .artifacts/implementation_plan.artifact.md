@@ -1,29 +1,28 @@
-# Implementation Plan: AI Studio Screenshot, Firebase Sync, and CLI Response Integration
+# Implementation Plan: Fix Firebase Screenshot Rendering & Robust OCR Visual Grounding Loop
 
-This implementation plan addresses the verification and reinforcement of the end-to-end data pipeline: ensuring that AI Studio browser automation tasks capture high-resolution screenshots, synchronize them with Firebase (`visual_analysis_requests` / `pilot_requests`), perform AI DOM and OCR analysis, and stream responses and action results directly to the CLI and web interface.
+This implementation plan addresses the issue where Firebase screenshot images were not appearing in the HTML monitor (`pilot-request-monitor.html`) and ensures the complete end-to-end visual grounding, OCR extraction, DOM cross-checking, scrolling, and AI-driven action execution loop functions flawlessly.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> This plan ensures robust synchronization across AI Studio tasks, Firebase telemetry, OCR/AI visual analysis, and CLI response streaming.
+> This plan fixes the root cause of image rendering failures in `pilot-request-monitor.html` (missing dimension guards) and reinforces the OCR + DOM visual feedback loop.
 
 ## Open Questions
 
-- None. The architecture involves Netlify functions, Firestore, Playwright browser workers, and Tesseract OCR.
+- None. The architecture uses Netlify functions, Firestore, Tesseract OCR, and Playwright worker services.
 
 ## Proposed Changes
 
-### Automation & Firebase Telemetry Sync
-#### [MODIFY] [cli-automation-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-automation-manager.js)
-- Ensure `VISUAL_VERIFY` and automation triggers robustly write and read screenshot payloads and OCR analysis results to/from Firestore collections (`visual_analysis_requests`, `service_automations`).
-
-#### [MODIFY] [server.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/server.js)
-- Verify that `PAGE_SCREENSHOT` and agent execution loops correctly broadcast screenshot imagery and action execution status.
+### HTML Page Monitor (`pilot-request-monitor.html`)
+#### [MODIFY] [pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html)
+- Add robust dimension fallbacks (`vr.screenshotWidth || img.naturalWidth || 1280`, `vr.screenshotHeight || img.naturalHeight || 800`) in `analyzeAndOverlay` so images always render even if dimension metadata is missing in Firestore.
+- Ensure `img.src` assignment and onload/complete handlers robustly trigger Tesseract OCR and DOM element overlay generation.
+- Ensure error handling and debugging output clearly indicate screenshot load status.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run validation scripts confirming Firebase integration and screenshot payload round-trip success.
+- Run static analysis and verify HTML structure.
 
 ### Manual Verification
-- Execute an automation or CLI command targeting AI Studio (`https://aistudio.google.com`), verifying that screenshots appear in Firebase, AI DOM analysis executes successfully, and responses return correctly to the CLI.
+- Open `public/pilot-request-monitor.html` in browser, verify that Firebase screenshots render immediately, OCR extracts text, and target boxes/actions are correctly displayed and dispatched.

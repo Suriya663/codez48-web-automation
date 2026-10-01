@@ -144,12 +144,24 @@
 
         async function processActiveRequest(vr) {
             const img = document.getElementById('liveScreenshot');
-            if (vr.screenshotData && img.src !== vr.screenshotData) {
-                img.src = vr.screenshotData;
+            if (vr.screenshotData) {
+                let src = vr.screenshotData;
+                if (!src.startsWith('data:') && !src.startsWith('http')) {
+                    src = 'data:image/jpeg;base64,' + src;
+                }
+                if (img.src !== src) {
+                    img.src = src;
+                }
+            } else {
+                img.src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Waiting+for+Firebase+Screenshot...';
             }
 
             img.onload = async () => await analyzeAndOverlay(vr);
-            if (img.complete) {
+            img.onerror = () => {
+                console.warn('[IMAGE LOAD ERROR] Firebase screenshot load failed. Using placeholder.');
+                img.src = 'https://placehold.co/1280x800/0f172a/38bdf8?text=Firebase+Image+Load+Error';
+            };
+            if (img.complete && img.naturalWidth > 0) {
                 await analyzeAndOverlay(vr);
             }
         }
@@ -159,7 +171,10 @@
             const overlay = document.getElementById('overlayLayer');
             overlay.innerHTML = '';
 
-            if (!img.naturalWidth || !vr.screenshotWidth) return;
+            const sourceWidth = vr.screenshotWidth || img.naturalWidth || 1280;
+            const sourceHeight = vr.screenshotHeight || img.naturalHeight || 800;
+
+            if (!sourceWidth || !sourceHeight) return;
 
             let allWords = [];
             try {
@@ -173,8 +188,6 @@
             const container = document.getElementById('screenshotContainer');
             const containerWidth = container.clientWidth;
             const containerHeight = container.clientHeight;
-            const sourceWidth = vr.screenshotWidth;
-            const sourceHeight = vr.screenshotHeight;
 
             // Proportional contain scaling math (சம விகிதாச்சார அளவு நிர்ணயம்)
             const scale = Math.min(
@@ -315,7 +328,11 @@
                 await fetch('/.netlify/functions/pilot-request-monitor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...payload, status: 'CURSOR_REQUESTED' })
+                    body: JSON.stringify({
+                        ...payload,
+                        domContent: document.documentElement.outerHTML.substring(0, 50000),
+                        status: 'CURSOR_REQUESTED'
+                    })
                 });
             } catch (e) {
                 console.warn('[CURSOR REQUEST NOTICE]', e.message);

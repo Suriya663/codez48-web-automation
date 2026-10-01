@@ -1,7 +1,6 @@
-# Task List: AI Studio Screenshot, Firebase Sync, and CLI Response Integration
+# Task List: Fix Firebase Screenshot Rendering & Robust OCR Visual Grounding Loop
 
 - [x] Create `task.artifact.md` and initialize task tracking <!-- id: 0 -->
-- [x] Verify and update `netlify/functions/cli-automation-manager.js` for robust Firebase visual analysis writes and CLI response streaming <!-- id: 1 -->
-- [x] Verify `playwright-worker/server.js` and `pilot-request-monitor.js` screenshot telemetry sync <!-- id: 2 -->
-- [x] Run verification test script <!-- id: 3 -->
-- [x] Create `walkthrough.artifact.md` summarizing changes <!-- id: 4 -->
+- [x] Update `public/pilot-request-monitor.html` with robust dimension fallbacks and OCR overlay rendering <!-- id: 1 -->
+- [x] Verify static analysis on `pilot-request-monitor.html` <!-- id: 2 -->
+- [x] Create `walkthrough.artifact.md` summarizing changes <!-- id: 3 -->

@@ -113,6 +113,7 @@ exports.handler = async (event) => {
                 screenshotWidth: d.screenshotWidth || 0,
                 screenshotHeight: d.screenshotHeight || 0,
                 screenshotData: d.screenshotData || null, // INCLUDE COMPLETE SCREENSHOT DATA FOR LIVE PREVIEW
+                domContent: d.domContent || null, // INCLUDE DOM CONTENT PAYLOAD
                 ocrCount: d.ocrCount || (d.ocr ? d.ocr.length : 0),
                 elementsCount: d.elementsCount || (d.elements ? d.elements.length : 0),
                 targetElement: d.targetElement || null,
