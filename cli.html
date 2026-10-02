@@ -157,6 +157,7 @@
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">On this page</h4>
                     <nav class="flex flex-col gap-3">
                         <a href="#quick-start" class="text-xs font-bold text-slate-600 hover:text-royal transition">Install Codez48 CLI</a>
+                        <a href="#pilot" class="text-xs font-bold text-royal transition font-black">Codez48 Pilot</a>
                         <a href="#products" class="text-xs font-bold text-slate-600 hover:text-royal transition">Product Management</a>
                         <a href="#ai" class="text-xs font-bold text-slate-600 hover:text-royal transition">AI Chat Interface</a>
                         <a href="#tools" class="text-xs font-bold text-slate-600 hover:text-royal transition">Business Tools</a>
@@ -167,8 +168,8 @@
 
                 <div class="p-6 bg-slate-100 rounded-2xl space-y-3">
                     <h5 class="text-[9px] font-black text-slate-900 uppercase tracking-widest">Latest Version</h5>
-                    <p class="text-xs font-bold text-royal">v1.1.0 (Stable)</p>
-                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">Added full Tools support for Automation, Tracker, and Mail Campaigns.</p>
+                    <p class="text-xs font-bold text-royal">v1.3.0 (Stable)</p>
+                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">Added Universal Text-Driven Computer Automation Agent support.</p>
                 </div>
             </aside>
 
@@ -179,7 +180,6 @@
                 <section id="quick-start" class="space-y-12">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Install Codez48 CLI</h2>
-                        <!-- Version Badge for Mobile -->
                         <div class="md:hidden inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full">
                             <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Latest</span>
                             <span class="text-[9px] font-black text-royal uppercase">v1.3.0</span>
@@ -197,7 +197,6 @@
                                     <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">node -v</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                                     <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">npm -v</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                                 </div>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">If both show version numbers, you are ready to continue.</p>
                             </div>
                         </div>
 
@@ -206,149 +205,80 @@
                             <div class="step-number mt-1">2</div>
                             <div class="space-y-4 flex-1 min-w-0">
                                 <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Install CLI Globally</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Run this command to install Codez48 CLI globally. You do <span class="text-black font-bold">NOT</span> need to download any source folders.</p>
+                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Run this command to install Codez48 CLI globally:</p>
                                 <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">npm install -g codez48-cli</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase italic">Can be run from CMD, PowerShell, or Terminal.</p>
                             </div>
                         </div>
 
                         <!-- Step 3 -->
                         <div class="flex gap-4 md:gap-6">
                             <div class="step-number mt-1">3</div>
-                            <div class="space-y-4 flex-1 min-w-0">
-                                <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Run Codez48</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">After installation, you can launch the CLI from any folder on your computer:</p>
+                            <div class="space-y-4 flex-1 min-w-0" id="local-dev">
+                                <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Run Codez48 & Local Setup</h3>
+                                <p class="text-slate-500 text-sm font-medium leading-relaxed">After installation, launch the CLI:</p>
                                 <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                                <div class="grid grid-cols-2 gap-3 pt-2">
-                                    <div class="p-3 bg-white border border-slate-100 rounded-xl"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">AI Chat</p><p class="text-[10px] font-bold">codez48 ai</p></div>
-                                    <div class="p-3 bg-white border border-slate-100 rounded-xl"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Group Chat</p><p class="text-[10px] font-bold">codez48 chat</p></div>
-                                    <div class="p-3 bg-white border border-slate-100 rounded-xl"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">File Share</p><p class="text-[10px] font-bold">codez48 share</p></div>
-                                    <div class="p-3 bg-white border border-slate-100 rounded-xl"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Authentication</p><p class="text-[10px] font-bold">codez48 login</p></div>
-                                </div>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <!-- Step 4: Windows Troubleshooting -->
-                        <div class="p-8 bg-blue-50/50 border-2 border-blue-100 rounded-[2.5rem] space-y-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center shadow-sm"><i class="fa-brands fa-windows text-xl"></i></div>
-                                <div>
-                                    <h3 class="text-lg font-black text-blue-900 uppercase">Windows: Fix "not recognized" Error</h3>
-                                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Step 4 — Troubleshooting</p>
-                                </div>
+                <!-- Section: Codez48 Pilot -->
+                <section id="pilot" class="space-y-12">
+                    <div class="space-y-4">
+                        <span class="px-4 py-1.5 bg-blue-50 text-royal text-[10px] font-black rounded-full uppercase tracking-widest border border-blue-100">
+                            Universal Automation Agent
+                        </span>
+                        <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Codez48 Pilot</h2>
+                        <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
+                            Codez48 Pilot is the natural-language automation agent inside the Codez48 CLI. Describe what you want to accomplish, and Pilot understands the goal, inspects the required application or website, performs actions, verifies the result, and continues through multi-step workflows.
+                        </p>
+                    </div>
+
+                    <!-- Pilot vs AI Chat Comparison -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm space-y-4">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+                                <h3 class="text-base font-black text-black uppercase tracking-tight">AI Chat (<code class="font-mono text-royal">codez48 ai</code>)</h3>
                             </div>
-
-                            <p class="text-slate-600 text-xs font-medium leading-relaxed">If you get a "command not found" or "not recognized" error, you need to add the npm global path to your Windows Environment Variables.</p>
-
-                            <div class="space-y-4">
-                                <p class="text-[9px] font-black text-blue-800 uppercase">1. Get your npm prefix path:</p>
-                                <div class="code-block group bg-white"><code class="font-mono text-xs text-black">npm config get prefix</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                                <p class="text-[10px] text-slate-400 italic">Example result: C:\Users\&lt;username&gt;\AppData\Roaming\npm</p>
-                            </div>
-
-                            <div class="space-y-3 pt-2">
-                                <p class="text-[9px] font-black text-blue-800 uppercase">2. Permanent Path Setup:</p>
-                                <ol class="text-[11px] text-slate-600 space-y-2 list-decimal ml-4 font-medium">
-                                    <li>Press the <span class="font-bold">Windows Key</span> and search for "<span class="italic text-black">Edit environment variables for your account</span>".</li>
-                                    <li>Under "<span class="font-bold">User variables</span>", select <span class="text-black font-bold">Path</span> and click <span class="font-bold text-black">Edit</span>.</li>
-                                    <li>Click <span class="font-bold text-black">New</span> and paste the exact path returned in Step 1.</li>
-                                    <li>Click <span class="font-bold text-black">OK</span> on all windows and restart your CMD/PowerShell.</li>
-                                </ol>
-                            </div>
-
-                            <div class="pt-4 border-t border-blue-100 space-y-3">
-                                <p class="text-[9px] font-black text-blue-800 uppercase">Temporary Fix (Current PowerShell Only):</p>
-                                <div class="code-block group bg-white"><code class="font-mono text-[10px] text-black">$env:Path += ";" + (npm config get prefix)</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            </div>
+                            <p class="text-slate-500 text-xs font-medium leading-relaxed">Conversational AI designed for questions, answering queries, code generation, and live brainstorming.</p>
                         </div>
-
-                        <!-- Step 5 -->
-                        <div class="flex gap-4 md:gap-6">
-                            <div class="step-number mt-1">5</div>
-                            <div class="space-y-4 flex-1 min-w-0">
-                                <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Verify Installation</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Check if everything is ready to use:</p>
-                                <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48 ai</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                                <p class="text-[10px] text-emerald-600 font-black uppercase"><i class="fa-solid fa-circle-check mr-1"></i> Codez48 CLI is ready to use.</p>
+                        <div class="p-8 bg-blue-50/50 border-2 border-blue-200 rounded-[2.5rem] shadow-sm space-y-4">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <h3 class="text-base font-black text-blue-900 uppercase tracking-tight">Pilot (<code class="font-mono text-emerald-700">codez48 pilot</code>)</h3>
                             </div>
+                            <p class="text-slate-600 text-xs font-medium leading-relaxed">Goal-driven computer automation agent that operates real applications, creates files, builds projects, and executes workflows.</p>
                         </div>
+                    </div>
 
-                        <!-- Step 6 -->
-                        <div class="flex gap-4 md:gap-6">
-                            <div class="step-number mt-1">6</div>
-                            <div class="space-y-4 flex-1 min-w-0">
-                                <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Update CLI</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">To ensure you have the latest features and security updates, run:</p>
-                                <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">npm install -g codez48-cli@latest</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            </div>
+                    <!-- Capabilities Grid -->
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-black text-black uppercase tracking-widest">What Can Pilot Do?</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">🌐 Browser Automation</p><p class="text-[11px] text-slate-500">Live DOM, OCR, and visual element interaction.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">💻 VS Code & IDE</p><p class="text-[11px] text-slate-500">Project creation, code editing, and execution.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">🗂️ File & Folders</p><p class="text-[11px] text-slate-500">TXT, MD, JSON, CSV, and code file management.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📊 Excel Spreadsheets</p><p class="text-[11px] text-slate-500">Data workbooks, tables, and formula calculations.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📝 Word Documents</p><p class="text-[11px] text-slate-500">Professional reports, notes, and documentation.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📽️ PowerPoint Presentations</p><p class="text-[11px] text-slate-500">Structured slides, titles, and bullet points.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">⚙️ Terminal Automation</p><p class="text-[11px] text-slate-500">Command execution, package installation, and logs.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📱 Android Projects</p><p class="text-[11px] text-slate-500">SDK auto-discovery, Gradle wrapper, and APK builds.</p></div>
+                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">🔄 Cross-App Workflows</p><p class="text-[11px] text-slate-500">Seamlessly moves between browser, VS Code, and terminal.</p></div>
                         </div>
+                    </div>
 
-                        <!-- Interactive CLI Terminal & Output Preview Element -->
-                        <div class="mt-12 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 md:p-8 text-white space-y-4 shadow-2xl">
-                            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-                                    <h3 class="text-sm md:text-base font-black uppercase tracking-wider text-emerald-400">Interactive CLI Terminal & Output Preview</h3>
-                                </div>
-                                <span class="text-[9px] font-mono bg-slate-800 text-slate-400 px-3 py-1 rounded-full uppercase">Live Element</span>
-                            </div>
-                            <p class="text-slate-400 text-xs font-medium">Test CLI commands below and view real-time execution output displayed directly in this HTML element:</p>
-
-                            <div class="flex gap-2">
-                                <span class="text-emerald-400 font-mono py-2">$</span>
-                                <input type="text" id="cli-input" value="codez48 pilot 'Create a Node.js API'" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 font-mono text-xs text-white focus:outline-none focus:border-emerald-500" />
-                                <button onclick="runCliCommand()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-6 py-2.5 rounded-xl transition-all shadow-lg">Run</button>
-                            </div>
-
-                            <!-- Output Display Element -->
-                            <div id="cli-output" class="bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-slate-300 min-h-[140px] max-h-[250px] overflow-y-auto space-y-1">
-                                <p class="text-slate-500">// Type a command above and click Run to see execution output displayed here...</p>
-                            </div>
-
-                            <div class="flex flex-wrap gap-2 pt-2">
-                                <button onclick="setCliCmd('codez48 ai')" class="text-[9px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">codez48 ai</button>
-                                <button onclick="setCliCmd('codez48 pilot \'Create a Node.js API\'')" class="text-[9px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">codez48 pilot 'Create a Node.js API'</button>
-                                <button onclick="setCliCmd('codez48 list-products')" class="text-[9px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">codez48 list-products</button>
-                                <button onclick="setCliCmd('codez48 login')" class="text-[9px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">codez48 login</button>
-                            </div>
+                    <!-- Practical Example Gallery -->
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-black text-black uppercase tracking-widest">Practical Example Gallery</h3>
+                        <div class="space-y-4">
+                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Open YouTube and search for Codez48"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
+                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create a Node.js REST API called task-api"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
+                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create a Word document explaining cloud computing"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
+                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create an Excel sheet for monthly expenses"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
+                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create a PowerPoint presentation about AI"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
+                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create an Android to-do list application"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                         </div>
-                        <script>
-                            function setCliCmd(cmd) {
-                                document.getElementById('cli-input').value = cmd;
-                            }
-                            function runCliCommand() {
-                                const cmd = document.getElementById('cli-input').value.trim();
-                                const out = document.getElementById('cli-output');
-                                const timestamp = new Date().toLocaleTimeString();
-
-                                let responseHtml = `<p class="text-emerald-400">[$] ${cmd}</p>`;
-                                if (cmd.includes('pilot')) {
-                                    responseHtml += `<p class="text-royal">[PILOT AGENT] Universal Task Planner activated...</p>`;
-                                    responseHtml += `<p class="text-slate-300">✓ Target Application: VS Code & Terminal</p>`;
-                                    responseHtml += `<p class="text-slate-300">✓ Project Workspace: Documents/MyBackendApp</p>`;
-                                    responseHtml += `<p class="text-emerald-400">✓ SUCCESS: Project created, npm dependencies installed, and server running live at http://localhost:3000</p>`;
-                                } else if (cmd.includes('ai')) {
-                                    responseHtml += `<p class="text-royal">[AI CHAT] Initializing Codez48 AI reasoning model...</p>`;
-                                    responseHtml += `<p class="text-slate-300">AI: Hello! I am your Codez48 AI development assistant. How can I help you build today?</p>`;
-                                } else if (cmd.includes('list-products')) {
-                                    responseHtml += `<p class="text-slate-300">┌────────────┬──────────────────────┬─────────┬───────┐</p>`;
-                                    responseHtml += `<p class="text-slate-300">│ ID         │ Name                 │ Price   │ Stock │</p>`;
-                                    responseHtml += `<p class="text-slate-300">├────────────┼──────────────────────┼─────────┼───────┤</p>`;
-                                    responseHtml += `<p class="text-slate-300">│ PROD-A12B  │ Premium AI Model     │ ₹4,000  │ 10    │</p>`;
-                                    responseHtml += `<p class="text-slate-300">│ PROD-C78D  │ Automation Licence   │ ₹2,500  │ 50    │</p>`;
-                                    responseHtml += `<p class="text-slate-300">└────────────┴──────────────────────┴─────────┴───────┘</p>`;
-                                } else if (cmd.includes('login')) {
-                                    responseHtml += `<p class="text-royal">[AUTH] Authenticating session with Codez48 secure gateway...</p>`;
-                                    responseHtml += `<p class="text-emerald-400">✓ SUCCESS: Session active and token stored.</p>`;
-                                } else {
-                                    responseHtml += `<p class="text-slate-300">Executing command: ${cmd}...</p>`;
-                                    responseHtml += `<p class="text-emerald-400">✓ Command executed successfully.</p>`;
-                                }
-
-                                out.innerHTML += `<div class="mt-2 border-t border-slate-900 pt-1"><span class="text-[9px] text-slate-500">[${timestamp}]</span> ${responseHtml}</div>`;
-                                out.scrollTop = out.scrollHeight;
-                            }
-                        </script>
                     </div>
                 </section>
 
@@ -356,356 +286,75 @@
                 <section id="products" class="space-y-8 md:space-y-10">
                     <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Product Management</h2>
                     <p class="text-slate-500 text-sm md:text-lg font-medium">Control your digital storefront inventory with simple commands.</p>
-
-                    <div class="grid grid-cols-1 gap-8">
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-xs md:text-sm font-black text-black uppercase tracking-widest">List Products</h3>
-                                <span class="text-[7px] md:text-[8px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-500 uppercase">Interactive</span>
-                            </div>
-                            <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48 list-products</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                        </div>
-
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-xs md:text-sm font-black text-black uppercase tracking-widest">Add New Product</h3>
-                                <span class="text-[7px] md:text-[8px] font-black bg-blue-50 px-2 py-0.5 rounded text-royal uppercase">Wizard</span>
-                            </div>
-                            <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48 add-product</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Free users can publish up to 4 products during their trial period.</p>
-                        </div>
-
-                        <div class="space-y-3">
-                            <h3 class="text-xs md:text-sm font-black text-black uppercase tracking-widest">Update & Delete</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="code-block group"><code class="font-mono text-[10px] md:text-xs text-black">codez48 update-product</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                                <div class="code-block group"><code class="font-mono text-[10px] md:text-xs text-black">codez48 delete-product</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48 list-products</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                 </section>
 
                 <!-- Section: AI Chat & Web Builder -->
                 <section id="ai" class="space-y-8">
                     <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">AI Chat & Web Builder</h2>
                     <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                        Start an interactive, contextual conversation with Codez48 AI. Beyond simple chat, this agent can generate full websites and even create local files on your computer.
+                        Start an interactive, contextual conversation with Codez48 AI.
                     </p>
-                    <div class="space-y-6">
-                        <div class="code-block group">
-                            <code class="font-mono text-sm text-black">codez48 ai</code>
-                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                        </div>
-                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                            <div>
-                                <p class="text-[10px] font-black text-royal uppercase tracking-widest mb-1">Interactive Website Generation</p>
-                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Create a portfolio website"</span> and get a live preview URL instantly.</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Local Coding Agent</p>
-                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Create a calculator with index.html, style.css and script.js"</span> to have the files generated in your current folder.</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">VS Code Integration</p>
-                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Open this project in VS Code"</span> to launch your editor immediately.</p>
-                            </div>
-                        </div>
-
-                        <!-- Interactive Live AI Chat Console -->
-                        <div class="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white space-y-4 shadow-xl">
-                            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <h4 class="text-xs font-black uppercase tracking-widest text-slate-300">Codez48 Live AI Console</h4>
-                                </div>
-                                <span class="text-[9px] font-mono text-royal bg-blue-500/10 px-2.5 py-1 rounded-full uppercase">Netlify Function Connected</span>
-                            </div>
-
-                            <div id="aiChatMessages" class="h-64 overflow-y-auto space-y-3 font-mono text-xs pr-2 custom-scrollbar">
-                                <div class="p-3 bg-slate-800/80 rounded-xl text-slate-300">
-                                    <p class="font-bold text-royal mb-1">Codez48 AI System:</p>
-                                    <p>Ready. Type a prompt below or ask me to generate code, websites, or analyze tasks.</p>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-2 pt-2">
-                                <input type="text" id="aiChatInput" placeholder="e.g. Create a modern landing page for my business..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono" onkeydown="if(event.key==='Enter') window.sendCliAIChat()" />
-                                <button onclick="window.sendCliAIChat()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg">Send</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Section: App Control -->
-                <section id="open" class="space-y-6">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">App & URL Launcher</h2>
-                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                        Instantly open installed applications or websites from your command line.
-                    </p>
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="code-block group">
-                            <code class="font-mono text-sm text-black">codez48 open chrome</code>
-                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                        </div>
-                        <div class="code-block group">
-                            <code class="font-mono text-sm text-black">codez48 open https://google.com</code>
-                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Section: Collaboration Rooms -->
-                <section id="rooms" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Collaboration Rooms</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-comments"></i></div>
-                                <h3 class="text-lg font-black text-black uppercase tracking-tight">Group Chat</h3>
-                            </div>
-                            <p class="text-slate-500 text-xs font-medium">Join real-time chat rooms with a 5-digit code.</p>
-                            <div class="code-block group">
-                                <code class="font-mono text-xs text-black">codez48 chat</code>
-                                <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                            </div>
-                        </div>
-
-                        <div class="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-share-nodes"></i></div>
-                                <h3 class="text-lg font-black text-black uppercase tracking-tight">File Sharing</h3>
-                            </div>
-                            <p class="text-slate-500 text-xs font-medium">Instantly share files with everyone in the room.</p>
-                            <div class="code-block group">
-                                <code class="font-mono text-xs text-black">codez48 share</code>
-                                <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Section: Local Search & Analysis -->
-                <section id="search" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Local Discovery & Safety</h2>
-                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                        Find files and folders on your computer using natural language, and perform heuristic safety analysis on suspicious downloads.
-                    </p>
-                    <div class="space-y-6">
-                        <div class="code-block group">
-                            <code class="font-mono text-sm text-black">codez48 find</code>
-                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                        </div>
-                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                            <div>
-                                <p class="text-[10px] font-black text-black uppercase tracking-widest mb-1">Natural Language Search</p>
-                                <p class="text-xs text-slate-600 font-medium">Say <span class="text-black font-bold">"Find my invoice from Downloads"</span> in AI Chat.</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Safety Analysis</p>
-                                <p class="text-xs text-slate-600 font-medium">Ask the AI to <span class="text-black font-bold">"Analyze my Downloads for suspicious files"</span> to run heuristic checks.</p>
-                            </div>
-                        </div>
-                    </div>
                 </section>
 
                 <!-- Section: Business Tools -->
-                <section id="tools" class="space-y-8 md:space-y-12">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Business Tools Hub</h2>
-
-                    <div class="space-y-8">
-                        <div class="p-6 md:p-8 bg-white border border-slate-100 rounded-[2rem] md:rounded-[2.5rem] shadow-sm space-y-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl"><i class="fa-solid fa-robot"></i></div>
-                                <h3 class="text-lg md:text-xl font-black text-black uppercase tracking-tight">Tools Suite</h3>
-                            </div>
-                            <p class="text-slate-500 text-sm font-medium">Access the core command for all business utilities:</p>
-                            <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48 tools</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 pt-4 border-t border-slate-50">
-                                <div>
-                                    <p class="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Automation Sentinel</p>
-                                    <p class="text-[10px] md:text-xs font-bold text-slate-600">codez48 tools automation</p>
-                                </div>
-                                <div>
-                                    <p class="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Website Tracker</p>
-                                    <p class="text-[10px] md:text-xs font-bold text-slate-600">codez48 tools tracker</p>
-                                </div>
-                                <div>
-                                    <p class="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Push Notifications</p>
-                                    <p class="text-[10px] md:text-xs font-bold text-slate-600">codez48 tools notifications</p>
-                                </div>
-                                <div>
-                                    <p class="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Mail Automation</p>
-                                    <p class="text-[10px] md:text-xs font-bold text-slate-600">codez48 tools mail</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <section id="tools" class="space-y-8">
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Business Tools</h2>
+                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
+                        Automated business intelligence, tracking, and campaign tools.
+                    </p>
                 </section>
 
-                <!-- Section: Reference Table -->
+                <!-- Section: Command Reference -->
                 <section id="reference" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Full Reference</h2>
-                    <div class="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left min-w-[500px]">
-                                <thead class="bg-slate-50 border-b border-slate-100">
-                                    <tr>
-                                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Command</th>
-                                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-[10px] md:text-[11px] font-bold text-slate-600 divide-y divide-slate-50 font-mono">
-                                    <tr><td class="px-6 py-4">codez48 login</td><td class="px-6 py-4 font-sans">Secure authentication</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 add-product</td><td class="px-6 py-4 font-sans">Interactive creation wizard</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 list-products</td><td class="px-6 py-4 font-sans">View active inventory</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 ai</td><td class="px-6 py-4 font-sans">Interactive AI Chat & Web Builder</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 open [app]</td><td class="px-6 py-4 font-sans">Launch local apps or URLs</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 find</td><td class="px-6 py-4 font-sans">Local file & folder search tool</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 chat</td><td class="px-6 py-4 font-sans">Real-time room-based group chat</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 share</td><td class="px-6 py-4 font-sans">Multi-user room-based file sharing</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 tools tracker add</td><td class="px-6 py-4 font-sans">Register external site</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 tools automation run</td><td class="px-6 py-4 font-sans">Trigger background rule</td></tr>
-                                    <tr><td class="px-6 py-4">codez48 logout</td><td class="px-6 py-4 font-sans">Clear local session key</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Command Reference</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400">
+                                    <th class="p-4">Command</th>
+                                    <th class="p-4">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-xs font-medium text-slate-600">
+                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 pilot "&lt;task&gt;"</td><td class="p-4">Natural-language automation agent for browser, desktop, files, projects, and development environments.</td></tr>
+                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 ai</td><td class="p-4">Interactive contextual AI assistant chat.</td></tr>
+                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 list-products</td><td class="p-4">List all published products in your merchant catalog.</td></tr>
+                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 add-product</td><td class="p-4">Interactive wizard to publish a new product.</td></tr>
+                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 login</td><td class="p-4">Authenticate and save merchant session credentials.</td></tr>
+                                <tr><td class="p-4 font-mono font-bold text-black">codez48 chat</td><td class="p-4">Join a real-time collaboration room.</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                </section>
-
-                <!-- Section: Local Development -->
-                <section id="local-dev" class="space-y-6 pb-20 border-t border-slate-200 pt-12 md:pt-16">
-                    <h2 class="text-xl md:text-2xl font-black text-slate-400 uppercase tracking-tight">Local Development</h2>
-                    <p class="text-slate-500 text-xs md:text-sm font-medium leading-relaxed">
-                        For developers contributing to the CLI or testing from source, you can run commands directly using Node.js without global installation.
-                    </p>
-                    <div class="space-y-4">
-                        <div class="code-block group">
-                            <code class="font-mono text-[10px] md:text-xs text-slate-500">node cli.js login</code>
-                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                        </div>
-                        <div class="code-block group">
-                            <code class="font-mono text-[10px] md:text-xs text-slate-500">node cli.js tools list</code>
-                            <button onclick="copyCode(this)" class="copy-btn">Copy</button>
-                        </div>
-                    </div>
-                    <p class="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest italic">
-                        Note: Development mode requires the CLI source folder and installed local dependencies.
-                    </p>
                 </section>
 
             </div>
         </div>
-
     </main>
+
+    <footer class="bg-slate-900 text-white py-12 px-6 mt-20 border-t border-slate-800">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <span class="text-lg font-black tracking-tighter uppercase text-white">CODEZ<span class="text-royal">48</span></span>
+                <span class="bg-slate-800 text-slate-400 text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase">CLI v1.3.0</span>
+            </div>
+            <p class="text-slate-500 text-xs font-medium">© 2026 Codez48 Platform. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script>
         function copyCode(btn) {
-            const code = btn.parentElement.querySelector('code').innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                const originalText = btn.innerText;
-                btn.innerText = 'Copied';
+            const codeEl = btn.previousElementSibling;
+            const text = codeEl.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.innerText = 'Copied!';
                 btn.classList.add('copied-state');
                 setTimeout(() => {
-                    btn.innerText = originalText;
+                    btn.innerText = 'Copy';
                     btn.classList.remove('copied-state');
                 }, 2000);
             });
         }
     </script>
-
-    <!-- Firebase & AI Chat Integration -->
-    <script type="module">
-        import { auth, db } from './js/firebase-config.js';
-        import { onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                try { await signInAnonymously(auth); } catch (e) { console.warn("Anon sign-in:", e); }
-            } else {
-                console.log("Firebase Authenticated:", user.uid);
-            }
-        });
-    </script>
-
-    <script>
-        let chatHistory = [];
-        window.sendCliAIChat = async function() {
-            const inputEl = document.getElementById('aiChatInput');
-            const messagesContainer = document.getElementById('aiChatMessages');
-            const prompt = inputEl.value.trim();
-            if (!prompt) return;
-
-            inputEl.value = '';
-            chatHistory.push({ role: 'user', content: prompt });
-
-            messagesContainer.innerHTML += `
-                <div class="p-3 bg-slate-800/40 rounded-xl text-right text-white">
-                    <p class="font-bold text-emerald-400 mb-1">You:</p>
-                    <p class="font-sans">${escapeHtml(prompt)}</p>
-                </div>
-            `;
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            const loadingId = 'loading-' + Date.now();
-            messagesContainer.innerHTML += `
-                <div id="${loadingId}" class="p-3 bg-slate-800/80 rounded-xl text-slate-400 animate-pulse">
-                    <p class="font-bold text-royal mb-1">Codez48 AI:</p>
-                    <p>Thinking & generating response...</p>
-                </div>
-            `;
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            try {
-                const res = await fetch('/.netlify/functions/cli-ai-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: chatHistory })
-                });
-                const data = await res.json();
-                document.getElementById(loadingId)?.remove();
-
-                if (data.success) {
-                    const reply = data.answer || data.explanation || JSON.stringify(data);
-                    chatHistory.push({ role: 'assistant', content: reply });
-
-                    let extraHtml = '';
-                    if (data.isWebsite && data.previewUrl) {
-                        extraHtml = `<div class="mt-2 pt-2 border-t border-slate-700"><a href="${data.previewUrl}" target="_blank" class="text-royal font-bold underline">🌐 View Live Website Preview →</a></div>`;
-                    }
-
-                    messagesContainer.innerHTML += `
-                        <div class="p-3 bg-slate-800/80 rounded-xl text-slate-200">
-                            <p class="font-bold text-royal mb-1">Codez48 AI:</p>
-                            <p class="font-sans whitespace-pre-wrap">${escapeHtml(reply)}</p>
-                            ${extraHtml}
-                        </div>
-                    `;
-                } else {
-                    messagesContainer.innerHTML += `
-                        <div class="p-3 bg-rose-950/50 border border-rose-900 rounded-xl text-rose-300">
-                            <p class="font-bold mb-1">Error:</p>
-                            <p>${escapeHtml(data.error || 'Unknown error occurred')}</p>
-                        </div>
-                    `;
-                }
-            } catch (err) {
-                document.getElementById(loadingId)?.remove();
-                messagesContainer.innerHTML += `
-                    <div class="p-3 bg-rose-950/50 border border-rose-900 rounded-xl text-rose-300">
-                        <p class="font-bold mb-1">Network Error:</p>
-                        <p>${escapeHtml(err.message)}</p>
-                    </div>
-                `;
-            }
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        };
-
-        function escapeHtml(text) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-        }
-    </script>
-
 </body>
 </html>
