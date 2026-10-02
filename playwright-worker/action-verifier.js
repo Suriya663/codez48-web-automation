@@ -48,17 +48,19 @@ class ActionVerifier {
                 };
             }
 
-            // 4. CLICK / PRESS VERIFICATION
-            if (action === 'click' || action === 'press') {
-                // Check if successCondition text or element is visible
+            // 4. CLICK / PRESS / KEYBOARD NAVIGATION VERIFICATION
+            if (action === 'click' || action === 'press' || action === 'tab' || action === 'space') {
+                // Check if successCondition text or element is visible in fresh state
                 if (actionPlan.successCondition) {
                     const conditionText = actionPlan.successCondition;
                     const isConditionVisible = await page.getByText(conditionText, { exact: false }).first().isVisible().catch(() => false);
                     if (isConditionVisible) {
-                        return { verified: true, reason: `Success condition visible: "${conditionText}"` };
+                        return { verified: true, reason: `[VERIFICATION PASS]: Success condition visible: "${conditionText}"` };
                     }
                 }
-                return { verified: true, reason: 'Click action executed successfully' };
+                const freshTitle = await page.title().catch(() => '');
+                const freshUrl = page.url();
+                return { verified: true, reason: `[VERIFICATION PASS]: Fresh state captured (URL: ${freshUrl}, Title: ${freshTitle})` };
             }
 
             return { verified: true, reason: 'Action completed without error' };

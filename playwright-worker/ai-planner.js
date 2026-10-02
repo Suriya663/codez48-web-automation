@@ -68,14 +68,17 @@ OUTPUT STRICT JSON ONLY:
 }`;
 
         const userContext = JSON.stringify({
-            goal: run.goal,
+            originalUserRequirement: run.goal,
             currentUrl: pageState.url,
             pageTitle: pageState.title,
+            viewport: pageState.viewport,
+            scroll: pageState.scroll,
+            activeElement: pageState.activeElement,
             headings: pageState.headings,
             buttons: pageState.buttons,
             inputs: pageState.inputs,
             links: pageState.links,
-            dialogs: pageState.dialogs,
+            layoutSections: pageState.layoutSections,
             previousAction: run.lastAction,
             previousResult: run.lastResult,
             collectedData: run.collectedData

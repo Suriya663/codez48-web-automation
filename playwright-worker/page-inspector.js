@@ -19,21 +19,25 @@ class PageInspector {
                     return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && elem.offsetWidth > 0 && elem.offsetHeight > 0;
                 };
 
-                // YouTube Channel Specific Extraction
-                let ytChannelData = null;
-                if (window.location.hostname.includes('youtube.com')) {
-                    const subCountEl = document.querySelector('#subscriber-count, yt-formatted-string#subscriber-count, [aria-label*="subscribers"]');
-                    const channelNameEl = document.querySelector('yt-formatted-string#text, #channel-name, h1.ytd-channel-name');
-                    const videoCountEl = document.querySelector('#videos-count, [aria-label*="videos"]');
-                    const channelBioEl = document.querySelector('#description-container, #about-container, #channel-tagline');
+                const viewport = {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                };
 
-                    ytChannelData = {
-                        channelName: channelNameEl?.innerText?.trim() || document.title.replace(' - YouTube', ''),
-                        subscriberCount: subCountEl?.innerText?.trim() || 'N/A',
-                        videoCount: videoCountEl?.innerText?.trim() || 'N/A',
-                        bio: channelBioEl?.innerText?.substring(0, 300)?.trim() || 'N/A'
-                    };
-                }
+                const scroll = {
+                    x: window.scrollX,
+                    y: window.scrollY
+                };
+
+                const active = document.activeElement;
+                const activeElement = active ? {
+                    tagName: active.tagName,
+                    id: active.id || '',
+                    className: active.className || '',
+                    text: (active.innerText || active.value || '').substring(0, 50)
+                } : null;
+
+                const fullHtml = document.documentElement.outerHTML.substring(0, 100000);
 
                 // Layout Section Classification
                 const layoutSections = [];
@@ -42,12 +46,14 @@ class PageInspector {
                         const tag = s.tagName.toLowerCase();
                         const heading = s.querySelector('h1, h2, h3')?.innerText?.trim() || '';
                         const textSnippet = s.innerText?.substring(0, 100)?.replace(/\s+/g, ' ')?.trim() || '';
+                        const rect = s.getBoundingClientRect();
                         if (textSnippet.length > 5) {
                             layoutSections.push({
                                 index: idx,
                                 tag,
                                 heading: heading || tag.toUpperCase(),
-                                snippet: textSnippet
+                                snippet: textSnippet,
+                                rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
                             });
                         }
                     }
@@ -65,13 +71,15 @@ class PageInspector {
                 document.querySelectorAll('button, input[type="submit"], input[type="button"], a.btn, [role="button"]').forEach((b, idx) => {
                     if (isVisible(b)) {
                         const name = b.getAttribute('aria-label') || b.innerText.trim() || b.getAttribute('value') || b.getAttribute('title') || '';
+                        const rect = b.getBoundingClientRect();
                         if (name && name.length < 80) {
                             buttons.push({
                                 index: idx,
                                 role: b.getAttribute('role') || 'button',
                                 name: name,
                                 disabled: b.disabled || b.getAttribute('aria-disabled') === 'true',
-                                id: b.id || ''
+                                id: b.id || '',
+                                rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
                             });
                         }
                     }
@@ -85,6 +93,7 @@ class PageInspector {
                         const type = i.getAttribute('type') || (tag === 'textarea' ? 'textarea' : isEditable ? 'contenteditable' : 'text');
                         const isSecret = /password|otp|secret|token|apikey/i.test(i.name || i.id || i.getAttribute('placeholder') || i.getAttribute('aria-label') || '');
                         const val = isEditable ? (i.innerText || i.textContent || '') : (i.value || '');
+                        const rect = i.getBoundingClientRect();
                         inputs.push({
                             index: idx,
                             type,
@@ -93,7 +102,8 @@ class PageInspector {
                             placeholder: i.getAttribute('placeholder') || i.getAttribute('aria-placeholder') || '',
                             label: i.getAttribute('aria-label') || i.labels?.[0]?.innerText?.trim() || i.getAttribute('title') || '',
                             value: isSecret ? '****' : val,
-                            disabled: i.disabled || i.getAttribute('aria-disabled') === 'true'
+                            disabled: i.disabled || i.getAttribute('aria-disabled') === 'true',
+                            rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
                         });
                     }
                 });
@@ -102,18 +112,23 @@ class PageInspector {
                 document.querySelectorAll('a[href]').forEach((a, idx) => {
                     if (isVisible(a) && links.length < 15) {
                         const text = a.innerText.trim() || a.getAttribute('aria-label') || '';
+                        const rect = a.getBoundingClientRect();
                         if (text && text.length < 60) {
                             links.push({
                                 index: idx,
                                 text,
-                                href: a.getAttribute('href')
+                                href: a.getAttribute('href'),
+                                rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
                             });
                         }
                     }
                 });
 
                 return {
-                    ytChannelData,
+                    viewport,
+                    scroll,
+                    activeElement,
+                    fullHtml,
                     layoutSections,
                     headings: headings.slice(0, 10),
                     buttons: buttons.slice(0, 20),
@@ -125,7 +140,10 @@ class PageInspector {
             return {
                 url,
                 title,
-                ytChannelData: pageData.ytChannelData,
+                viewport: pageData.viewport,
+                scroll: pageData.scroll,
+                activeElement: pageData.activeElement,
+                fullHtml: pageData.fullHtml,
                 layoutSections: pageData.layoutSections,
                 headings: pageData.headings,
                 buttons: pageData.buttons,
