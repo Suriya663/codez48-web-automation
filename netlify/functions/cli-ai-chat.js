@@ -213,6 +213,7 @@ exports.handler = async (event, context) => {
         - If the user asks to "Open in VS Code", always trigger "open_vscode".`;
 
         let aiResponse = null;
+        let aiErrors = [];
 
         // Try Groq First
         if (groqKeys.length > 0) {
@@ -240,11 +241,16 @@ exports.handler = async (event, context) => {
                     if (response.ok) {
                         aiResponse = data.choices[0].message.content;
                         break;
+                    } else {
+                        aiErrors.push(`Groq (${response.status}): ${data.error?.message || JSON.stringify(data)}`);
                     }
                 } catch (err) {
                     console.warn(`[Groq Retry] Key failure:`, err.message);
+                    aiErrors.push(`Groq Exception: ${err.message}`);
                 }
             }
+        } else {
+            aiErrors.push("No Groq API Keys configured in environment.");
         }
 
         // Fallback to Gemini
@@ -287,16 +293,21 @@ exports.handler = async (event, context) => {
                 const data = await response.json();
                 if (response.ok && data.candidates && data.candidates[0]) {
                     aiResponse = data.candidates[0].content.parts[0].text;
+                } else {
+                    aiErrors.push(`Gemini (${response.status}): ${data.error?.message || JSON.stringify(data)}`);
                 }
             } catch (err) {
                 console.error("[Gemini Fallback Error]:", err.message);
+                aiErrors.push(`Gemini Exception: ${err.message}`);
             }
+        } else if (!geminiApiKey) {
+            aiErrors.push("No Gemini API Key available.");
         }
 
         if (!aiResponse) {
             return jsonResponse(502, {
                 success: false,
-                error: "AI Services are currently unreachable."
+                error: "AI Services unreachable. Details: " + aiErrors.join(' | ')
             });
         }
 
