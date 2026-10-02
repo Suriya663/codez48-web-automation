@@ -115,7 +115,7 @@ exports.handler = async (event, context) => {
                     ownerId: sellerId,
                     html: parsedBody.htmlContent,
                     prompt: parsedBody.prompt || 'Codez48 Static Preview',
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    updatedAt: new Date().toISOString()
                 }, { merge: true });
             } catch (e) {
                 console.warn('Firebase generated_websites set failed:', e.message);
@@ -150,7 +150,7 @@ exports.handler = async (event, context) => {
         const groqKeys = rawGroqKeys
             ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
             : [];
-        const geminiApiKey = process.env.GEMINI_API_KEY || "";
+        const geminiApiKey = process.env.GEMINI_API_KEY || "AIzaSyAbCLiq_qTnWNR3QRYi_UTuL7WSOKEJEzM";
 
         if (groqKeys.length === 0 && !geminiApiKey) {
             return jsonResponse(500, { success: false, error: "AI Service Unconfigured on Server." });
@@ -226,7 +226,7 @@ exports.handler = async (event, context) => {
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
-                            model: "openai/gpt-oss-120b",
+                            model: "llama-3.3-70b-versatile",
                             messages: [
                                 { role: "system", content: systemPrompt },
                                 ...messages
@@ -250,16 +250,38 @@ exports.handler = async (event, context) => {
         // Fallback to Gemini
         if (!aiResponse && geminiApiKey) {
             try {
-                const contents = messages.map(m => ({
-                    role: m.role === 'assistant' ? 'model' : 'user',
-                    parts: [{ text: m.content || " " }]
-                }));
-                contents.unshift({ role: 'user', parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }] });
+                let systemInstruction = { parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }] };
+                const contents = [];
+                let currentRole = null;
+                let currentText = "";
+
+                messages.forEach(m => {
+                    if (m.role === 'system') {
+                        systemInstruction.parts[0].text += "\n" + m.content;
+                    } else {
+                        const role = m.role === 'assistant' ? 'model' : 'user';
+                        if (currentRole === role) {
+                            currentText += "\n\n" + (m.content || " ");
+                        } else {
+                            if (currentRole) {
+                                contents.push({ role: currentRole, parts: [{ text: currentText || " " }] });
+                            }
+                            currentRole = role;
+                            currentText = m.content || " ";
+                        }
+                    }
+                });
+                if (currentRole) {
+                    contents.push({ role: currentRole, parts: [{ text: currentText || " " }] });
+                }
+                if (contents.length === 0) contents.push({ role: 'user', parts: [{ text: 'Hello' }] });
+
+                const reqBody = { contents: contents, systemInstruction: systemInstruction };
 
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: contents })
+                    body: JSON.stringify(reqBody)
                 });
 
                 const data = await response.json();
@@ -280,8 +302,22 @@ exports.handler = async (event, context) => {
 
         // Process Response
         try {
-            // Check if it's a JSON response
-            const parsed = JSON.parse(aiResponse.trim().replace(/^```json/, '').replace(/```$/, ''));
+            // Robust JSON extraction to handle model conversational wrappers
+            let jsonString = aiResponse;
+            const jsonMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (jsonMatch) {
+                jsonString = jsonMatch[1];
+            } else {
+                // Fallback: extract substring from first { to last }
+                const firstBrace = aiResponse.indexOf('{');
+                const lastBrace = aiResponse.lastIndexOf('}');
+                if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                    jsonString = aiResponse.substring(firstBrace, lastBrace + 1);
+                }
+            }
+
+            // Attempt to parse the extracted string
+            const parsed = JSON.parse(jsonString.trim());
 
             // Record status in Firestore pilot_requests for Request Monitor tracking
             try {
@@ -299,12 +335,21 @@ exports.handler = async (event, context) => {
             // 1. Handle Website Generation (Public Preview)
             if (parsed.isWebsite && parsed.html) {
                 const projectId = existingProjectId || 'web-' + Math.random().toString(36).substring(2, 8);
+
+                // Clean up any markdown code blocks from the HTML string if the AI included them
+                let cleanHtml = parsed.html;
+                if (cleanHtml.startsWith('```html')) {
+                    cleanHtml = cleanHtml.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+                } else if (cleanHtml.startsWith('```')) {
+                    cleanHtml = cleanHtml.replace(/^```\n?/, '').replace(/\n?```$/, '');
+                }
+
                 await db.collection('generated_websites').doc(projectId).set({
                     projectId,
                     ownerId: sellerId,
-                    html: parsed.html,
+                    html: cleanHtml,
                     prompt: messages[messages.length - 1].content,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                    updatedAt: new Date().toISOString()
                 }, { merge: true });
 
                 return jsonResponse(200, {

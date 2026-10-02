@@ -20,7 +20,7 @@ class AIPlanner {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "openai/gpt-oss-120b",
+                        model: "llama-3.3-70b-versatile",
                         messages: promptMessages,
                         temperature: 0.2,
                         max_tokens: 1500

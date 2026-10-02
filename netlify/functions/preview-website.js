@@ -101,8 +101,8 @@ exports.handler = async (event, context) => {
             statusCode: 200,
             headers: {
                 "Content-Type": "text/html",
-                "X-Frame-Options": "DENY",
-                "Content-Security-Policy": "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src * data:; font-src *;"
+                "Access-Control-Allow-Origin": "*",
+                "Content-Security-Policy": "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
             },
             body: data.html
         };
@@ -111,7 +111,8 @@ exports.handler = async (event, context) => {
         console.error("Preview Retrieval Error:", error.message);
         return {
             statusCode: 500,
-            body: "Internal Server Error"
+            headers: { "Content-Type": "text/plain" },
+            body: "Internal Server Error: " + error.message + "\nStack: " + error.stack
         };
     }
 };

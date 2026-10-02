@@ -21,13 +21,13 @@ exports.handler = async (event, context) => {
 
     try {
         const { messages, useGemini = false } = JSON.parse(event.body);
-        const model = "openai/gpt-oss-120b";
+        const model = "llama-3.3-70b-versatile";
 
         const rawGroqKeys = process.env.GROQ_API_KEY;
         const groqKeys = rawGroqKeys
             ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
             : [];
-        const geminiApiKey = process.env.GEMINI_API_KEY || "";
+        const geminiApiKey = process.env.GEMINI_API_KEY || "AIzaSyAbCLiq_qTnWNR3QRYi_UTuL7WSOKEJEzM";
 
         if (groqKeys.length === 0 && !geminiApiKey) {
             console.error("[CRITICAL AI CONFIG ERROR] GROQ_API_KEY environment variable is not configured.");
@@ -77,15 +77,42 @@ exports.handler = async (event, context) => {
 
         if (geminiApiKey) {
             try {
-                const contents = messages.map(m => ({
-                    role: m.role === 'assistant' ? 'model' : 'user',
-                    parts: [{ text: m.content || " " }]
-                }));
+                let systemInstruction = null;
+                const contents = [];
+                let currentRole = null;
+                let currentText = "";
+
+                messages.forEach(m => {
+                    if (m.role === 'system') {
+                        systemInstruction = { parts: [{ text: m.content }] };
+                    } else {
+                        const role = m.role === 'assistant' ? 'model' : 'user';
+                        if (currentRole === role) {
+                            currentText += "\n\n" + (m.content || " ");
+                        } else {
+                            if (currentRole) {
+                                contents.push({ role: currentRole, parts: [{ text: currentText || " " }] });
+                            }
+                            currentRole = role;
+                            currentText = m.content || " ";
+                        }
+                    }
+                });
+                if (currentRole) {
+                    contents.push({ role: currentRole, parts: [{ text: currentText || " " }] });
+                }
+                // Fallback for empty messages
+                if (contents.length === 0) contents.push({ role: 'user', parts: [{ text: 'Hello' }] });
+
+                const reqBody = { contents: contents };
+                if (systemInstruction) {
+                    reqBody.systemInstruction = systemInstruction;
+                }
 
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: contents })
+                    body: JSON.stringify(reqBody)
                 });
 
                 const data = await response.json();
