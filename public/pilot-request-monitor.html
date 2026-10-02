@@ -514,5 +514,59 @@
         fetchRequests();
         setInterval(fetchRequests, 3000);
     </script>
+
+    <!-- Direct Real-Time Firebase Firestore Live Sync -->
+    <script type="module">
+        import { db, auth } from '../js/firebase-config.js';
+        import { collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+        import { signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+        async function initRealtimeFirebaseMonitor() {
+            try {
+                await signInAnonymously(auth);
+                console.log("[FIREBASE REALTIME MONITOR] Authenticated anonymously to Firestore.");
+
+                const q = query(collection(db, "visual_analysis_requests"), orderBy("createdAt", "desc"), limit(10));
+                onSnapshot(q, (snapshot) => {
+                    const reqs = [];
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        reqs.push({
+                            requestId: d.requestId || doc.id,
+                            type: d.type || 'SCREEN_ANALYSIS',
+                            status: d.status || 'COMPLETED',
+                            screenshotWidth: d.screenshotWidth || 1280,
+                            screenshotHeight: 800,
+                            screenshotData: d.screenshotData || null,
+                            domContent: d.domContent || '',
+                            targetElement: d.targetElement || d.originalGoal || 'Business',
+                            createdAt: d.createdAt || new Date().toISOString(),
+                            ocr: d.ocr || [],
+                            elements: d.elements || []
+                        });
+                    });
+
+                    if (reqs.length > 0) {
+                        visualRequestsCache = reqs;
+                        const latest = visualRequestsCache[0];
+                        if (!activeRequestId || activeRequestId !== latest.requestId || (latest.screenshotData && activeScreenshotLength !== latest.screenshotData.length)) {
+                            activeRequestId = latest.requestId;
+                            activeScreenshotLength = latest.screenshotData ? latest.screenshotData.length : 0;
+                            processActiveRequest(latest);
+                        }
+                        renderDiagnosticsDrawer();
+                    }
+                }, (err) => {
+                    console.warn("[FIREBASE SNAPSHOT WARN]:", err.message);
+                });
+            } catch (e) {
+                console.warn("[FIREBASE MONITOR INIT WARN]:", e.message);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initRealtimeFirebaseMonitor();
+        });
+    </script>
 </body>
 </html>

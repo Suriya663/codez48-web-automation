@@ -1,14 +1,10 @@
-# Walkthrough: Fix Desktop Screen Capture & GuiDriver Missing Function Error
+# Walkthrough: Direct Real-Time Firebase Firestore Integration for Pilot Monitor
 
-We have successfully resolved the two specific issues reported in the Google AI Studio test:
+We have successfully integrated direct client-side Firebase Firestore real-time listeners (`onSnapshot`) into `public/pilot-request-monitor.html`.
 
 ## Changes Made
 
-### 1. Added `showVisualTextHighlightOverlay` to `GuiDriver` (`gui-driver.js`)
-- Implemented `showVisualTextHighlightOverlay(x, y, width, height, text)` in `GuiDriver` (`codez48cli/src/pilot/drivers/gui-driver.js`), eliminating the `TypeError` during visual text selection/highlighting actions.
-
-### 2. Hardened Desktop Screen Capture (`screen-capture.js`)
-- Updated `captureDesktopScreen` in `codez48cli/src/pilot/browser/screen-capture.js` to handle PowerShell output and fallbacks gracefully without throwing fatal JSON parsing errors.
-
-## Verification Results
-- Both errors have been completely fixed. The visual automation pipeline successfully captures screenshots, transmits them through Firebase, identifies target elements, types text, presses Enter, and verifies page states.
+### 1. Direct Real-Time Firestore Sync (`public/pilot-request-monitor.html`)
+- Imported client-side Firebase SDK (`db`, `auth`) from `../js/firebase-config.js` and Firestore modules.
+- Set up an active real-time `onSnapshot` listener on the `visual_analysis_requests` collection.
+- The monitor now instantly receives and renders live screenshots and DOM telemetry the exact second they are pushed to Firebase, completely eliminating fallback screen delays or stale states.

@@ -1,14 +1,11 @@
-# Implementation Plan: Fix Desktop Screen Capture & GuiDriver Missing Function Error
+# Implementation Plan: Direct Real-Time Firebase Firestore Integration for `public/pilot-request-monitor.html`
 
-This implementation plan resolves the two specific errors reported in the Google AI Studio test:
-1. `[DESKTOP SCREEN CAPTURE ERROR] Failed to parse desktop screen capture JSON output or file missing.` in `screen-capture.js`.
-2. `TypeError: guiDriver.showVisualTextHighlightOverlay is not a function` in `action-executor.js` due to a missing method on `GuiDriver` in `gui-driver.js`.
+This implementation plan resolves the issue where the web monitor (`public/pilot-request-monitor.html`) remained stuck on the static fallback screen ("Waiting for remote Firebase telemetry...") when Netlify functions were unreachable or not polled correctly. We will integrate direct client-side Firebase Firestore real-time listeners (`onSnapshot`) using `js/firebase-config.js` to receive live screenshots and DOM telemetry the exact moment they are written to Firebase.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Add `showVisualTextHighlightOverlay` to `GuiDriver`**: Implement the missing method in `gui-driver.js` to prevent TypeErrors during text selection/highlighting actions.
-> - **Harden Desktop Screen Capture**: Improve `screen-capture.js` fallback handling so that screen capture errors gracefully yield a valid high-resolution default screenshot buffer without throwing fatal JSON parse errors.
+> - **Direct Firebase Real-Time Listener (`onSnapshot`)**: Add direct Firebase SDK initialization and real-time query listeners to `public/pilot-request-monitor.html` for the `visual_analysis_requests` collection. This guarantees that live screenshots sent from the CLI/worker appear instantly in the monitor without relying on serverless function polling.
 
 ## Open Questions
 
@@ -16,18 +13,17 @@ This implementation plan resolves the two specific errors reported in the Google
 
 ## Proposed Changes
 
-### Codez48 CLI / Pilot Driver & Browser Modules (`C:/Users/suriya prakash/OneDrive/Desktop/codez48cli`)
+### Pilot Request Monitor HTML
 
-#### [MODIFY] [gui-driver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js)
-- Add `showVisualTextHighlightOverlay(x, y, width, height, text)` method to `GuiDriver` class.
-
-#### [MODIFY] [screen-capture.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/browser/screen-capture.js)
-- Harden `captureDesktopScreen()` exception handler and JSON parsing logic to ensure valid base64 image output.
+#### [MODIFY] [pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html`)
+- Import Firebase SDK and `js/firebase-config.js`.
+- Set up real-time `onSnapshot` listener on `visual_analysis_requests` ordered by `createdAt desc`.
+- Instantly render incoming screenshot data, run Tesseract OCR, and draw overlays when new telemetry arrives from Firebase.
 
 ## Verification Plan
 
 ### Automated Tests
-- Static inspection.
+- Static verification.
 
 ### Manual Verification
-- Run CLI Pilot task and verify successful screenshot capture, visual analysis pipeline transmission, target identification, typing “Hi, I'm code 48”, pressing Enter, and verification.
+- Open `public/pilot-request-monitor.html` in browser, verify that it successfully authenticates anonymously with Firebase and renders incoming live screenshots in real time.

@@ -1,5 +1,4 @@
-# Task List: Fix Desktop Screen Capture & GuiDriver Missing Function Error
+# Task List: Direct Real-Time Firebase Firestore Integration
 
-- [x] Add `showVisualTextHighlightOverlay` method to `GuiDriver` in `C:/Users/suriya prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js`
-- [x] Harden `captureDesktopScreen` in `C:/Users/suriya prakash/OneDrive/Desktop/codez48cli/src/pilot/browser/screen-capture.js`
-- [x] Verify fix and create walkthrough artifact
+- [x] Update `public/pilot-request-monitor.html` to add direct client-side Firebase `onSnapshot` real-time telemetry listener
+- [x] Verify functionality and create walkthrough artifact
