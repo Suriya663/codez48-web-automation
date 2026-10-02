@@ -61,7 +61,13 @@ exports.handler = async (event) => {
 
     try {
         if (event.httpMethod === "POST") {
-            const body = JSON.parse(event.body || '{}');
+            let body = {};
+            try {
+                body = event.body ? JSON.parse(event.body) : {};
+            } catch (parseErr) {
+                console.warn('[BODY PARSE WARNING] Failed to parse request body as JSON:', parseErr.message);
+                body = { screenshotData: event.body };
+            }
             const requestId = body.requestId || `VISUAL-${Date.now()}`;
 
             console.log(`[FIREBASE_REQUEST_CREATED] requestId=${requestId}, size=${body.fileSize || 'unknown'} bytes`);

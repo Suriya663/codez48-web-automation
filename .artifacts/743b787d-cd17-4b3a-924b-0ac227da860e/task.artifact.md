@@ -1,5 +1,5 @@
-# Task List: Puppeteer/Playwright CLI Automation Image & DOM Transmission to Firebase
+# Task List: Robust JSON Parsing & Desktop Screenshot Capture Error Fix
 
-- [x] Update `runAgentLoop` in `playwright-worker/server.js` to capture screenshot + HTML/DOM + query text and sync to Firebase Firestore
-- [x] Update `realtime-server.js` to persist image, DOM, and goal in Firestore
-- [x] Verify test execution and create walkthrough artifact
+- [x] Add safe `try...catch` body parsing in `netlify/functions/cli-automation-manager.js`
+- [x] Add safe `try...catch` body parsing in `netlify/functions/pilot-request-monitor.js`
+- [x] Verify functionality and create walkthrough artifact

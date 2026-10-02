@@ -1,11 +1,11 @@
-# Implementation Plan: Puppeteer/Playwright CLI Automation Image & DOM Transmission to Firebase
+# Implementation Plan: Robust JSON Parsing & Desktop Screenshot Capture Error Fix
 
-This implementation plan resolves the issue where automated runs from the command line (via Puppeteer/Playwright) need to flawlessly transmit screenshot images (`screenshotData`), user query text (`goal`), HTML (`activePage.content()`), and DOM content (`domContent`) to Firebase Firestore (`visual_analysis_requests` and `automations`), ensuring the request-response cycle and image retrieval work reliably.
+This implementation plan addresses the `[DESKTOP SCREEN CAPTURE ERROR] Failed to parse desktop screen capture JSON output or file missing` issue by adding bulletproof `try...catch` JSON body parsing in Netlify serverless functions (`cli-automation-manager.js`, `pilot-request-monitor.js`) and ensuring screenshot base64 payloads are accepted and handled without parsing crashes.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Puppeteer/Playwright Worker Firebase Sync**: Updating `runAgentLoop` in `playwright-worker/server.js` and `realtimeServer.emitRunEvent` in `playwright-worker/realtime-server.js` to capture live screenshots, full HTML/DOM content (`activePage.content()`), and user query text (`goal`), and persist them directly into Firebase Firestore (`visual_analysis_requests` and `automations/{runId}`) on every inspection step.
+> - **Robust Body Parsing**: Wrapping `JSON.parse(event.body)` in `try...catch` blocks across Netlify functions to gracefully handle any raw or malformed desktop screen capture payloads.
 
 ## Open Questions
 
@@ -13,19 +13,18 @@ This implementation plan resolves the issue where automated runs from the comman
 
 ## Proposed Changes
 
-### Playwright Worker & Realtime Server
+### Netlify Functions
 
-#### [MODIFY] [server.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/server.js)
-- In `runAgentLoop`, capture live screenshot base64 (`image`), full HTML/DOM content (`domContent = await activePage.content()`), and user query text (`run.goal`).
-- Write these explicitly to Firebase Firestore (`visual_analysis_requests` and `automations`) so remote monitors retrieve them instantly.
+#### [MODIFY] [cli-automation-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-automation-manager.js)
+- Add safe `try...catch` body parsing so screenshot payloads and DOM content never trigger JSON parse crashes.
 
-#### [MODIFY] [realtime-server.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/realtime-server.js)
-- Ensure `emitRunEvent` persists `screenshotData`, `domContent`, and `goal` to Firestore `automations/{runId}` cleanly.
+#### [MODIFY] [pilot-request-monitor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/pilot-request-monitor.js)
+- Ensure safe `try...catch` body parsing for POST telemetry requests.
 
 ## Verification Plan
 
 ### Automated Tests
-- Static verification.
+- Static inspection of Netlify functions.
 
 ### Manual Verification
-- Run test simulation script and verify Firestore write payload structure for screenshot + DOM + query text.
+- Test POST requests with screenshot data payloads to ensure clean parsing and Firebase recording.

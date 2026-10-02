@@ -74,7 +74,13 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const body = event.body ? JSON.parse(event.body) : {};
+        let body = {};
+        try {
+            body = event.body ? JSON.parse(event.body) : {};
+        } catch (parseErr) {
+            console.warn('[BODY PARSE WARNING] Failed to parse request body as JSON:', parseErr.message);
+            body = { action: 'VISUAL_VERIFY', rawBody: event.body };
+        }
         const { action } = body;
 
         // --- 1. LIST AUTOMATIONS ---
