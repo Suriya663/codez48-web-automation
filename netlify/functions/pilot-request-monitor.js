@@ -119,6 +119,10 @@ exports.handler = async (event) => {
                 requestId: d.requestId || doc.id,
                 type: d.type || 'SCREEN_ANALYSIS',
                 status: d.status || 'COMPLETED',
+                originalGoal: d.originalGoal || d.userRequirement || d.query || null,
+                url: d.url || d.website || null,
+                title: d.title || d.pageTitle || null,
+                scrollPosition: d.scrollPosition || null,
                 screenshotWidth: d.screenshotWidth || 0,
                 screenshotHeight: d.screenshotHeight || 0,
                 // Only send large base64 payload for the most recent request to avoid HTTP 500 payload limit crash
