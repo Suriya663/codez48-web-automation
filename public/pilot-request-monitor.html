@@ -356,6 +356,8 @@
 
             if (elements.length > 0) {
                 const el = elements[0];
+                const box = el.box || { left: 0, top: 0, right: 0, bottom: 0 };
+                const sourceLeft = box.left;
                 const sourceTop = box.top;
                 const sourceRight = box.right;
                 const sourceBottom = box.bottom;
