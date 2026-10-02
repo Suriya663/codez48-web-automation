@@ -1,37 +1,31 @@
-# Implementation Plan: Generic Search Grounding, Tab Focus Verification, and Scroll Invalidation Layer
+# Implementation Plan: Generic Visual + DOM Content Grounding & Rich Target Identity
 
-This implementation plan enhances the Codez48 Pilot system's screen grounding, search bar identification, scroll interaction, and keyboard navigation (Tab focus tracking) to work generically across any website (YouTube, Google, Amazon, blogs, docs, etc.) without hardcoded selectors.
+This implementation plan outlines the refinement of Codez48 Pilot's content understanding, visual (OCR/screenshot) + DOM + HTML grounding, rich target identity payload construction, monitor highlighting data, and verified CLI cursor/keyboard execution flow.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Generic Search Detection**: Combine DOM attributes (`role="searchbox"`, `type="search"`, `placeholder`, `aria-label`, `name`), OCR visible text, and screenshot analysis to identify search bars universally.
-> - **Verified Tab Navigation**: Track active element focus after each Tab key press (`activeElement` inspection + screenshot highlight confirmation) before typing or pressing Enter.
-> - **Scroll & Navigation Invalidation**: Invalidate all cached target data, OCR coordinates, and DOM references immediately upon scrolling or navigation.
-> - **Observe-Act-Verify Loop**: Enforce strict capture of fresh observation (screenshot + OCR + DOM + HTML + activeElement) post-action to verify state transitions.
+> - **Unified Grounding Payload**: Construct structured target identities combining OCR bounding boxes, live DOM attributes (ID, tag, role, text), HTML snippets, and viewport coordinates.
+> - **Preserve Original Requirement**: Maintain the user's original requirement throughout the automation lifecycle to guide AI visual understanding and target resolution.
+> - **Monitor Visualization & Highlighting**: Expose bounding boxes, OCR regions, and matched DOM elements for live monitoring and debugging.
+> - **Stale Target Invalidation**: Invalidate all target references immediately upon scrolling, navigation, or DOM/viewport shifts.
 
 ## Proposed Changes
 
 ### Playwright Worker & Pilot Engine
 
+#### [MODIFY] [page-inspector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/page-inspector.js)
+- Enhance inspection to extract rich element attributes (`id`, `tagName`, `role`, `innerText`, `outerHTML` snippet, bounding rect `x`, `y`, `width`, `height`, `viewportX`, `viewportY`) for interactive elements.
+
 #### [MODIFY] [locator-resolver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/locator-resolver.js)
-- Enhance generic search bar resolution combining DOM inputs/searchboxes, accessibility attributes, and visual OCR bounding boxes.
-- Implement stale target invalidation hooks on scroll and navigation events.
+- Implement multi-signal grounding (combining visual OCR hints, DOM attributes, and HTML structure).
+- Attach rich target identity metadata (`elementId`, `tagName`, `role`, `text`, `htmlSnippet`, `rect`, `viewportX`, `viewportY`) to resolved targets.
 
 #### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-executor.js)
-- Implement verified Tab navigation loop (press Tab, inspect `document.activeElement`, verify focus reached intended target).
-- Support physical cursor movement with coordinate validation (`[CURSOR POSITION VERIFIED]: PASS`).
-- Execute typing and Enter/Space actions post-focus.
-
-#### [MODIFY] [action-verifier.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-verifier.js)
-- Implement strict post-action fresh state verification capturing fresh screenshot, OCR, DOM, HTML, URL, title, and active element.
+- Enforce pre-action target revalidation, physical cursor movement, and `[CURSOR POSITION VERIFIED]: PASS` validation.
 
 ## Verification Plan
 
 ### Automated Tests
 - Run acceptance test script (`node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_youtube_acceptance.js`).
-- Verify console logs show:
-  - `[SEARCH GROUNDING]: Generic search input detected`
-  - `[KEYBOARD FOCUS VERIFIED]: Tab focus reached target`
-  - `[CURSOR POSITION VERIFIED]: PASS`
-  - `[FRESH STATE VERIFIED]: PASS`
+- Verify console logs show rich target identity grounding and successful post-action verification.

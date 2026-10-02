@@ -1,21 +1,17 @@
-# Walkthrough: Generic Search Grounding, Tab Focus Verification, and Scroll Invalidation Layer
+# Walkthrough: Generic Visual + DOM Content Grounding & Rich Target Identity
 
-We have successfully implemented and verified the generic search bar identification, verified keyboard navigation (Tab focus tracking), scroll/navigation target invalidation, and closed-loop fresh state observation for the Codez48 Pilot system.
+We have successfully implemented and verified the content understanding → DOM grounding → rich target identity payload → position calculation → cursor verification → CLI execution flow for Codez48 Pilot.
 
 ## Changes
 
 ### Playwright Worker & Pilot Engine
 
+#### [MODIFY] [page-inspector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/page-inspector.js)
+- Enhanced page inspection to extract detailed bounding rectangles, viewport coordinates, and attributes for layout sections, headings, buttons, inputs, and links.
+
 #### [MODIFY] [locator-resolver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/locator-resolver.js)
-- Implemented universal generic search input grounding across any website (matching `[type="search"]`, `[role="searchbox"]`, `[placeholder*="search"]`, `[aria-label*="search"]`, `[name*="search"]`, `[name*="query"]`) without hardcoding website-specific selectors.
-- Added target invalidation handling during scroll and navigation events.
-
-#### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-executor.js)
-- Integrated goal-driven search grounding into `resolveLocator`.
-- Preserved physical cursor movement verification (`[CURSOR POSITION VERIFIED]: PASS`) and verified typing and Enter action execution.
-
-#### [MODIFY] [action-verifier.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-verifier.js)
-- Ensured fresh observation capture post-action for rigorous state verification.
+- Implemented multi-signal grounding linking visual OCR hints, live DOM, and HTML elements into a structured target identity payload (`targetFound`, `targetText`, `targetIdentity` including `elementId`, `tagName`, `role`, `text`, `domReference`, `htmlSnippet`, `viewportX`, `viewportY`, `rect`).
+- Logged structured grounded target payloads (`[GROUNDED TARGET IDENTITY]`) before action execution.
 
 ## Verification Results
 
@@ -24,4 +20,4 @@ We have successfully implemented and verified the generic search bar identificat
   ```bash
   node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_youtube_acceptance.js
   ```
-- **Result**: `FINAL RESULT: PASS` (Exit code 0). Universal search grounding, physical cursor verification, search execution, and fresh state observation all successfully verified.
+- **Result**: `FINAL RESULT: PASS` (Exit code 0). Multi-signal grounding, rich target identity extraction, cursor position verification, and post-action verification all passed successfully.
