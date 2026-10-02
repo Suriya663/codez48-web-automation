@@ -1,11 +1,17 @@
-# Implementation Plan: Hybrid Local Simulation & Storage Fallback for Requests/Responses in `public/pilot-request-monitor.html`
+# Implementation Plan: Remote Global Pilot Flow via Firebase & Netlify (Removing Localhost Dependencies)
 
-This implementation plan addresses the issue where network requests to Netlify functions (`/.netlify/functions/pilot-request-monitor`) fail when tested outside a running Netlify dev server, causing requests not to go and responses not to come.
+This implementation plan refines the existing Codez48 Pilot automation flow to remove any reliance on local HTTP servers (such as `localhost:4848` or local ports) for Pilot data exchange. All communication (screenshots, DOM/HTML state, user requirements, AI analysis requests, AI responses, and verification steps) will flow strictly through the existing Netlify functions and Firebase Firestore architecture.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Local Storage & Memory Request/Response Simulation**: Implementing a robust fallback layer in `public/pilot-request-monitor.html` that simulates API request/response persistence using `localStorage` and memory queues when network fetches to Netlify functions fail. This guarantees outgoing requests are recorded and incoming responses are returned instantly during testing.
+> - **Removal of Localhost/Port 4848 Dependencies**: Ensure that `public/pilot-request-monitor.html` and CLI automation scripts communicate exclusively via Netlify serverless functions (`/.netlify/functions/...`) and Firebase Firestore rather than attempting local HTTP connections.
+> - **End-to-End Remote Pilot Flow**:
+  1. Real Browser captures Screenshot + DOM + User Requirement.
+  2. Data is synced to Firebase Firestore / Netlify Backend.
+  3. Existing AI analyzes OCR/Screenshot, User Requirement, and live DOM.
+  4. Returns identified target element or navigation action (e.g. "Get Started" / scroll) via Firebase.
+  5. CLI executes action in the real browser, captures fresh state, and syncs back to Firebase for verification.
 
 ## Open Questions
 
@@ -13,16 +19,19 @@ This implementation plan addresses the issue where network requests to Netlify f
 
 ## Proposed Changes
 
-### Pilot Request Monitor HTML
+### Pilot Monitor & Automation Architecture
 
 #### [MODIFY] [pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html)
-- Update `fetchRequests()` and `sendCursorRequest()` to support local storage / memory queuing when `/.netlify/functions/pilot-request-monitor` is unreachable (e.g., static file or offline testing).
-- Ensure requests and responses are logged correctly in the diagnostics drawer and response panel.
+- Remove any references to local port 4848 or local fallback servers.
+- Route all telemetry fetch and POST requests directly to Netlify functions (`/.netlify/functions/pilot-request-monitor`) backed by Firebase Firestore.
+
+#### [MODIFY] [cli-automation-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-automation-manager.js)
+- Ensure `VISUAL_VERIFY` and automation actions communicate reliably with Firebase Firestore for remote global coordination.
 
 ## Verification Plan
 
 ### Automated Tests
-- Static verification.
+- Static inspection and build checks.
 
 ### Manual Verification
-- Open `public/pilot-request-monitor.html` in browser, verify that outgoing requests and incoming telemetry responses are fully simulated and displayed in real time without network errors.
+- Verify that `public/pilot-request-monitor.html` and Netlify backend functions exchange screenshot + DOM + requirement telemetry globally through Firebase without any local server dependencies.

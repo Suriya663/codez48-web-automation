@@ -138,7 +138,7 @@
                     x.fillText('Codez48 Pilot Automation Monitor', 80, 120);
                     x.fillStyle = '#34d399';
                     x.font = 'bold 28px sans-serif';
-                    x.fillText('Waiting for local CLI server on port 4848...', 80, 200);
+                    x.fillText('Waiting for remote Firebase telemetry...', 80, 200);
                     x.fillStyle = '#ffffff';
                     x.font = '24px monospace';
                     x.fillText('Target Element: Business', 80, 300);
@@ -154,20 +154,16 @@
             let remoteRequests = [];
 
             try {
-                // Fetch from the standard route - monitor.js cleanly proxies this to the local CLI server
-                // so no browser-level ERR_CONNECTION_REFUSED will ever show up in console!
                 const res = await fetch('/.netlify/functions/pilot-request-monitor');
                 const data = await res.json();
 
                 if (data.success && data.payload) {
-                    // Handled by local monitor.js proxy
                     remoteRequests = [data.payload];
                 } else if (data.success && Array.isArray(data.visualRequests)) {
-                    // Handled by remote Firebase
                     remoteRequests = data.visualRequests;
                 }
             } catch (err) {
-                console.log("[LOCAL SERVER NOT FOUND] Waiting for telemetry stream...");
+                console.log("[FIREBASE SYNC] Waiting for remote telemetry stream...");
             }
 
             let localQueue = [];
