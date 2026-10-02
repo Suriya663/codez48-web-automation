@@ -198,46 +198,190 @@ exports.handler = async (event, context) => {
                 }
             }
 
-            // Cross-check screenshot text / DOM state for target elements (e.g., input box, "Start" button)
             const buttons = pageState?.buttons || [];
             const inputs = pageState?.inputs || [];
+            const links = pageState?.links || [];
 
-            let foundStartButton = buttons.find(b => /start|proceed|next|submit|continue|send/i.test(b.name));
-            let foundInput = inputs.find(i => /search|input|email|query|prompt|name|text|what|idea|chat|message|textbox/i.test(i.placeholder || i.name || i.label || i.id || i.type));
+            const systemPrompt = `You are a Visual Web Automation AI Pilot.
+Analyze the provided screenshot, DOM state, and user goal.
+Determine if the target element for the goal is currently visible.
+If found, return the precise action and target.
+If not found, but there's a clear 'Next', 'Get Started', 'Login' or similar button leading to the required path, return a click on it.
+If not found and no obvious path, return a 'scroll' action.
+
+DOM STATE:
+Buttons: ${JSON.stringify(buttons)}
+Inputs: ${JSON.stringify(inputs)}
+Links: ${JSON.stringify(links)}
+
+USER GOAL: "${goal}"
+
+OUTPUT STRICT JSON ONLY:
+{
+  "action": "click|fill|scroll",
+  "target": { "role": "button|link|input", "name": "Name", "id": "id", "placeholder": "P" },
+  "value": "text to fill or 'down' for scroll",
+  "successCondition": "Expected outcome",
+  "statusText": "User friendly status message",
+  "explanation": "Why you chose this action"
+}`;
+
+            let aiResponse = null;
+
+            // Try Groq First
+            const rawGroqKeys = process.env.GROQ_API_KEY;
+            const groqKeys = rawGroqKeys ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean))) : [];
+            const geminiApiKey = process.env.GEMINI_API_KEY || "";
+
+            // Clean base64
+            let cleanBase64 = screenshotData;
+            if (screenshotData && screenshotData.startsWith('data:image')) {
+                cleanBase64 = screenshotData.split(',')[1];
+            }
+
+            if (groqKeys.length > 0) {
+                const shuffledKeys = [...groqKeys].sort(() => 0.5 - Math.random());
+                for (const groqApiKey of shuffledKeys) {
+                    try {
+                        const messages = [{ role: "system", content: systemPrompt }];
+
+                        if (cleanBase64) {
+                            messages.push({
+                                role: "user",
+                                content: [
+                                    { type: "text", text: `Here is the current screenshot and DOM. Goal: ${goal}` },
+                                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
+                                ]
+                            });
+                        } else {
+                            messages.push({ role: "user", content: `Goal: ${goal}` });
+                        }
+
+                        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${groqApiKey}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                model: "openai/gpt-oss-120b",
+                                messages: messages,
+                                temperature: 0.2,
+                                max_tokens: 1024
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) {
+                            aiResponse = data.choices[0].message.content;
+                            break;
+                        }
+                    } catch (err) {
+                        console.warn(`[Groq VISUAL_VERIFY Retry] Key failure:`, err.message);
+                    }
+                }
+            }
+
+            // Fallback to Gemini
+            if (!aiResponse && geminiApiKey) {
+                try {
+                    let systemInstruction = { parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }] };
+                    const contents = [];
+
+                    if (cleanBase64) {
+                        contents.push({
+                            role: 'user',
+                            parts: [
+                                { text: `Goal: ${goal}` },
+                                { inlineData: { mimeType: "image/jpeg", data: cleanBase64 } }
+                            ]
+                        });
+                    } else {
+                        contents.push({ role: 'user', parts: [{ text: `Goal: ${goal}` }] });
+                    }
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: contents, systemInstruction: systemInstruction })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.candidates && data.candidates[0]) {
+                        aiResponse = data.candidates[0].content.parts[0].text;
+                    }
+                } catch (err) {
+                    console.error("[Gemini VISUAL_VERIFY Fallback Error]:", err.message);
+                }
+            }
 
             let analysisMessage = "";
             let recommendedAction = {};
+            let verified = false;
 
-            if (foundStartButton) {
-                analysisMessage = `[OCR & DOM VERIFY] Verified target element "${foundStartButton.name}" present in current view. Ready to click.`;
-                recommendedAction = {
-                    action: "click",
-                    target: { name: foundStartButton.name, role: foundStartButton.role, id: foundStartButton.id },
-                    successCondition: "Transitioned to next page",
-                    statusText: `Clicking ${foundStartButton.name} to proceed...`
-                };
-            } else if (foundInput) {
-                analysisMessage = `[OCR & DOM VERIFY] Verified target input field present. Ready to fill.`;
-                recommendedAction = {
-                    action: "fill",
-                    target: { name: foundInput.name, id: foundInput.id, placeholder: foundInput.placeholder },
-                    value: goal,
-                    successCondition: "Input populated",
-                    statusText: `Filling input field...`
-                };
-            } else {
-                analysisMessage = `[OCR & DOM VERIFY] Target element not immediately visible in current viewport. Recommending scroll discovery.`;
-                recommendedAction = {
-                    action: "scroll",
-                    value: "down",
-                    successCondition: "New elements visible",
-                    statusText: `Scrolling page to locate interactive element...`
-                };
+            if (aiResponse) {
+                try {
+                    // Extract JSON
+                    let jsonString = aiResponse;
+                    const jsonMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch) {
+                        jsonString = jsonMatch[1];
+                    } else {
+                        const firstBrace = aiResponse.indexOf('{');
+                        const lastBrace = aiResponse.lastIndexOf('}');
+                        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                            jsonString = aiResponse.substring(firstBrace, lastBrace + 1);
+                        }
+                    }
+
+                    recommendedAction = JSON.parse(jsonString.trim());
+                    verified = (recommendedAction.action !== "scroll");
+                    analysisMessage = `[AI VISUAL VERIFY] ${recommendedAction.explanation || recommendedAction.statusText || 'Analysis complete.'}`;
+
+                } catch(e) {
+                    console.error("Failed to parse AI VISUAL_VERIFY JSON:", e.message, aiResponse);
+                }
+            }
+
+            // Fallback to old regex logic if AI failed to return valid response
+            if (!recommendedAction.action) {
+                let foundStartButton = buttons.find(b => /start|proceed|next|submit|continue|send/i.test(b.name));
+                let foundInput = inputs.find(i => /search|input|email|query|prompt|name|text|what|idea|chat|message|textbox/i.test(i.placeholder || i.name || i.label || i.id || i.type));
+
+                if (foundStartButton) {
+                    analysisMessage = `[OCR & DOM VERIFY FALLBACK] Verified target element "${foundStartButton.name}" present in current view. Ready to click.`;
+                    recommendedAction = {
+                        action: "click",
+                        target: { name: foundStartButton.name, role: foundStartButton.role, id: foundStartButton.id },
+                        successCondition: "Transitioned to next page",
+                        statusText: `Clicking ${foundStartButton.name} to proceed...`
+                    };
+                    verified = true;
+                } else if (foundInput) {
+                    analysisMessage = `[OCR & DOM VERIFY FALLBACK] Verified target input field present. Ready to fill.`;
+                    recommendedAction = {
+                        action: "fill",
+                        target: { name: foundInput.name, id: foundInput.id, placeholder: foundInput.placeholder },
+                        value: goal,
+                        successCondition: "Input populated",
+                        statusText: `Filling input field...`
+                    };
+                    verified = true;
+                } else {
+                    analysisMessage = `[OCR & DOM VERIFY FALLBACK] Target element not immediately visible in current viewport. Recommending scroll discovery.`;
+                    recommendedAction = {
+                        action: "scroll",
+                        value: "down",
+                        successCondition: "New elements visible",
+                        statusText: `Scrolling page to locate interactive element...`
+                    };
+                    verified = false;
+                }
             }
 
             return jsonResponse(200, {
                 success: true,
-                verified: !!(foundStartButton || foundInput),
+                verified: verified,
                 analysisMessage,
                 recommendedAction,
                 pageSummary: {
