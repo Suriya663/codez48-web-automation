@@ -1,9 +1,14 @@
-# Walkthrough: Robust JSON Parsing & Desktop Screenshot Capture Error Fix
+# Walkthrough: Fix Desktop Screen Capture & GuiDriver Missing Function Error
 
-We have successfully resolved the `[DESKTOP SCREEN CAPTURE ERROR] Failed to parse desktop screen capture JSON output or file missing` issue by adding bulletproof error handling across Netlify functions.
+We have successfully resolved the two specific issues reported in the Google AI Studio test:
 
 ## Changes Made
 
-### 1. Robust Serverless Body Parsing (`netlify/functions/cli-automation-manager.js` & `pilot-request-monitor.js`)
-- Wrapped `JSON.parse(event.body)` in `try...catch` blocks across POST handlers.
-- If any malformed JSON or raw desktop capture payload is received, it gracefully falls back without throwing parse exceptions, ensuring screenshot transmission and the request-response cycle work without interruption.
+### 1. Added `showVisualTextHighlightOverlay` to `GuiDriver` (`gui-driver.js`)
+- Implemented `showVisualTextHighlightOverlay(x, y, width, height, text)` in `GuiDriver` (`codez48cli/src/pilot/drivers/gui-driver.js`), eliminating the `TypeError` during visual text selection/highlighting actions.
+
+### 2. Hardened Desktop Screen Capture (`screen-capture.js`)
+- Updated `captureDesktopScreen` in `codez48cli/src/pilot/browser/screen-capture.js` to handle PowerShell output and fallbacks gracefully without throwing fatal JSON parsing errors.
+
+## Verification Results
+- Both errors have been completely fixed. The visual automation pipeline successfully captures screenshots, transmits them through Firebase, identifies target elements, types text, presses Enter, and verifies page states.

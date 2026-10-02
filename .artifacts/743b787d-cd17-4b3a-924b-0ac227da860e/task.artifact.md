@@ -1,5 +1,5 @@
-# Task List: Robust JSON Parsing & Desktop Screenshot Capture Error Fix
+# Task List: Fix Desktop Screen Capture & GuiDriver Missing Function Error
 
-- [x] Add safe `try...catch` body parsing in `netlify/functions/cli-automation-manager.js`
-- [x] Add safe `try...catch` body parsing in `netlify/functions/pilot-request-monitor.js`
-- [x] Verify functionality and create walkthrough artifact
+- [x] Add `showVisualTextHighlightOverlay` method to `GuiDriver` in `C:/Users/suriya prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js`
+- [x] Harden `captureDesktopScreen` in `C:/Users/suriya prakash/OneDrive/Desktop/codez48cli/src/pilot/browser/screen-capture.js`
+- [x] Verify fix and create walkthrough artifact

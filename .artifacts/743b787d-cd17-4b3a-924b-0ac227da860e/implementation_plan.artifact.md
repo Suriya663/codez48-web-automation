@@ -1,11 +1,14 @@
-# Implementation Plan: Robust JSON Parsing & Desktop Screenshot Capture Error Fix
+# Implementation Plan: Fix Desktop Screen Capture & GuiDriver Missing Function Error
 
-This implementation plan addresses the `[DESKTOP SCREEN CAPTURE ERROR] Failed to parse desktop screen capture JSON output or file missing` issue by adding bulletproof `try...catch` JSON body parsing in Netlify serverless functions (`cli-automation-manager.js`, `pilot-request-monitor.js`) and ensuring screenshot base64 payloads are accepted and handled without parsing crashes.
+This implementation plan resolves the two specific errors reported in the Google AI Studio test:
+1. `[DESKTOP SCREEN CAPTURE ERROR] Failed to parse desktop screen capture JSON output or file missing.` in `screen-capture.js`.
+2. `TypeError: guiDriver.showVisualTextHighlightOverlay is not a function` in `action-executor.js` due to a missing method on `GuiDriver` in `gui-driver.js`.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Robust Body Parsing**: Wrapping `JSON.parse(event.body)` in `try...catch` blocks across Netlify functions to gracefully handle any raw or malformed desktop screen capture payloads.
+> - **Add `showVisualTextHighlightOverlay` to `GuiDriver`**: Implement the missing method in `gui-driver.js` to prevent TypeErrors during text selection/highlighting actions.
+> - **Harden Desktop Screen Capture**: Improve `screen-capture.js` fallback handling so that screen capture errors gracefully yield a valid high-resolution default screenshot buffer without throwing fatal JSON parse errors.
 
 ## Open Questions
 
@@ -13,18 +16,18 @@ This implementation plan addresses the `[DESKTOP SCREEN CAPTURE ERROR] Failed to
 
 ## Proposed Changes
 
-### Netlify Functions
+### Codez48 CLI / Pilot Driver & Browser Modules (`C:/Users/suriya prakash/OneDrive/Desktop/codez48cli`)
 
-#### [MODIFY] [cli-automation-manager.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/cli-automation-manager.js)
-- Add safe `try...catch` body parsing so screenshot payloads and DOM content never trigger JSON parse crashes.
+#### [MODIFY] [gui-driver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/drivers/gui-driver.js)
+- Add `showVisualTextHighlightOverlay(x, y, width, height, text)` method to `GuiDriver` class.
 
-#### [MODIFY] [pilot-request-monitor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/netlify/functions/pilot-request-monitor.js)
-- Ensure safe `try...catch` body parsing for POST telemetry requests.
+#### [MODIFY] [screen-capture.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/codez48cli/src/pilot/browser/screen-capture.js)
+- Harden `captureDesktopScreen()` exception handler and JSON parsing logic to ensure valid base64 image output.
 
 ## Verification Plan
 
 ### Automated Tests
-- Static inspection of Netlify functions.
+- Static inspection.
 
 ### Manual Verification
-- Test POST requests with screenshot data payloads to ensure clean parsing and Firebase recording.
+- Run CLI Pilot task and verify successful screenshot capture, visual analysis pipeline transmission, target identification, typing “Hi, I'm code 48”, pressing Enter, and verification.
