@@ -1,14 +1,12 @@
-# Task List: Post-Website-Visit Screen Understanding & Verification Flow
+# Task List: Generic Search Grounding & Tab Focus Verification
 
-- [x] **Phase 1: Enhanced Page Inspection (`page-inspector.js`)**
-  - [x] Capture full HTML, scroll position, viewport size, active element, and element bounding rectangles.
-- [x] **Phase 2: Synchronized AI Planner & Grounding (`ai-planner.js` & `locator-resolver.js`)**
-  - [x] Package synchronized observation (Screenshot + OCR + DOM + HTML + Scroll + Viewport + Active Element + Goal).
-  - [x] Implement robust visual-to-DOM target grounding and stale target invalidation.
-- [x] **Phase 3: Verified Action Execution & Keyboard Navigation (`action-executor.js`)**
-  - [x] Calculate physical screen coordinates and verify cursor arrival (`[CURSOR POSITION VERIFIED]: PASS`).
-  - [x] Support keyboard navigation (`TAB`, `SHIFT+TAB`, `ENTER`, `SPACE`) with focus verification.
-- [x] **Phase 4: Post-Action Fresh State Verification (`action-verifier.js` & `server.js`)**
-  - [x] Capture fresh observation post-action and verify real result transition.
-- [x] **Phase 5: Final Testing & Verification**
-  - [x] Run test scripts / CLI pilot execution and confirm all verification checks pass.
+- [x] **Phase 1: Generic Search Bar Grounding (`locator-resolver.js`)**
+  - [x] Implement universal search bar detection combining DOM inputs/searchboxes, accessibility attributes, and OCR visual hints.
+  - [x] Implement scroll and navigation target invalidation.
+- [x] **Phase 2: Verified Tab Navigation & Keyboard Focus (`action-executor.js`)**
+  - [x] Implement iterative Tab / Shift+Tab navigation with active element focus verification.
+  - [x] Support physical cursor movement with `[CURSOR POSITION VERIFIED]: PASS`.
+- [x] **Phase 3: Fresh State Observation & Verification (`action-verifier.js`)**
+  - [x] Enforce fresh screenshot, OCR, DOM, HTML, URL, and active element capture post-action.
+- [x] **Phase 4: Acceptance Testing**
+  - [x] Run YouTube search acceptance test and verify all steps pass successfully.

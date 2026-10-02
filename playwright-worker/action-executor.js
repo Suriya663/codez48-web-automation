@@ -56,7 +56,7 @@ class ActionExecutor {
             }
 
             // 4. LOCATOR-BASED ACTIONS (click, fill, type, press, select, check, hover, extract)
-            const resolved = await locatorResolver.resolveLocator(page, target);
+            const resolved = await locatorResolver.resolveLocator(page, target, actionPlan.goal || actionPlan.searchQuery || '');
             if (!resolved || !resolved.locator) {
                 console.warn(`[ACTION EXECUTOR] Could not resolve target locator for action ${action}. Falling back.`);
                 return { success: false, error: 'Target element locator not found on live page' };

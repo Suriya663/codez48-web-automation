@@ -1,35 +1,27 @@
-# Walkthrough: Post-Website-Visit Screen Understanding, Target Grounding, Interaction, and Verification Flow
+# Walkthrough: Generic Search Grounding, Tab Focus Verification, and Scroll Invalidation Layer
 
-We have successfully implemented and verified the post-website-visit screen understanding, target grounding, physical cursor movement with verification, keyboard navigation, and closed-loop verification flow for Codez48 Pilot.
+We have successfully implemented and verified the generic search bar identification, verified keyboard navigation (Tab focus tracking), scroll/navigation target invalidation, and closed-loop fresh state observation for the Codez48 Pilot system.
 
 ## Changes
 
 ### Playwright Worker & Pilot Engine
 
-#### [MODIFY] [page-inspector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/page-inspector.js)
-- Enhanced page inspection to capture:
-  - Full HTML (`document.documentElement.outerHTML`)
-  - Viewport dimensions (`viewport`)
-  - Scroll position (`scroll`)
-  - Active element (`activeElement`)
-  - Detailed bounding rectangles (`rect`) for layout sections, headings, buttons, inputs, and links.
-
-#### [MODIFY] [ai-planner.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/ai-planner.js)
-- Updated AI action planner context to include synchronized observations (`originalUserRequirement`, `viewport`, `scroll`, `activeElement`, `layoutSections`, `buttons`, `inputs`, `links`).
+#### [MODIFY] [locator-resolver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/locator-resolver.js)
+- Implemented universal generic search input grounding across any website (matching `[type="search"]`, `[role="searchbox"]`, `[placeholder*="search"]`, `[aria-label*="search"]`, `[name*="search"]`, `[name*="query"]`) without hardcoding website-specific selectors.
+- Added target invalidation handling during scroll and navigation events.
 
 #### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-executor.js)
-- Implemented physical mouse cursor movement to target element center coordinates.
-- Added physical cursor validation logging (`[CURSOR POSITION VERIFIED]: PASS`).
-- Added robust keyboard navigation support (`tab`, `shift-tab`, `press`, `space`) with focus tracking.
+- Integrated goal-driven search grounding into `resolveLocator`.
+- Preserved physical cursor movement verification (`[CURSOR POSITION VERIFIED]: PASS`) and verified typing and Enter action execution.
 
 #### [MODIFY] [action-verifier.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-verifier.js)
-- Implemented closed-loop fresh state verification requiring screenshot capture, OCR/DOM inspection, and state transition validation.
+- Ensured fresh observation capture post-action for rigorous state verification.
 
 ## Verification Results
 
-### Automated Test Execution
-- Executed pilot simulation flow test:
+### Acceptance Test Execution
+- Executed real-world acceptance test:
   ```bash
-  node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_pilot_flow.js
+  node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_youtube_acceptance.js
   ```
-- **Result**: `✅ All Global Pilot Flow simulation tests passed successfully!` (Exit code 0).
+- **Result**: `FINAL RESULT: PASS` (Exit code 0). Universal search grounding, physical cursor verification, search execution, and fresh state observation all successfully verified.

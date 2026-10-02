@@ -1,52 +1,37 @@
-# Implementation Plan: Post-Website-Visit Screen Understanding, Target Grounding, Interaction, and Verification Flow
+# Implementation Plan: Generic Search Grounding, Tab Focus Verification, and Scroll Invalidation Layer
 
-This implementation plan outlines the enhancement of the Codez48 Pilot system's post-website-visit execution pipeline. The goal is to establish a robust, autonomous computer-use agent flow combining real screenshots, OCR positional data, live DOM inspection, full HTML structure, and the original user requirement, followed by precise target grounding, physical cursor/keyboard interaction, and real-world state verification.
+This implementation plan enhances the Codez48 Pilot system's screen grounding, search bar identification, scroll interaction, and keyboard navigation (Tab focus tracking) to work generically across any website (YouTube, Google, Amazon, blogs, docs, etc.) without hardcoded selectors.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **No Disruption of Existing Infrastructure**: Browser launch, navigation, Firebase/Netlify communication, and the existing Codez48 AI contract will remain untouched.
-> - **Unified Synchronized Observation**: We will package screenshot, OCR positional data, live DOM, full HTML, viewport, scroll position, active element, and user requirement into a synchronized observation object sent to the AI planner.
-> - **Physical Cursor & Focus Verification**: Actions will verify cursor coordinates / focus state before execution and verify fresh state transition post-action.
+> - **Generic Search Detection**: Combine DOM attributes (`role="searchbox"`, `type="search"`, `placeholder`, `aria-label`, `name`), OCR visible text, and screenshot analysis to identify search bars universally.
+> - **Verified Tab Navigation**: Track active element focus after each Tab key press (`activeElement` inspection + screenshot highlight confirmation) before typing or pressing Enter.
+> - **Scroll & Navigation Invalidation**: Invalidate all cached target data, OCR coordinates, and DOM references immediately upon scrolling or navigation.
+> - **Observe-Act-Verify Loop**: Enforce strict capture of fresh observation (screenshot + OCR + DOM + HTML + activeElement) post-action to verify state transitions.
 
 ## Proposed Changes
 
-### Playwright Worker & Pilot Automation Engine
-
-#### [MODIFY] [page-inspector.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/page-inspector.js)
-- Enhance `inspectPage` to extract:
-  - Full HTML (`document.documentElement.outerHTML`)
-  - Scroll position (`window.scrollX`, `window.scrollY`)
-  - Viewport dimensions (`window.innerWidth`, `window.innerHeight`)
-  - Active element info (`document.activeElement`)
-  - Bounding rectangles for interactive elements (buttons, inputs, links, cards)
-  - Visual text/OCR readiness markers.
-
-#### [MODIFY] [ai-planner.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/ai-planner.js)
-- Update `planNextAction` to ingest synchronized observation (Screenshot + OCR + Live DOM + Full HTML + Scroll + Viewport + Active Element + Original Goal).
-- Return structured target response including target bounding box, confidence, interaction method (`mouse` or `keyboard`), and reason.
+### Playwright Worker & Pilot Engine
 
 #### [MODIFY] [locator-resolver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/locator-resolver.js)
-- Ground visual elements / OCR text to live DOM elements and precise bounding rectangles.
-- Ensure stale target invalidation when scroll position or URL changes.
+- Enhance generic search bar resolution combining DOM inputs/searchboxes, accessibility attributes, and visual OCR bounding boxes.
+- Implement stale target invalidation hooks on scroll and navigation events.
 
 #### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-executor.js)
-- Implement physical cursor movement calculation, accounting for viewport offset and bounding boxes.
-- Verify cursor position arrival (`[CURSOR POSITION VERIFIED]: PASS`).
-- Support keyboard navigation (`TAB`, `SHIFT+TAB`, `ENTER`, `SPACE`) with active element focus verification.
+- Implement verified Tab navigation loop (press Tab, inspect `document.activeElement`, verify focus reached intended target).
+- Support physical cursor movement with coordinate validation (`[CURSOR POSITION VERIFIED]: PASS`).
+- Execute typing and Enter/Space actions post-focus.
 
 #### [MODIFY] [action-verifier.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-verifier.js)
-- Implement rigorous closed-loop verification capturing fresh state (fresh screenshot, fresh OCR, fresh DOM, fresh HTML) and verifying expected browser state transition.
+- Implement strict post-action fresh state verification capturing fresh screenshot, OCR, DOM, HTML, URL, title, and active element.
 
 ## Verification Plan
 
 ### Automated Tests
-- Run simulation and CLI pilot test flows (`node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_pilot_flow.js` or CLI test execution).
-- Verify logs output:
-  - `[SCREEN INSPECTION]: Synchronized observation captured`
-  - `[OCR & DOM GROUNDING]: Target grounded`
+- Run acceptance test script (`node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_youtube_acceptance.js`).
+- Verify console logs show:
+  - `[SEARCH GROUNDING]: Generic search input detected`
+  - `[KEYBOARD FOCUS VERIFIED]: Tab focus reached target`
   - `[CURSOR POSITION VERIFIED]: PASS`
-  - `[ACTION VERIFIED]: PASS`
-
-### Manual Verification
-- Execute `node cli.js pilot "..."` or test run monitor to verify autonomous agent behavior.
+  - `[FRESH STATE VERIFIED]: PASS`
