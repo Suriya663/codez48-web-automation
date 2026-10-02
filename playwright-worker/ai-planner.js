@@ -63,11 +63,15 @@ ACTIONS:
 - wait (value: milliseconds e.g. 2000)
 - ask_user (value: "reason e.g. OTP or CAPTCHA required")
 - extract (target: { selector, name }, value: "fieldLabel")
+- native_app (value: "minimize"|"calculator:EXPR"|"powerpoint:TITLE"|"vscode:PROJECT_NAME")
+- search_and_extract (value: "search query")
+- verify_inputs (value: "request input field screenshot verification")
+- popup_input (value: "prompt label")
 - finish (value: "completion summary message")
 
 OUTPUT STRICT JSON ONLY:
 {
-  "action": "tab|shift-tab|click|fill|type|press|select|check|scroll|hover|wait|ask_user|extract|finish",
+  "action": "tab|shift-tab|click|fill|type|press|select|check|scroll|hover|wait|ask_user|extract|native_app|search_and_extract|verify_inputs|popup_input|finish",
   "target": { "role": "button", "name": "Name", "label": "Label", "placeholder": "P", "id": "id", "selector": "sel" },
   "value": "text or parameter value",
   "successCondition": "Expected DOM or URL state change",

@@ -1,12 +1,21 @@
-# Task List: Tab Navigation & Resolved Live-DOM Target Architecture
+# Pilot Automation Execution Tasks
 
-- [x] **Phase 1: Ingest Pre-Resolved Target in `action-executor.js`**
-  - [x] Accept `actionPlan.resolvedTarget` directly from resolver.
-  - [x] Revalidate element presence and bounding rect in live DOM before click/type.
-- [x] **Phase 2: Tab Navigation & Active Element Tracking (`action-executor.js`)**
-  - [x] Implement Tab / Shift+Tab focus step with `document.activeElement` inspection.
-  - [x] Log `[FOCUS OBSERVATION]` and `[KEYBOARD FOCUS VERIFIED]: PASS`.
-- [x] **Phase 3: Update `server.js` Target Pipeline**
-  - [x] Resolve target and pass `resolvedTarget` to `actionExecutor.executeAction`.
-- [x] **Phase 4: Acceptance Testing & Verification**
-  - [x] Run test scripts and confirm 100% PASS rate.
+- [x] Component 1: Native System & IDE Application Manager (`playwright-worker/native-app-automation.js`)
+  - [x] Minimize all open desktop windows
+  - [x] System Calculator automation & calculation solver
+  - [x] PowerPoint presentation generation (`.pptx`)
+  - [x] VS Code project creator under `Documents` directory, code generator, package installer, and terminal execution
+- [x] Component 2: Smart Web Search & Direct Link Extractor (`playwright-worker/web-search-extractor.js`)
+  - [x] Generic web searcher (e.g. Amazon search for iPhone)
+  - [x] Direct product link, title, price, and canonical URL extraction without manual clicks
+- [x] Component 3: Input Field Screenshot Verification & Field Ordering (`playwright-worker/input-verifier.js`)
+  - [x] Detect input boxes and generate annotated screenshot
+  - [x] Submit verification request to Firebase `input_field_verifications` collection
+  - [x] Capture user confirmation and field sequence ordering (1st, 2nd, 3rd field)
+- [x] Component 4: Lightweight 200px Height Firebase Input Popup Window (`public/input-prompt.html` & `playwright-worker/popup-input-manager.js`)
+  - [x] Create `public/input-prompt.html` with exact 200px height layout, input box, Send button, and Firebase integration
+  - [x] Support saved browser credential auto-fill / lookup for login pages
+  - [x] Transmit input data to Firebase and auto-close popup window immediately
+- [x] Component 5: Integration & Verification
+  - [x] Integrate into `playwright-worker/server.js` and `ai-planner.js`
+  - [x] Run test scripts to verify native automation, web extraction, input verification, and 200px popup auto-close

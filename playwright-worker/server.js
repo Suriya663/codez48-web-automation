@@ -384,7 +384,7 @@ async function runAgentLoop(runId) {
             // 5. Execute Real Playwright Action & Calculate Real Element Bounding Box (Module 4 & 7)
             RunManager.updateRunStatus(runId, RunState.VERIFYING, actionPlan.statusText || `Executing ${actionPlan.action}...`);
 
-            const executionResult = await actionExecutor.executeAction(activePage, actionPlan, realtimeServer, runId);
+            const executionResult = await actionExecutor.executeAction(activePage, actionPlan, realtimeServer, runId, run.browserContext);
 
             // 6. Action Verification (Module 6 & 25)
             const verification = await actionVerifier.verifyAction(activePage, actionPlan, executionResult);
