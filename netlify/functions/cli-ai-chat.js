@@ -253,6 +253,19 @@ exports.handler = async (event, context) => {
             aiErrors.push("No Groq API Keys configured in environment.");
         }
 
+        // DUMP GROQ MODELS FOR DEBUG
+        if (groqKeys.length > 0 && !aiResponse) {
+            try {
+                const res = await fetch("https://api.groq.com/openai/v1/models", {
+                    headers: { "Authorization": `Bearer ${groqKeys[0]}` }
+                });
+                const data = await res.json();
+                aiErrors.push("AVAILABLE GROQ MODELS: " + data.data.map(m => m.id).join(", "));
+            } catch (e) {
+                aiErrors.push("Failed to fetch Groq models: " + e.message);
+            }
+        }
+
         // Fallback to Gemini
         if (!aiResponse && geminiApiKey) {
             try {
