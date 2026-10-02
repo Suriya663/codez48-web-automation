@@ -13,7 +13,7 @@ class GroqProvider extends BaseAIProvider {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: this.model || 'mixtral-8x7b-32768',
+                    model: this.model || 'llama3-8b-8192',
                     messages: [{ role: 'user', content: prompt }],
                     temperature: 0.3
                 })

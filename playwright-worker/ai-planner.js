@@ -20,7 +20,7 @@ class AIPlanner {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "mixtral-8x7b-32768",
+                        model: "llama3-8b-8192",
                         messages: promptMessages,
                         temperature: 0.2,
                         max_tokens: 1500

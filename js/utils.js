@@ -19,7 +19,7 @@ export const callAI = async (messages, useGemini = false) => {
                 // Log specific protocol errors as requested
                 console.error(`[AI Protocol Error] Status: ${response.status}`, {
                     message: errorDetail,
-                    requestedModel: "mixtral-8x7b-32768",
+                    requestedModel: "llama3-8b-8192",
                     endpoint: "/.netlify/functions/call-ai"
                 });
             } catch (e) {
