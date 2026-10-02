@@ -225,6 +225,9 @@
             }
         }
 
+        const ocrCache = {};
+        let isOcrBusy = false;
+
         async function analyzeAndOverlay(vr) {
             const img = document.getElementById('liveScreenshot');
             const overlay = document.getElementById('overlayLayer');
@@ -236,24 +239,28 @@
             if (!sourceWidth || !sourceHeight) return;
 
             let allWords = [];
-            if (img.src && img.src.startsWith('data:image/') && img.naturalWidth > 10 && img.naturalHeight > 10) {
+
+            // 1. Check OCR Cache or execute Tesseract safely without worker collisions
+            if (vr.requestId && ocrCache[vr.requestId]) {
+                allWords = ocrCache[vr.requestId];
+            } else if (!isOcrBusy && img.src && img.src.startsWith('data:image/') && img.naturalWidth > 10 && img.naturalHeight > 10) {
+                isOcrBusy = true;
                 try {
-                    console.log('[ROBUST OCR] Extracting all word bounding boxes from screenshot pixels...');
                     const canvas = document.createElement('canvas');
                     canvas.width = img.naturalWidth || sourceWidth;
                     canvas.height = img.naturalHeight || sourceHeight;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
 
-                    const result = await Tesseract.recognize(canvas, 'eng').catch(err => {
-                        console.warn('[TESSERACT OCR WORKER CATCH]', err ? (err.message || err) : 'Worker error');
-                        return null;
-                    });
+                    const result = await Tesseract.recognize(canvas, 'eng').catch(() => null);
                     if (result && result.data && result.data.words) {
                         allWords = result.data.words;
+                        if (vr.requestId) ocrCache[vr.requestId] = allWords;
                     }
                 } catch (err) {
                     console.warn('[TESSERACT OCR WARNING]', err ? (err.message || err) : 'OCR scan skipped');
+                } finally {
+                    isOcrBusy = false;
                 }
             }
 
@@ -261,7 +268,6 @@
             const containerWidth = container.clientWidth;
             const containerHeight = container.clientHeight;
 
-            // Proportional contain scaling math (சம விகிதாச்சார அளவு நிர்ணயம்)
             const scale = Math.min(
                 containerWidth / sourceWidth,
                 containerHeight / sourceHeight
@@ -272,13 +278,12 @@
             const imageOffsetX = (containerWidth - renderedW) / 2;
             const imageOffsetY = (containerHeight - renderedH) / 2;
 
-            // Position overlay-layer exactly over the rendered image rectangle
             overlay.style.left = `${imageOffsetX}px`;
             overlay.style.top = `${imageOffsetY}px`;
             overlay.style.width = `${renderedW}px`;
             overlay.style.height = `${renderedH}px`;
 
-            // 1. Render interactive copyable spans for ALL valid detected OCR words
+            // Render interactive copyable spans for ALL valid detected OCR words
             allWords.forEach(w => {
                 if (w.bbox.y0 > 50 && w.text && w.text.trim().length > 0) {
                     const span = document.createElement('span');
@@ -291,17 +296,15 @@
                 }
             });
 
-            // 2. Filter target matches with robust disambiguation (Exclude browser chrome top-left artifacts & noise symbols)
+            // Filter target matches
             const targetQuery = (vr.targetElement || 'business').toLowerCase().trim().replace(/[^\w]/g, '');
             const matches = allWords.filter(w => {
                 const text = (w.text || '').toLowerCase().trim().replace(/[^\w]/g, '');
-                // Exclude browser chrome / header region artifacts (top < 60, left < 60) and single symbol noise
                 if (w.bbox.y0 < 60 && w.bbox.x0 < 100) return false;
                 if (text.length < 2) return false;
                 return text.includes(targetQuery) || targetQuery.includes(text);
             });
 
-            // Sort matches by vertical position / confidence to pick the primary website content target
             matches.sort((a, b) => a.bbox.y0 - b.bbox.y0);
 
             const elements = matches.length > 0 ? matches.map(w => ({
@@ -330,7 +333,6 @@
                 const displayCenterX = sourceCenterX * scale;
                 const displayCenterY = sourceCenterY * scale;
 
-                // Bounding rect (இலக்கு பெட்டி)
                 const rect = document.createElement('div');
                 rect.className = 'bounding-rect';
                 rect.style.left = `${displayLeft}px`;
@@ -339,14 +341,12 @@
                 rect.style.height = `${displayHeight}px`;
                 overlay.appendChild(rect);
 
-                // Target ring at center (மைய இலக்கு வட்டம்)
                 const ring = document.createElement('div');
                 ring.className = 'target-ring';
                 ring.style.left = `${displayCenterX}px`;
                 ring.style.top = `${displayCenterY}px`;
                 overlay.appendChild(ring);
 
-                // Label (பெயர் மற்றும் X, Y அச்சு)
                 const lbl = document.createElement('div');
                 lbl.className = 'target-label';
                 lbl.style.left = `${displayCenterX}px`;
@@ -354,14 +354,12 @@
                 lbl.innerText = `${el.label || 'Target'} (X: ${sourceCenterX}, Y: ${sourceCenterY})`;
                 overlay.appendChild(lbl);
 
-                // Update Response Panel
                 document.getElementById('respTarget').innerText = el.label || 'business';
                 document.getElementById('respX').innerText = sourceCenterX;
                 document.getElementById('respY').innerText = sourceCenterY;
                 document.getElementById('respConf').innerText = `${((el.confidence || 0.98) * 100).toFixed(1)}%`;
                 document.getElementById('respStatus').innerText = 'TARGET DETECTED';
 
-                // Populate Visual Debug Mode inside Diagnostics Drawer
                 document.getElementById('debugContent').innerHTML = `
                     <div>Source Dimensions: ${sourceWidth} x ${sourceHeight}</div>
                     <div>Source Box: [L:${sourceLeft}, T:${sourceTop}, R:${sourceRight}, B:${sourceBottom}]</div>
@@ -374,35 +372,9 @@
                     <div>Source Type: ${el.sourceType || 'IMAGE_OCR'}</div>
                     <div>Filtered Words: ${allWords.length} total, ${matches.length} matches</div>
                 `;
-
-                // Dispatch Cursor Request to Mouse System (சுட்டி இயக்கத்திற்கு அனுப்பப்படும் X, Y தரவு)
-                sendCursorRequest({
-                    type: "CURSOR_TARGET",
-                    targetText: el.label || 'business',
-                    x: sourceCenterX,
-                    y: sourceCenterY,
-                    sourceLeft,
-                    sourceTop,
-                    sourceRight,
-                    sourceBottom,
-                    requestId: vr.requestId,
-                    sequence: vr.sequence || 1
-                });
             } else {
-                document.getElementById('respTarget').innerText = 'Not Found - Scrolling';
-                document.getElementById('respStatus').innerText = 'SCROLLING TO LOCATE';
-                console.log('[SCROLL-TO-LOCATE] Target not immediately visible. Scrolling down to scan screen...');
-                window.scrollBy({ top: 400, behavior: 'smooth' });
-                setTimeout(async () => {
-                    await sendCursorRequest({
-                        type: "SCROLL_SCAN",
-                        targetText: vr.targetElement || 'business',
-                        scrollX: window.scrollX,
-                        scrollY: window.scrollY,
-                        requestId: vr.requestId,
-                        status: 'SCROLLED_AND_SCANNING'
-                    });
-                }, 1000);
+                document.getElementById('respTarget').innerText = vr.targetElement || 'Observing Page';
+                document.getElementById('respStatus').innerText = 'OBSERVING';
             }
         }
 
