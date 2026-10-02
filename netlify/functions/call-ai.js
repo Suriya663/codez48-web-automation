@@ -21,7 +21,7 @@ exports.handler = async (event, context) => {
 
     try {
         const { messages, useGemini = false } = JSON.parse(event.body);
-        const model = "llama3-8b-8192";
+        const model = "openai/gpt-oss-120b";
 
         const rawGroqKeys = process.env.GROQ_API_KEY;
         const groqKeys = rawGroqKeys
