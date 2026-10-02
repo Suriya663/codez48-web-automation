@@ -56,6 +56,47 @@ class AIPlanner {
             };
         }
 
+        // 1b. WORD / DOCUMENT PRE-RESOLVER
+        if ((goalLower.includes('word') || goalLower.includes('document') || goalLower.includes('report') || goalLower.includes('notes')) && currentStep === 1) {
+            let title = run.goal.replace(/^(?:create|generate|make|build)?\s*(?:a|an)?\s*(?:word)?\s*(?:document|report|notes|file)?\s*(?:on|about|for|titled|named)?\s*/i, '').trim() || 'Business_Report';
+            console.log(`[PRE-RESOLVER] Detected Word Document intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `word:${title}`,
+                successCondition: 'Word document generated',
+                statusText: `Generating Word document: "${title}"...`
+            };
+        }
+
+        // 1c. EXCEL / SPREADSHEET PRE-RESOLVER
+        if ((goalLower.includes('excel') || goalLower.includes('spreadsheet') || goalLower.includes('sheet') || goalLower.includes('expenses')) && currentStep === 1) {
+            let title = run.goal.replace(/^(?:create|generate|make|build)?\s*(?:a|an)?\s*(?:excel|spreadsheet|sheet)?\s*(?:for|on|about|titled|named)?\s*/i, '').trim() || 'Monthly_Expenses';
+            console.log(`[PRE-RESOLVER] Detected Spreadsheet intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `spreadsheet:${title}`,
+                successCondition: 'Excel spreadsheet generated',
+                statusText: `Generating spreadsheet: "${title}"...`
+            };
+        }
+
+        // 1d. STATIC WEBSITE & HOSTING PRE-RESOLVER
+        if ((goalLower.includes('website') || goalLower.includes('static site') || goalLower.includes('host') || goalLower.includes('create a site')) && currentStep === 1) {
+            let siteName = 'StaticWebsite';
+            const match = run.goal.match(/(?:website|site)\s+(?:named|titled|called)\s+([a-zA-Z0-9_-]+)/i);
+            if (match) siteName = match[1];
+            console.log(`[PRE-RESOLVER] Detected Static Website & Hosting intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `website:${siteName}`,
+                successCondition: 'Static website created, opened in VS Code, new terminal window opened, and hosted successfully',
+                statusText: `Creating static website "${siteName}", opening in VS Code, launching terminal window, and hosting locally...`
+            };
+        }
+
         // 2. CALCULATOR PRE-RESOLVER
         if ((goalLower.includes('calculator') || goalLower.includes('calc') || goalLower.includes('calculate') || goalLower.includes('math')) && currentStep === 1) {
             const mathMatch = run.goal.match(/(?:calculate|calc|math|calculator)\s*:?\s*([0-9+\-*/().\s]+)/i);
@@ -71,7 +112,7 @@ class AIPlanner {
         }
 
         // 3. VS CODE / PROGRAM CREATION PRE-RESOLVER
-        if ((goalLower.includes('program') || goalLower.includes('code') || goalLower.includes('vscode') || goalLower.includes('write a program') || goalLower.includes('create project')) && !goalLower.includes('android') && currentStep === 1) {
+        if ((goalLower.includes('program') || goalLower.includes('code') || goalLower.includes('vscode') || goalLower.includes('write a program') || goalLower.includes('create project')) && currentStep === 1) {
             let projName = 'AutomatedProgram';
             const match = run.goal.match(/(?:project|program|app)\s+(?:named|titled|called)\s+([a-zA-Z0-9_-]+)/i);
             if (match) projName = match[1];
@@ -82,21 +123,6 @@ class AIPlanner {
                 value: `vscode:${projName}`,
                 successCondition: 'Minimized open apps, created project in Documents, opened VS Code, and executed in terminal',
                 statusText: `Minimizing open windows, creating project "${projName}" in Documents, opening VS Code, and running in terminal...`
-            };
-        }
-
-        // 3b. REAL ANDROID APPLICATION PRE-RESOLVER
-        if ((goalLower.includes('android') || goalLower.includes('apk') || goalLower.includes('mobile app')) && currentStep === 1) {
-            let appName = 'RealAndroidApp';
-            const match = run.goal.match(/(?:app|project|application|apk)\s+(?:named|titled|called)\s+([a-zA-Z0-9_-]+)/i);
-            if (match) appName = match[1];
-            console.log(`[PRE-RESOLVER] Detected Real Android Application intent for goal: "${run.goal}"`);
-            return {
-                action: 'native_app',
-                target: null,
-                value: `android:${appName}`,
-                successCondition: 'Auto-resolved Android SDK/ADB, created Real Android Project in Documents, opened VS Code, and configured Gradle wrapper',
-                statusText: `Auto-resolving Android SDK, creating Real Android Application "${appName}" in Documents, opening VS Code, and assembling APK...`
             };
         }
 
