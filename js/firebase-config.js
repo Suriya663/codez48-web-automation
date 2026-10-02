@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-functions.js";
 import { getMessaging } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js";
@@ -16,10 +16,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-try { setLogLevel('silent'); } catch(e){}
-export const db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true
-});
+export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
