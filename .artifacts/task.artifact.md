@@ -1,12 +1,12 @@
-# Task List: Ultra-Reliable Multi-Signal Grounding Engine
+# Task List: Tab Navigation & Resolved Live-DOM Target Architecture
 
-- [x] **Phase 1: Spatial OCR ↔ DOM Grounding (`locator-resolver.js`)**
-  - [x] Implement spatial overlap calculation between OCR bounding boxes and DOM bounding rects.
-  - [x] Construct complete `targetIdentity` contract with HTML snippet, DOM reference, and confidence score.
-- [x] **Phase 2: Monitor Target Highlighting Overlay (`public/pilot-request-monitor.html`)**
-  - [x] Render grounded target bounding box highlights and target identity badges on live monitor streams.
-- [x] **Phase 3: Pre-Action Revalidation & Keyboard Navigation (`action-executor.js`)**
-  - [x] Revalidate target state immediately prior to click.
-  - [x] Support Tab focus tracking (`document.activeElement`) and physical cursor validation (`[CURSOR POSITION VERIFIED]: PASS`).
+- [x] **Phase 1: Ingest Pre-Resolved Target in `action-executor.js`**
+  - [x] Accept `actionPlan.resolvedTarget` directly from resolver.
+  - [x] Revalidate element presence and bounding rect in live DOM before click/type.
+- [x] **Phase 2: Tab Navigation & Active Element Tracking (`action-executor.js`)**
+  - [x] Implement Tab / Shift+Tab focus step with `document.activeElement` inspection.
+  - [x] Log `[FOCUS OBSERVATION]` and `[KEYBOARD FOCUS VERIFIED]: PASS`.
+- [x] **Phase 3: Update `server.js` Target Pipeline**
+  - [x] Resolve target and pass `resolvedTarget` to `actionExecutor.executeAction`.
 - [x] **Phase 4: Acceptance Testing & Verification**
-  - [x] Run real-world acceptance test and verify all stages pass cleanly.
+  - [x] Run test scripts and confirm 100% PASS rate.

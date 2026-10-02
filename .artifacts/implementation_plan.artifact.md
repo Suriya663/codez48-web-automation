@@ -1,36 +1,33 @@
-# Implementation Plan: Ultra-Reliable Multi-Signal Visual + DOM + OCR Grounding Engine
+# Implementation Plan: Tab Navigation Loop & Resolved Live-DOM Target Architecture
 
-This implementation plan establishes maximum reliability for Codez48 Pilot's screen understanding, OCR ↔ DOM ↔ HTML spatial correlation, rich target contract emission, live monitor visual target highlighting, verified keyboard navigation, and fresh state post-action verification.
+This implementation plan establishes first-class Tab/keyboard navigation, verified focus tracking (`document.activeElement`), resolved live-DOM target propagation from resolver to executor, and strict stale-target invalidation.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Spatial Correlation (OCR ↔ DOM ↔ HTML)**: Correlate OCR bounding boxes (`x`, `y`, `width`, `height`) with live DOM `getBoundingClientRect()` to compute spatial overlap and confidence scores before action execution.
-> - **Rich Grounded Contract Emission**: Output structured target contracts (`targetFound`, `targetText`, `targetType`, `action`, `confidence`, `reason`, `targetIdentity` including `elementId`, `tagName`, `role`, `text`, `domReference`, `htmlSnippet`, `viewportX`, `viewportY`, `rect`).
-> - **Live Monitor Target Highlighting**: Render prominent target bounding box overlays and target identity badges (`TARGET FOUND: [Text] | TYPE: [Type]`) in `public/pilot-request-monitor.html`.
-> - **Keyboard Navigation & Active Element Tracking**: Support Tab/Shift+Tab iteration with `document.activeElement` focus verification prior to executing Enter/Space actions.
-> - **Pre-Action Target Revalidation & Cursor Verification**: Confirm element visibility and position in live browser state before moving real cursor (`[CURSOR POSITION VERIFIED]: PASS`).
+> - **Resolved Target Propagation**: Resolver passes the resolved Playwright locator and `groundedPayload` directly to the Action Executor, avoiding redundant or stale re-resolutions.
+> - **Verified Tab Navigation Loop**: `action: 'tab'` and `action: 'shift-tab'` step through Tab focus, inspect `document.activeElement` (`tagName`, `id`, `role`, `text`, `rect`), capture fresh state, and log `[KEYBOARD FOCUS VERIFIED]: PASS`.
+> - **Pre-Action Revalidation**: Re-check element presence and bounding rect in live DOM prior to mouse click/type. If URL or DOM shifted, invalidate and re-resolve.
 
 ## Proposed Changes
 
-### Playwright Worker & Telemetry Engine
-
-#### [MODIFY] [locator-resolver.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/locator-resolver.js)
-- Enhance `buildGroundedPayload` to calculate spatial overlap between OCR visual bounding boxes and DOM bounding rects.
-- Compute confidence score and emit structured `targetIdentity` contracts.
+### Playwright Worker & Execution Engine
 
 #### [MODIFY] [action-executor.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/action-executor.js)
-- Enforce pre-action target revalidation, physical cursor movement, and `[CURSOR POSITION VERIFIED]: PASS` verification.
-- Support verified keyboard navigation (Tab/Shift+Tab tracking `document.activeElement`).
+- Accept pre-resolved locator/grounded target when available in `actionPlan`.
+- Re-check target validity against live DOM before executing actions.
+- Enhance `tab` and `shift-tab` execution to query `document.activeElement`, log `[FOCUS OBSERVATION]`, and verify focus arrival (`[KEYBOARD FOCUS VERIFIED]: PASS`).
+- Support keyboard shortcuts (`enter`, `space`, `escape`, `arrow-down`, `arrow-up`, `ctrl-a`).
 
-#### [MODIFY] [public/pilot-request-monitor.html](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/public/pilot-request-monitor.html)
-- Add target overlay rendering for grounded target contracts (`targetIdentity.rect`), displaying prominent bounding box highlights and target metadata badges on live stream frames.
+#### [MODIFY] [server.js](file:///C:/Users/suriya%20prakash/OneDrive/Desktop/web/playwright-worker/server.js)
+- Attach `resolvedTarget` directly to `actionPlan` for `actionExecutor.executeAction`.
 
 ## Verification Plan
 
 ### Automated Tests
-- Execute real-world CLI acceptance test (`node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_youtube_acceptance.js`).
-- Confirm console logs verify:
-  - `[GROUNDED TARGET IDENTITY]`: Structured JSON with spatial correlation & HTML snippet
-  - `[CURSOR POSITION VERIFIED]: PASS`: Real cursor arrival confirmed
-  - `[FRESH STATE VERIFIED]: PASS`: State transition confirmed post-action.
+- Run updated acceptance test harness (`node .artifacts/743b787d-cd17-4b3a-924b-0ac227da860e/scratch/test_comprehensive_capabilities.js` and `test_youtube_acceptance.js`).
+- Confirm logs display:
+  - `[FOCUS OBSERVATION] activeElement: ...`
+  - `[KEYBOARD FOCUS VERIFIED]: PASS`
+  - `[GROUNDED TARGET IDENTITY]`: Rich DOM target identity preserved
+  - `[CURSOR POSITION VERIFIED]: PASS`

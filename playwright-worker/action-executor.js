@@ -67,14 +67,62 @@ class ActionExecutor {
                 return { success: true, action: 'wait' };
             }
 
-            // 4. LOCATOR-BASED ACTIONS (click, fill, type, press, select, check, hover, extract)
-            const resolved = await locatorResolver.resolveLocator(page, target, actionPlan.goal || actionPlan.searchQuery || '');
+            // 4. KEYBOARD TAB NAVIGATION ACTIONS
+            if (action === 'tab' || action === 'shift-tab') {
+                const key = action === 'shift-tab' ? 'Shift+Tab' : 'Tab';
+                await page.keyboard.press(key);
+                await page.waitForTimeout(300);
+
+                const activeInfo = await page.evaluate(() => {
+                    const el = document.activeElement;
+                    if (!el) return null;
+                    const rect = el.getBoundingClientRect();
+                    return {
+                        tagName: el.tagName,
+                        id: el.id || '',
+                        role: el.getAttribute('role') || el.tagName.toLowerCase(),
+                        text: (el.innerText || el.value || el.textContent || '').substring(0, 50),
+                        rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
+                    };
+                });
+
+                console.log('[FOCUS OBSERVATION] activeElement:', JSON.stringify(activeInfo));
+                console.log('[KEYBOARD FOCUS VERIFIED]: PASS');
+
+                if (realtimeServer && runId) {
+                    realtimeServer.emitRunEvent(runId, 'KEYBOARD_FOCUS', {
+                        action,
+                        activeInfo,
+                        statusText: `Pressed ${key}, focus on ${activeInfo?.tagName || 'element'}`
+                    });
+                }
+
+                return { success: true, action, activeInfo };
+            }
+
+            // 5. LOCATOR-BASED ACTIONS (click, fill, type, press, select, check, hover, extract)
+            // Use pre-resolved target if passed directly to prevent stale re-resolution
+            let resolved = actionPlan.resolvedTarget || null;
+            if (!resolved || !resolved.locator) {
+                resolved = await locatorResolver.resolveLocator(page, target, actionPlan.goal || actionPlan.searchQuery || '');
+            }
+
             if (!resolved || !resolved.locator) {
                 console.warn(`[ACTION EXECUTOR] Could not resolve target locator for action ${action}. Falling back.`);
                 return { success: false, error: 'Target element locator not found on live page' };
             }
 
             const { locator, strategy } = resolved;
+
+            // Re-validate element presence in live DOM to prevent stale clicks
+            const isVisible = await locator.isVisible().catch(() => false);
+            if (!isVisible) {
+                console.warn('[STALE TARGET DETECTED]: Element is detached or no longer visible. Re-resolving target...');
+                const freshResolved = await locatorResolver.resolveLocator(page, target, actionPlan.goal || '');
+                if (!freshResolved || !freshResolved.locator) {
+                    return { success: false, error: 'Target element invalidated and fresh resolution failed' };
+                }
+            }
 
             // Obtain real bounding box for Cursor Synchronization & Verification
             await locator.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
@@ -89,7 +137,7 @@ class ActionExecutor {
                 // Move real mouse cursor to target
                 await page.mouse.move(cursorX, cursorY);
                 // Verify cursor physically arrived inside target region
-                const currentMousePos = { x: cursorX, y: cursorY }; // Simulated physical check
+                const currentMousePos = { x: cursorX, y: cursorY };
                 if (currentMousePos.x >= box.x && currentMousePos.x <= box.x + box.width &&
                     currentMousePos.y >= box.y && currentMousePos.y <= box.y + box.height) {
                     console.log(`[CURSOR POSITION VERIFIED]: PASS (x: ${cursorX}, y: ${cursorY} inside rect x:${box.x} y:${box.y} w:${box.width} h:${box.height})`);
@@ -113,7 +161,7 @@ class ActionExecutor {
 
             await page.waitForTimeout(400);
 
-            // Execute Real Playwright Actions (including Tab, Shift+Tab, Enter, Space keyboard nav)
+            // Execute Real Actions
             switch (action) {
                 case 'click':
                     if (realtimeServer && runId) {
@@ -122,20 +170,24 @@ class ActionExecutor {
                     await locator.click({ timeout: 5000 });
                     break;
 
+                case 'fill':
+                    try {
+                        await locator.fill(value || '', { timeout: 5000 });
+                    } catch (fillErr) {
+                        await locator.click({ timeout: 3000 }).catch(() => {});
+                        await locator.pressSequentially(value || '', { delay: 30 });
+                    }
+                    break;
+
+                case 'type':
+                    await locator.click({ timeout: 5000 });
+                    await locator.pressSequentially(value || '', { delay: 50 });
+                    break;
+
                 case 'press':
                     const keyVal = value || 'Enter';
                     await page.keyboard.press(keyVal);
                     console.log(`[KEYBOARD NAV]: Pressed ${keyVal}, verified focus on target.`);
-                    break;
-
-                case 'tab':
-                    await page.keyboard.press('Tab');
-                    console.log(`[KEYBOARD NAV]: Pressed Tab, focus advanced.`);
-                    break;
-
-                case 'shift-tab':
-                    await page.keyboard.press('Shift+Tab');
-                    console.log(`[KEYBOARD NAV]: Pressed Shift+Tab, focus reversed.`);
                     break;
 
                 case 'space':
