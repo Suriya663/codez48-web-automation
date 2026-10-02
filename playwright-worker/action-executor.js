@@ -46,6 +46,11 @@ class ActionExecutor {
                     });
                     return { success: true, action: 'native_app', details: res };
                 }
+                if (value.startsWith('android')) {
+                    const name = value.split(':')[1] || 'RealAndroidApp';
+                    const res = await nativeAppAutomation.createAndroidProject({ appName: name });
+                    return { success: true, action: 'native_app', details: res };
+                }
             }
 
             // SEARCH AND EXTRACT ACTION

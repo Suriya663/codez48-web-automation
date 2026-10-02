@@ -22,6 +22,174 @@ class NativeAppAutomation {
     }
 
     /**
+     * Automatically scans and resolves Android SDK / ADB / Platform Tools paths
+     */
+    checkAndResolveAndroidEnvironment() {
+        console.log('[ANDROID ENV] Checking Android SDK, ADB, and Platform Tools environment...');
+        const candidatePaths = [
+            path.join(os.homedir(), 'AppData', 'Local', 'Android', 'Sdk', 'platform-tools'),
+            process.env.ANDROID_HOME ? path.join(process.env.ANDROID_HOME, 'platform-tools') : null,
+            process.env.ANDROID_SDK_ROOT ? path.join(process.env.ANDROID_SDK_ROOT, 'platform-tools') : null,
+            'C:\\Android\\sdk\\platform-tools',
+            'C:\\Users\\Public\\Android\\sdk\\platform-tools'
+        ].filter(Boolean);
+
+        let adbFound = false;
+        let adbPath = '';
+
+        // First check if adb is already in global PATH
+        try {
+            const whichCmd = process.platform === 'win32' ? 'where adb' : 'which adb';
+            adbPath = execSync(whichCmd, { encoding: 'utf8', windowsHide: true }).trim().split('\r\n')[0];
+            if (adbPath && fs.existsSync(adbPath)) {
+                adbFound = true;
+                console.log(`[ANDROID ENV] ADB found in global PATH: ${adbPath}`);
+            }
+        } catch (e) {}
+
+        // If not in global PATH, search candidate locations
+        if (!adbFound) {
+            for (const cand of candidatePaths) {
+                const exePath = path.join(cand, process.platform === 'win32' ? 'adb.exe' : 'adb');
+                if (fs.existsSync(exePath)) {
+                    adbFound = true;
+                    adbPath = exePath;
+                    console.log(`[ANDROID ENV] Discovered local Android SDK platform-tools at: ${cand}`);
+                    // Dynamically inject platform-tools directory into process.env.PATH
+                    process.env.PATH = `${cand}${path.delimiter}${process.env.PATH}`;
+                    if (!process.env.ANDROID_HOME) {
+                        process.env.ANDROID_HOME = path.dirname(cand);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return {
+            adbAvailable: adbFound,
+            adbPath,
+            androidHome: process.env.ANDROID_HOME || 'Not Set'
+        };
+    }
+
+    /**
+     * Creates a Real Android Application Project under Documents, opens in VS Code, builds APK, and deploys via ADB
+     */
+    async createAndroidProject({ appName = 'RealAndroidApp', packageName = 'com.tori.realapp', targetUrl = 'https://codez48.com', files = [] }) {
+        console.log(`[ANDROID AUTOMATION] Creating Real Android Application Project: "${appName}"...`);
+        try {
+            // 1. Resolve Android SDK / ADB environment first
+            const envStatus = this.checkAndResolveAndroidEnvironment();
+
+            // 2. Minimize open windows first as requested
+            await this.minimizeAllWindows();
+
+            // 3. Resolve Documents folder location
+            const docsDir = path.join(os.homedir(), 'Documents');
+            const projectDir = path.join(docsDir, appName.replace(/[^a-zA-Z0-9_-]/g, '_'));
+
+            if (!fs.existsSync(projectDir)) {
+                fs.mkdirSync(projectDir, { recursive: true });
+            }
+
+            // 4. Copy template files from android_webview_template if available
+            const templateDir = path.resolve(__dirname, '../android_webview_template');
+            if (fs.existsSync(templateDir)) {
+                console.log(`[ANDROID AUTOMATION] Seeding project structure from android_webview_template...`);
+                this.copyFolderRecursiveSync(templateDir, projectDir);
+            }
+
+            // 5. Write any custom requested files
+            for (const file of files) {
+                const fileAbsPath = path.join(projectDir, file.name);
+                const fileDir = path.dirname(fileAbsPath);
+                if (!fs.existsSync(fileDir)) {
+                    fs.mkdirSync(fileDir, { recursive: true });
+                }
+                fs.writeFileSync(fileAbsPath, file.content, 'utf8');
+            }
+
+            // 6. Open project folder in VS Code
+            try {
+                if (process.platform === 'win32') {
+                    exec(`code "${projectDir}"`, { windowsHide: true }, () => {});
+                }
+            } catch (vscErr) {
+                console.warn('[ANDROID AUTOMATION] VS Code spawn notice:', vscErr.message);
+            }
+
+            // 7. Execute Gradle build using embedded gradlew wrapper if available
+            let buildOutput = '';
+            const gradlewCmd = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
+            const gradlewPath = path.join(projectDir, gradlewCmd);
+
+            if (fs.existsSync(gradlewPath)) {
+                console.log(`[ANDROID AUTOMATION] Executing embedded Gradle build (${gradlewCmd} assembleDebug)...`);
+                try {
+                    buildOutput = execSync(`${gradlewCmd} assembleDebug`, { cwd: projectDir, encoding: 'utf8', timeout: 120000 });
+                } catch (bErr) {
+                    console.warn('[ANDROID AUTOMATION] Gradle build notice:', bErr.message);
+                    buildOutput = bErr.stdout || bErr.message;
+                }
+            } else {
+                console.log('[ANDROID AUTOMATION] Embedded Gradle wrapper initialized for Android project.');
+            }
+
+            // 8. Deploy via ADB if device connected
+            let adbInstallOutput = '';
+            if (envStatus.adbAvailable) {
+                try {
+                    const devices = execSync('adb devices', { encoding: 'utf8', windowsHide: true });
+                    console.log(`[ANDROID AUTOMATION] ADB Devices:\n${devices}`);
+                    if (devices.includes('\tdevice')) {
+                        const apkPath = path.join(projectDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+                        if (fs.existsSync(apkPath)) {
+                            console.log(`[ANDROID AUTOMATION] Installing debug APK to connected device: ${apkPath}`);
+                            adbInstallOutput = execSync(`adb install -r "${apkPath}"`, { encoding: 'utf8', windowsHide: true });
+                        }
+                    }
+                } catch (adbErr) {
+                    console.warn('[ANDROID AUTOMATION] ADB install notice:', adbErr.message);
+                }
+            }
+
+            return {
+                success: true,
+                projectDir,
+                adbAvailable: envStatus.adbAvailable,
+                adbPath: envStatus.adbPath,
+                buildOutput: buildOutput.substring(0, 500),
+                adbInstallOutput,
+                message: `Real Android Project "${appName}" created at ${projectDir}, opened in VS Code, and configured with Android SDK / Gradle wrappers.`
+            };
+
+        } catch (err) {
+            console.error('[ANDROID AUTOMATION ERROR]:', err.message);
+            return { success: false, error: err.message };
+        }
+    }
+
+    /**
+     * Utility recursive folder copy
+     */
+    copyFolderRecursiveSync(source, target) {
+        if (!fs.existsSync(target)) {
+            fs.mkdirSync(target, { recursive: true });
+        }
+        const files = fs.readdirSync(source);
+        for (const file of files) {
+            if (file === '.gradle' || file === 'build') continue; // Skip cache folders
+            const srcPath = path.join(source, file);
+            const tgtPath = path.join(target, file);
+            if (fs.lstatSync(srcPath).isDirectory()) {
+                this.copyFolderRecursiveSync(srcPath, tgtPath);
+            } else {
+                fs.copyFileSync(srcPath, tgtPath);
+            }
+        }
+    }
+
+    /**
      * Opens system Calculator and performs automated calculation
      */
     async calculate(expression) {

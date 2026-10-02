@@ -71,7 +71,7 @@ class AIPlanner {
         }
 
         // 3. VS CODE / PROGRAM CREATION PRE-RESOLVER
-        if ((goalLower.includes('program') || goalLower.includes('code') || goalLower.includes('vscode') || goalLower.includes('write a program') || goalLower.includes('create project')) && currentStep === 1) {
+        if ((goalLower.includes('program') || goalLower.includes('code') || goalLower.includes('vscode') || goalLower.includes('write a program') || goalLower.includes('create project')) && !goalLower.includes('android') && currentStep === 1) {
             let projName = 'AutomatedProgram';
             const match = run.goal.match(/(?:project|program|app)\s+(?:named|titled|called)\s+([a-zA-Z0-9_-]+)/i);
             if (match) projName = match[1];
@@ -82,6 +82,21 @@ class AIPlanner {
                 value: `vscode:${projName}`,
                 successCondition: 'Minimized open apps, created project in Documents, opened VS Code, and executed in terminal',
                 statusText: `Minimizing open windows, creating project "${projName}" in Documents, opening VS Code, and running in terminal...`
+            };
+        }
+
+        // 3b. REAL ANDROID APPLICATION PRE-RESOLVER
+        if ((goalLower.includes('android') || goalLower.includes('apk') || goalLower.includes('mobile app')) && currentStep === 1) {
+            let appName = 'RealAndroidApp';
+            const match = run.goal.match(/(?:app|project|application|apk)\s+(?:named|titled|called)\s+([a-zA-Z0-9_-]+)/i);
+            if (match) appName = match[1];
+            console.log(`[PRE-RESOLVER] Detected Real Android Application intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `android:${appName}`,
+                successCondition: 'Auto-resolved Android SDK/ADB, created Real Android Project in Documents, opened VS Code, and configured Gradle wrapper',
+                statusText: `Auto-resolving Android SDK, creating Real Android Application "${appName}" in Documents, opening VS Code, and assembling APK...`
             };
         }
 
