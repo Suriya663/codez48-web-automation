@@ -111,7 +111,7 @@
         // 4. சரியான இலக்கு எழுத்து ("business") கண்டறியப்பட்டு சரியான X, Y ஆயத்தொலைவுகள் சுட்டி இயக்கத்திற்கு அனுப்பப்படுகின்றன.
         // ==========================================
 
-        let visualRequestsCache = [];
+        window.visualRequestsCache = [];
         let activeRequestId = null;
         let activeScreenshotLength = 0;
 
@@ -176,8 +176,8 @@
                 combined.push(fallbackRequest);
             }
 
-            visualRequestsCache = combined;
-            const latest = visualRequestsCache[0];
+            window.visualRequestsCache = combined;
+            const latest = window.visualRequestsCache[0];
 
             const currentScreenshotLength = latest.screenshotData ? latest.screenshotData.length : 0;
             if (!activeRequestId || activeRequestId !== latest.requestId || currentScreenshotLength !== activeScreenshotLength) {
@@ -353,8 +353,9 @@
                     overlay.appendChild(gLbl);
                 }
             }
-                const box = el.box || { left: 0, top: 0, right: 0, bottom: 0 };
-                const sourceLeft = box.left;
+
+            if (elements.length > 0) {
+                const el = elements[0];
                 const sourceTop = box.top;
                 const sourceRight = box.right;
                 const sourceBottom = box.bottom;
@@ -569,8 +570,8 @@
                     });
 
                     if (reqs.length > 0) {
-                        visualRequestsCache = reqs;
-                        const latest = visualRequestsCache[0];
+                        window.visualRequestsCache = reqs;
+                        const latest = window.visualRequestsCache[0];
                         if (!activeRequestId || activeRequestId !== latest.requestId || (latest.screenshotData && activeScreenshotLength !== latest.screenshotData.length)) {
                             activeRequestId = latest.requestId;
                             activeScreenshotLength = latest.screenshotData ? latest.screenshotData.length : 0;
