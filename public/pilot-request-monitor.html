@@ -236,12 +236,25 @@
             if (!sourceWidth || !sourceHeight) return;
 
             let allWords = [];
-            try {
-                console.log('[ROBUST OCR] Extracting all word bounding boxes from screenshot pixels...');
-                const result = await Tesseract.recognize(img.src, 'eng');
-                allWords = result.data.words || [];
-            } catch (err) {
-                console.warn('[TESSERACT OCR WARNING]', err.message);
+            if (img.src && img.src.startsWith('data:image/') && img.naturalWidth > 10 && img.naturalHeight > 10) {
+                try {
+                    console.log('[ROBUST OCR] Extracting all word bounding boxes from screenshot pixels...');
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || sourceWidth;
+                    canvas.height = img.naturalHeight || sourceHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const result = await Tesseract.recognize(canvas, 'eng').catch(err => {
+                        console.warn('[TESSERACT OCR WORKER CATCH]', err ? (err.message || err) : 'Worker error');
+                        return null;
+                    });
+                    if (result && result.data && result.data.words) {
+                        allWords = result.data.words;
+                    }
+                } catch (err) {
+                    console.warn('[TESSERACT OCR WARNING]', err ? (err.message || err) : 'OCR scan skipped');
+                }
             }
 
             const container = document.getElementById('screenshotContainer');
@@ -512,7 +525,7 @@
         });
 
         fetchRequests();
-        setInterval(fetchRequests, 3000);
+        setInterval(fetchRequests, 500);
     </script>
 
     <!-- Direct Real-Time Firebase Firestore Live Sync -->
