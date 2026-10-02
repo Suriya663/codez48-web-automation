@@ -21,7 +21,7 @@ exports.handler = async (event, context) => {
 
     try {
         const { messages, useGemini = false } = JSON.parse(event.body);
-        const model = "llama3-70b-8192";
+        const model = "llama-3.1-70b-versatile";
 
         const rawGroqKeys = process.env.GROQ_API_KEY;
         const groqKeys = rawGroqKeys
