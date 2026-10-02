@@ -67,9 +67,10 @@ class ActionExecutor {
                 return { success: true, action: 'wait' };
             }
 
-            // 4. KEYBOARD TAB NAVIGATION ACTIONS
+            // 4. FIRST-CLASS KEYBOARD TAB / SHIFT-TAB NAVIGATION ACTIONS
             if (action === 'tab' || action === 'shift-tab') {
                 const key = action === 'shift-tab' ? 'Shift+Tab' : 'Tab';
+                console.log(`[KEYBOARD] ${key.toUpperCase()} pressed`);
                 await page.keyboard.press(key);
                 await page.waitForTimeout(300);
 
@@ -80,20 +81,23 @@ class ActionExecutor {
                     return {
                         tagName: el.tagName,
                         id: el.id || '',
-                        role: el.getAttribute('role') || el.tagName.toLowerCase(),
-                        text: (el.innerText || el.value || el.textContent || '').substring(0, 50),
-                        rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
+                        role: el.getAttribute('role') || el.type || el.tagName.toLowerCase(),
+                        ariaLabel: el.getAttribute('aria-label') || '',
+                        text: (el.innerText || el.value || el.placeholder || el.textContent || '').trim().substring(0, 60),
+                        rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
+                        viewportX: Math.round(rect.x + rect.width / 2),
+                        viewportY: Math.round(rect.y + rect.height / 2)
                     };
                 });
 
-                console.log('[FOCUS OBSERVATION] activeElement:', JSON.stringify(activeInfo));
+                console.log('[FOCUS OBSERVATION] activeElement:', JSON.stringify(activeInfo, null, 2));
                 console.log('[KEYBOARD FOCUS VERIFIED]: PASS');
 
                 if (realtimeServer && runId) {
                     realtimeServer.emitRunEvent(runId, 'KEYBOARD_FOCUS', {
                         action,
                         activeInfo,
-                        statusText: `Pressed ${key}, focus on ${activeInfo?.tagName || 'element'}`
+                        statusText: `Pressed ${key}, focus on ${activeInfo?.tagName || 'element'} (${activeInfo?.text || activeInfo?.role || ''})`
                     });
                 }
 
@@ -112,16 +116,18 @@ class ActionExecutor {
                 return { success: false, error: 'Target element locator not found on live page' };
             }
 
-            const { locator, strategy } = resolved;
+            let { locator, strategy } = resolved;
 
-            // Re-validate element presence in live DOM to prevent stale clicks
+            // Re-validate element presence & visibility in live DOM to prevent stale clicks
             const isVisible = await locator.isVisible().catch(() => false);
             if (!isVisible) {
-                console.warn('[STALE TARGET DETECTED]: Element is detached or no longer visible. Re-resolving target...');
+                console.warn('[STALE TARGET DETECTED]: Element is detached or no longer visible. Re-resolving target from fresh DOM...');
                 const freshResolved = await locatorResolver.resolveLocator(page, target, actionPlan.goal || '');
                 if (!freshResolved || !freshResolved.locator) {
                     return { success: false, error: 'Target element invalidated and fresh resolution failed' };
                 }
+                locator = freshResolved.locator;
+                strategy = freshResolved.strategy;
             }
 
             // Obtain real bounding box for Cursor Synchronization & Verification
@@ -140,7 +146,7 @@ class ActionExecutor {
                 const currentMousePos = { x: cursorX, y: cursorY };
                 if (currentMousePos.x >= box.x && currentMousePos.x <= box.x + box.width &&
                     currentMousePos.y >= box.y && currentMousePos.y <= box.y + box.height) {
-                    console.log(`[CURSOR POSITION VERIFIED]: PASS (x: ${cursorX}, y: ${cursorY} inside rect x:${box.x} y:${box.y} w:${box.width} h:${box.height})`);
+                    console.log(`[CURSOR POSITION VERIFIED]: PASS (x: ${cursorX}, y: ${cursorY} inside rect x:${Math.round(box.x)} y:${Math.round(box.y)} w:${Math.round(box.width)} h:${Math.round(box.height)})`);
                 } else {
                     console.warn(`[CURSOR POSITION VERIFIED]: WARNING (outside bounding box)`);
                 }

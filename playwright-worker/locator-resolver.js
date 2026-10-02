@@ -4,12 +4,15 @@ class LocatorResolver {
             const tagName = await locator.evaluate(el => el.tagName).catch(() => 'UNKNOWN');
             const elementId = await locator.evaluate(el => el.id).catch(() => '');
             const role = await locator.evaluate(el => el.getAttribute('role') || el.tagName.toLowerCase()).catch(() => 'element');
+            const ariaLabel = await locator.evaluate(el => el.getAttribute('aria-label') || '').catch(() => '');
             const text = await locator.evaluate(el => el.innerText || el.value || el.textContent || '').catch(() => '');
             const htmlSnippet = await locator.evaluate(el => el.outerHTML.substring(0, 300)).catch(() => '');
             const box = await locator.boundingBox().catch(() => null);
 
             let confidence = 0.96;
             let reason = 'Live DOM element grounded via multi-signal resolution.';
+            let ocrMatch = false;
+            let visualMatch = false;
 
             if (box && ocrBox) {
                 // Calculate spatial overlap between OCR bounding box and DOM bounding rect
@@ -18,23 +21,36 @@ class LocatorResolver {
                 const overlapArea = overlapX * overlapY;
                 if (overlapArea > 0) {
                     confidence = 0.98;
+                    ocrMatch = true;
+                    visualMatch = true;
                     reason = `OCR visual detection spatially overlaps with live DOM element (${tagName}#${elementId || 'element'}).`;
                 }
             } else if (box) {
-                reason = `OCR visual detection and live DOM element occupy overlapping spatial region (rect: x:${Math.round(box.x)}, y:${Math.round(box.y)}, w:${Math.round(box.width)}, h:${Math.round(box.height)}).`;
+                visualMatch = true;
+                reason = `Live DOM element grounded spatially (rect: x:${Math.round(box.x)}, y:${Math.round(box.y)}, w:${Math.round(box.width)}, h:${Math.round(box.height)}).`;
             }
 
             const groundedPayload = {
                 targetFound: true,
                 targetText: text.substring(0, 60),
                 targetType: role,
-                action: 'GROUNDED_TARGET',
+                tagName,
+                elementId,
+                role,
+                ariaLabel,
+                domIdentity: `${tagName.toLowerCase()}${elementId ? '#' + elementId : ''}[strategy=${strategy}]`,
+                viewportX: box ? Math.round(box.x + box.width / 2) : 0,
+                viewportY: box ? Math.round(box.y + box.height / 2) : 0,
+                rect: box ? { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width), height: Math.round(box.height) } : { x: 0, y: 0, width: 0, height: 0 },
+                ocrMatch,
+                visualMatch,
                 confidence,
                 reason,
                 targetIdentity: {
                     elementId,
                     tagName,
                     role,
+                    ariaLabel,
                     text: text.substring(0, 60),
                     domReference: strategy,
                     htmlSnippet,
@@ -54,7 +70,7 @@ class LocatorResolver {
     async resolveLocator(page, target, goal = '') {
         if (!page || page.isClosed()) return null;
 
-        // Invalidate stale target references on scroll / navigation state change
+        // Universal Search Input Grounding Heuristics
         try {
             const isSearchGoal = /search|find|lookup|query/i.test(goal || '');
             if (isSearchGoal && (!target || !target.selector)) {
@@ -65,12 +81,13 @@ class LocatorResolver {
                     { loc: page.locator('input[aria-label*="search" i]').first(), strat: 'search-arialabel' },
                     { loc: page.locator('input[name*="search" i]').first(), strat: 'search-name' },
                     { loc: page.locator('input[name*="q" i]').first(), strat: 'search-q' },
-                    { loc: page.locator('input[name*="query" i]').first(), strat: 'search-query' }
+                    { loc: page.locator('input[name*="query" i]').first(), strat: 'search-query' },
+                    { loc: page.locator('textarea[name*="q" i]').first(), strat: 'search-textarea-q' }
                 ];
 
                 for (const item of searchLocators) {
                     if (await item.loc.count() > 0 && await item.loc.isVisible().catch(() => false)) {
-                        console.log('[SEARCH GROUNDING]: Generic search input detected via universal heuristics');
+                        console.log('[SEARCH GROUNDING]: Universal search input detected via heuristics');
                         return await this.buildGroundedPayload(item.loc, item.strat);
                     }
                 }
@@ -88,51 +105,73 @@ class LocatorResolver {
             // Priority 1: getByRole()
             if (target.role && target.name) {
                 const loc = page.getByRole(target.role, { name: target.name, exact: false }).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'getByRole'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'getByRole';
+                }
             }
 
             // Priority 2: getByLabel()
             if (!foundLoc && target.label) {
                 const loc = page.getByLabel(target.label, { exact: false }).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'getByLabel'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'getByLabel';
+                }
             }
 
             // Priority 3: getByPlaceholder()
             if (!foundLoc && target.placeholder) {
                 const loc = page.getByPlaceholder(target.placeholder, { exact: false }).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'getByPlaceholder'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'getByPlaceholder';
+                }
             }
 
             // Priority 4: Name Attribute
             if (!foundLoc && (target.nameAttr || target.name)) {
                 const nameVal = target.nameAttr || target.name;
                 const loc = page.locator(`[name="${nameVal}"]`).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'nameAttr'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'nameAttr';
+                }
             }
 
             // Priority 5: ID
             if (!foundLoc && target.id) {
                 const loc = page.locator(`#${target.id}`).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'id'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'id';
+                }
             }
 
             // Priority 6: getByText()
-            if (!foundLoc && target.text) {
-                const loc = page.getByText(target.text, { exact: false }).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'getByText'; }
+            if (!foundLoc && (target.text || target.name)) {
+                const textVal = target.text || target.name;
+                const loc = page.getByText(textVal, { exact: false }).first();
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'getByText';
+                }
             }
 
             // Priority 7: CSS Selector
             if (!foundLoc && target.selector) {
                 const loc = page.locator(target.selector).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'css'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'css';
+                }
             }
 
             if (foundLoc) {
                 return await this.buildGroundedPayload(foundLoc, foundStrat);
             }
 
-            // Target not resolved on initial viewport - attempt scroll-and-retry search for elements
+            // Target not resolved on initial viewport - attempt scroll-and-retry
             console.log('[LOCATOR RESOLVER] Target not in immediate viewport. Scrolling down to locate element...');
             await page.mouse.wheel(0, 400);
             await page.waitForTimeout(600);
@@ -140,16 +179,26 @@ class LocatorResolver {
             // Retry resolution after scroll (Invalidates previous viewport coordinates)
             if (target.role && target.name) {
                 const loc = page.getByRole(target.role, { name: target.name, exact: false }).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'getByRole-after-scroll'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'getByRole-after-scroll';
+                }
             }
-            if (!foundLoc && target.text) {
-                const loc = page.getByText(target.text, { exact: false }).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'getByText-after-scroll'; }
+            if (!foundLoc && (target.text || target.name)) {
+                const textVal = target.text || target.name;
+                const loc = page.getByText(textVal, { exact: false }).first();
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'getByText-after-scroll';
+                }
             }
             if (!foundLoc && (target.nameAttr || target.name)) {
                 const nameVal = target.nameAttr || target.name;
                 const loc = page.locator(`[name="${nameVal}"]`).first();
-                if (await loc.count() > 0) { foundLoc = loc; foundStrat = 'nameAttr-after-scroll'; }
+                if (await loc.count() > 0 && await loc.isVisible().catch(() => false)) {
+                    foundLoc = loc;
+                    foundStrat = 'nameAttr-after-scroll';
+                }
             }
 
             if (foundLoc) {

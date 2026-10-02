@@ -40,15 +40,22 @@ class AIPlanner {
     }
 
     async planNextAction(run, pageState) {
-        const systemPrompt = `You are the Stateful Playwright AI Action Planner.
-Given the goal: "${run.goal}" and live inspected page state at "${pageState.url}", choose the SINGLE NEXT Playwright action.
+        const systemPrompt = `You are the Stateful Codez48 Playwright AI Action Planner.
+Given the ORIGINAL USER REQUIREMENT: "${run.goal}" and live inspected page state at "${pageState.url}", choose the SINGLE NEXT Playwright action.
+
+NAVIGATION GUIDELINES:
+- Keyboard Tab navigation ("tab" / "shift-tab") is a FIRST-CLASS navigation method. Use "tab" when traversing headers, navigation bars, search inputs, login controls, or form controls sequentially.
+- When an element receives keyboard focus ("activeElement"), check if it matches the target. If it matches, use "press" with value "Enter" or "Space" to activate.
+- Otherwise use "click", "fill", "type", "scroll", "hover", "wait", "finish".
 
 ACTIONS:
 - navigate (value: "URL")
+- tab (value: "next focus step")
+- shift-tab (value: "previous focus step")
 - click (target: { role, name, id, selector })
 - fill (target: { label, placeholder, id, name, selector }, value: "text")
 - type (target: { selector, id }, value: "text")
-- press (value: "Enter"|"Tab"|"Escape")
+- press (value: "Enter"|"Tab"|"Space"|"Escape")
 - select (target: { selector, id }, value: "optionValue")
 - check (target: { label, id, selector })
 - scroll (value: "down"|"up")
@@ -60,11 +67,11 @@ ACTIONS:
 
 OUTPUT STRICT JSON ONLY:
 {
-  "action": "click|fill|type|press|select|check|scroll|hover|wait|ask_user|extract|finish",
+  "action": "tab|shift-tab|click|fill|type|press|select|check|scroll|hover|wait|ask_user|extract|finish",
   "target": { "role": "button", "name": "Name", "label": "Label", "placeholder": "P", "id": "id", "selector": "sel" },
   "value": "text or parameter value",
   "successCondition": "Expected DOM or URL state change",
-  "statusText": "Short user-safe status message (e.g. Entering search query...)"
+  "statusText": "Short user-safe status message"
 }`;
 
         const userContext = JSON.stringify({
@@ -74,6 +81,7 @@ OUTPUT STRICT JSON ONLY:
             viewport: pageState.viewport,
             scroll: pageState.scroll,
             activeElement: pageState.activeElement,
+            headerNavElements: pageState.headerNavElements,
             headings: pageState.headings,
             buttons: pageState.buttons,
             inputs: pageState.inputs,

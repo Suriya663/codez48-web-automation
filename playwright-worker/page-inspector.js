@@ -29,15 +29,44 @@ class PageInspector {
                     y: window.scrollY
                 };
 
+                // Detailed active Element inspection
                 const active = document.activeElement;
-                const activeElement = active ? {
-                    tagName: active.tagName,
-                    id: active.id || '',
-                    className: active.className || '',
-                    text: (active.innerText || active.value || '').substring(0, 50)
-                } : null;
+                let activeElement = null;
+                if (active && active !== document.body && active !== document.documentElement) {
+                    const rect = active.getBoundingClientRect();
+                    activeElement = {
+                        tagName: active.tagName,
+                        id: active.id || '',
+                        role: active.getAttribute('role') || active.type || active.tagName.toLowerCase(),
+                        ariaLabel: active.getAttribute('aria-label') || '',
+                        text: (active.innerText || active.value || active.placeholder || active.textContent || '').trim().substring(0, 60),
+                        value: active.value || '',
+                        isFocused: true,
+                        rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
+                        viewportX: Math.round(rect.x + rect.width / 2),
+                        viewportY: Math.round(rect.y + rect.height / 2)
+                    };
+                }
 
                 const fullHtml = document.documentElement.outerHTML.substring(0, 100000);
+
+                // Header / Navigation Interactive Elements Area
+                const headerNavElements = [];
+                document.querySelectorAll('header a, header button, nav a, nav button, [role="navigation"] a, [role="navigation"] button').forEach((el, idx) => {
+                    if (isVisible(el) && headerNavElements.length < 15) {
+                        const rect = el.getBoundingClientRect();
+                        const text = (el.innerText || el.getAttribute('aria-label') || el.title || '').trim();
+                        if (text) {
+                            headerNavElements.push({
+                                index: idx,
+                                tagName: el.tagName,
+                                role: el.getAttribute('role') || el.tagName.toLowerCase(),
+                                name: text.substring(0, 50),
+                                rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) }
+                            });
+                        }
+                    }
+                });
 
                 // Layout Section Classification
                 const layoutSections = [];
@@ -86,10 +115,10 @@ class PageInspector {
                 });
 
                 const inputs = [];
-                document.querySelectorAll('input, textarea, select, div[contenteditable="true"], [role="textbox"]').forEach((i, idx) => {
+                document.querySelectorAll('input, textarea, select, div[contenteditable="true"], [role="textbox"], [role="searchbox"]').forEach((i, idx) => {
                     if (isVisible(i)) {
                         const tag = i.tagName.toLowerCase();
-                        const isEditable = tag === 'div' || i.getAttribute('contenteditable') === 'true' || i.getAttribute('role') === 'textbox';
+                        const isEditable = tag === 'div' || i.getAttribute('contenteditable') === 'true' || i.getAttribute('role') === 'textbox' || i.getAttribute('role') === 'searchbox';
                         const type = i.getAttribute('type') || (tag === 'textarea' ? 'textarea' : isEditable ? 'contenteditable' : 'text');
                         const isSecret = /password|otp|secret|token|apikey/i.test(i.name || i.id || i.getAttribute('placeholder') || i.getAttribute('aria-label') || '');
                         const val = isEditable ? (i.innerText || i.textContent || '') : (i.value || '');
@@ -129,6 +158,7 @@ class PageInspector {
                     scroll,
                     activeElement,
                     fullHtml,
+                    headerNavElements,
                     layoutSections,
                     headings: headings.slice(0, 10),
                     buttons: buttons.slice(0, 20),
@@ -144,6 +174,7 @@ class PageInspector {
                 scroll: pageData.scroll,
                 activeElement: pageData.activeElement,
                 fullHtml: pageData.fullHtml,
+                headerNavElements: pageData.headerNavElements,
                 layoutSections: pageData.layoutSections,
                 headings: pageData.headings,
                 buttons: pageData.buttons,
