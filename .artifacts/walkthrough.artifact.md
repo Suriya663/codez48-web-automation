@@ -1,51 +1,29 @@
-# Pilot Automation Capabilities Walkthrough
+# AI Pilot Intent Pre-Resolver Integration Walkthrough
 
-We have successfully implemented and verified the full suite of native desktop application automation, web search and direct link extraction, input field verification with screenshot confirmation, and the dedicated 200px height Firebase input popup window.
+We have added the **Deterministic Native Intent Pre-Resolver** directly inside the AI Pilot Planner (`playwright-worker/ai-planner.js`). The Pilot now automatically identifies PowerPoint, Calculator, VS Code program creation, Web Search, Input Verification, and 200px Popup Window requests directly from the user's prompt step 1.
 
 ---
 
 ## 🛠️ Key Technical Implementations
 
-### 1. Native Application & VS Code Automation (`playwright-worker/native-app-automation.js`)
-- **Desktop Window Minimization**: Minimizes all open desktop windows using Shell COM object execution (`(New-Object -ComObject Shell.Application).MinimizeAll()`).
-- **Calculator Automation**: Opens system calculator (`calc.exe`) and computes mathematical expressions automatically.
-- **PowerPoint Presentation Deck Builder**: Automatically generates styled `.pptx` presentation decks based on user prompts.
-- **VS Code Project Creator & Terminal Execution**:
-  - Automatically creates a project folder inside `C:\Users\<user>\Documents\Codez48Projects\<projectName>`.
-  - Writes program files (single or multi-file).
-  - Spawns VS Code (`code <projectDir>`).
-  - Executes package installation and executes the program directly in the VS Code terminal process.
-
-### 2. Smart Web Search & Direct Link Extractor (`playwright-worker/web-search-extractor.js`)
-- Navigates directly to Amazon, Wikipedia, eBay, Google, or any target site.
-- Automatically finds search fields and submits search queries without manual user clicks.
-- Extracts matching item titles, prices, product links, and canonical URLs directly from the DOM structure.
-
-### 3. Input Box Verification & Ordering (`playwright-worker/input-verifier.js`)
-- Detects input fields during page inspection and generates an annotated screenshot highlighting all discovered input boxes.
-- Submits verification payload and screenshot to Firebase `input_field_verifications` collection.
-- Prompts user to confirm whether the detected area is an input box and captures field sequence order (1st, 2nd, 3rd field).
-
-### 4. Dedicated 200px Height Firebase Input Popup Window (`public/input-prompt.html` & `popup-input-manager.js`)
-- Renders `public/input-prompt.html` in an exact **200px height window**.
-- Displays an input box and "Send" button.
-- Connected directly to Firebase Firestore for real-time data transmission.
-- Supports browser saved credential lookup for auto-filling login pages.
-- Automatically closes the window (`window.close()`) immediately after data transmission.
+### 1. Deterministic Intent Pre-Resolver (`playwright-worker/ai-planner.js`)
+- Added pre-resolution step before LLM invocation:
+  - **PowerPoint/PPT Intent**: Prompting for PowerPoint immediately triggers `native_app` with value `powerpoint:<Title>`, building the presentation deck automatically.
+  - **Calculator Intent**: Prompting for calculations immediately triggers `native_app` with value `calculator:<Expr>`, opening calculator and evaluating results.
+  - **VS Code Program Creation Intent**: Prompting for writing code or projects immediately triggers `native_app` with value `vscode:<ProjectName>`, minimizing windows, creating the project in `Documents`, opening VS Code, and executing code in the terminal.
+  - **Web Search & Link Extraction Intent**: Prompting to search Amazon or websites immediately triggers `search_and_extract` with value `<SearchQuery>`, extracting direct product links.
+  - **Input Verification & Popup Input**: Automatically triggers screenshot verification (`verify_inputs`) and 200px popup window (`popup_input`).
 
 ---
 
 ## 🧪 Verification Results
 
-Executed `test_pilot_capabilities.js`:
+Executed `test_ai_planner_pre_resolver.js`:
 
 > [!NOTE]
-> All native automation, web extraction, input verification, and 200px popup auto-closure workflows passed with 100% operational success.
+> All native pilot intents pre-resolved instantly to their target native actions without getting stuck in browser navigation loops.
 
-- **Desktop Minimization**: `All open applications minimized.`
-- **Calculator Output**: `150 * 12 + 450` = **`2250`**
-- **PowerPoint Deck**: `AI_Pilot_Capabilities_Deck_...html` generated under `Documents/Codez48Presentations`.
-- **VS Code Project Execution**: Project created at `C:\Users\...\Documents\Codez48Projects\TestPilotProject`, opened in VS Code, and executed in terminal (`Hello World from VS Code Automation Project!`).
-- **Web Search Extractor**: Navigated to page, searched for "iPhone", and extracted 10 direct item links automatically.
-- **Input Verification**: Detected input fields and captured annotated screenshot.
-- **200px Popup Window**: Spawned 200px viewport window, loaded UI, and closed popup window automatically upon submission.
+- **PowerPoint Goal**: `"Create a PowerPoint presentation on AI Automation"` -> `action: 'native_app'`, `value: 'powerpoint:presentation on AI Automation'`
+- **Calculator Goal**: `"Calculate 250 * 15 + 100"` -> `action: 'native_app'`, `value: 'calculator:250 * 15 + 100'`
+- **VS Code Goal**: `"Write a program in VS Code for Node.js"` -> `action: 'native_app'`, `value: 'vscode:AutomatedProgram'`
+- **Search Goal**: `"Search Amazon for iPhone and extract link"` -> `action: 'search_and_extract'`, `value: 'Amazon for iPhone'`

@@ -1,21 +1,12 @@
-# Pilot Automation Execution Tasks
+# AI Pilot Intent Pre-Resolver Execution Tasks
 
-- [x] Component 1: Native System & IDE Application Manager (`playwright-worker/native-app-automation.js`)
-  - [x] Minimize all open desktop windows
-  - [x] System Calculator automation & calculation solver
-  - [x] PowerPoint presentation generation (`.pptx`)
-  - [x] VS Code project creator under `Documents` directory, code generator, package installer, and terminal execution
-- [x] Component 2: Smart Web Search & Direct Link Extractor (`playwright-worker/web-search-extractor.js`)
-  - [x] Generic web searcher (e.g. Amazon search for iPhone)
-  - [x] Direct product link, title, price, and canonical URL extraction without manual clicks
-- [x] Component 3: Input Field Screenshot Verification & Field Ordering (`playwright-worker/input-verifier.js`)
-  - [x] Detect input boxes and generate annotated screenshot
-  - [x] Submit verification request to Firebase `input_field_verifications` collection
-  - [x] Capture user confirmation and field sequence ordering (1st, 2nd, 3rd field)
-- [x] Component 4: Lightweight 200px Height Firebase Input Popup Window (`public/input-prompt.html` & `playwright-worker/popup-input-manager.js`)
-  - [x] Create `public/input-prompt.html` with exact 200px height layout, input box, Send button, and Firebase integration
-  - [x] Support saved browser credential auto-fill / lookup for login pages
-  - [x] Transmit input data to Firebase and auto-close popup window immediately
-- [x] Component 5: Integration & Verification
-  - [x] Integrate into `playwright-worker/server.js` and `ai-planner.js`
-  - [x] Run test scripts to verify native automation, web extraction, input verification, and 200px popup auto-close
+- [x] Component 1: Deterministic Native Intent Pre-Resolver (`playwright-worker/ai-planner.js`)
+  - [x] Add intent detection for PowerPoint / PPT / presentation requests
+  - [x] Add intent detection for Calculator / Math calculation requests
+  - [x] Add intent detection for VS Code program writing and project creation requests in `Documents`
+  - [x] Add intent detection for Web Search & direct product link extraction
+  - [x] Add intent detection for Input field verification and 200px popup input
+- [x] Component 2: Action Executor Stream Formatting (`playwright-worker/action-executor.js`)
+  - [x] Format real-time logs for PPT creation, Calculator results, VS Code project creation, and terminal execution
+- [x] Component 3: Integration & End-to-End Verification
+  - [x] Run test suite verifying that goals automatically trigger PowerPoint, Calculator, VS Code workflow, and Web Search

@@ -119,8 +119,8 @@ class NativeAppAutomation {
             await this.minimizeAllWindows();
 
             // 2. Resolve Documents folder location
-            const docsDir = path.join(os.homedir(), 'Documents', 'Codez48Projects');
-            const projectDir = path.join(docsDir, projectName || `project_${Date.now()}`);
+            const docsDir = path.join(os.homedir(), 'Documents');
+            const projectDir = path.join(docsDir, projectName || `Project_${Date.now()}`);
 
             if (!fs.existsSync(projectDir)) {
                 fs.mkdirSync(projectDir, { recursive: true });

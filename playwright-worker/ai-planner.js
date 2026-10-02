@@ -40,6 +40,88 @@ class AIPlanner {
     }
 
     async planNextAction(run, pageState) {
+        const goalLower = (run.goal || '').toLowerCase();
+        const currentStep = run.currentStep || 1;
+
+        // 1. POWERPOINT / PPT PRE-RESOLVER
+        if ((goalLower.includes('powerpoint') || goalLower.includes('ppt') || goalLower.includes('presentation') || goalLower.includes('slide')) && currentStep === 1) {
+            let title = run.goal.replace(/^(?:create|generate|make|build)?\s*(?:a|an)?\s*(?:powerpoint|ppt|presentation|slides?)\s*(?:deck|file)?\s*(?:on|about|for|titled|named)?\s*/i, '').trim() || 'Automated_Presentation';
+            console.log(`[PRE-RESOLVER] Detected PowerPoint intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `powerpoint:${title}`,
+                successCondition: 'PowerPoint presentation deck generated',
+                statusText: `Generating PowerPoint presentation deck: "${title}"...`
+            };
+        }
+
+        // 2. CALCULATOR PRE-RESOLVER
+        if ((goalLower.includes('calculator') || goalLower.includes('calc') || goalLower.includes('calculate') || goalLower.includes('math')) && currentStep === 1) {
+            const mathMatch = run.goal.match(/(?:calculate|calc|math|calculator)\s*:?\s*([0-9+\-*/().\s]+)/i);
+            const expr = mathMatch?.[1]?.trim() || run.goal.replace(/[^0-9+\-*/().\s]/g, '') || '2+2';
+            console.log(`[PRE-RESOLVER] Detected Calculator intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `calculator:${expr}`,
+                successCondition: 'Calculator opened and result evaluated',
+                statusText: `Opening calculator and evaluating expression: ${expr}...`
+            };
+        }
+
+        // 3. VS CODE / PROGRAM CREATION PRE-RESOLVER
+        if ((goalLower.includes('program') || goalLower.includes('code') || goalLower.includes('vscode') || goalLower.includes('write a program') || goalLower.includes('create project')) && currentStep === 1) {
+            let projName = 'AutomatedProgram';
+            const match = run.goal.match(/(?:project|program|app)\s+(?:named|titled|called)\s+([a-zA-Z0-9_-]+)/i);
+            if (match) projName = match[1];
+            console.log(`[PRE-RESOLVER] Detected VS Code Program Creation intent for goal: "${run.goal}"`);
+            return {
+                action: 'native_app',
+                target: null,
+                value: `vscode:${projName}`,
+                successCondition: 'Minimized open apps, created project in Documents, opened VS Code, and executed in terminal',
+                statusText: `Minimizing open windows, creating project "${projName}" in Documents, opening VS Code, and running in terminal...`
+            };
+        }
+
+        // 4. SEARCH & LINK EXTRACTION PRE-RESOLVER
+        if ((goalLower.includes('search') || goalLower.includes('amazon') || goalLower.includes('find on') || goalLower.includes('locate link')) && currentStep === 1) {
+            let query = run.goal.replace(/^(?:go to|visit|open)?\s*(?:amazon|google|ebay)?\s*(?:and)?\s*(?:search|find|locate)\s*(?:for|on)?\s*/i, '').replace(/\s*(?:and|to)?\s*(?:extract|get|find|retrieve)\s*(?:the)?\s*(?:link|url|details).*/i, '').trim() || run.goal;
+            console.log(`[PRE-RESOLVER] Detected Search & Link Extraction intent for goal: "${run.goal}"`);
+            return {
+                action: 'search_and_extract',
+                target: null,
+                value: query,
+                successCondition: 'Navigated to search site and extracted product links directly from DOM',
+                statusText: `Searching and extracting direct product links for: "${query}"...`
+            };
+        }
+
+        // 5. INPUT FIELD VERIFICATION PRE-RESOLVER
+        if ((goalLower.includes('input box') || goalLower.includes('verify field') || goalLower.includes('check input')) && currentStep === 1) {
+            console.log(`[PRE-RESOLVER] Detected Input Field Verification intent for goal: "${run.goal}"`);
+            return {
+                action: 'verify_inputs',
+                target: null,
+                value: 'request verification',
+                successCondition: 'Captured annotated screenshot of input boxes and sent verification request via Firebase',
+                statusText: 'Capturing annotated screenshot of input fields for user verification...'
+            };
+        }
+
+        // 6. POPUP CREDENTIAL COLLECTION PRE-RESOLVER
+        if ((goalLower.includes('personal details') || goalLower.includes('credentials') || goalLower.includes('login details') || goalLower.includes('popup input')) && currentStep === 1) {
+            console.log(`[PRE-RESOLVER] Detected Popup Credential Collection intent for goal: "${run.goal}"`);
+            return {
+                action: 'popup_input',
+                target: null,
+                value: 'Enter requested personal/login details:',
+                successCondition: 'Opened 200px popup window connected to Firebase',
+                statusText: 'Opening dedicated 200px height input popup window...'
+            };
+        }
+
         const systemPrompt = `You are the Stateful Codez48 Playwright AI Action Planner.
 Given the ORIGINAL USER REQUIREMENT: "${run.goal}" and live inspected page state at "${pageState.url}", choose the SINGLE NEXT Playwright action.
 
