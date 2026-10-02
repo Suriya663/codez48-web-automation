@@ -340,12 +340,22 @@ async function runAgentLoop(runId) {
             // 1. Inspect live Playwright Page (Module 7)
             const pageState = await pageInspector.inspectPage(activePage);
 
-            // Emit Screenshot Frame event to Viewer (Module 30 & 31)
+            // Emit Screenshot Frame event and DOM/Goal to Firebase (Module 30 & 31)
             try {
-                const screenshotBuf = await activePage.screenshot({ type: 'jpeg', quality: 50 });
+                const screenshotBuf = await activePage.screenshot({ type: 'jpeg', quality: 60 });
                 const base64Img = screenshotBuf.toString('base64');
-                realtimeServer.emitRunEvent(runId, 'PAGE_SCREENSHOT', { image: `data:image/jpeg;base64,${base64Img}` });
-            } catch (sErr) {}
+                const image = `data:image/jpeg;base64,${base64Img}`;
+                const domContent = await activePage.content();
+
+                realtimeServer.emitRunEvent(runId, 'PAGE_SCREENSHOT', {
+                    image,
+                    domContent,
+                    goal: run.goal,
+                    statusText: `Inspected page state for goal: ${run.goal}`
+                });
+            } catch (sErr) {
+                console.warn('[SCREENSHOT SYNC WARN]:', sErr.message);
+            }
 
             // 2. Ask AI Action Planner for ONE next step (Module 8)
             const actionPlan = await aiPlanner.planNextAction(run, pageState);

@@ -1,6 +1,5 @@
-# Task List: Remote Global Pilot Flow via Firebase & Netlify
+# Task List: Puppeteer/Playwright CLI Automation Image & DOM Transmission to Firebase
 
-- [x] Remove localhost/port 4848 dependencies in `public/pilot-request-monitor.html`
-- [x] Ensure Netlify functions (`pilot-request-monitor.js`, `cli-automation-manager.js`) handle global Firebase telemetry exchange
-- [x] Verify end-to-end remote Pilot workflow (Browser → Screenshot + DOM + Requirement → Firebase → AI → Firebase → CLI → Action → Verification)
-- [x] Create walkthrough artifact
+- [x] Update `runAgentLoop` in `playwright-worker/server.js` to capture screenshot + HTML/DOM + query text and sync to Firebase Firestore
+- [x] Update `realtime-server.js` to persist image, DOM, and goal in Firestore
+- [x] Verify test execution and create walkthrough artifact

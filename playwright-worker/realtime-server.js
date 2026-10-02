@@ -195,10 +195,38 @@ class RealtimeServer {
                 docData.activePageInfo = eventData.activePageInfo;
             }
 
+            if (eventData.image) {
+                docData.screenshotData = eventData.image;
+            }
+
+            if (eventData.domContent) {
+                docData.domContent = eventData.domContent;
+            }
+
+            if (eventData.goal) {
+                docData.goal = eventData.goal;
+            }
+
             const cleanDoc = sanitizeFirestoreObject(docData);
             autoRef.set(cleanDoc, { merge: true }).catch(err => {
                 console.error(`[FIRESTORE WRITE ERROR] Run ${runId}:`, err.message);
             });
+
+            if (eventData.image) {
+                this.db.collection('visual_analysis_requests').doc(runId).set({
+                    requestId: runId,
+                    type: 'CLI_SCREEN_ANALYSIS',
+                    status: 'ANALYZING',
+                    screenshotWidth: 1280,
+                    screenshotHeight: 800,
+                    screenshotData: eventData.image,
+                    domContent: eventData.domContent || '',
+                    originalGoal: eventData.goal || 'CLI Automation Run',
+                    targetElement: eventData.goal || 'Automated Target',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(() => {});
+            }
         }
     }
 }

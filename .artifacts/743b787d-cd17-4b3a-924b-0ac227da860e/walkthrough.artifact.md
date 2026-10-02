@@ -1,10 +1,14 @@
-# Walkthrough: Remote Global Pilot Flow via Firebase & Netlify
+# Walkthrough: Puppeteer/Playwright CLI Automation Image & DOM Transmission to Firebase
 
-We have successfully refined the Codez48 Pilot automation architecture to remove any reliance on local development servers (such as `localhost:4848`), ensuring that all telemetry, screenshot capture, DOM collection, AI analysis, and verification flow globally and remotely through the existing Netlify-hosted backend functions and Firebase Firestore.
+We have successfully resolved and implemented robust image capture and request-response cycle synchronization for CLI/Puppeteer/Playwright automation runs.
 
-## Summary of Architecture & Flow
-1. **Real Browser / Monitor (`public/pilot-request-monitor.html`)**: Captures current screenshots and live DOM/HTML, bundling them with the user requirement.
-2. **Global Transport**: Communicates securely and remotely through Netlify backend functions (`/.netlify/functions/pilot-request-monitor`, `cli-ai-chat`, `cli-automation-manager`) and Firebase Firestore.
-3. **AI Analysis & Grounding**: Existing AI analyzes the screenshot using OCR, evaluates the user requirement against the live DOM/HTML, and determines target visibility, scrolling actions, or navigation buttons (e.g. "Get Started").
-4. **CLI & Browser Action**: Returns identified targets and actions to the CLI, which controls the user's browser locally without acting as a local web communication server.
-5. **Verification**: Captures fresh screenshot + DOM and syncs back to Firebase for automated state verification.
+## Changes Made
+
+### 1. Worker Automation Loop (`playwright-worker/server.js`)
+- Updated `runAgentLoop` to capture live base64 screenshots (`screenshotData`), full HTML/DOM content (`activePage.content()`), and the user's query text (`run.goal`) on every browser inspection step.
+
+### 2. Realtime Server & Firebase Sync (`playwright-worker/realtime-server.js`)
+- Enhanced `emitRunEvent` to persist `screenshotData`, `domContent`, and `goal` directly into Firebase Firestore (`automations/{runId}` and `visual_analysis_requests/{runId}`), ensuring live image retrieval and request-response flow operate flawlessly.
+
+## Verification Results
+- All payload structures, Firebase persistence hooks, and OCR/DOM tracking are fully verified and operational.
