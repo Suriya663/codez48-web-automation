@@ -32,20 +32,32 @@ class ActionExecutor {
                 return { success: true, action: 'navigate', url: page.url() };
             }
 
-            // 2. SCROLL ACTION
+            // 2. SCROLL ACTION (Unbounded intelligent scrolling with page exhaustion detection & fresh observation)
             if (action === 'scroll') {
-                const scrollAmount = value === 'up' ? -500 : 500;
+                const beforeScrollY = await page.evaluate(() => window.scrollY);
+                const scrollAmount = value === 'up' ? -600 : 600;
                 await page.mouse.wheel(0, scrollAmount);
-                await page.waitForTimeout(500);
+                await page.waitForTimeout(800); // wait for page stability & rendering
+                const afterScrollY = await page.evaluate(() => window.scrollY);
+
+                const isExhausted = beforeScrollY === afterScrollY;
+                if (isExhausted) {
+                    console.log('[SCROLL] Page scroll position unchanged. Page is genuinely exhausted.');
+                } else {
+                    console.log('[SCROLL] Fresh observation capture cycle triggered after scroll. Previous coordinates invalidated.');
+                }
 
                 if (realtimeServer && runId) {
                     realtimeServer.emitRunEvent(runId, 'SCROLL_COMPLETED', {
                         direction: value,
-                        statusText: `Scrolled page ${value}...`
+                        beforeScrollY,
+                        afterScrollY,
+                        isExhausted,
+                        statusText: isExhausted ? 'Page exhausted.' : `Scrolled ${value} to inspect new content...`
                     });
                 }
 
-                return { success: true, action: 'scroll' };
+                return { success: true, action: 'scroll', isExhausted, scrollY: afterScrollY };
             }
 
             // 3. WAIT ACTION

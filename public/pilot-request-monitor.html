@@ -314,8 +314,45 @@
                 sourceType: 'IMAGE_OCR'
             })) : (vr.elements || []).filter(el => !(el.box && el.box.top < 60 && el.box.left < 100));
 
-            if (elements.length > 0) {
-                const el = elements[0];
+            // Render Grounded Target Identity Overlay if present from AI Telemetry
+            if (vr.groundedPayload && vr.groundedPayload.targetIdentity && vr.groundedPayload.targetIdentity.rect) {
+                const ti = vr.groundedPayload.targetIdentity;
+                const rectBox = ti.rect;
+                if (rectBox.width > 0 && rectBox.height > 0) {
+                    const gLeft = rectBox.x * scale;
+                    const gTop = rectBox.y * scale;
+                    const gWidth = rectBox.width * scale;
+                    const gHeight = rectBox.height * scale;
+                    const gCenterX = ti.viewportX * scale;
+                    const gCenterY = ti.viewportY * scale;
+
+                    const gRect = document.createElement('div');
+                    gRect.className = 'bounding-rect';
+                    gRect.style.borderColor = '#10b981';
+                    gRect.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.8)';
+                    gRect.style.left = `${gLeft}px`;
+                    gRect.style.top = `${gTop}px`;
+                    gRect.style.width = `${gWidth}px`;
+                    gRect.style.height = `${gHeight}px`;
+                    overlay.appendChild(gRect);
+
+                    const gRing = document.createElement('div');
+                    gRing.className = 'target-ring';
+                    gRing.style.borderColor = '#10b981';
+                    gRing.style.left = `${gCenterX}px`;
+                    gRing.style.top = `${gCenterY}px`;
+                    overlay.appendChild(gRing);
+
+                    const gLbl = document.createElement('div');
+                    gLbl.className = 'target-label';
+                    gLbl.style.background = 'rgba(16, 185, 129, 0.9)';
+                    gLbl.style.color = '#ffffff';
+                    gLbl.style.left = `${gCenterX}px`;
+                    gLbl.style.top = `${Math.max(0, gTop - 25)}px`;
+                    gLbl.innerText = `GROUNDED: ${ti.text || ti.role} (X:${ti.viewportX}, Y:${ti.viewportY})`;
+                    overlay.appendChild(gLbl);
+                }
+            }
                 const box = el.box || { left: 0, top: 0, right: 0, bottom: 0 };
                 const sourceLeft = box.left;
                 const sourceTop = box.top;

@@ -1,5 +1,5 @@
 class LocatorResolver {
-    async buildGroundedPayload(locator, strategy) {
+    async buildGroundedPayload(locator, strategy, ocrBox = null) {
         try {
             const tagName = await locator.evaluate(el => el.tagName).catch(() => 'UNKNOWN');
             const elementId = await locator.evaluate(el => el.id).catch(() => '');
@@ -8,17 +8,34 @@ class LocatorResolver {
             const htmlSnippet = await locator.evaluate(el => el.outerHTML.substring(0, 300)).catch(() => '');
             const box = await locator.boundingBox().catch(() => null);
 
+            let confidence = 0.96;
+            let reason = 'Live DOM element grounded via multi-signal resolution.';
+
+            if (box && ocrBox) {
+                // Calculate spatial overlap between OCR bounding box and DOM bounding rect
+                const overlapX = Math.max(0, Math.min(box.x + box.width, ocrBox.x + ocrBox.width) - Math.max(box.x, ocrBox.x));
+                const overlapY = Math.max(0, Math.min(box.y + box.height, ocrBox.y + ocrBox.height) - Math.max(box.y, ocrBox.y));
+                const overlapArea = overlapX * overlapY;
+                if (overlapArea > 0) {
+                    confidence = 0.98;
+                    reason = `OCR visual detection spatially overlaps with live DOM element (${tagName}#${elementId || 'element'}).`;
+                }
+            } else if (box) {
+                reason = `OCR visual detection and live DOM element occupy overlapping spatial region (rect: x:${Math.round(box.x)}, y:${Math.round(box.y)}, w:${Math.round(box.width)}, h:${Math.round(box.height)}).`;
+            }
+
             const groundedPayload = {
                 targetFound: true,
-                targetText: text.substring(0, 50),
+                targetText: text.substring(0, 60),
                 targetType: role,
                 action: 'GROUNDED_TARGET',
-                confidence: 0.96,
+                confidence,
+                reason,
                 targetIdentity: {
                     elementId,
                     tagName,
                     role,
-                    text: text.substring(0, 50),
+                    text: text.substring(0, 60),
                     domReference: strategy,
                     htmlSnippet,
                     viewportX: box ? Math.round(box.x + box.width / 2) : 0,

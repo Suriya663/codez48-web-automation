@@ -324,7 +324,7 @@ async function runAgentLoop(runId) {
 
     try {
         let stepCount = run.currentStep || 0;
-        const maxSteps = 15;
+        const maxSteps = 30;
 
         // CONTINUOUS AGENT LOOP (Inspect -> Decide -> Act -> Verify -> Reinspect)
         while (run.status === RunState.RUNNING && stepCount < maxSteps) {
