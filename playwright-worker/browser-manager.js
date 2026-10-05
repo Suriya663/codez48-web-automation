@@ -1,124 +1,62 @@
 const { chromium } = require('playwright');
-const config = require('./config');
+const path = require('path');
+const fs = require('fs');
 
 class BrowserManager {
     constructor() {
-        this.browser = null;
-        this.userContexts = new Map(); // userId -> BrowserContext
-        this.isInitializing = false;
+        this.context = null;
+        this.page = null;
+        this.userDataDir = path.resolve(__dirname, '../.codez48_profile');
+        if (!fs.existsSync(this.userDataDir)) {
+            fs.mkdirSync(this.userDataDir, { recursive: true });
+        }
+        this._setupCleanupHooks();
     }
 
-    async getBrowser() {
-        if (this.browser && this.browser.isConnected()) {
-            return this.browser;
+    async getPage(options = { headless: true }) {
+        if (this.page && !this.page.isClosed()) {
+            return this.page;
         }
 
-        if (this.isInitializing) {
-            while (this.isInitializing) {
-                await new Promise(r => setTimeout(r, 100));
-            }
-            if (this.browser && this.browser.isConnected()) return this.browser;
-        }
-
-        this.isInitializing = true;
-        try {
-            console.log('[BROWSER MANAGER] Launching Playwright Chromium instance...');
-            this.browser = await chromium.launch({
-                headless: config.HEADLESS,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--disable-gpu'
-                ]
-            });
-            console.log('[BROWSER MANAGER] Playwright Chromium process online.');
-            return this.browser;
-        } catch (err) {
-            console.error('[BROWSER MANAGER] Failed to launch Playwright browser:', err.message);
-            throw err;
-        } finally {
-            this.isInitializing = false;
-        }
-    }
-
-    async getOrCreateContext(userId = 'guest') {
-        const browser = await this.getBrowser();
-
-        if (this.userContexts.has(userId)) {
-            const existingCtx = this.userContexts.get(userId);
-            try {
-                if (existingCtx.pages().length >= 0) {
-                    return existingCtx;
-                }
-            } catch (e) {
-                this.userContexts.delete(userId);
-            }
-        }
-
-        console.log(`[BROWSER MANAGER] Creating isolated BrowserContext for user: ${userId}`);
-        const context = await browser.newContext({
-            viewport: config.VIEWPORT,
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Codez48Agent/2.0',
-            deviceScaleFactor: 1,
-            hasTouch: false,
-            isMobile: false,
-            permissions: [] // Sensitive permissions requested on-demand only (Module 21)
+        console.log(`[BROWSER MANAGER] Launching persistent context (headless: ${options.headless})...`);
+        this.context = await chromium.launchPersistentContext(this.userDataDir, {
+            headless: options.headless,
+            viewport: { width: 1280, height: 800 },
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
-        this.userContexts.set(userId, context);
-
-        context.on('close', () => {
-            console.log(`[BROWSER MANAGER] BrowserContext closed for user: ${userId}`);
-            this.userContexts.delete(userId);
-        });
-
-        return context;
+        const pages = this.context.pages();
+        this.page = pages.length > 0 ? pages[0] : await this.context.newPage();
+        return this.page;
     }
 
-    async healthCheck() {
+    async close() {
         try {
-            const browser = await this.getBrowser();
-            const isConnected = browser.isConnected();
-            return {
-                status: 'online',
-                browserConnected: isConnected,
-                activeContextsCount: this.userContexts.size,
-                version: browser.version()
-            };
+            if (this.context) {
+                await this.context.close();
+                this.context = null;
+                this.page = null;
+                console.log('[BROWSER MANAGER] Browser context closed cleanly.');
+            }
         } catch (e) {
-            console.error('[BROWSER HEALTHCHECK FAILURE]:', e.message);
-            return {
-                status: 'offline',
-                browserConnected: false,
-                error: e.message
-            };
+            console.error('[BROWSER MANAGER CLOSE ERROR]:', e.message);
         }
     }
 
-    async closeUserContext(userId) {
-        if (this.userContexts.has(userId)) {
-            const ctx = this.userContexts.get(userId);
+    _setupCleanupHooks() {
+        const cleanup = async () => {
+            await this.close();
+            process.exit(0);
+        };
+        process.on('SIGINT', cleanup);
+        process.on('SIGTERM', cleanup);
+        process.on('exit', () => {
             try {
-                await ctx.close();
+                if (this.context) {
+                    // Synchronous fallback close if possible
+                }
             } catch (e) {}
-            this.userContexts.delete(userId);
-        }
-    }
-
-    async shutdown() {
-        console.log('[BROWSER MANAGER] Shutting down Playwright browser manager...');
-        for (const [userId, ctx] of this.userContexts.entries()) {
-            try { await ctx.close(); } catch (e) {}
-        }
-        this.userContexts.clear();
-        if (this.browser) {
-            try { await this.browser.close(); } catch (e) {}
-            this.browser = null;
-        }
+        });
     }
 }
 

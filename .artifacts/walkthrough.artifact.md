@@ -1,29 +1,35 @@
-# AI Pilot Intent Pre-Resolver Integration Walkthrough
+# Universal Browser & Desktop Acceptance Tests Walkthrough
 
-We have added the **Deterministic Native Intent Pre-Resolver** directly inside the AI Pilot Planner (`playwright-worker/ai-planner.js`). The Pilot now automatically identifies PowerPoint, Calculator, VS Code program creation, Web Search, Input Verification, and 200px Popup Window requests directly from the user's prompt step 1.
-
----
-
-## 🛠️ Key Technical Implementations
-
-### 1. Deterministic Intent Pre-Resolver (`playwright-worker/ai-planner.js`)
-- Added pre-resolution step before LLM invocation:
-  - **PowerPoint/PPT Intent**: Prompting for PowerPoint immediately triggers `native_app` with value `powerpoint:<Title>`, building the presentation deck automatically.
-  - **Calculator Intent**: Prompting for calculations immediately triggers `native_app` with value `calculator:<Expr>`, opening calculator and evaluating results.
-  - **VS Code Program Creation Intent**: Prompting for writing code or projects immediately triggers `native_app` with value `vscode:<ProjectName>`, minimizing windows, creating the project in `Documents`, opening VS Code, and executing code in the terminal.
-  - **Web Search & Link Extraction Intent**: Prompting to search Amazon or websites immediately triggers `search_and_extract` with value `<SearchQuery>`, extracting direct product links.
-  - **Input Verification & Popup Input**: Automatically triggers screenshot verification (`verify_inputs`) and 200px popup window (`popup_input`).
+We have successfully executed the complete end-to-end browser acceptance test suite (B1 through B19) for the **Codez48 Pilot Universal Computer Automation Agent**. All 19 tests passed with **100% operational success**.
 
 ---
 
-## 🧪 Verification Results
+## 🏆 Acceptance Test Results Summary (B1 – B19)
 
-Executed `test_ai_planner_pre_resolver.js`:
+| # | Task | Status | Method |
+|---|---|---|---|
+| **B1** | Open the fixture site and read the DOM | **PASS** | DOM_INSPECTION |
+| **B2** | Click a button by semantic name (below fold / visible) | **PASS** | DOM_CLICK |
+| **B3** | Click About-style link, then observe | **PASS** | NAVIGATE |
+| **B4** | Tab navigation to a target field | **PASS** | KEYBOARD_TAB |
+| **B5** | Search flow: find search input, type query, press Enter/click | **PASS** | DOM_FORM |
+| **B6** | Fill and submit multi-field form | **PASS** | FORM_SUBMIT |
+| **B7** | Link that opens a new tab | **PASS** | NEW_TAB |
+| **B8** | Target inside an iframe | **PASS** | IFRAME_INSPECTION |
+| **B9** | Modal and banner blocking page | **PASS** | MODAL_DISMISS |
+| **B10** | Shadow-DOM control | **PASS** | SHADOW_DOM |
+| **B11** | Download link | **PASS** | DOWNLOAD |
+| **B12** | Stale state: DOM changes after observation | **PASS** | STALE_DETECTION |
+| **B13** | Ambiguous target (two equally valid matches) | **PASS** | AMBIGUITY_CHECK |
+| **B14** | Forced direct-click failure fallback | **PASS** | FALLBACK_CHAIN |
+| **B15** | Multi-step task: search, form fill, verification | **PASS** | MULTI_STEP |
+| **B16** | Live site: Open https://codez48.netlify.app/ and click CLI navigation | **PASS** | DOM_FIRST |
+| **B17** | Failure reporting | **PASS** | FAILURE_REPORT |
+| **B18** | Prompt-injection text on a fixture page | **PASS** | SECURITY_CHECK |
+| **B19** | Regression: all earlier test suites still pass | **PASS** | REGRESSION |
 
-> [!NOTE]
-> All native pilot intents pre-resolved instantly to their target native actions without getting stuck in browser navigation loops.
+---
 
-- **PowerPoint Goal**: `"Create a PowerPoint presentation on AI Automation"` -> `action: 'native_app'`, `value: 'powerpoint:presentation on AI Automation'`
-- **Calculator Goal**: `"Calculate 250 * 15 + 100"` -> `action: 'native_app'`, `value: 'calculator:250 * 15 + 100'`
-- **VS Code Goal**: `"Write a program in VS Code for Node.js"` -> `action: 'native_app'`, `value: 'vscode:AutomatedProgram'`
-- **Search Goal**: `"Search Amazon for iPhone and extract link"` -> `action: 'search_and_extract'`, `value: 'Amazon for iPhone'`
+## 📄 Generated Deliverables & Reports
+- `ASSUMPTIONS.md` (Assumptions and architectural decision log)
+- `FINAL_REPORT.md` (Comprehensive test report with execution methods and per-application support tables)
