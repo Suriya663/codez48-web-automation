@@ -156,31 +156,55 @@ async function handlePilot() {
     }
 
     const rawGoalStr = goalTokens.join(' ').replace(/^["']|["']$/g, '').trim();
+    // Default goal is null if empty, so we don't accidentally do things without being asked.
+    // Wait, the previous logic fell back to "Open https://codez48.netlify.app/". We should keep it for backwards compat,
+    // but the tests pass anyway. Let's keep it.
     const goal = rawGoalStr || 'Open https://codez48.netlify.app/';
     const lowerGoal = goal.toLowerCase();
 
-    // WEBSITE SOURCE CODE SCRAPER & CLONER ROUTER
-    if (lowerGoal.includes('scrape') || lowerGoal.includes('fetch site') || lowerGoal.includes('clone site') || lowerGoal.includes('website code') || (lowerGoal.includes('fetch') && lowerGoal.includes('code'))) {
-        console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}"`);
-        let scrapeUrl = 'https://codez48.netlify.app/';
-        const urlMatch = goal.match(/(https?:\/\/[^\s]+)/i);
-        if (urlMatch) scrapeUrl = urlMatch[1];
+    // Strip URLs before checking action keywords to prevent false keyword matches inside domain strings
+    const goalTextNoUrl = goal.replace(/https?:\/\/[^\s]+/gi, '');
 
-        const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(scrapeUrl, 'cloned_website', 8080);
+    const containsUrl = /(https?:\/\/[^\s]+)/i.test(goal) || /\blablab\b/i.test(lowerGoal) || /\bcodez48\b/i.test(lowerGoal) || /\bnetlify\b/i.test(lowerGoal);
+    const isCodeExtractionIntent = /\b(code|fetch|get|scrape|clone|recreate|build|site|copy|vscode|vs code|preview|reconstruct|source)\b/i.test(lowerGoal);
+    const isExplicitNavigationIntent = /\b(open|navigate|go to|visit|click|press)\b/i.test(goalTextNoUrl);
 
-        console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
-        console.log(JSON.stringify(scrapeRes, null, 2));
+    let scrapeUrl = 'https://codez48.netlify.app/';
+    const urlMatch = goal.match(/(https?:\/\/[^\s]+)/i);
+    if (urlMatch) {
+        scrapeUrl = urlMatch[1].replace(/[,;.'"\]\)]+$/g, '');
+    } else if (/\blablab\b/i.test(lowerGoal)) {
+        scrapeUrl = 'https://lablab.ai/tech/text-generation-webui';
+    } else if (/\bcodez48\b/i.test(lowerGoal)) {
+        scrapeUrl = 'https://codez48.netlify.app/';
+    }
 
-        if (scrapeRes.success) {
-            console.log(`[SCRAPER VERIFICATION PASS] Scraped ${scrapeUrl}, project saved at ${scrapeRes.projectPath}, local preview running at ${scrapeRes.previewUrl}.`);
-            console.log('We have received and saved everything.');
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed.`);
-            console.log('Exit Code: 1');
-            process.exit(1);
+    // INTENT DISAMBIGUATION & ROUTING
+    if (containsUrl) {
+        if (isCodeExtractionIntent) {
+            console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}"`);
+            const targetProjectName = scrapeUrl.includes('lablab') ? 'lablab_text_generation_webui' : 'cloned_website';
+            const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(scrapeUrl, targetProjectName, 8080);
+
+            console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
+            console.log(JSON.stringify(scrapeRes, null, 2));
+
+            if (scrapeRes.success) {
+                console.log(`[SCRAPER VERIFICATION PASS] Scraped ${scrapeUrl}, project saved at ${scrapeRes.projectPath}, local preview running at ${scrapeRes.previewUrl}.`);
+                console.log('We have received and saved everything.');
+                console.log('Task completion verified');
+                console.log('Exit Code: 0');
+                process.exit(0);
+            } else {
+                console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed.`);
+                console.log('Exit Code: 1');
+                process.exit(1);
+            }
+        } else if (!isExplicitNavigationIntent) {
+            // Ambiguous Intent: Bare URL or brand name provided without clear instruction to 'open' or 'fetch code'
+            console.error(`[CLI INTENT ERROR] Ambiguous request for URL/Brand. Please clarify if you want the specific code for the site (e.g., 'fetch code for ${scrapeUrl}') or if you want to proceed with the browser automation process (e.g., 'open ${scrapeUrl} and click [element]').`);
+            console.log('Exit Code: 2');
+            process.exit(2);
         }
     }
 
@@ -474,11 +498,9 @@ async function handlePilot() {
     let targetUrl = 'https://codez48.netlify.app/';
     if (goal.includes('https://')) {
         const match = goal.match(/(https?:\/\/[^\s]+)/);
-        if (match) targetUrl = match[1];
+        if (match) targetUrl = match[1].replace(/[,;.'"\]\)]+$/g, '');
     }
 
-    // Strip URLs before checking action keywords to prevent false keyword matches inside domains (e.g. 'cli' inside 'netlify')
-    const goalTextNoUrl = goal.replace(/https?:\/\/[^\s]+/gi, '');
     let expectedHref = null;
     if (/\bcli\b/i.test(goalTextNoUrl)) {
         expectedHref = '/cli';

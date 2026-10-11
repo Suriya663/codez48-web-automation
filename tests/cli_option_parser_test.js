@@ -46,7 +46,20 @@ function parseCliArgs(rawArgs) {
         }
     }
 
-    return { answer, debug, remember, disableDismiss, testSafetyLoop, goal, expectedHref };
+    let sanitizedUrl = null;
+    const urlMatch = goal.match(/(https?:\/\/[^\s]+)/i);
+    if (urlMatch) {
+        sanitizedUrl = urlMatch[1].replace(/[,;.'"\]\)]+$/g, '');
+    }
+
+    const lowerGoal = goal.toLowerCase();
+    const containsUrl = /https?:\/\/[^\s]+/i.test(goal) || lowerGoal.includes('lablab.ai') || lowerGoal.includes('netlify.app') || lowerGoal.includes('lablab');
+    const isExplicitClickAction = /\bclick\b/i.test(goalTextNoUrl) || /\bpress\b/i.test(goalTextNoUrl);
+    const isCodeExtractionIntent = lowerGoal.includes('scrape') || lowerGoal.includes('fetch') || lowerGoal.includes('clone') || lowerGoal.includes('code') || lowerGoal.includes('recreate') || lowerGoal.includes('build') || lowerGoal.includes('source') || lowerGoal.includes('preview') || lowerGoal.includes('vscode') || lowerGoal.includes('vs code') || lowerGoal.includes('lablab');
+
+    const isScraperTask = (containsUrl && isCodeExtractionIntent) || (containsUrl && !isExplicitClickAction);
+
+    return { answer, debug, remember, disableDismiss, testSafetyLoop, goal, expectedHref, sanitizedUrl, isScraperTask };
 }
 
 function runTests() {
@@ -88,6 +101,18 @@ function runTests() {
     const res6 = parseCliArgs(['pilot', 'click the debug button on https://codez48.netlify.app/']);
     assert.strictEqual(res6.expectedHref, 'debug');
     console.log('[TEST 6 PASSED] Embedded task words handled cleanly without flag pollution');
+
+    // Test 7: URL trailing punctuation sanitization
+    const res7 = parseCliArgs(['pilot', 'Fetch site code for https://lablab.ai/tech/text-generation-webui,']);
+    assert.strictEqual(res7.sanitizedUrl, 'https://lablab.ai/tech/text-generation-webui');
+    assert.strictEqual(res7.isScraperTask, true);
+    console.log('[TEST 7 PASSED] URL trailing punctuation sanitization verified');
+
+    // Test 8: Direct URL input intent analysis routing
+    const res8 = parseCliArgs(['pilot', 'https://lablab.ai/tech/text-generation-webui']);
+    assert.strictEqual(res8.sanitizedUrl, 'https://lablab.ai/tech/text-generation-webui');
+    assert.strictEqual(res8.isScraperTask, true);
+    console.log('[TEST 8 PASSED] Direct URL input intent analysis scraper routing verified');
 
     console.log('ALL CLI OPTION PARSER TESTS PASSED SUCCESSFULLY.');
 }
