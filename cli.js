@@ -35,6 +35,61 @@ function savePrefs(prefs) {
 async function handlePilot() {
     const rawArgs = process.argv.slice(2);
 
+    if (rawArgs[0] === 'scrap') {
+        const Codez48ScrapEngine = require(path.resolve(__dirname, 'playwright-worker/codez48-scrap.js'));
+        const readline = require('readline');
+
+        console.log('\n=== CODEZ48 SCRAP ===');
+
+        let targetUrl = null;
+        let allowOfficialScrape = false;
+
+        for (let i = 1; i < rawArgs.length; i++) {
+            const arg = rawArgs[i];
+            if (arg === '--allow-official-scrape') {
+                allowOfficialScrape = true;
+            } else if (!arg.startsWith('--') && !targetUrl) {
+                targetUrl = arg;
+            }
+        }
+
+        if (!targetUrl) {
+            if (process.stdin.isTTY || !process.env.CI) {
+                const rl = readline.createInterface({
+                    input: process.stdin,
+                    output: process.stdout
+                });
+                targetUrl = await new Promise((resolve) => {
+                    rl.question('Enter website URL to scrap: ', (answer) => {
+                        rl.close();
+                        resolve(answer ? answer.trim() : '');
+                    });
+                });
+            } else {
+                console.error('[SCRAP ERROR] No website URL provided.');
+                process.exit(1);
+            }
+        }
+
+        if (!targetUrl) {
+            console.error('[SCRAP ERROR] URL cannot be empty.');
+            process.exit(1);
+        }
+
+        const scrapEngine = new Codez48ScrapEngine();
+        const scrapResult = await scrapEngine.runScrapWorkflow(targetUrl, { allowOfficial: allowOfficialScrape });
+
+        if (scrapResult.success) {
+            console.log('[SCRAP VERIFICATION PASS] Website source code & resources extracted successfully.');
+            console.log('Exit Code: 0');
+            process.exit(0);
+        } else {
+            console.error(`[SCRAP ERROR] Scraping process failed: ${scrapResult.failureReason}`);
+            console.log('Exit Code: 1');
+            process.exit(1);
+        }
+    }
+
     if (rawArgs[0] === 'prefs') {
         const prefs = loadPrefs();
         if (rawArgs[1] === 'list') {

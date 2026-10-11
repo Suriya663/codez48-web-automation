@@ -1,0 +1,42 @@
+{
+  "tool": "Codez48 Scrap",
+  "version": "1.0.0",
+  "targetUrl": "http://127.0.0.1:9876/",
+  "scrapedAt": "2026-10-11T13:15:34.319Z",
+  "scrapedTitle": "Fixture Website",
+  "httpStatus": 200,
+  "totalDiscovered": 4,
+  "successfulDownloads": 4,
+  "failedDownloads": 0,
+  "resources": [
+    {
+      "url": "http://127.0.0.1:9876/",
+      "localPath": "index.html",
+      "type": "html",
+      "sizeBytes": 419,
+      "status": "success"
+    },
+    {
+      "url": "http://127.0.0.1:9876/styles.css",
+      "localPath": "assets/css/styles.css",
+      "type": "css",
+      "sizeBytes": 18,
+      "status": "success"
+    },
+    {
+      "url": "http://127.0.0.1:9876/app.js",
+      "localPath": "assets/js/app.js",
+      "type": "js",
+      "sizeBytes": 31,
+      "status": "success"
+    },
+    {
+      "url": "http://127.0.0.1:9876/logo.png",
+      "localPath": "assets/images/logo.png",
+      "type": "image",
+      "sizeBytes": 14,
+      "status": "success"
+    }
+  ],
+  "limitations": "Some server-side APIs, protected origins, or cross-domain resources may not be fully extracted."
+}
