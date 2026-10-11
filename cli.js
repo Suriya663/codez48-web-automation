@@ -13,6 +13,7 @@ const filesystemController = require(path.resolve(__dirname, 'playwright-worker/
 const nativeAppAutomation = require(path.resolve(__dirname, 'playwright-worker/native-app-automation.js'));
 const appResolver = require(path.resolve(__dirname, 'playwright-worker/app-resolver.js'));
 const { getCursor, setCursor } = require(path.resolve(__dirname, 'playwright-worker/win32-cursor.js'));
+const intentRouter = require(path.resolve(__dirname, 'playwright-worker/intent-router.js'));
 
 const PREFS_FILE = path.join(os.homedir(), '.codez48_prefs.json');
 
@@ -165,51 +166,73 @@ async function handlePilot() {
     // Strip URLs before checking action keywords to prevent false keyword matches inside domain strings
     const goalTextNoUrl = goal.replace(/https?:\/\/[^\s]+/gi, '');
 
-    const containsUrl = /(https?:\/\/[^\s]+)/i.test(goal) || /\blablab\b/i.test(lowerGoal) || /\bcodez48\b/i.test(lowerGoal) || /\bnetlify\b/i.test(lowerGoal);
-    const isCodeExtractionIntent = /\b(code|fetch|get|scrape|clone|recreate|build|site|copy|vscode|vs code|preview|reconstruct|source)\b/i.test(lowerGoal);
-    const isExplicitNavigationIntent = /\b(open|navigate|go to|visit|click|press)\b/i.test(goalTextNoUrl);
-
-    let scrapeUrl = 'https://codez48.netlify.app/';
-    const urlMatch = goal.match(/(https?:\/\/[^\s]+)/i);
-    if (urlMatch) {
-        scrapeUrl = urlMatch[1].replace(/[,;.'"\]\)]+$/g, '');
-    } else if (/\blablab\b/i.test(lowerGoal)) {
-        scrapeUrl = 'https://lablab.ai/tech/text-generation-webui';
-    } else if (/\bcodez48\b/i.test(lowerGoal)) {
-        scrapeUrl = 'https://codez48.netlify.app/';
-    }
+    const routingContext = intentRouter.classifyIntent(goal);
+    const intent = routingContext.intent;
+    let targetUrl = routingContext.url || 'https://codez48.netlify.app/';
 
     // INTENT DISAMBIGUATION & ROUTING
-    if (containsUrl) {
-        if (isCodeExtractionIntent) {
-            console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}"`);
-            const targetProjectName = scrapeUrl.includes('lablab') ? 'lablab_text_generation_webui' : 'cloned_website';
-            const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(scrapeUrl, targetProjectName, 8080);
+    if (intent === 'WEBSITE_CODE_RECONSTRUCTION') {
+        console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}"`);
+        const targetProjectName = targetUrl.includes('lablab') ? 'lablab_text_generation_webui' : 'cloned_website';
+        const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(targetUrl, targetProjectName, 8080);
 
-            console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
-            console.log(JSON.stringify(scrapeRes, null, 2));
+        console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
+        console.log(JSON.stringify(scrapeRes, null, 2));
 
-            if (scrapeRes.success) {
-                console.log(`[SCRAPER VERIFICATION PASS] Scraped ${scrapeUrl}, project saved at ${scrapeRes.projectPath}, local preview running at ${scrapeRes.previewUrl}.`);
-                console.log('We have received and saved everything.');
-                console.log('Task completion verified');
-                console.log('Exit Code: 0');
-                process.exit(0);
-            } else {
-                console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed.`);
-                console.log('Exit Code: 1');
-                process.exit(1);
-            }
-        } else if (!isExplicitNavigationIntent) {
-            // Ambiguous Intent: Bare URL or brand name provided without clear instruction to 'open' or 'fetch code'
-            console.error(`[CLI INTENT ERROR] Ambiguous request for URL/Brand. Please clarify if you want the specific code for the site (e.g., 'fetch code for ${scrapeUrl}') or if you want to proceed with the browser automation process (e.g., 'open ${scrapeUrl} and click [element]').`);
-            console.log('Exit Code: 2');
-            process.exit(2);
+        if (scrapeRes.success) {
+            console.log(`[SCRAPER VERIFICATION PASS] Scraped ${targetUrl}, project saved at ${scrapeRes.projectPath}, local preview running at ${scrapeRes.previewUrl}.`);
+            console.log('We have received and saved everything.');
+            console.log('Task completion verified');
+            console.log('Exit Code: 0');
+            process.exit(0);
+        } else {
+            console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed.`);
+            console.log('Exit Code: 1');
+            process.exit(1);
         }
+    } else if (intent === 'WEB_SCRAPE') {
+        console.log(`[DATA SCRAPER ROUTER] Routing web scrape extraction task: "${goal}"`);
+        const extractRes = await pilotNavigator.extractData(targetUrl, goal);
+
+        console.log('=== WEB DATA EXTRACTION RESULT ===');
+        console.log(JSON.stringify(extractRes, null, 2));
+
+        if (extractRes.success) {
+            console.log(`[EXTRACTION VERIFICATION PASS] Scraped data from ${targetUrl}, saved to ${extractRes.filePath}.`);
+            console.log('Task completion verified');
+            console.log('Exit Code: 0');
+            process.exit(0);
+        } else {
+            console.error(`[EXTRACTION ERROR] Data scraping failed.`);
+            console.log('Exit Code: 1');
+            process.exit(1);
+        }
+    } else if (intent === 'WEBSITE_ANALYSIS') {
+        console.log(`[ANALYSIS ROUTER] Routing website analysis task: "${goal}"`);
+        const analysisRes = await pilotNavigator.analyzeWebsite(targetUrl, goal);
+
+        console.log('=== WEBSITE ANALYSIS RESULT ===');
+        console.log(JSON.stringify(analysisRes, null, 2));
+
+        if (analysisRes.success) {
+            console.log(`[ANALYSIS VERIFICATION PASS] Analyzed ${targetUrl}.`);
+            console.log('Task completion verified');
+            console.log('Exit Code: 0');
+            process.exit(0);
+        } else {
+            console.error(`[ANALYSIS ERROR] Website analysis failed.`);
+            console.log('Exit Code: 1');
+            process.exit(1);
+        }
+    } else if (intent === 'UNKNOWN' && routingContext.url) {
+        // Ambiguous Intent: Bare URL or brand name provided without clear instruction to 'open' or 'fetch code'
+        console.error(`[CLI INTENT ERROR] Ambiguous request for URL/Brand. Please clarify if you want the specific code for the site (e.g., 'recreate ${targetUrl}'), if you want to extract data (e.g., 'scrape data from ${targetUrl}'), or if you want to proceed with browser automation (e.g., 'open ${targetUrl}').`);
+        console.log('Exit Code: 2');
+        process.exit(2);
     }
 
     // VS CODE & CODING TASK ROUTER
-    if (lowerGoal.includes('vs code') || lowerGoal.includes('vscode') || lowerGoal.includes('web app') || lowerGoal.includes('coding task') || lowerGoal.includes('express') || (lowerGoal.includes('demo') && lowerGoal.includes('code'))) {
+    if (intent === 'GENERATE_OR_MODIFY_LOCAL_PROJECT' || (lowerGoal.includes('vs code') || lowerGoal.includes('vscode') || lowerGoal.includes('web app') || lowerGoal.includes('coding task') || lowerGoal.includes('express') || (lowerGoal.includes('demo') && lowerGoal.includes('code')))) {
         console.log(`[VSCODE ROUTER] Routing coding task: "${goal}"`);
         const vscRes = await nativeAppAutomation.automatedVsCodeSaveAsWorkflow({ projectName: 'interactive_demo' });
 
@@ -231,7 +254,7 @@ async function handlePilot() {
 
     // STAGE 3 TASK ROUTING
     // 1. CALCULATOR TASK
-    if (lowerGoal.includes('calculator') || lowerGoal.includes('calc')) {
+    if (intent === 'GENERAL_AUTOMATION_CALC' || lowerGoal.includes('calculator') || lowerGoal.includes('calc')) {
         console.log(`[STAGE 3 ROUTER] Executing Calculator task: "${goal}"`);
         const calcRes = await nativeAppAutomation.calculateAndVerify('7 * 8');
         if (calcRes.success && calcRes.verified) {
@@ -247,7 +270,7 @@ async function handlePilot() {
     }
 
     // 2. POWERPOINT PRESENTATION TASK
-    if (lowerGoal.includes('powerpoint') || lowerGoal.includes('presentation') || lowerGoal.includes('pptx')) {
+    if (intent === 'GENERAL_AUTOMATION_PPTX' || lowerGoal.includes('powerpoint') || lowerGoal.includes('presentation') || lowerGoal.includes('pptx')) {
         console.log(`[STAGE 3 ROUTER] Executing PowerPoint presentation task: "${goal}"`);
         const pptxRes = await nativeAppAutomation.createFanAutomationPresentation();
         if (pptxRes.success) {
@@ -263,7 +286,7 @@ async function handlePilot() {
     }
 
     // 3. WORD DOCUMENT TASK
-    if (lowerGoal.includes('word document') || lowerGoal.includes('word doc') || lowerGoal.includes('docx')) {
+    if (intent === 'GENERAL_AUTOMATION_DOCX' || lowerGoal.includes('word document') || lowerGoal.includes('word doc') || lowerGoal.includes('docx')) {
         console.log(`[STAGE 3 ROUTER] Executing Word document task: "${goal}"`);
         const wordRes = await nativeAppAutomation.createFanAutomationWordDoc();
         if (wordRes.success) {
@@ -279,7 +302,7 @@ async function handlePilot() {
     }
 
     // 4. GRAVITY STORY TASK
-    if (lowerGoal.includes('story') && lowerGoal.includes('gravity')) {
+    if (intent === 'GENERAL_AUTOMATION_STORY' || (lowerGoal.includes('story') && lowerGoal.includes('gravity'))) {
         console.log(`[STAGE 3 ROUTER] Executing Gravity Story text task: "${goal}"`);
         const storyRes = filesystemController.createGravityStoryFile();
         if (storyRes.success) {
@@ -295,7 +318,7 @@ async function handlePilot() {
     }
 
     // 5. CSV REPORT TASK
-    if (lowerGoal.includes('csv') && lowerGoal.includes('report')) {
+    if (intent === 'GENERAL_AUTOMATION_CSV' || (lowerGoal.includes('csv') && lowerGoal.includes('report'))) {
         console.log(`[STAGE 3 ROUTER] Executing CSV report task: "${goal}"`);
         const csvRes = filesystemController.createCsvReport();
         if (csvRes.success) {
@@ -311,7 +334,7 @@ async function handlePilot() {
     }
 
     // METATRADER 5 DIAGNOSTIC ROUTING
-    if (lowerGoal.includes('metatrader') || lowerGoal.includes('mt5')) {
+    if (intent === 'GENERAL_AUTOMATION_MT5' || lowerGoal.includes('metatrader') || lowerGoal.includes('mt5')) {
         console.log(`[MT5 ROUTER] Executing MetaTrader 5 diagnostic task: "${goal}"`);
         const mt5Probe = await mt5DiscoveryManager.probeBridgeAndAccount();
         console.log('=== METATRADER 5 READ-ONLY DIAGNOSTIC REPORT ===');
@@ -322,7 +345,7 @@ async function handlePilot() {
     }
 
     // OFFLINE STRATEGY BACKTEST ROUTING
-    if (lowerGoal.includes('backtest') || lowerGoal.includes('strategy')) {
+    if (intent === 'GENERAL_AUTOMATION_BACKTEST' || lowerGoal.includes('backtest') || lowerGoal.includes('strategy')) {
         console.log(`[STRATEGY ENGINE] Executing offline backtest task: "${goal}"`);
 
         // Generate synthetic OHLCV candle series
@@ -349,7 +372,7 @@ async function handlePilot() {
     }
 
     // ADVANCED FILESYSTEM WORKFLOWS
-    if (lowerGoal.includes('folder') || lowerGoal.includes('directory') || lowerGoal.includes('file') || lowerGoal.includes('rename') || lowerGoal.includes('edit')) {
+    if (intent === 'GENERAL_AUTOMATION_FS' || lowerGoal.includes('folder') || lowerGoal.includes('directory') || lowerGoal.includes('file') || lowerGoal.includes('rename') || lowerGoal.includes('edit')) {
         console.log(`[FILESYSTEM WORKFLOW] Routing filesystem task: "${goal}"`);
 
         const baseLocation = lowerGoal.includes('documents') ? 'Documents' : lowerGoal.includes('downloads') ? 'Downloads' : 'Desktop';
@@ -434,7 +457,7 @@ async function handlePilot() {
         }
     }
 
-    if (lowerGoal.includes('notepad')) {
+    if (intent === 'GENERAL_AUTOMATION_NOTEPAD' || lowerGoal.includes('notepad')) {
         console.log(`[SAFETY MONITOR ACTIVE] Safety monitors active for native app task: "${goal}"`);
         const textMatch = goal.match(/(?:write|type)\s+['"]([^'"]+)['"]/i) || goal.match(/(?:write|type)\s+(.+)$/i);
         const textToInject = textMatch ? textMatch[1] : 'Hello from Codez48 Pilot Stage C';
@@ -495,12 +518,13 @@ async function handlePilot() {
         process.exit(0);
     }
 
-    let targetUrl = 'https://codez48.netlify.app/';
-    if (goal.includes('https://')) {
-        const match = goal.match(/(https?:\/\/[^\s]+)/);
-        if (match) targetUrl = match[1].replace(/[,;.'"\]\)]+$/g, '');
+    if (intent !== 'BROWSE_WEBSITE' && intent !== 'WEB_AUTOMATION' && intent !== 'WEBSITE_TESTING') {
+        // We shouldn't reach here unless it's an unhandled intent, but prevent fall-through navigation.
+        console.log(`[ROUTER END] Task completed or no web navigation required for intent: ${intent}`);
+        process.exit(0);
     }
 
+    // Only if intent explicitly wants browser interaction:
     let expectedHref = null;
     if (/\bcli\b/i.test(goalTextNoUrl)) {
         expectedHref = '/cli';
