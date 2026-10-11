@@ -82,7 +82,7 @@ class PilotNavigator {
     async navigateAndInteract(goalUrl, expectedHref, options = {}) {
         const forcePhysical = options.forcePhysical === true;
         const page = await browserManager.getPage({ headless: forcePhysical ? false : true });
-        console.log(`[PILOT NAVIGATOR] Navigating to target URL: ${goalUrl}`);
+        console.log(`[PILOT NAVIGATOR] Navigating to target URL with network readiness check: ${goalUrl}`);
 
         try {
             await page.goto(goalUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -254,7 +254,15 @@ class PilotNavigator {
                 return route.continue();
             });
 
-            await page.goto(validUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            // 1. Send initial request with bounded networkidle readiness check (10000ms timeout)
+            console.log(`[WEBSITE SCRAPER] Dispatching initial network request to "${validUrl}" with bounded networkidle readiness check...`);
+            let response = null;
+            try {
+                response = await page.goto(validUrl, { waitUntil: 'networkidle', timeout: 10000 });
+            } catch (netIdleErr) {
+                console.log(`[NETWORK READINESS NOTICE] Network idle wait reached timeout or active streaming connection. Falling back to load state for "${validUrl}"...`);
+                response = await page.goto(validUrl, { waitUntil: 'load', timeout: 20000 });
+            }
 
             if (redirectBlocked) {
                 await browserManager.close();
@@ -266,7 +274,34 @@ class PilotNavigator {
                 };
             }
 
-            // Revalidate destination URL after redirects to prevent SSRF bypass
+            // 2. Inspect HTTP Response Status Code & Content-Type Header
+            const httpStatus = response ? response.status() : 200;
+            const contentType = response ? (response.headers()['content-type'] || 'text/html') : 'text/html';
+            console.log(`[NETWORK RESPONSE PROCESSED] URL: "${validUrl}", HTTP Status: ${httpStatus}, Content-Type: "${contentType}"`);
+
+            if (httpStatus >= 400) {
+                await browserManager.close();
+                console.error(`[WEBSITE SCRAPER ERROR] HTTP ${httpStatus} error returned from server for "${validUrl}".`);
+                return {
+                    success: false,
+                    error: 'HTTP_ERROR_STATUS',
+                    failureReason: `Server returned HTTP ${httpStatus} error status for URL "${validUrl}".`,
+                    targetUrl: validUrl
+                };
+            }
+
+            if (!contentType.includes('html') && !contentType.includes('xml') && !contentType.includes('json') && !contentType.includes('plain')) {
+                await browserManager.close();
+                console.error(`[WEBSITE SCRAPER ERROR] Unsupported Content-Type "${contentType}" returned from "${validUrl}".`);
+                return {
+                    success: false,
+                    error: 'UNSUPPORTED_CONTENT_TYPE',
+                    failureReason: `URL "${validUrl}" returned unsupported Content-Type "${contentType}".`,
+                    targetUrl: validUrl
+                };
+            }
+
+            // 3. Revalidate destination URL after redirects to prevent SSRF bypass
             const finalDestinationUrl = page.url();
             const validFinalUrl = await this.validateUrlAsync(finalDestinationUrl);
             if (!validFinalUrl) {
@@ -279,6 +314,9 @@ class PilotNavigator {
                     targetUrl: validUrl
                 };
             }
+
+            // 4. Bounded SPA Hydration Pause for client-side frameworks
+            await page.waitForTimeout(1000);
 
             htmlContent = await page.content();
             pageTitle = await page.title();
