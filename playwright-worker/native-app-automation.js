@@ -87,7 +87,7 @@ class NativeAppAutomation {
 
             if (process.platform === 'win32') {
                 try {
-                    const psCheck = `powershell -NoProfile -NonInteractive -Command "$p = Get-Process CalculatorApp, calc -ErrorAction SilentlyContinue | Select-Object -First 1; if ($p) { Write-Output \\"$($p.Id):$($p.MainWindowTitle)\\" } else { Write-Output \\"0:Calculator\\" }"`;
+                    const psCheck = `powershell -NoProfile -NonInteractive -Command "$p = Get-Process CalculatorApp, calc -ErrorAction SilentlyContinue | Select-Object -First 1; if ($p) { Write-Output \\"$($p.Id)\\" } else { Write-Output \\"0:Calculator\\" }"`;
                     const procInfo = execSync(psCheck, { encoding: 'utf8', windowsHide: true }).trim();
                     const parts = procInfo.split(':');
                     pid = parts[0] || '0';
@@ -138,7 +138,14 @@ class NativeAppAutomation {
             const absFilePath = path.join(projectDir, f.name);
             const parentDir = path.dirname(absFilePath);
             if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
-            fs.writeFileSync(absFilePath, f.content, 'utf8');
+
+            try {
+                fs.writeFileSync(absFilePath, f.content, 'utf8');
+            } catch (wErr) {
+                await new Promise(r => setTimeout(r, 200));
+                fs.writeFileSync(absFilePath, f.content, 'utf8');
+            }
+
             filesWritten.push(f.name);
             console.log(`[PRE-CREATION PASS] File set up cleanly at: ${absFilePath}`);
         }

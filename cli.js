@@ -132,6 +132,7 @@ async function handlePilot() {
     let remember = false;
     let disableDismiss = false;
     let testSafetyLoop = false;
+    let allowOfficialScrape = false;
     let goalTokens = [];
 
     for (let i = 0; i < rawArgs.length; i++) {
@@ -151,6 +152,8 @@ async function handlePilot() {
             disableDismiss = true;
         } else if (arg === '--visible-safety-test') {
             testSafetyLoop = true;
+        } else if (arg === '--allow-official-scrape') {
+            allowOfficialScrape = true;
         } else {
             goalTokens.push(arg);
         }
@@ -171,7 +174,7 @@ async function handlePilot() {
     if (intent === 'WEBSITE_CODE_RECONSTRUCTION') {
         console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}"`);
         const targetProjectName = 'startify'; // Standardized folder per user request
-        const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(targetUrl, targetProjectName, 8080);
+        const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(targetUrl, targetProjectName, 8080, { allowOfficial: allowOfficialScrape });
 
         console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
         console.log(JSON.stringify(scrapeRes, null, 2));
@@ -183,18 +186,16 @@ async function handlePilot() {
             console.log('Exit Code: 0');
             process.exit(0);
         } else {
-            console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed.`);
+            console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed: ${scrapeRes.failureReason || scrapeRes.error}`);
             console.log('Exit Code: 1');
             process.exit(1);
         }
     } else if (intent === 'WEB_SCRAPE') {
         console.log(`[DATA SCRAPER ROUTER] Routing web scrape extraction task: "${goal}"`);
-        // Fallback or future implementation placeholder
         console.log('Exit Code: 1');
         process.exit(1);
     } else if (intent === 'WEBSITE_ANALYSIS') {
         console.log(`[ANALYSIS ROUTER] Routing website analysis task: "${goal}"`);
-        // Fallback or future implementation placeholder
         console.log('Exit Code: 1');
         process.exit(1);
     } else if (intent === 'UNKNOWN' && routingContext.url) {

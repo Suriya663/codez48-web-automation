@@ -72,3 +72,14 @@ Codez48_Debug_Artifacts/
 debug/
 .artifacts/
 tests/e2e/evidence/
+
+# Test Generated Workspace Artifacts
+pilot-workspace/documents/
+pilot-workspace/presentations/
+pilot-workspace/stories/
+pilot-workspace/reports/
+pilot-workspace/projects/startify/
+pilot-workspace/projects/lablab_text_generation_webui/
+pilot-workspace/projects/cloned_website/
+pilot-workspace/projects/dynamic_express_app/
+pilot-workspace/projects/interactive_demo/
