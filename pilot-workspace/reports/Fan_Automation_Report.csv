@@ -1,0 +1,5 @@
+Item_ID,Device_Name,Status,Temperature_C,Power_Watts
+DEV_001,HVAC_Primary_Blower,OPERATIONAL,24.5,350.0
+DEV_002,Server_Rack_Exhaust_Fan,OPERATIONAL,28.1,120.5
+DEV_003,Condenser_Cooling_Fan,BOOST_MODE,32.4,480.0
+DEV_004,Auxiliary_Vent_Fan,STANDBY,21.0,15.0

@@ -36,6 +36,8 @@ class BrowserManager {
                 await this.context.close();
                 this.context = null;
                 this.page = null;
+                // Allow OS / Chromium to release profile lockfile cleanly before next launch
+                await new Promise(r => setTimeout(r, 600));
                 console.log('[BROWSER MANAGER] Browser context closed cleanly.');
             }
         } catch (e) {
@@ -53,7 +55,7 @@ class BrowserManager {
         process.on('exit', () => {
             try {
                 if (this.context) {
-                    // Synchronous fallback close if possible
+                    // Synchronous fallback cleanup if possible
                 }
             } catch (e) {}
         });
