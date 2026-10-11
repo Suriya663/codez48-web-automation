@@ -126,6 +126,20 @@ class PilotNavigator {
     }
 
     async scrapeAndCloneWebsite(targetUrl = 'https://codez48.netlify.app/', projectName = 'cloned_website', port = 8080) {
+        const lowerUrl = (targetUrl || '').toLowerCase();
+
+        // Security restriction: Block scraping on official primary domain
+        if (lowerUrl.includes('codez48.netlify.app') || lowerUrl.includes('codez48.com') || lowerUrl.includes('coach48') || (lowerUrl.includes('codez48') && !lowerUrl.includes('localhost'))) {
+            console.error(`[SECURITY BLOCK] Web scraping and code reconstruction are strictly restricted on official primary website: ${targetUrl}`);
+            return {
+                success: false,
+                error: 'OFFICIAL_PRIMARY_DOMAIN_PROTECTED',
+                failureReason: 'Web scraping and code reconstruction are strictly restricted on official primary website.',
+                targetUrl,
+                confirmationMessage: 'Official primary domain is protected against web scraping.'
+            };
+        }
+
         console.log(`[WEBSITE SCRAPER] Initiating source code retrieval & scraping for: "${targetUrl}"...`);
 
         let htmlContent = '';
@@ -202,94 +216,6 @@ class PilotNavigator {
             confirmationMessage,
             testOutcomes: cloneRes.testOutcomes
         };
-    }
-
-    async extractData(targetUrl, instructions) {
-        console.log(`[DATA SCRAPER] Initiating data extraction for: "${targetUrl}"`);
-
-        try {
-            const page = await browserManager.getPage({ headless: true });
-            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-            const pageTitle = await page.title();
-
-            // Simple heuristic based extraction for demonstration.
-            // In a real advanced setup, this would pass to AIPlanner for DOM parsing.
-            const extractedText = await page.evaluate(() => {
-                const elements = Array.from(document.querySelectorAll('h1, h2, h3, p, a, li, span'));
-                const texts = elements.map(el => el.innerText.replace(/[\n\r]+/g, ' ').trim()).filter(t => t.length > 0);
-                return Array.from(new Set(texts)).slice(0, 100); // Unique up to 100
-            });
-
-            await browserManager.close();
-
-            const filesystemController = require('./filesystem-controller.js');
-            const fileName = `extracted_data_${Date.now()}.csv`;
-
-            const headers = ['Type', 'Content'];
-            const rows = extractedText.map(t => ['Text', `"${t.replace(/"/g, '""')}"`]);
-
-            const saveResult = filesystemController.createCsvReport(null, fileName, headers, rows);
-
-            if (saveResult.success) {
-                return {
-                    success: true,
-                    targetUrl,
-                    pageTitle,
-                    extractedItemsCount: rows.length,
-                    filePath: saveResult.filePath
-                };
-            } else {
-                return {
-                    success: false,
-                    error: 'Failed to write extracted data to disk.'
-                };
-            }
-        } catch (err) {
-            console.error('[DATA SCRAPER ERROR]:', err.message);
-            await browserManager.close();
-            return {
-                success: false,
-                error: err.message
-            };
-        }
-    }
-
-    async analyzeWebsite(targetUrl, instructions) {
-        console.log(`[WEBSITE ANALYSIS] Initiating analysis for: "${targetUrl}"`);
-
-        try {
-            const page = await browserManager.getPage({ headless: true });
-            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-            const analysis = await page.evaluate(() => {
-                return {
-                    title: document.title,
-                    linksCount: document.querySelectorAll('a').length,
-                    imagesCount: document.querySelectorAll('img').length,
-                    scriptsCount: document.querySelectorAll('script').length,
-                    headingsCount: document.querySelectorAll('h1, h2, h3, h4, h5, h6').length,
-                    metaDescription: document.querySelector('meta[name="description"]')?.content || 'None',
-                    isResponsive: !!document.querySelector('meta[name="viewport"]')
-                };
-            });
-
-            await browserManager.close();
-
-            return {
-                success: true,
-                targetUrl,
-                analysis,
-                report: `Analyzed ${targetUrl}: Title "${analysis.title}". Found ${analysis.linksCount} links, ${analysis.imagesCount} images, and ${analysis.headingsCount} headings.`
-            };
-        } catch (err) {
-            console.error('[WEBSITE ANALYSIS ERROR]:', err.message);
-            await browserManager.close();
-            return {
-                success: false,
-                error: err.message
-            };
-        }
     }
 }
 

@@ -20,7 +20,7 @@
         .bounding-rect { position: absolute; border: 2px dashed #34d399; background: rgba(52, 211, 153, 0.12); border-radius: 3px; z-index: 5; }
         .target-label { position: absolute; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transform: translate(-50%, -130%); white-space: nowrap; font-family: monospace; font-weight: 600; z-index: 15; }
 
-        /* Interactive Selectable OCR Text Overlays (பதிவு செய்யப்பட்ட உரೆಯನ್ನು தேர்ந்தெடுக்க மற்றும் நகலெடுக்க) */
+        /* Interactive Selectable OCR Text Overlays */
         .ocr-selectable-text {
             position: absolute;
             color: transparent;
@@ -40,6 +40,11 @@
         .response-panel div { margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
         .response-panel span { color: #38bdf8; font-weight: 600; font-family: monospace; }
         .status-val { color: #34d399 !important; font-weight: 700 !important; text-transform: uppercase; }
+
+        /* Intent Keyword Display Panel */
+        .intent-panel { position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; backdrop-filter: blur(10px); padding: 0.85rem 1.15rem; border-radius: 8px; font-size: 0.85rem; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.6); display: none; }
+        .intent-panel .intent-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #10b981; margin-bottom: 0.35rem; font-weight: 700; border-bottom: 1px solid rgba(16, 185, 129, 0.3); padding-bottom: 0.25rem; }
+        .intent-panel .intent-val { color: #ffffff; font-weight: bold; font-family: monospace; font-size: 1.1rem; }
 
         /* Minimal Discrete Diagnostics Trigger */
         .diag-trigger { position: absolute; bottom: 1.25rem; right: 1.25rem; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: #94a3b8; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; z-index: 50; transition: all 0.2s; }
@@ -63,6 +68,12 @@
 </head>
 <body>
     <div class="viewport-screen" id="viewportScreen">
+        <!-- Intent Keyword Panel -->
+        <div class="intent-panel" id="intentPanel">
+            <div class="intent-title">Intent Identified</div>
+            <div class="intent-val" id="intentValue">--</div>
+        </div>
+
         <!-- Compact Floating Response Panel -->
         <div class="response-panel" id="responsePanel">
             <div class="panel-title">Current Event / Response</div>
@@ -103,20 +114,34 @@
     <!-- Include Tesseract.js CDN for robust browser-side direct image OCR fallback & selectable text -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        // ==========================================
-        // தமிழ் குறிப்புகள் (Tamil Explanatory Notes):
-        // 1. Firebase இலிருந்து திரைப்பிடிப்பு (Screenshot) பெறப்படுகிறது.
-        // 2. Tesseract.js மூலம் படத்தில் உள்ள எழுத்துக்கள் (OCR) துல்லியமாக படிக்கப்படுகின்றன.
-        // 3. உலாவி தலைப்பு பகுதி (Browser Chrome) மற்றும் தேவையற்ற சின்னங்கள் (Symbols like ®) வடிகட்டப்படுகின்றன.
-        // 4. சரியான இலக்கு எழுத்து ("business") கண்டறியப்பட்டு சரியான X, Y ஆயத்தொலைவுகள் சுட்டி இயக்கத்திற்கு அனுப்பப்படுகின்றன.
-        // ==========================================
-
         window.visualRequestsCache = [];
         let activeRequestId = null;
         let activeScreenshotLength = 0;
 
         function toggleDiagnostics() {
             document.getElementById('diagDrawer').classList.toggle('open');
+        }
+
+        function analyzeIntentFromGoal(goal) {
+            if (!goal) return null;
+            const lowerGoal = goal.toLowerCase();
+            if (lowerGoal.includes('scraping')) {
+                return 'scraping';
+            } else if (lowerGoal.includes('automation')) {
+                return 'automation';
+            }
+            return null;
+        }
+
+        function displayIntent(intent) {
+            const panel = document.getElementById('intentPanel');
+            const val = document.getElementById('intentValue');
+            if (intent) {
+                val.innerText = intent;
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
         }
 
         async function fetchRequests() {
@@ -178,6 +203,14 @@
 
             window.visualRequestsCache = combined;
             const latest = window.visualRequestsCache[0];
+
+            if (latest && latest.originalGoal) {
+                const detectedIntent = analyzeIntentFromGoal(latest.originalGoal);
+                displayIntent(detectedIntent);
+            } else if (latest && latest.targetElement) {
+                const detectedIntent = analyzeIntentFromGoal(latest.targetElement);
+                displayIntent(detectedIntent);
+            }
 
             const currentScreenshotLength = latest.screenshotData ? latest.screenshotData.length : 0;
             if (!activeRequestId || activeRequestId !== latest.requestId || currentScreenshotLength !== activeScreenshotLength) {
@@ -574,6 +607,15 @@
                     if (reqs.length > 0) {
                         window.visualRequestsCache = reqs;
                         const latest = window.visualRequestsCache[0];
+
+                        if (latest && latest.originalGoal) {
+                            const detectedIntent = analyzeIntentFromGoal(latest.originalGoal);
+                            displayIntent(detectedIntent);
+                        } else if (latest && latest.targetElement) {
+                            const detectedIntent = analyzeIntentFromGoal(latest.targetElement);
+                            displayIntent(detectedIntent);
+                        }
+
                         if (!activeRequestId || activeRequestId !== latest.requestId || (latest.screenshotData && activeScreenshotLength !== latest.screenshotData.length)) {
                             activeRequestId = latest.requestId;
                             activeScreenshotLength = latest.screenshotData ? latest.screenshotData.length : 0;

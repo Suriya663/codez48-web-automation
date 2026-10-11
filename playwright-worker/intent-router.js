@@ -4,7 +4,6 @@ class IntentRouter {
         try {
             const parsed = new URL(urlString);
             if (['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(parsed.hostname)) {
-                // To prevent SSRF/unauthorized access unless specifically overriding for testing
                 if (process.env.NODE_ENV !== 'test' && !process.env.ALLOW_LOCAL_TARGETS) {
                      console.warn(`[SECURITY WARN] Blocked local/private network target: ${parsed.hostname}`);
                      return null;
@@ -37,14 +36,15 @@ class IntentRouter {
 
         let intent = 'UNKNOWN';
 
-        if (/\b(scrape|extract\s+data|get\s+data|fetch\s+data|pull\s+data)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEB_SCRAPE';
-        } else if (/\b(reconstruct|recreate|clone\s+website|local\s+project|copy\s+site)\b/i.test(lowerGoal) && containsUrl) {
+        // Explicit Keywords defined by user
+        if (/\b(scraping|scrape|reconstruct|recreate|clone\s+website|local\s+project|copy\s+site|code)\b/i.test(lowerGoal) && containsUrl) {
             intent = 'WEBSITE_CODE_RECONSTRUCTION';
+        } else if (/\b(automation|automate|run\s+automation|fill|submit|log\s+in)\b/i.test(lowerGoal) && containsUrl) {
+            intent = 'WEB_AUTOMATION';
+        } else if (/\b(extract\s+data|get\s+data|fetch\s+data|pull\s+data)\b/i.test(lowerGoal) && containsUrl) {
+            intent = 'WEB_SCRAPE';
         } else if (/\b(analyze|explain|inspect)\b/i.test(lowerGoal) && containsUrl) {
             intent = 'WEBSITE_ANALYSIS';
-        } else if (/\b(automate|fill|submit|log\s+in)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEB_AUTOMATION';
         } else if (/\b(test|verify\s+form|check)\b/i.test(lowerGoal) && containsUrl) {
             intent = 'WEBSITE_TESTING';
         } else if (/\b(open|navigate|go\s+to|visit|browse|show\s+me)\b/i.test(lowerGoal) && containsUrl) {
@@ -72,14 +72,7 @@ class IntentRouter {
         }
 
         if (intent === 'UNKNOWN' && containsUrl) {
-            if (/\b(code|fetch|get|build|site|copy|source)\b/i.test(lowerGoal)) {
-                 intent = 'WEBSITE_CODE_RECONSTRUCTION';
-            } else {
-                 const goalTextNoUrl = goal.replace(/(https?:\/\/[^\s]+)/i, '').trim();
-                 if (goalTextNoUrl.length < 5) {
-                     intent = 'BROWSE_WEBSITE';
-                 }
-            }
+            intent = 'UNKNOWN'; // Force user to clarify
         }
 
         return { intent, url, originalGoal: goal, lowerGoal };

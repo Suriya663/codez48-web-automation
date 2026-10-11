@@ -1,0 +1,9 @@
+{
+  "name": "startify",
+  "version": "1.0.0",
+  "description": "Reconstructed website workspace generated and verified by Codez48 Pilot",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080"
+  }
+}

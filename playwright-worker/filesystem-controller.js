@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { spawn, execSync } = require('child_process');
 
 class FilesystemController {
     resolveBasePath(locationName = 'Desktop') {
@@ -36,7 +37,7 @@ class FilesystemController {
         }
     }
 
-    createTextFile(folderPath, fileName, content = '', options = { overwrite: true }) {
+    createTextFile(folderPath, fileName, content = '', options = { overwrite: true, openInNotepad: true }) {
         const filePath = path.isAbsolute(fileName) ? fileName : path.join(folderPath, fileName);
 
         console.log(`[FILESYSTEM] BEFORE STATE: Checking file presence at "${filePath}"...`);
@@ -57,7 +58,19 @@ class FilesystemController {
         const existsAfter = fs.existsSync(filePath) && fs.statSync(filePath).isFile();
         if (existsAfter) {
             console.log(`[FILESYSTEM VERIFICATION PASS] File created and verified at "${filePath}"`);
-            return { success: true, path: filePath, contentWritten: content };
+
+            let notepadPid = '0';
+            if (options.openInNotepad && process.platform === 'win32') {
+                try {
+                    const child = spawn('notepad.exe', [filePath], { detached: true, stdio: 'ignore', windowsHide: false });
+                    child.unref();
+                    const psCheck = `powershell -NoProfile -NonInteractive -Command "$p = Get-Process notepad -ErrorAction SilentlyContinue | Select-Object -First 1; if ($p) { Write-Output \\"$($p.Id)\\" } else { Write-Output \\"0\\" }"`;
+                    notepadPid = execSync(psCheck, { encoding: 'utf8', windowsHide: true }).trim();
+                    console.log(`[TEXT FILE NOTEPAD LAUNCH] Opened text file in Notepad window (PID: ${notepadPid})`);
+                } catch (npErr) {}
+            }
+
+            return { success: true, path: filePath, notepadPid, contentWritten: content };
         } else {
             return { success: false, error: 'FILE_CREATION_FAILED' };
         }
@@ -86,12 +99,27 @@ By 2:15 PM, with a soft hum that vibrated through every floorboard, gravity retu
 
         fs.writeFileSync(filePath, storyText, 'utf8');
 
+        // Automatically launch Notepad to display the story content on screen for user inspection
+        let notepadPid = '0';
+        try {
+            if (process.platform === 'win32') {
+                const child = spawn('notepad.exe', [filePath], { detached: true, stdio: 'ignore', windowsHide: false });
+                child.unref();
+                const psCheck = `powershell -NoProfile -NonInteractive -Command "$p = Get-Process notepad -ErrorAction SilentlyContinue | Select-Object -First 1; if ($p) { Write-Output \\"$($p.Id)\\" } else { Write-Output \\"0\\" }"`;
+                notepadPid = execSync(psCheck, { encoding: 'utf8', windowsHide: true }).trim();
+                console.log(`[TEXT FILE NOTEPAD LAUNCH] Opened story file in Notepad window (PID: ${notepadPid})`);
+            }
+        } catch (npErr) {
+            console.warn('[TEXT FILE NOTEPAD LAUNCH WARN]:', npErr.message);
+        }
+
         const readBack = this.readFile(filePath);
         if (readBack.success && readBack.content.includes('The Day Gravity Took a Break')) {
-            console.log(`[FILESYSTEM VERIFICATION PASS] Story file created and content verified at "${filePath}"`);
+            console.log(`[FILESYSTEM VERIFICATION PASS] Story file created, displayed in Notepad (PID: ${notepadPid}), and verified at "${filePath}"`);
             return {
                 success: true,
                 filePath,
+                notepadPid,
                 title: 'The Day Gravity Took a Break',
                 storyContent: readBack.content
             };
