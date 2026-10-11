@@ -36,21 +36,33 @@ class IntentRouter {
 
         let intent = 'UNKNOWN';
 
-        // Explicit Keywords defined by user
-        if (/\b(scraping|scrape|reconstruct|recreate|clone\s+website|local\s+project|copy\s+site|code)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEBSITE_CODE_RECONSTRUCTION';
-        } else if (/\b(automation|automate|run\s+automation|fill|submit|log\s+in)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEB_AUTOMATION';
-        } else if (/\b(extract\s+data|get\s+data|fetch\s+data|pull\s+data)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEB_SCRAPE';
-        } else if (/\b(analyze|explain|inspect)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEBSITE_ANALYSIS';
-        } else if (/\b(test|verify\s+form|check)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'WEBSITE_TESTING';
-        } else if (/\b(open|navigate|go\s+to|visit|browse|show\s+me)\b/i.test(lowerGoal) && containsUrl) {
-            intent = 'BROWSE_WEBSITE';
-        } else if (lowerGoal.includes('vs code') || lowerGoal.includes('vscode') || lowerGoal.includes('coding task')) {
-            intent = 'GENERATE_OR_MODIFY_LOCAL_PROJECT';
+        // 1. Local File Edit / Local Web Intent
+        if (/\b(file_edit|local_web)\b/i.test(lowerGoal) || (/\b(open|update|edit|modify|change)\b/i.test(lowerGoal) && (/[a-z]:\\[^\s]+/i.test(goal) || /\b(index\.html|style\.css|script\.js|app\.js|server\.js)\b/i.test(lowerGoal)))) {
+            intent = lowerGoal.includes('local_web') ? 'local_web' : 'file_edit';
+        }
+        // 2. Website Creation Intent
+        else if (/\b(website_creation|create\s+(?:a\s+)?(?:responsive\s+)?(?:business\s+)?website|build\s+(?:a\s+)?website|make\s+(?:a\s+)?website|generate\s+(?:a\s+)?website)\b/i.test(lowerGoal)) {
+            intent = 'website_creation';
+        }
+        // 3. Scraping / Website Code Reconstruction Intent
+        else if (/\b(scraping|scrape|reconstruct|recreate|clone\s+website|copy\s+site|fetch\s+site\s+code|get\s+site\s+code)\b/i.test(lowerGoal) && containsUrl) {
+            intent = 'scraping';
+        }
+        // 4. Website Analysis Intent
+        else if (/\b(website_analysis|analyze|explain\s+layout|inspect\s+layout|explain\s+design|audit\s+site)\b/i.test(lowerGoal) && containsUrl) {
+            intent = 'website_analysis';
+        }
+        // 5. Automation Intent
+        else if (/\b(automation|automate|run\s+automation|click|press|fill|submit|log\s+in)\b/i.test(lowerGoal) && containsUrl) {
+            intent = 'automation';
+        }
+        // 6. Simple Browser Navigation Intent
+        else if (/\b(browser_navigation|open\s+this\s+url\s+in\s+(?:the\s+)?browser|go\s+to\s+url|visit\s+site|browse\s+url|open\s+https?:\/\/)\b/i.test(lowerGoal) && containsUrl) {
+            intent = 'browser_navigation';
+        }
+        // Native General Automation Intent Keywords
+        else if (lowerGoal.includes('vs code') || lowerGoal.includes('vscode') || lowerGoal.includes('coding task')) {
+            intent = 'website_creation';
         } else if (lowerGoal.includes('calculator') || lowerGoal.includes('calc')) {
             intent = 'GENERAL_AUTOMATION_CALC';
         } else if (lowerGoal.includes('powerpoint') || lowerGoal.includes('presentation')) {

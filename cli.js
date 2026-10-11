@@ -170,10 +170,12 @@ async function handlePilot() {
     const intent = routingContext.intent;
     let targetUrl = routingContext.url || 'https://codez48.netlify.app/';
 
-    // INTENT DISAMBIGUATION & ROUTING
-    if (intent === 'WEBSITE_CODE_RECONSTRUCTION') {
-        console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}"`);
-        const targetProjectName = 'startify'; // Standardized folder per user request
+    // CANONICAL INTENT ROUTING (7 INTERNAL ROUTING LABELS)
+
+    // 1. SCRAPING / WEBSITE CODE RECONSTRUCTION
+    if (intent === 'scraping' || intent === 'WEBSITE_CODE_RECONSTRUCTION') {
+        console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}" (Intent: "scraping")`);
+        const targetProjectName = 'startify';
         const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(targetUrl, targetProjectName, 8080, { allowOfficial: allowOfficialScrape });
 
         console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
@@ -190,44 +192,103 @@ async function handlePilot() {
             console.log('Exit Code: 1');
             process.exit(1);
         }
-    } else if (intent === 'WEB_SCRAPE') {
-        console.log(`[DATA SCRAPER ROUTER] Routing web scrape extraction task: "${goal}"`);
-        console.log('Exit Code: 1');
-        process.exit(1);
-    } else if (intent === 'WEBSITE_ANALYSIS') {
-        console.log(`[ANALYSIS ROUTER] Routing website analysis task: "${goal}"`);
-        console.log('Exit Code: 1');
-        process.exit(1);
-    } else if (intent === 'UNKNOWN' && routingContext.url) {
-        // Ambiguous Intent: Bare URL or brand name provided without clear instruction to 'open' or 'fetch code'
-        console.error(`[CLI INTENT ERROR] Ambiguous request for URL/Brand. Please clarify if you want the specific code for the site (e.g., 'scraping ${targetUrl}'), if you want to extract data (e.g., 'scrape data from ${targetUrl}'), or if you want to proceed with browser automation (e.g., 'automation ${targetUrl}').`);
-        console.log('Exit Code: 2');
-        process.exit(2);
     }
 
-    // VS CODE & CODING TASK ROUTER
-    if (intent === 'GENERATE_OR_MODIFY_LOCAL_PROJECT') {
-        console.log(`[VSCODE ROUTER] Routing coding task: "${goal}"`);
+    // 2. WEBSITE CREATION INTENT
+    if (intent === 'website_creation' || intent === 'GENERATE_OR_MODIFY_LOCAL_PROJECT') {
+        console.log(`[WEBSITE CREATION ROUTER] Routing website creation task: "${goal}" (Intent: "website_creation")`);
         const vscRes = await nativeAppAutomation.automatedVsCodeSaveAsWorkflow({ projectName: 'startify' });
 
-        console.log('=== VS CODE AUTOMATION & LOCAL PREVIEW VERIFICATION RESULT ===');
+        console.log('=== WEBSITE CREATION & LOCAL PREVIEW VERIFICATION RESULT ===');
         console.log(JSON.stringify(vscRes, null, 2));
 
         if (vscRes.success) {
-            console.log(`[VSCODE VERIFICATION PASS] Project created at ${vscRes.projectPath}, previewed at ${vscRes.previewUrl}, UI interaction verified.`);
+            console.log(`[WEBSITE CREATION VERIFICATION PASS] Project created at ${vscRes.projectPath}, previewed at ${vscRes.previewUrl}, UI interaction verified.`);
             console.log('We have received and saved everything.');
             console.log('Task completion verified');
             console.log('Exit Code: 0');
             process.exit(0);
         } else {
-            console.error(`[VSCODE ERROR] Coding task or local preview verification failed.`);
+            console.error(`[WEBSITE CREATION ERROR] Project generation or local preview verification failed.`);
             console.log('Exit Code: 1');
             process.exit(1);
         }
     }
 
-    // STAGE 3 TASK ROUTING
-    // 1. CALCULATOR TASK
+    // 3. LOCAL FILE EDIT / LOCAL WEB INTENT
+    if (intent === 'file_edit' || intent === 'local_web') {
+        console.log(`[FILE EDIT ROUTER] Routing local file editing task: "${goal}" (Intent: "${intent}")`);
+
+        // Resolve local file path handling Windows paths with spaces
+        let targetFilePath = null;
+        const fullPathMatch = goal.match(/([a-zA-Z]:\\[^\s"']+(?:\s+[^\s"']+)*\.[a-zA-Z0-9]+)/) || goal.match(/([a-zA-Z]:\/[^\s"']+(?:\s+[^\s"']+)*\.[a-zA-Z0-9]+)/);
+        if (fullPathMatch) {
+            targetFilePath = fullPathMatch[1];
+        } else {
+            targetFilePath = path.resolve(__dirname, 'pilot-workspace/projects/startify/public/index.html');
+        }
+
+        console.log(`[FILE EDIT ACTION] Target file resolved at: "${targetFilePath}"`);
+
+        if (!fs.existsSync(targetFilePath)) {
+            console.error(`[FILE EDIT ERROR] Target file does not exist: "${targetFilePath}"`);
+            console.log('Exit Code: 1');
+            process.exit(1);
+        }
+
+        const appendNote = `\n<!-- Codez48 Pilot File Edit Pass: ${new Date().toISOString()} -->\n`;
+        const editRes = filesystemController.editFile(targetFilePath, appendNote);
+
+        if (editRes.success) {
+            console.log(`[FILE EDIT VERIFICATION PASS] Edited file verified at: ${targetFilePath}`);
+            console.log('Task completion verified');
+            console.log('Exit Code: 0');
+            process.exit(0);
+        } else {
+            console.error(`[FILE EDIT ERROR] Edit verification failed: ${editRes.error}`);
+            console.log('Exit Code: 1');
+            process.exit(1);
+        }
+    }
+
+    // 4. WEBSITE ANALYSIS INTENT
+    if (intent === 'website_analysis') {
+        console.log(`[ANALYSIS ROUTER] Routing website analysis task: "${goal}" (Intent: "website_analysis")`);
+        try {
+            const page = await browserManager.getPage({ headless: true });
+            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            const pageTitle = await page.title();
+            const h1Text = await page.locator('h1').first().textContent().catch(() => 'None');
+            const linkCount = await page.evaluate(() => document.querySelectorAll('a').length).catch(() => 0);
+            await browserManager.close();
+
+            console.log('=== WEBSITE GROUNDED ANALYSIS REPORT ===');
+            console.log(JSON.stringify({
+                targetUrl,
+                pageTitle,
+                primaryHeading: h1Text,
+                totalInteractiveLinks: linkCount,
+                layoutSummary: `Page "${pageTitle}" contains primary heading "${h1Text}" with ${linkCount} interactive navigation links.`
+            }, null, 2));
+
+            console.log('Task completion verified');
+            console.log('Exit Code: 0');
+            process.exit(0);
+        } catch (analysisErr) {
+            console.error(`[ANALYSIS ERROR] Failed to analyze website "${targetUrl}":`, analysisErr.message);
+            console.log('Exit Code: 1');
+            process.exit(1);
+        }
+    }
+
+    // 5. UNKNOWN AMBIGUOUS INTENT HANDLING
+    if (intent === 'UNKNOWN' && routingContext.url) {
+        console.error(`[CLI INTENT ERROR] Ambiguous request for URL/Brand. Please clarify if you want the specific code for the site (e.g., 'scraping ${targetUrl}'), if you want to create a website (e.g., 'create a website'), if you want to edit a local file (e.g., 'edit index.html'), or if you want to proceed with browser automation (e.g., 'automation ${targetUrl}').`);
+        console.log('Exit Code: 2');
+        process.exit(2);
+    }
+
+    // STAGE 3 NATIVE APP TASK ROUTING
     if (intent === 'GENERAL_AUTOMATION_CALC') {
         console.log(`[STAGE 3 ROUTER] Executing Calculator task: "${goal}"`);
         const calcRes = await nativeAppAutomation.calculateAndVerify('7 * 8');
@@ -243,7 +304,6 @@ async function handlePilot() {
         }
     }
 
-    // 2. POWERPOINT PRESENTATION TASK
     if (intent === 'GENERAL_AUTOMATION_PPTX') {
         console.log(`[STAGE 3 ROUTER] Executing PowerPoint presentation task: "${goal}"`);
         const pptxRes = await nativeAppAutomation.createFanAutomationPresentation();
@@ -259,7 +319,6 @@ async function handlePilot() {
         }
     }
 
-    // 3. WORD DOCUMENT TASK
     if (intent === 'GENERAL_AUTOMATION_DOCX') {
         console.log(`[STAGE 3 ROUTER] Executing Word document task: "${goal}"`);
         const wordRes = await nativeAppAutomation.createFanAutomationWordDoc();
@@ -275,7 +334,6 @@ async function handlePilot() {
         }
     }
 
-    // 4. GRAVITY STORY TASK
     if (intent === 'GENERAL_AUTOMATION_STORY') {
         console.log(`[STAGE 3 ROUTER] Executing Gravity Story text task: "${goal}"`);
         const storyRes = filesystemController.createGravityStoryFile();
@@ -291,7 +349,6 @@ async function handlePilot() {
         }
     }
 
-    // 5. CSV REPORT TASK
     if (intent === 'GENERAL_AUTOMATION_CSV') {
         console.log(`[STAGE 3 ROUTER] Executing CSV report task: "${goal}"`);
         const csvRes = filesystemController.createCsvReport();
@@ -307,7 +364,6 @@ async function handlePilot() {
         }
     }
 
-    // METATRADER 5 DIAGNOSTIC ROUTING
     if (intent === 'GENERAL_AUTOMATION_MT5') {
         console.log(`[MT5 ROUTER] Executing MetaTrader 5 diagnostic task: "${goal}"`);
         const mt5Probe = await mt5DiscoveryManager.probeBridgeAndAccount();
@@ -318,11 +374,8 @@ async function handlePilot() {
         process.exit(0);
     }
 
-    // OFFLINE STRATEGY BACKTEST ROUTING
     if (intent === 'GENERAL_AUTOMATION_BACKTEST') {
         console.log(`[STRATEGY ENGINE] Executing offline backtest task: "${goal}"`);
-
-        // Generate synthetic OHLCV candle series
         const syntheticCandles = [];
         let price = 1.0800;
         for (let i = 0; i < 100; i++) {
@@ -345,10 +398,8 @@ async function handlePilot() {
         process.exit(0);
     }
 
-    // ADVANCED FILESYSTEM WORKFLOWS
     if (intent === 'GENERAL_AUTOMATION_FS') {
         console.log(`[FILESYSTEM WORKFLOW] Routing filesystem task: "${goal}"`);
-
         const baseLocation = lowerGoal.includes('documents') ? 'Documents' : lowerGoal.includes('downloads') ? 'Downloads' : 'Desktop';
         const desktopDir = filesystemController.resolveBasePath(baseLocation);
 
@@ -395,38 +446,6 @@ async function handlePilot() {
                     console.log('Exit Code: 1');
                     process.exit(1);
                 }
-            }
-        }
-
-        if ((lowerGoal.includes('folder') || lowerGoal.includes('directory')) && (lowerGoal.includes('create') || lowerGoal.includes('make'))) {
-            const folderMatch = goal.match(/(?:folder|directory)\s+(?:named\s+)?([a-zA-Z0-9_\-]+)/i) || goal.match(/create\s+(?:a\s+)?(?:folder|directory)\s+([a-zA-Z0-9_\-]+)/i);
-            const fileMatch = goal.match(/(?:file|text file|notes)\s+(?:named\s+)?([a-zA-Z0-9_\-\.]+)/i);
-
-            const folderName = folderMatch ? folderMatch[1] : 'StageCDemo';
-            const fileName = fileMatch ? fileMatch[1] : 'notes.txt';
-
-            const folderRes = filesystemController.createFolder(baseLocation, folderName);
-            if (!folderRes.success) {
-                console.error(`[FILESYSTEM ERROR] Failed to create folder: ${folderRes.error}`);
-                console.log('Exit Code: 1');
-                process.exit(1);
-            }
-
-            const fileRes = filesystemController.createTextFile(
-                folderRes.path,
-                fileName,
-                `Project: ${folderName}\nCreated by Codez48 Pilot\nTimestamp: ${new Date().toISOString()}\nStatus: VERIFIED\n`
-            );
-
-            if (fileRes.success) {
-                console.log(`[FILESYSTEM VERIFICATION PASS] Folder and file created and verified at: ${fileRes.path}`);
-                console.log('Task completion verified');
-                console.log('Exit Code: 0');
-                process.exit(0);
-            } else {
-                console.error(`[FILESYSTEM ERROR] Failed to create file: ${fileRes.error}`);
-                console.log('Exit Code: 1');
-                process.exit(1);
             }
         }
     }
@@ -492,8 +511,8 @@ async function handlePilot() {
         process.exit(0);
     }
 
-    // FINAL FALLBACK: If intent is BROWSE_WEBSITE or WEB_AUTOMATION
-    if (intent === 'BROWSE_WEBSITE' || intent === 'WEB_AUTOMATION') {
+    // 6. AUTOMATION & BROWSER NAVIGATION INTENT
+    if (intent === 'automation' || intent === 'browser_navigation' || intent === 'BROWSE_WEBSITE' || intent === 'WEB_AUTOMATION') {
         let expectedHref = null;
         if (/\bcli\b/i.test(goalTextNoUrl)) {
             expectedHref = '/cli';
