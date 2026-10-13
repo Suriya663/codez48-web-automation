@@ -218,12 +218,123 @@ async function handlePilot() {
     const goal = rawGoalStr || 'Open https://codez48.netlify.app/';
     const lowerGoal = goal.toLowerCase();
 
+    // NEW AI WORKFLOW
+    const cliAiAnalyzer = require(path.resolve(__dirname, 'playwright-worker/cli-ai-analyzer.js'));
+    const cliProjectGenerator = require(path.resolve(__dirname, 'playwright-worker/cli-project-generator.js'));
+    const cliProjectModifier = require(path.resolve(__dirname, 'playwright-worker/cli-project-modifier.js'));
+
+    const aiPlan = await cliAiAnalyzer.analyzeRequest(goal);
+    let overrideIntent = null;
+    let overrideTargetUrl = null;
+
+    if (aiPlan) {
+        console.log(`Analyzing User Request...`);
+        if (aiPlan.projectType) console.log(`Project Type: ${aiPlan.projectType}`);
+        console.log(`Description: ${aiPlan.description}`);
+
+        if (aiPlan.intent === 'GENERATE_PROJECT') {
+            try {
+                const { projectDir, startCommand } = await cliProjectGenerator.generateProject(aiPlan);
+                let runningProcess = null;
+
+                if (startCommand) {
+                    runningProcess = await cliProjectGenerator.startApplication(projectDir, startCommand);
+                }
+
+                if (aiPlan.previewUrl) {
+                    console.log(`Opening Browser to ${aiPlan.previewUrl}...`);
+                    console.log(`Capturing Screenshot...`);
+                    try {
+                        const page = await browserManager.getPage({ headless: true });
+                        await page.goto(aiPlan.previewUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+
+                        const screenshotPath = path.join(projectDir, 'preview_screenshot.png');
+                        await page.screenshot({ path: screenshotPath, fullPage: true });
+                        console.log(`[SCREENSHOT SAVED] Project preview captured at: ${screenshotPath}`);
+
+                        await browserManager.close();
+                    } catch(e) {
+                        console.log(`[SCREENSHOT ERROR] Could not capture preview: ${e.message}`);
+                    }
+                }
+
+                console.log('Verifying Application...');
+                console.log('Task Completed Successfully');
+                console.log('Exit Code: 0');
+                process.exit(0);
+            } catch (err) {
+                console.error('Error during project generation:', err.message);
+
+                console.log('Attempting AI Error Recovery...');
+                const fixPlan = await cliAiAnalyzer.analyzeErrorFix(err.message);
+                if (fixPlan && fixPlan.fixCommands) {
+                    console.log(`Cause: ${fixPlan.cause}`);
+                    for (const fixCmd of fixPlan.fixCommands) {
+                        if (/rm\s+-rf|del\s+\/|format|mkfs|chmod\s+-R\s+777/.test(fixCmd)) {
+                            console.log(`[SAFETY BLOCK] Dangerous command rejected: ${fixCmd}`);
+                            continue;
+                        }
+                        console.log(`Executing Fix: ${fixCmd}`);
+                        try {
+                            execSync(fixCmd, { stdio: 'inherit' });
+                        } catch(e) {
+                            console.error(`Fix command failed: ${e.message}`);
+                        }
+                    }
+                }
+                console.log('Task Completed with Errors');
+                console.log('Exit Code: 1');
+                process.exit(1);
+            }
+        } else if (aiPlan.intent === 'SCRAPE_WEBSITE') {
+            overrideIntent = 'scraping';
+            overrideTargetUrl = aiPlan.targetUrl;
+        } else if (aiPlan.intent === 'BROWSER_AUTOMATION') {
+            overrideIntent = 'automation';
+            overrideTargetUrl = aiPlan.targetUrl;
+        } else if (aiPlan.intent === 'GENERAL_AUTOMATION') {
+            // let the legacy intentRouter handle it
+        } else if (aiPlan.intent === 'MODIFY_LOCAL_PROJECT') {
+            try {
+                await cliProjectModifier.modifyProject(aiPlan);
+                console.log('Task Completed Successfully');
+                console.log('Exit Code: 0');
+                process.exit(0);
+            } catch (err) {
+                console.error(`Project modification failed: ${err.message}`);
+                console.log('Exit Code: 1');
+                process.exit(1);
+            }
+        } else if (aiPlan.intent === 'FIX_ERROR') {
+             // ...
+             console.log('AI analyzing the error to fix...');
+             const fixPlan = await cliAiAnalyzer.analyzeErrorFix(goal);
+             if (fixPlan) {
+                 console.log(`Cause: ${fixPlan.cause}`);
+                 for (const fixCmd of (fixPlan.fixCommands || [])) {
+                     if (/rm\s+-rf|del\s+\/|format|mkfs|chmod\s+-R\s+777/.test(fixCmd)) {
+                         console.log(`[SAFETY BLOCK] Dangerous command rejected: ${fixCmd}`);
+                         continue;
+                     }
+                     console.log(`Executing Fix: ${fixCmd}`);
+                     try {
+                         execSync(fixCmd, { stdio: 'inherit' });
+                     } catch(e) {}
+                 }
+                 console.log('Task Completed Successfully');
+                 console.log('Exit Code: 0');
+                 process.exit(0);
+             }
+        }
+    }
+
     // Strip URLs before checking action keywords to prevent false keyword matches inside domain strings
     const goalTextNoUrl = goal.replace(/https?:\/\/[^\s]+/gi, '');
 
     const routingContext = intentRouter.classifyIntent(goal);
-    const intent = routingContext.intent;
-    let targetUrl = routingContext.url || 'https://codez48.netlify.app/';
+    const intent = overrideIntent || routingContext.intent;
+    let targetUrl = overrideTargetUrl || routingContext.url || 'https://codez48.netlify.app/';
+
 
     // CANONICAL INTENT ROUTING (7 INTERNAL ROUTING LABELS)
 

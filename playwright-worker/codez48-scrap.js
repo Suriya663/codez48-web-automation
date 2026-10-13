@@ -613,9 +613,11 @@ Notes & Limitations:
         console.log(` Output Folder:      ${outputFolder}`);
         console.log(` Saved Files:        ${successfulCount} succeeded, ${failedCount} failed`);
         console.log(` Verified ZIP Path:  ${zipFilePath} (${zipSize} bytes)`);
-        console.log(` Local Server Link:  ${serverDetails.downloadUrl}`);
+        console.log(` Direct Download:    ${serverDetails.downloadUrl}`);
         console.log(` Execution Time:     ${durationSec}s`);
         console.log('==================================================\n');
+
+        this.openBrowserForDownload(serverDetails.downloadUrl, zipFilePath);
 
         return {
             success: true,
@@ -631,6 +633,34 @@ Notes & Limitations:
             failedCount,
             durationSec
         };
+    }
+
+    openBrowserForDownload(downloadUrl, zipFilePath) {
+        if (process.env.NODE_ENV === 'test' || process.env.CI || process.env.SUPPRESS_BROWSER_OPEN) {
+            console.log(`[BROWSER LAUNCH SUPPRESSED] Test mode active. Verified ZIP path: ${zipFilePath}`);
+            return;
+        }
+
+        console.log(`[BROWSER LAUNCH] Automatically opening verified ZIP archive in File Explorer...`);
+        let command;
+        if (process.platform === 'win32') {
+            command = `explorer /select,"${zipFilePath.replace(/\//g, '\\')}"`;
+        } else if (process.platform === 'darwin') {
+            command = `open -R "${zipFilePath}"`;
+        } else {
+            command = `xdg-open "${path.dirname(zipFilePath)}"`;
+        }
+
+        const { exec } = require('child_process');
+        exec(command, (err) => {
+            if (err) {
+                console.warn(`[BROWSER LAUNCH NOTICE] Could not open file explorer automatically: ${err.message}`);
+            }
+            console.log(`\n==================================================`);
+            console.log(` VERIFIED ZIP ARCHIVE READY FOR DOWNLOAD/USE:`);
+            console.log(`   ${zipFilePath}`);
+            console.log(`==================================================\n`);
+        });
     }
 
     discoverResources(html, baseUrl) {
