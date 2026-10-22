@@ -1,5 +1,5 @@
-const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+import admin from 'firebase-admin';
+import { GoogleGenAI } from '@google/genai';
 
 let isInitialized = false;
 let db = null;
@@ -7,7 +7,7 @@ let db = null;
 const initAdmin = () => {
     if (isInitialized) return true;
     try {
-        const saVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+        const saVar = Netlify.env.get('FIREBASE_SERVICE_ACCOUNT');
         if (!saVar) {
             if (admin.apps.length === 0) admin.initializeApp();
             db = admin.firestore();
@@ -56,7 +56,7 @@ const jsonResponse = (statusCode, data) => ({
     body: JSON.stringify(data)
 });
 
-exports.handler = async (event, context) => {
+const handleRequest = async (event) => {
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
@@ -146,15 +146,12 @@ exports.handler = async (event, context) => {
             return jsonResponse(400, { success: false, error: "Message too long. Please keep questions under 2000 characters." });
         }
 
-        const rawGroqKeys = process.env.GROQ_API_KEY;
+        const rawGroqKeys = Netlify.env.get('GROQ_API_KEY');
         const groqKeys = rawGroqKeys
             ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
             : [];
-        const geminiApiKey = process.env.GEMINI_API_KEY || "AIzaSyAbCLiq_qTnWNR3QRYi_UTuL7WSOKEJEzM";
 
-        if (groqKeys.length === 0 && !geminiApiKey) {
-            return jsonResponse(500, { success: false, error: "AI Service Unconfigured on Server." });
-        }
+
 
         const systemPrompt = `You are Codez48 AI, a professional full-stack developer, software engineer, and business assistant.
 
@@ -267,7 +264,7 @@ exports.handler = async (event, context) => {
         }
 
         // Fallback to Gemini
-        if (!aiResponse && geminiApiKey) {
+        if (!aiResponse) {
             try {
                 let systemInstruction = { parts: [{ text: "SYSTEM INSTRUCTIONS: " + systemPrompt }] };
                 const contents = [];
@@ -297,24 +294,21 @@ exports.handler = async (event, context) => {
 
                 const reqBody = { contents: contents, systemInstruction: systemInstruction };
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(reqBody)
+                const ai = new GoogleGenAI({});
+                const data = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: reqBody.contents,
+                    config: { systemInstruction: reqBody.systemInstruction }
                 });
-
-                const data = await response.json();
-                if (response.ok && data.candidates && data.candidates[0]) {
+                if (data.candidates && data.candidates[0]) {
                     aiResponse = data.candidates[0].content.parts[0].text;
                 } else {
-                    aiErrors.push(`Gemini (${response.status}): ${data.error?.message || JSON.stringify(data)}`);
+                    aiErrors.push("Gemini returned no content.");
                 }
             } catch (err) {
                 console.error("[Gemini Fallback Error]:", err.message);
                 aiErrors.push(`Gemini Exception: ${err.message}`);
             }
-        } else if (!geminiApiKey) {
-            aiErrors.push("No Gemini API Key available.");
         }
 
         if (!aiResponse) {
@@ -425,4 +419,17 @@ exports.handler = async (event, context) => {
         console.error("CLI AI Chat Error:", error.message);
         return jsonResponse(500, { success: false, error: error.message });
     }
+};
+
+
+export default async (req) => {
+    const result = await handleRequest({
+        httpMethod: req.method,
+        headers: Object.fromEntries(req.headers),
+        body: req.method === 'POST' ? await req.text() : ''
+    });
+    return new Response(result.body ?? null, {
+        status: result.statusCode,
+        headers: result.headers
+    });
 };

@@ -1,6 +1,6 @@
-const fetch = require('node-fetch');
+import { GoogleGenAI } from '@google/genai';
 
-exports.handler = async (event, context) => {
+const handleRequest = async (event) => {
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 204,
@@ -23,19 +23,12 @@ exports.handler = async (event, context) => {
         const { messages, useGemini = false } = JSON.parse(event.body);
         const model = "openai/gpt-oss-120b";
 
-        const rawGroqKeys = process.env.GROQ_API_KEY;
+        const rawGroqKeys = Netlify.env.get('GROQ_API_KEY');
         const groqKeys = rawGroqKeys
             ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
             : [];
-        const geminiApiKey = process.env.GEMINI_API_KEY || "AIzaSyAbCLiq_qTnWNR3QRYi_UTuL7WSOKEJEzM";
 
-        if (groqKeys.length === 0 && !geminiApiKey) {
-            console.error("[CRITICAL AI CONFIG ERROR] GROQ_API_KEY environment variable is not configured.");
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ error: "AI Service Unconfigured: GROQ_API_KEY environment variable is missing." })
-            };
-        }
+
 
         if (!useGemini && groqKeys.length > 0) {
             const shuffledKeys = [...groqKeys].sort(() => 0.5 - Math.random());
@@ -75,7 +68,7 @@ exports.handler = async (event, context) => {
             }
         }
 
-        if (geminiApiKey) {
+        {
             try {
                 let systemInstruction = null;
                 const contents = [];
@@ -109,15 +102,14 @@ exports.handler = async (event, context) => {
                     reqBody.systemInstruction = systemInstruction;
                 }
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(reqBody)
+                const ai = new GoogleGenAI({});
+                const data = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: reqBody.contents,
+                    config: { systemInstruction: reqBody.systemInstruction }
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
+                if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                     return {
                         statusCode: 200,
                         headers: { "Content-Type": "application/json" },
@@ -141,4 +133,17 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({ error: "Internal Server Error", details: error.message })
         };
     }
+};
+
+
+export default async (req) => {
+    const result = await handleRequest({
+        httpMethod: req.method,
+        headers: Object.fromEntries(req.headers),
+        body: req.method === 'POST' ? await req.text() : ''
+    });
+    return new Response(result.body ?? null, {
+        status: result.statusCode,
+        headers: result.headers
+    });
 };
