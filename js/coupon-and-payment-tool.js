@@ -38,6 +38,7 @@ export const CouponAndPaymentTool = {
     discountAmount: 0,
 
     plans: {
+        TRIAL: { id: 'TRIAL', name: 'Starter Trial Pass', price: 1, credits: 50, isTrial: true },
         MICRO: { id: 'MICRO', name: 'Micro Plan', price: 299, credits: 300, desc: 'Clean B&W PPT & Word document automation' },
         ENTERPRISE: { id: 'ENTERPRISE', name: 'Enterprise Plan', price: 599, credits: 700, desc: 'High-quality code, static websites & unlimited WhatsApp automation' },
         PROFIT_ORIENTED: { id: 'PROFIT_ORIENTED', name: 'Profit-Oriented Plan', price: 999, credits: 1500, desc: 'Top-tier design with real-time Voice AI & WhatsApp Voice Supervisor' }
@@ -50,9 +51,30 @@ export const CouponAndPaymentTool = {
         return params.get('uid') || localStorage.getItem('c48_user_uid') || localStorage.getItem('tori_seller_id') || 'USR-CDZ48-USER';
     },
 
+    async checkUserEligibility() {
+        const uid = this.getUserId();
+        const trialModalCard = document.getElementById('first-time-trial-card-modal');
+        if (!trialModalCard) return;
+
+        try {
+            const userSnap = await getDoc(doc(db, "pilot_users", uid));
+            if (userSnap.exists()) {
+                const data = userSnap.data();
+                if (data.lastPaymentId || data.trialClaimed) {
+                    trialModalCard.remove();
+                    return;
+                }
+            }
+            trialModalCard.classList.remove('hidden');
+        } catch (_) {
+            trialModalCard.classList.remove('hidden');
+        }
+    },
+
     init() {
         this.checkDeveloperStatus();
         this.setupUrlTriggers();
+        this.checkUserEligibility();
     },
 
     checkDeveloperStatus() {
@@ -382,13 +404,13 @@ export const CouponAndPaymentTool = {
         let finalPrice = plan.price;
         this.discountAmount = 0;
 
-        if (this.appliedCoupon && (this.appliedCoupon.type === 'DISCOUNT_PERCENT' || this.appliedCoupon.type === 'DISCOUNT_FLAT')) {
+        if (this.appliedCoupon && (this.appliedCoupon.type === 'DISCOUNT_PERCENT' || this.appliedCoupon.type === 'DISCOUNT_FLAT') && plan.id !== 'TRIAL') {
             if (this.appliedCoupon.type === 'DISCOUNT_PERCENT') {
                 this.discountAmount = Math.round((plan.price * Number(this.appliedCoupon.value)) / 100);
             } else {
                 this.discountAmount = Math.min(plan.price, Number(this.appliedCoupon.value));
             }
-            finalPrice = Math.max(0, plan.price - this.discountAmount);
+            finalPrice = Math.max(1, plan.price - this.discountAmount);
 
             const row = document.getElementById('payment-coupon-discount-row');
             const codeEl = document.getElementById('payment-coupon-applied-code');
@@ -420,7 +442,7 @@ export const CouponAndPaymentTool = {
 
     async launchRazorpayLivePayment() {
         const plan = this.plans[this.selectedPlan] || this.plans.ENTERPRISE;
-        const finalAmountRupees = Math.max(0, plan.price - this.discountAmount);
+        const finalAmountRupees = Math.max(1, plan.price - (plan.id === 'TRIAL' ? 0 : this.discountAmount));
         const finalAmountPaise = finalAmountRupees * 100;
         const uid = this.getUserId();
         const payBtn = document.getElementById('btn-razorpay-checkout');
@@ -494,7 +516,7 @@ export const CouponAndPaymentTool = {
 
         } catch (err) {
             console.warn("Razorpay Init Warning:", err.message);
-            alert(`Razorpay Checkout initialized for ₹${finalAmountRupees}.\nYou can also complete via UPI QR Code directly.`);
+            alert(`Unable to open Razorpay gateway: ${err.message}. Please check your connection.`);
             if (payBtn) {
                 payBtn.disabled = false;
                 payBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
@@ -510,7 +532,7 @@ export const CouponAndPaymentTool = {
 
         try {
             // Update pilot_users
-            await setDoc(doc(db, "pilot_users", uid), {
+            const userUpdate = {
                 userId: uid,
                 userEmail: email,
                 plan: plan.id,
@@ -520,7 +542,15 @@ export const CouponAndPaymentTool = {
                 lastPaymentId: paymentId,
                 lastPaymentAmount: amountPaid,
                 updatedAt: now
-            }, { merge: true });
+            };
+            if (plan.id === 'TRIAL') {
+                userUpdate.trialClaimed = true;
+            }
+            await setDoc(doc(db, "pilot_users", uid), userUpdate, { merge: true });
+
+            // Remove trial card from DOM once claimed
+            const trialModalCard = document.getElementById('first-time-trial-card-modal');
+            if (trialModalCard) trialModalCard.remove();
 
             // Record transaction
             const txId = `tx_${Date.now()}`;
@@ -675,6 +705,7 @@ window.openPilotPaymentModal = (planId = 'ENTERPRISE') => {
     if (!modal) return;
     modal.classList.remove('hidden');
     window.selectPilotPlan(planId || 'ENTERPRISE');
+    CouponAndPaymentTool.checkUserEligibility();
 };
 
 window.closePilotPaymentModal = () => {
@@ -718,22 +749,10 @@ window.removePaymentCoupon = () => {
     CouponAndPaymentTool.updatePaymentPricingDisplay();
 };
 
-window.verifyDirectUpiPayment = async () => {
-    const plan = CouponAndPaymentTool.plans[CouponAndPaymentTool.selectedPlan];
-    const finalAmount = Math.max(0, plan.price - CouponAndPaymentTool.discountAmount);
-    const uid = CouponAndPaymentTool.getUserId();
-    const utr = prompt(`Please enter your UPI Reference / UTR Number from your payment app (GPay/PhonePe/Paytm/BHIM):\n\n(Or press OK to complete direct activation for ${uid})`, `UPI-${Date.now()}`);
-    if (utr === null) return;
-    const paymentId = utr.trim() || `upi_${Date.now()}`;
-    await CouponAndPaymentTool.recordPaymentSuccess({ razorpay_payment_id: paymentId }, plan, finalAmount, uid);
-    return;
-};
-window._old_verify = async () => {
-    const plan = CouponAndPaymentTool.plans[CouponAndPaymentTool.selectedPlan];
-    const finalAmount = Math.max(0, plan.price - CouponAndPaymentTool.discountAmount);
-    const uid = CouponAndPaymentTool.getUserId();
-    const fakeId = `upi_${Date.now()}`;
-    await CouponAndPaymentTool.recordPaymentSuccess({ razorpay_payment_id: fakeId }, plan, finalAmount, uid);
+window.claimPilotTrialPass = () => {
+    CouponAndPaymentTool.selectedPlan = 'TRIAL';
+    CouponAndPaymentTool.updatePaymentPricingDisplay();
+    CouponAndPaymentTool.launchRazorpayLivePayment();
 };
 
 // Initialize when DOM is ready

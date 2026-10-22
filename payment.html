@@ -6,7 +6,7 @@
     <title>Codez48 Pilot — Official Subscription & Payment Gateway</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Razorpay Checkout -->
+    <!-- Razorpay Checkout SDK -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -30,9 +30,9 @@
                 </div>
                 <div>
                     <h1 class="font-extrabold text-base tracking-wide text-white flex items-center gap-2">
-                        CODEZ48 <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Razorpay Live</span>
+                        CODEZ48 <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase">Razorpay Verified</span>
                     </h1>
-                    <p class="text-[11px] text-slate-400">codez48.netlify.app/tools • Official Billing</p>
+                    <p class="text-[11px] text-slate-400">codez48.netlify.app/tools • Official Billing Gateway</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -48,17 +48,17 @@
         <!-- Title Banner -->
         <div class="text-center max-w-2xl mx-auto space-y-2">
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
-                <i class="fa-solid fa-shield-halved"></i> 256-Bit SSL Encrypted Razorpay & UPI Gateway
+                <i class="fa-solid fa-shield-halved"></i> 256-Bit SSL Encrypted Razorpay Live Gateway
             </div>
             <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
                 Codez48 Pilot Subscriptions
             </h2>
             <p class="text-slate-400 text-xs sm:text-sm">
-                Unlock autonomous browser automation, document generation, and WhatsApp AI campaigns with fresh monthly credits.
+                Verified payment gateway for autonomous browser automation, document generation, and WhatsApp AI campaigns.
             </p>
         </div>
 
-        <!-- 1. USER ACCOUNT INSPECTOR & EMAIL CARD -->
+        <!-- 1. USER ACCOUNT INSPECTOR & DELIVERY EMAIL CARD -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto space-y-4">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-2">
@@ -97,24 +97,52 @@
                 </div>
             </div>
 
-            <!-- Email Address Input for Delivery -->
+            <!-- Delivery Email Address -->
             <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-center gap-3">
                 <div class="flex-1 w-full">
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
-                        <i class="fa-solid fa-envelope text-blue-400"></i> Delivery Email Address (For User ID & Payment Receipts)
+                        <i class="fa-solid fa-envelope text-blue-400"></i> Delivery Email Address (For Credentials & Receipts)
                     </label>
                     <input type="email" id="page-email-input" placeholder="e.g. rajnaga75556@gmail.com"
                         class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
                 </div>
                 <div class="text-[11px] text-slate-500 sm:w-60 leading-tight">
-                    Your User ID and subscription activation details will be automatically sent to this address once payment is complete.
+                    Your official User ID and verified payment receipt will be automatically emailed to this address upon successful completion.
                 </div>
             </div>
 
             <div id="account-feedback" class="text-[11px] min-h-[16px] font-sans"></div>
         </div>
 
-        <!-- 2. PLANS SELECTION GRID (BASE PRICES FRESH) -->
+        <!-- 2. EXCLUSIVE ONE-TIME TRIAL ENTRY OFFER FOR FIRST-TIME USERS ONLY (₹1 ONLY) -->
+        <div id="first-time-trial-card" class="hidden bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-blue-500/15 border-2 border-amber-400/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden transition-all max-w-3xl mx-auto">
+            <span class="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider shadow">
+                ★ First-Time Users Only
+            </span>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="space-y-1.5 text-center sm:text-left">
+                    <div class="flex items-center justify-center sm:justify-start gap-2">
+                        <span class="text-2xl">🎁</span>
+                        <h3 class="text-xl font-black text-white tracking-tight uppercase">Starter Trial Pass — Just ₹1</h3>
+                    </div>
+                    <p class="text-xs text-slate-300 max-w-md">
+                        Special entry point for new users: Get <span class="text-amber-300 font-bold">+50 AI Credits</span> to test presentation & document automation tools right away.
+                    </p>
+                    <p class="text-[11px] text-amber-300/80 font-mono">
+                        <i class="fa-solid fa-circle-info mr-1"></i> One-time promotional offer. Once redeemed, this trial pass will never appear again.
+                    </p>
+                </div>
+                <div class="text-center sm:text-right flex-shrink-0">
+                    <div class="text-3xl font-black text-amber-400 mb-2">₹1<span class="text-xs text-slate-400 font-normal"> /one-time</span></div>
+                    <button onclick="claimOneTimeTrial()" id="btn-claim-trial"
+                        class="bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-amber-400/20 flex items-center justify-center gap-2 mx-auto sm:ml-auto">
+                        <i class="fa-solid fa-bolt"></i> Claim ₹1 Trial Pass
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MONTHLY SUBSCRIPTION PLANS GRID -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <!-- Micro Plan -->
@@ -188,7 +216,7 @@
 
         </div>
 
-        <!-- 3. COUPON CODE SECTION (WITH REMOVE BUTTON FOR FRESH BASE PRICING) -->
+        <!-- 4. COUPON CODE SECTION -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto">
             <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                 <i class="fa-solid fa-tag text-purple-400"></i> Have a Promotional Coupon or Voucher?
@@ -206,10 +234,10 @@
             <div id="page-coupon-feedback" class="text-[11px] mt-2 min-h-[16px]"></div>
         </div>
 
-        <!-- 4. CHECKOUT SUMMARY & PAYMENT TRIGGERS -->
+        <!-- 5. CHECKOUT SUMMARY & VERIFIED RAZORPAY TRIGGER -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto shadow-2xl space-y-6">
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-lock text-emerald-400"></i> Checkout Summary
+                <i class="fa-solid fa-lock text-emerald-400"></i> Verified Checkout Summary
             </h3>
 
             <div class="bg-slate-950 rounded-xl p-4 space-y-2.5 text-xs font-mono">
@@ -222,7 +250,7 @@
                     <span id="summary-email-text" class="text-slate-300 font-bold">rajnaga75556@gmail.com</span>
                 </div>
                 <div class="flex justify-between text-slate-400">
-                    <span>Selected Plan:</span>
+                    <span>Selected Tier:</span>
                     <span id="summary-plan-text" class="text-white font-bold">Enterprise Plan</span>
                 </div>
                 <div class="flex justify-between text-slate-400">
@@ -238,46 +266,35 @@
                     <span id="summary-discount-text" class="font-bold">-₹0</span>
                 </div>
                 <div class="border-t border-slate-800 pt-3 flex justify-between text-sm">
-                    <span class="font-bold text-white">Final Amount:</span>
-                    <span id="summary-amount-text" class="font-black text-2xl text-blue-400">₹599</span>
+                    <span class="font-bold text-white">Final Payable Amount:</span>
+                    <span id="summary-amount-text" class="font-black text-2xl text-emerald-400">₹599</span>
                 </div>
             </div>
 
-            <!-- Razorpay & UPI Triggers -->
-            <div class="space-y-4">
+            <!-- Single Verified Razorpay Trigger Button -->
+            <div class="space-y-3">
                 <button onclick="launchRazorpayCheckout()" id="page-btn-razorpay"
                     class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-widest transition shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)
+                    <i class="fa-solid fa-shield-halved text-emerald-400"></i> Pay with Razorpay (Cards, UPI, Netbanking)
                 </button>
-
-                <!-- Direct UPI Alternative -->
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
-                    <img id="page-upi-qr" src="" alt="UPI QR" class="w-32 h-32 bg-white p-1 rounded-lg shadow">
-                    <div class="text-xs text-slate-400 space-y-2 flex-1 text-center sm:text-left">
-                        <p class="font-bold text-white flex items-center justify-center sm:justify-start gap-1.5">
-                            <i class="fa-brands fa-google-pay text-emerald-400 text-base"></i> Instant UPI Transfer
-                        </p>
-                        <p>VPA: <span class="font-mono text-blue-300 bg-slate-900 px-2 py-0.5 rounded select-all font-bold">rajnaga75556@okaxis</span></p>
-                        <button onclick="handleDirectUpiComplete()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-[11px] transition shadow flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-circle-check"></i> I Have Paid via UPI — Activate Now
-                        </button>
-                    </div>
+                <div class="text-center text-[11px] text-slate-500">
+                    <i class="fa-solid fa-lock mr-1"></i> Razorpay Verified Gateway. Once payment is completed, you will be automatically returned and your account will be activated.
                 </div>
             </div>
         </div>
 
     </main>
 
-    <!-- SUCCESS MODAL -->
+    <!-- SUCCESS RECEIPT MODAL -->
     <div id="payment-success-modal" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center space-y-5 shadow-2xl shadow-emerald-500/10">
             <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-3xl">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
             <div>
-                <h3 class="text-2xl font-black text-white">Payment Successful!</h3>
+                <h3 class="text-2xl font-black text-white">Payment Verified & Approved!</h3>
                 <p id="success-plan-title" class="text-sm text-emerald-400 font-bold mt-1">Enterprise Plan Activated</p>
-                <p class="text-xs text-slate-400 mt-2">Credits and subscription have been updated in Firestore for your User ID.</p>
+                <p class="text-xs text-slate-400 mt-2">Your subscription has been verified and permanently registered in Firebase.</p>
             </div>
             <div class="bg-slate-950 rounded-xl p-4 text-xs font-mono text-left space-y-1.5 border border-slate-800">
                 <div class="flex justify-between"><span class="text-slate-500">User ID:</span><span id="succ-uid" class="text-blue-300 font-bold break-all"></span></div>
@@ -310,6 +327,7 @@
 
     <script>
         const PLANS = {
+            TRIAL: { id: 'TRIAL', name: 'Starter Trial Pass', price: 1, credits: 50, isTrial: true },
             MICRO: { id: 'MICRO', name: 'Micro Plan', price: 299, credits: 300 },
             ENTERPRISE: { id: 'ENTERPRISE', name: 'Enterprise Plan', price: 599, credits: 700 },
             PROFIT_ORIENTED: { id: 'PROFIT_ORIENTED', name: 'Profit-Oriented Plan', price: 999, credits: 1500 }
@@ -364,9 +382,20 @@
             }
 
             setTimeout(inspectUserAccount, 500);
+
+            // Handle Razorpay Post-Payment Redirection
+            const paymentId = params.get('razorpay_payment_id') || params.get('payment_id');
+            const paymentStatus = params.get('payment_status');
+            if (paymentId || paymentStatus === 'success') {
+                setTimeout(() => {
+                    const plan = PLANS[currentPlan] || PLANS.ENTERPRISE;
+                    const finalRupees = Math.max(0, plan.price - discount);
+                    recordSuccess(paymentId || `pay_redirect_${Date.now()}`, plan, finalRupees, uidParam);
+                }, 1000);
+            }
         });
 
-        // 1. User Account Inspection & Auto-Registration
+        // 1. User Account Inspection & First-Time Trial Detection
         async function inspectUserAccount() {
             let uid = (document.getElementById('page-uid-input').value || '').trim();
             const feedback = document.getElementById('account-feedback');
@@ -394,6 +423,8 @@
                 const { doc, getDoc, setDoc } = window.firestoreTools;
                 const snap = await getDoc(doc(window.firebaseDb, "pilot_users", uid));
 
+                const trialCard = document.getElementById('first-time-trial-card');
+
                 if (snap.exists()) {
                     userCurrentData = snap.data();
                     const planName = userCurrentData.planName || userCurrentData.plan || 'Free Tier';
@@ -415,6 +446,20 @@
                         document.getElementById('summary-email-text').textContent = userCurrentData.userEmail;
                     }
 
+                    // Check if returning user or first time user
+                    const hasPaid = !!(userCurrentData.lastPaymentId || userCurrentData.trialClaimed || (userCurrentData.plan && userCurrentData.plan !== 'PENDING' && userCurrentData.plan !== 'FREE'));
+
+                    if (trialCard) {
+                        if (!hasPaid) {
+                            // First-time user: display the one-time ₹1 trial offer!
+                            trialCard.classList.remove('hidden');
+                        } else {
+                            // Returning user: remove from DOM permanently!
+                            trialCard.classList.add('hidden');
+                            trialCard.remove();
+                        }
+                    }
+
                     // Update badges
                     const currentPlanKey = (userCurrentData.plan || '').toUpperCase();
                     ['MICRO', 'ENTERPRISE', 'PROFIT_ORIENTED'].forEach(p => {
@@ -430,7 +475,11 @@
 
                     feedback.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Account verified: ${planName} with ${balance} remaining credits.</span>`;
                 } else {
-                    // First time payer! Create initial Firestore profile
+                    // New first-time user: show the one-time ₹1 trial pass
+                    if (trialCard) {
+                        trialCard.classList.remove('hidden');
+                    }
+
                     const now = new Date().toISOString();
                     await setDoc(doc(window.firebaseDb, "pilot_users", uid), {
                         userId: uid,
@@ -445,7 +494,7 @@
                     document.getElementById('display-active-plan').textContent = 'New Account (Pending)';
                     document.getElementById('display-credit-balance').textContent = '0 Credits';
                     document.getElementById('display-expiration').textContent = 'Activates upon payment';
-                    feedback.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-sparkles"></i> New User ID generated & saved in Firebase! Complete checkout to activate your subscription.</span>`;
+                    feedback.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-sparkles"></i> New User ID generated & saved in Firebase! Claim your ₹1 trial pass or choose a monthly plan.</span>`;
                 }
             } catch (err) {
                 feedback.innerHTML = `<span class="text-rose-400">Notice: ${err.message}</span>`;
@@ -454,13 +503,20 @@
             updateDisplay();
         }
 
-        // 2. Plan Selection
+        // 2. Claim One-Time Trial (₹1 Only)
+        function claimOneTimeTrial() {
+            selectPlan('TRIAL');
+            launchRazorpayCheckout();
+        }
+
+        // 3. Plan Selection
         function selectPlan(planId) {
             if (!PLANS[planId]) return;
             currentPlan = planId;
 
             ['MICRO', 'ENTERPRISE', 'PROFIT_ORIENTED'].forEach(p => {
                 const card = document.getElementById(`plan-card-${p}`);
+                if (!card) return;
                 if (p === planId) {
                     card.className = "cursor-pointer bg-slate-900 border-2 border-blue-500 rounded-2xl p-6 flex flex-col justify-between transition-all relative shadow-xl shadow-blue-500/10";
                 } else {
@@ -471,13 +527,13 @@
             updateDisplay();
         }
 
-        // 3. Display Refresh
+        // 4. Display Refresh
         function updateDisplay() {
-            const plan = PLANS[currentPlan];
+            const plan = PLANS[currentPlan] || PLANS.ENTERPRISE;
             let payable = plan.price;
             discount = 0;
 
-            if (activeCoupon && (activeCoupon.type === 'DISCOUNT_PERCENT' || activeCoupon.type === 'DISCOUNT_FLAT')) {
+            if (activeCoupon && (activeCoupon.type === 'DISCOUNT_PERCENT' || activeCoupon.type === 'DISCOUNT_FLAT') && plan.id !== 'TRIAL') {
                 if (activeCoupon.type === 'DISCOUNT_PERCENT') {
                     discount = Math.round((plan.price * Number(activeCoupon.value)) / 100);
                 } else {
@@ -502,12 +558,9 @@
             document.getElementById('summary-credits-text').textContent = `+${plan.credits} Credits`;
             document.getElementById('summary-base-price').textContent = `₹${plan.price}`;
             document.getElementById('summary-amount-text').textContent = `₹${payable}`;
-
-            const upiUrl = `upi://pay?pa=rajnaga75556@okaxis&pn=Codez48&am=${payable}&cu=INR&tn=Codez48_${currentPlan}_${uid}`;
-            document.getElementById('page-upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`;
         }
 
-        // 4. Coupon Handlers
+        // 5. Coupon Handlers
         async function handleCouponApply() {
             const code = document.getElementById('page-coupon-input').value.trim().toUpperCase();
             const feedback = document.getElementById('page-coupon-feedback');
@@ -602,17 +655,19 @@
             updateDisplay();
         }
 
-        // 5. Razorpay Checkout
+        // 6. Razorpay Checkout Execution (Cards, UPI, Netbanking)
         async function launchRazorpayCheckout() {
-            const plan = PLANS[currentPlan];
-            const finalRupees = Math.max(0, plan.price - discount);
+            const plan = PLANS[currentPlan] || PLANS.ENTERPRISE;
+            const finalRupees = Math.max(1, plan.price - (plan.id === 'TRIAL' ? 0 : discount));
             const finalPaise = finalRupees * 100;
             const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
             const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
             const btn = document.getElementById('page-btn-razorpay');
 
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Initializing Gateway...`;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Initializing Gateway...`;
+            }
 
             let orderData = null;
             try {
@@ -631,6 +686,7 @@
             }
 
             try {
+                const redirectUrl = `${window.location.origin}${window.location.pathname}?uid=${encodeURIComponent(uid)}&plan=${plan.id}&payment_status=success`;
                 const options = {
                     key: "rzp_live_TaX2zuAv0lLUKf",
                     amount: finalPaise,
@@ -638,6 +694,8 @@
                     name: "Codez48 Technologies",
                     description: `${plan.name} (${plan.credits} AI Credits)`,
                     order_id: orderData ? orderData.id : undefined,
+                    callback_url: redirectUrl,
+                    redirect: false,
                     prefill: { email: email, contact: "9443210987" },
                     theme: { color: "#2563EB" },
                     handler: async (paymentResp) => {
@@ -645,8 +703,10 @@
                     },
                     modal: {
                         ondismiss: () => {
-                            btn.disabled = false;
-                            btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = `<i class="fa-solid fa-shield-halved text-emerald-400"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                            }
                         }
                     }
                 };
@@ -654,30 +714,20 @@
                 const rzp = new window.Razorpay(options);
                 rzp.on('payment.failed', function (response) {
                     alert("Razorpay Payment Failed: " + response.error.description);
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-solid fa-shield-halved text-emerald-400"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                    }
                 });
                 rzp.open();
             } catch (e) {
                 console.error("Razorpay open error:", e);
-                alert(`Razorpay Checkout initialized for ₹${finalRupees}.\nYou can also complete via UPI QR Code directly.`);
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                alert(`Razorpay checkout initialization error: ${e.message}`);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-shield-halved text-emerald-400"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                }
             }
-        }
-
-        // 6. Direct UPI Complete Handler
-        async function handleDirectUpiComplete() {
-            const plan = PLANS[currentPlan];
-            const finalRupees = Math.max(0, plan.price - discount);
-            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
-            const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
-
-            const utr = prompt(`Please enter your UPI Reference / UTR Number from your payment app (GPay/PhonePe/Paytm/BHIM):\n\n(Or press OK to complete direct activation for ${uid})`, `UPI-${Date.now()}`);
-            if (utr === null) return; // cancelled
-
-            const paymentId = utr.trim() || `upi_${Date.now()}`;
-            await recordSuccess(paymentId, plan, finalRupees, uid, email);
         }
 
         // 7. Success Record in Firestore & Automated Email Dispatch
@@ -692,8 +742,7 @@
             if (window.firebaseDb && window.firestoreTools) {
                 const { doc, setDoc, updateDoc, increment, getDoc } = window.firestoreTools;
 
-                // 1. Update pilot_users
-                await setDoc(doc(window.firebaseDb, "pilot_users", uid), {
+                const userUpdate = {
                     userId: uid,
                     userEmail: email,
                     plan: plan.id,
@@ -703,7 +752,15 @@
                     lastPaymentId: paymentId,
                     lastPaymentAmount: amountPaid,
                     updatedAt: now
-                }, { merge: true });
+                };
+
+                // If trial was redeemed, mark trialClaimed: true so it's never shown again
+                if (plan.id === 'TRIAL') {
+                    userUpdate.trialClaimed = true;
+                }
+
+                // 1. Update pilot_users
+                await setDoc(doc(window.firebaseDb, "pilot_users", uid), userUpdate, { merge: true });
 
                 // 2. Record transaction
                 const txId = `tx_${Date.now()}`;
@@ -757,6 +814,10 @@
             } catch (mailErr) {
                 console.warn("[PAYMENT MAIL DISPATCH WARNING]:", mailErr);
             }
+
+            // Remove the trial card if redeemed
+            const trialCard = document.getElementById('first-time-trial-card');
+            if (trialCard) trialCard.remove();
 
             // 6. Show success receipt modal
             document.getElementById('success-plan-title').textContent = `${plan.name} Activated`;

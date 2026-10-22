@@ -1059,6 +1059,21 @@
                 </div>
             </div>
 
+            <!-- FIRST-TIME USER ONE-TIME TRIAL ENTRY OFFER (₹1 ONLY) -->
+            <div id="first-time-trial-card-modal" class="hidden bg-gradient-to-r from-amber-50 to-amber-100/60 border-2 border-amber-300 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 relative">
+                <span class="absolute -top-2.5 right-4 bg-amber-400 text-slate-900 text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">One-Time Offer</span>
+                <div class="text-center sm:text-left">
+                    <div class="flex items-center justify-center sm:justify-start gap-1.5">
+                        <span class="text-lg">🎁</span>
+                        <h4 class="text-sm font-black text-black uppercase">Starter Trial Pass — Just ₹1</h4>
+                    </div>
+                    <p class="text-[11px] text-slate-600">Get +50 AI Credits to test PPT and document automation. Valid for new users only.</p>
+                </div>
+                <button onclick="window.claimPilotTrialPass()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-[11px] px-4 py-2 rounded-xl uppercase tracking-wider transition shadow-sm whitespace-nowrap">
+                    Claim ₹1 Pass
+                </button>
+            </div>
+
             <!-- Plans Selector -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div id="pay-card-MICRO" onclick="window.selectPilotPlan('MICRO')"
@@ -1145,23 +1160,15 @@
                     <span id="payment-summary-final-price" class="text-2xl font-black text-royal">₹599</span>
                 </div>
 
-                <!-- Action Buttons: Razorpay & UPI QR -->
+                <!-- Action Buttons: Verified Razorpay Checkout -->
                 <div class="space-y-3 pt-2">
                     <button onclick="window.launchPilotRazorpayPayment()" id="btn-razorpay-checkout"
                         class="w-full bg-royal hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)
                     </button>
-
-                    <div class="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200">
-                        <img id="payment-upi-qr" src="" alt="UPI QR" class="w-24 h-24 rounded-lg border border-slate-100">
-                        <div class="text-[11px] text-slate-500 space-y-1">
-                            <p class="font-bold text-black">Scan & Pay via any UPI App</p>
-                            <p>UPI ID: <span class="font-mono text-royal font-bold select-all">rajnaga75556@okaxis</span></p>
-                            <button onclick="window.verifyDirectUpiPayment()" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline pt-1 inline-block">
-                                Click here after UPI payment to activate
-                            </button>
-                        </div>
-                    </div>
+                    <p class="text-center text-[10px] text-slate-400 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-emerald-600"></i> Instant automated activation & verification via Razorpay Live
+                    </p>
                 </div>
             </div>
         </div>
