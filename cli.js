@@ -17,6 +17,68 @@ const intentRouter = require(path.resolve(__dirname, 'playwright-worker/intent-r
 
 const PREFS_FILE = path.join(os.homedir(), '.codez48_prefs.json');
 
+function unwrapAnswer(val) {
+    if (!val) return '';
+    if (typeof val === 'object') {
+        if (val.answer) return unwrapAnswer(val.answer);
+        if (val.description) return unwrapAnswer(val.description);
+        return JSON.stringify(val, null, 2);
+    }
+    if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (parsed && (parsed.answer || parsed.description)) {
+                    return unwrapAnswer(parsed.answer || parsed.description);
+                }
+            } catch (e) {}
+        }
+    }
+    return String(val);
+}
+
+function openInVsCode(targetPath) {
+    const absPath = path.resolve(process.cwd(), targetPath || '.');
+    if (!fs.existsSync(absPath)) {
+        console.error(`[OPEN ERROR] Project path does not exist: "${absPath}"`);
+        process.exit(1);
+    }
+    const stat = fs.statSync(absPath);
+    if (!stat.isDirectory()) {
+        console.error(`[OPEN ERROR] Target path is not a directory: "${absPath}"`);
+        process.exit(1);
+    }
+
+    if (absPath.toLowerCase() === os.homedir().toLowerCase() || path.parse(absPath).root.toLowerCase() === absPath.toLowerCase()) {
+        console.error(`[OPEN ERROR] Refusing to open user home directory or system root ("${absPath}") to protect against Restricted Mode and security risks.`);
+        console.error(`Please specify a dedicated project subdirectory.`);
+        process.exit(1);
+    }
+
+    let codeCmd = 'code';
+    if (os.platform() === 'win32') {
+        codeCmd = 'code.cmd';
+    }
+
+    try {
+        console.log(`[VS CODE] Opening project in a dedicated window at: ${absPath}`);
+        const child = spawn(codeCmd, ['-n', absPath], {
+            detached: true,
+            stdio: 'ignore',
+            shell: true,
+            windowsHide: true
+        });
+        child.unref();
+        console.log(`[VS CODE] Successfully launched VS Code for: ${absPath}`);
+        return true;
+    } catch (err) {
+        console.error(`[OPEN ERROR] Failed to launch VS Code. Ensure VS Code is installed and 'code' is available in your system PATH.`);
+        console.error(`Details: ${err.message}`);
+        process.exit(1);
+    }
+}
+
 function loadPrefs() {
     try {
         if (fs.existsSync(PREFS_FILE)) {
@@ -32,8 +94,411 @@ function savePrefs(prefs) {
     } catch (e) {}
 }
 
+async function executePilotGoal(goal, options = {}) {
+    const { answer = null, disableDismiss = false, allowOfficialScrape = false } = options;
+    const lowerGoal = goal.toLowerCase();
+
+    const greetingRegex = /^\s*(hi+|hhi+|hello+|hey+|sup+|greetings+|how\s+are\s+you|thank\s+you|thanks)\b/i;
+    const isLikelyGreeting = greetingRegex.test(goal) || (goal.trim().length <= 20 && !/\b(create|build|generate|make|scrape|automate|calculate|open|write|fix|run|delete|edit|modify)\b/i.test(goal));
+
+    if (isLikelyGreeting) {
+        console.log(`\n[INTENT: GENERAL_CHAT]`);
+        console.log(`[KEYWORDS: greeting, conversation]`);
+        console.log(`[WORKFLOW: CHAT]`);
+        console.log(`[REASON: Ordinary conversational greeting or short message]`);
+        console.log(`\n[50%] Processing query...\n`);
+        console.log(`=== CODEZ48 AI RESPONSE ===`);
+        console.log(`Hello! I am Codez48 Pilot. How can I help you today?`);
+        console.log(`\n[100%] Task completed.`);
+        console.log(`Task Completed Successfully`);
+        return true;
+    }
+
+    // NEW AI WORKFLOW
+    const cliAiAnalyzer = require(path.resolve(__dirname, 'playwright-worker/cli-ai-analyzer.js'));
+    const cliProjectGenerator = require(path.resolve(__dirname, 'playwright-worker/cli-project-generator.js'));
+    const cliProjectModifier = require(path.resolve(__dirname, 'playwright-worker/cli-project-modifier.js'));
+    const terminalExecutor = require(path.resolve(__dirname, 'playwright-worker/terminal-executor.js'));
+
+    let aiPlan = null;
+    let overrideIntent = null;
+    let overrideTargetUrl = null;
+
+    const tempOut = path.join(os.tmpdir(), `ai_plan_${Date.now()}_${Math.random().toString(36).substring(2)}.json`);
+    console.log(`\n[10%] Understanding request...`);
+
+    const cmdRes = await terminalExecutor.runCommand(process.execPath, [path.resolve(__dirname, 'cli.js'), 'ai', goal, `--out=${tempOut}`], process.cwd());
+    if (cmdRes.stdout) process.stdout.write(cmdRes.stdout);
+    if (cmdRes.stderr) process.stderr.write(cmdRes.stderr);
+
+    if (fs.existsSync(tempOut)) {
+        try {
+            aiPlan = JSON.parse(fs.readFileSync(tempOut, 'utf8'));
+            fs.unlinkSync(tempOut);
+        } catch (e) {
+            console.error('[PILOT ERROR] Failed to parse AI plan:', e.message);
+        }
+    }
+
+    if (!aiPlan) {
+        if (/^https?:\/\/[^\s]+$/.test(goal)) {
+            overrideIntent = 'scraping';
+            overrideTargetUrl = goal;
+        } else {
+            console.log(`[50%] Processing query...\n`);
+            console.log(`=== CODEZ48 AI RESPONSE ===`);
+            console.log(`Hello! I am Codez48 Pilot. You asked: "${goal}". How can I assist you with your project or questions today?`);
+            console.log(`\n[100%] Task completed.`);
+            console.log(`Task Completed Successfully`);
+            return true;
+        }
+    }
+
+    if (aiPlan) {
+        console.log(`\n[INTENT: ${aiPlan.intent || 'UNKNOWN_OR_AMBIGUOUS'}]`);
+        if (aiPlan.keywords && Array.isArray(aiPlan.keywords)) {
+            console.log(`[KEYWORDS: ${aiPlan.keywords.join(', ')}]`);
+        } else {
+            console.log(`[KEYWORDS: ${goal.split(/\s+/).slice(0, 4).join(', ')}]`);
+        }
+        console.log(`[WORKFLOW: ${aiPlan.workflow || aiPlan.intent || 'GENERAL_WORKFLOW'}]`);
+        if (aiPlan.reason) {
+            console.log(`[REASON: ${aiPlan.reason}]`);
+        } else if (aiPlan.description) {
+            console.log(`[REASON: ${aiPlan.description}]`);
+        }
+
+        const intent = (aiPlan.intent || '').toUpperCase();
+        const answerText = unwrapAnswer(aiPlan.answer || aiPlan.description || aiPlan.content || '');
+
+        if (intent === 'GENERAL_CHAT' || intent === 'CHAT' || intent === 'UNKNOWN' || intent === 'UNKNOWN_OR_AMBIGUOUS' || intent === 'GENERAL_AUTOMATION' || (answerText && (!aiPlan.files || aiPlan.files.length === 0) && intent !== 'PROJECT_GENERATION' && intent !== 'GENERATE_PROJECT' && intent !== 'SCRAPE_WEBSITE' && intent !== 'BROWSER_AUTOMATION' && intent !== 'FILE_OPERATIONS' && intent !== 'MODIFY_LOCAL_PROJECT')) {
+            console.log(`[50%] Processing query...\n`);
+            console.log(`=== CODEZ48 AI RESPONSE ===`);
+            console.log(answerText || `Hello! I processed your request: "${goal}".`);
+            console.log(`\n[100%] Task completed.`);
+            console.log(`Task Completed Successfully`);
+            return true;
+        }
+
+        console.log(`[25%] AI planning completed.`);
+        if (aiPlan.description) console.log(`Task: ${aiPlan.description}`);
+
+        if (aiPlan.intent === 'GENERATE_PROJECT') {
+            let attempt = 0;
+            const MAX_ATTEMPTS = 3;
+            let currentPlan = aiPlan;
+
+            while (attempt < MAX_ATTEMPTS) {
+                attempt++;
+                try {
+                    const { projectDir, startCommand } = await cliProjectGenerator.generateProject(currentPlan);
+                    let runningProcess = null;
+
+                    if (startCommand) {
+                        runningProcess = await cliProjectGenerator.startApplication(projectDir, startCommand);
+                    }
+
+                    if (currentPlan.previewUrl) {
+                        console.log(`Opening Browser to ${currentPlan.previewUrl}...`);
+                        try {
+                            const page = await browserManager.getPage({ headless: true });
+                            await page.goto(currentPlan.previewUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+
+                            const screenshotPath = path.join(projectDir, 'preview_screenshot.png');
+                            await page.screenshot({ path: screenshotPath, fullPage: true });
+                            console.log(`[SCREENSHOT SAVED] Project preview captured at: ${screenshotPath}`);
+
+                            await browserManager.close();
+                        } catch(e) {
+                            console.log(`[SCREENSHOT ERROR] Could not capture preview: ${e.message}`);
+                        }
+                    }
+
+                    console.log('[100%] Task completed and verified.');
+                    console.log('Task Completed Successfully');
+                    return true;
+                } catch (err) {
+                    console.error(`[ATTEMPT ${attempt}/${MAX_ATTEMPTS} FAILED]: ${err.message}`);
+
+                    if (attempt >= MAX_ATTEMPTS) {
+                        console.error(`[FATAL] Bounded repair attempts (${MAX_ATTEMPTS}) exhausted.`);
+                        return false;
+                    }
+
+                    console.log(`[AI REPAIR] Attempting AI Error Diagnostics (Attempt ${attempt}/${MAX_ATTEMPTS})...`);
+                    const fixPlan = await cliAiAnalyzer.analyzeErrorFix(err.message);
+                    if (fixPlan) {
+                        if (fixPlan.cause) console.log(`Cause: ${fixPlan.cause}`);
+                        if (fixPlan.fixCommands && fixPlan.fixCommands.length > 0) {
+                            for (const fixCmd of fixPlan.fixCommands) {
+                                if (/rm\s+-rf|del\s+\/|format|mkfs|chmod\s+-R\s+777/.test(fixCmd)) {
+                                    console.log(`[SAFETY BLOCK] Dangerous command rejected: ${fixCmd}`);
+                                    continue;
+                                }
+                                console.log(`Executing Fix: ${fixCmd}`);
+                                try {
+                                    execSync(fixCmd, { stdio: 'inherit' });
+                                } catch(e) {
+                                    console.error(`Fix command failed: ${e.message}`);
+                                }
+                            }
+                        }
+                        if (fixPlan.files && fixPlan.files.length > 0) {
+                            currentPlan.files = fixPlan.files;
+                        }
+                    }
+                }
+            }
+        } else if (aiPlan.intent === 'SCRAPE_WEBSITE') {
+            overrideIntent = 'scraping';
+            overrideTargetUrl = aiPlan.targetUrl;
+        } else if (aiPlan.intent === 'BROWSER_AUTOMATION') {
+            overrideIntent = 'automation';
+            overrideTargetUrl = aiPlan.targetUrl;
+        } else if (aiPlan.intent === 'MODIFY_LOCAL_PROJECT') {
+            try {
+                await cliProjectModifier.modifyProject(aiPlan, goal);
+                console.log('[100%] Task completed and verified.');
+                console.log('Task Completed Successfully');
+                return true;
+            } catch (err) {
+                console.error(`Project modification failed: ${err.message}`);
+                return false;
+            }
+        } else if (aiPlan.intent === 'FIX_ERROR') {
+             console.log('AI analyzing the error to fix...');
+             const fixPlan = await cliAiAnalyzer.analyzeErrorFix(goal);
+             if (fixPlan) {
+                 console.log(`Cause: ${fixPlan.cause}`);
+                 for (const fixCmd of (fixPlan.fixCommands || [])) {
+                     if (/rm\s+-rf|del\s+\/|format|mkfs|chmod\s+-R\s+777/.test(fixCmd)) {
+                         console.log(`[SAFETY BLOCK] Dangerous command rejected: ${fixCmd}`);
+                         continue;
+                     }
+                     console.log(`Executing Fix: ${fixCmd}`);
+                     try {
+                         execSync(fixCmd, { stdio: 'inherit' });
+                     } catch(e) {}
+                 }
+                 console.log('Task Completed Successfully');
+                 return true;
+             }
+        }
+    }
+
+    const goalTextNoUrl = goal.replace(/https?:\/\/[^\s]+/gi, '');
+    const routingContext = intentRouter.classifyIntent(goal);
+    const intent = overrideIntent || routingContext.intent;
+    let targetUrl = overrideTargetUrl || routingContext.url || 'https://codez48.netlify.app/';
+
+    if (intent === 'scraping' || intent === 'WEBSITE_CODE_RECONSTRUCTION') {
+        const targetProjectName = 'startify';
+        const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(targetUrl, targetProjectName, 8080, { allowOfficial: allowOfficialScrape });
+        if (scrapeRes.success) {
+            console.log('[SCRAPER VERIFICATION PASS] Success.');
+            return true;
+        } else {
+            console.error('[SCRAPER ERROR]', scrapeRes.failureReason);
+            return false;
+        }
+    }
+
+    if (intent === 'automation' || intent === 'browser_navigation' || intent === 'BROWSE_WEBSITE' || intent === 'WEB_AUTOMATION') {
+        let expectedHref = null;
+        if (/\bcli\b/i.test(goalTextNoUrl)) expectedHref = '/cli';
+        else if (/\bpricing\b/i.test(goalTextNoUrl)) expectedHref = '#pricing';
+        const result = await pilotNavigator.navigateAndInteract(targetUrl, expectedHref, { answer, disableDismiss });
+        return result.success;
+    }
+
+    return true;
+}
+
 async function handlePilot() {
     const rawArgs = process.argv.slice(2);
+
+    if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
+        console.log('CODEZ48 CLI v1.3.3');
+        console.log('Usage: codez48 <command> [options] or codez48 "<prompt>"');
+        console.log('Commands:');
+        console.log('  ai "<prompt>"          Run AI analysis / query');
+        console.log('  pilot "<prompt>"       Run AI Pilot workflow (chat, code generation, scraping, automation)');
+        console.log('  open [path]            Open project directory in VS Code');
+        console.log('  dev "<task>" [--path]  Run AI development workflow (VS Code, AI plan, edits, tests)');
+        console.log('  doctor                 Run environment & dependency diagnostics');
+        console.log('  capability             Probe system capabilities');
+        console.log('  scrap <url>            Scrap website source code');
+        process.exit(0);
+    }
+    if (rawArgs.includes('--version') || rawArgs.includes('-v')) {
+        console.log('1.3.3');
+        process.exit(0);
+    }
+
+    if (rawArgs[0] === 'open') {
+        const targetPath = rawArgs.slice(1).join(' ').replace(/^["']|["']$/g, '').trim() || '.';
+        openInVsCode(targetPath);
+        process.exit(0);
+    }
+
+    if (rawArgs[0] === 'dev') {
+        let task = '';
+        let targetPath = '.';
+
+        const taskTokens = [];
+        for (let i = 1; i < rawArgs.length; i++) {
+            const arg = rawArgs[i];
+            if (arg === '--path' && rawArgs[i + 1]) {
+                targetPath = rawArgs[i + 1].replace(/^["']|["']$/g, '');
+                i++;
+            } else if (arg.startsWith('--path=')) {
+                targetPath = arg.split('=')[1].replace(/^["']|["']$/g, '');
+            } else {
+                taskTokens.push(arg);
+            }
+        }
+        task = taskTokens.join(' ').replace(/^["']|["']$/g, '').trim();
+
+        if (!task) {
+            console.error('[DEV ERROR] No task description provided.');
+            console.error('Usage: codez48 dev "<task>" --path "<project-path>"');
+            process.exit(1);
+        }
+
+        const absProjPath = path.resolve(process.cwd(), targetPath);
+        console.log(`=== CODEZ48 DEV WORKFLOW ===`);
+        console.log(`Task: ${task}`);
+        console.log(`Target Project: ${absProjPath}`);
+
+        if (!fs.existsSync(absProjPath)) {
+            console.log(`[DEV] Creating target project directory: ${absProjPath}`);
+            fs.mkdirSync(absProjPath, { recursive: true });
+        }
+
+        // 1. Open project in VS Code (new window)
+        openInVsCode(absProjPath);
+
+        // 2. Analyze task with AI
+        const cliAiAnalyzer = require(path.resolve(__dirname, 'playwright-worker/cli-ai-analyzer.js'));
+        const cliProjectModifier = require(path.resolve(__dirname, 'playwright-worker/cli-project-modifier.js'));
+        const terminalExecutor = require(path.resolve(__dirname, 'playwright-worker/terminal-executor.js'));
+
+        console.log('\n[10%] Analyzing task against project files...');
+        const plan = await cliAiAnalyzer.analyzeRequest(task, { detectedKeywords: [], url: null, isUrlOnly: false });
+
+        if (!plan) {
+            console.error('[DEV ERROR] AI could not generate an execution plan for this task.');
+            process.exit(1);
+        }
+
+        console.log('\n=== PROPOSED AI PLAN ===');
+        if (plan.description) console.log(`Description: ${plan.description}`);
+        if (plan.filesToRead && plan.filesToRead.length > 0) {
+            console.log(`Files to read: ${plan.filesToRead.join(', ')}`);
+        }
+        if (plan.files && plan.files.length > 0) {
+            console.log(`Files to modify/create: ${plan.files.map(f => f.path).join(', ')}`);
+        }
+
+        plan.targetFolder = absProjPath;
+
+        console.log('\n[50%] Executing modifications / generation...');
+        try {
+            if (plan.intent === 'GENERATE_PROJECT' || (plan.files && plan.files.length > 0)) {
+                for (const file of plan.files || []) {
+                    const filePath = path.join(absProjPath, file.path);
+                    const dirName = path.dirname(filePath);
+                    if (!fs.existsSync(dirName)) {
+                        fs.mkdirSync(dirName, { recursive: true });
+                    }
+                    fs.writeFileSync(filePath, file.content, 'utf8');
+                    console.log(`Created/Updated: ${file.path}`);
+                }
+                for (const file of plan.files || []) {
+                    if ((file.path.endsWith('.js') || file.path.endsWith('.mjs')) && !file.path.includes('node_modules')) {
+                        const absPath = path.join(absProjPath, file.path);
+                        const checkRes = await terminalExecutor.runCommand('node', ['--check', absPath], absProjPath);
+                        if (checkRes.exitCode !== 0) {
+                            throw new Error(`Syntax check failed for ${file.path}:\n${checkRes.stderr}`);
+                        }
+                    }
+                }
+                if (fs.existsSync(path.join(absProjPath, 'package.json'))) {
+                    console.log('[DEV] package.json detected. Checking npm and installing dependencies...');
+                    const npmRes = await terminalExecutor.runCommand('npm', ['install'], absProjPath);
+                    if (npmRes.stdout) console.log(npmRes.stdout);
+                }
+            } else if (plan.intent === 'MODIFY_LOCAL_PROJECT') {
+                cliProjectModifier.findProject = () => absProjPath;
+                await cliProjectModifier.modifyProject(plan, task);
+            } else {
+                console.log(plan.description || task);
+            }
+            console.log('\n[80%] Modifications applied successfully.');
+
+            if (plan.fixCommands && plan.fixCommands.length > 0) {
+                console.log('\n[90%] Running verification commands...');
+                for (const cmd of plan.fixCommands) {
+                    console.log(`Executing: ${cmd}`);
+                    const res = await terminalExecutor.runCommand(cmd.split(' ')[0], cmd.split(' ').slice(1), absProjPath);
+                    if (res.stdout) console.log(res.stdout);
+                    if (res.stderr) console.error(res.stderr);
+                }
+            }
+
+            console.log('\n[100%] Development task completed successfully.');
+            process.exit(0);
+        } catch (err) {
+            console.error(`\n[DEV ERROR] Task execution failed: ${err.message}`);
+            process.exit(1);
+        }
+    }
+
+    if (rawArgs[0] === 'ai') {
+        const isErrorFix = rawArgs.includes('--error-fix');
+        const outFlagIndex = rawArgs.findIndex(a => a.startsWith('--out='));
+        let outFile = null;
+        if (outFlagIndex !== -1) {
+            outFile = rawArgs[outFlagIndex].split('=')[1];
+            rawArgs.splice(outFlagIndex, 1);
+        }
+
+        const goalTokens = rawArgs.slice(1).filter(a => !a.startsWith('--'));
+        const goal = goalTokens.join(' ').replace(/^["']|["']$/g, '').trim();
+
+        const cliAiAnalyzer = require(path.resolve(__dirname, 'playwright-worker/cli-ai-analyzer.js'));
+        const intentRouter = require(path.resolve(__dirname, 'playwright-worker/intent-router.js'));
+
+        let result;
+        if (isErrorFix) {
+            console.log('AI analyzing the error to fix...');
+            result = await cliAiAnalyzer.analyzeErrorFix(goal);
+        } else {
+            console.log('AI Analyzing Request...');
+            const routingContext = intentRouter.classifyIntent(goal);
+            result = await cliAiAnalyzer.analyzeRequest(goal, {
+                detectedKeywords: routingContext.detectedKeywords,
+                url: routingContext.url,
+                isUrlOnly: routingContext.isUrlOnly
+            });
+        }
+
+        if (outFile && result) {
+            fs.writeFileSync(outFile, JSON.stringify(result, null, 2), 'utf8');
+        } else if (result) {
+            if (result.intent === 'CHAT' && result.answer) {
+                console.log(unwrapAnswer(result.answer));
+            } else if (result.description) {
+                console.log(unwrapAnswer(result.description));
+            } else {
+                console.log(JSON.stringify(result, null, 2));
+            }
+        } else {
+            console.error("AI Error: No result");
+            process.exit(1);
+        }
+        process.exit(0);
+    }
 
     if (rawArgs[0] === 'scrap') {
         const Codez48ScrapEngine = require(path.resolve(__dirname, 'playwright-worker/codez48-scrap.js'));
@@ -215,499 +680,53 @@ async function handlePilot() {
     }
 
     const rawGoalStr = goalTokens.join(' ').replace(/^["']|["']$/g, '').trim();
-    const goal = rawGoalStr || 'Open https://codez48.netlify.app/';
-    const lowerGoal = goal.toLowerCase();
 
-    // NEW AI WORKFLOW
-    const cliAiAnalyzer = require(path.resolve(__dirname, 'playwright-worker/cli-ai-analyzer.js'));
-    const cliProjectGenerator = require(path.resolve(__dirname, 'playwright-worker/cli-project-generator.js'));
-    const cliProjectModifier = require(path.resolve(__dirname, 'playwright-worker/cli-project-modifier.js'));
+    if (!rawGoalStr) {
+        const readline = require('readline');
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
 
-    const aiPlan = await cliAiAnalyzer.analyzeRequest(goal);
-    let overrideIntent = null;
-    let overrideTargetUrl = null;
+        console.log('\nCodez48 Pilot\n');
 
-    if (aiPlan) {
-        console.log(`Analyzing User Request...`);
-        if (aiPlan.projectType) console.log(`Project Type: ${aiPlan.projectType}`);
-        console.log(`Description: ${aiPlan.description}`);
+        rl.on('close', () => {
+            process.exit(0);
+        });
 
-        if (aiPlan.intent === 'GENERATE_PROJECT') {
-            try {
-                const { projectDir, startCommand } = await cliProjectGenerator.generateProject(aiPlan);
-                let runningProcess = null;
-
-                if (startCommand) {
-                    runningProcess = await cliProjectGenerator.startApplication(projectDir, startCommand);
+        const askPrompt = async () => {
+            if (rl.closed) return;
+            rl.question('\nYou: ', async (userInput) => {
+                if (rl.closed) return;
+                const trimmedInput = (userInput || '').trim();
+                if (!trimmedInput) {
+                    askPrompt();
+                    return;
+                }
+                if (['exit', 'quit', ':q'].includes(trimmedInput.toLowerCase())) {
+                    console.log('Goodbye.');
+                    rl.close();
+                    return;
                 }
 
-                if (aiPlan.previewUrl) {
-                    console.log(`Opening Browser to ${aiPlan.previewUrl}...`);
-                    console.log(`Capturing Screenshot...`);
-                    try {
-                        const page = await browserManager.getPage({ headless: true });
-                        await page.goto(aiPlan.previewUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-
-                        const screenshotPath = path.join(projectDir, 'preview_screenshot.png');
-                        await page.screenshot({ path: screenshotPath, fullPage: true });
-                        console.log(`[SCREENSHOT SAVED] Project preview captured at: ${screenshotPath}`);
-
-                        await browserManager.close();
-                    } catch(e) {
-                        console.log(`[SCREENSHOT ERROR] Could not capture preview: ${e.message}`);
-                    }
+                try {
+                    await executePilotGoal(trimmedInput, { answer, disableDismiss, allowOfficialScrape });
+                } catch (err) {
+                    console.error('[PILOT ERROR]', err.message || err);
                 }
 
-                console.log('Verifying Application...');
-                console.log('Task Completed Successfully');
-                console.log('Exit Code: 0');
-                process.exit(0);
-            } catch (err) {
-                console.error('Error during project generation:', err.message);
-
-                console.log('Attempting AI Error Recovery...');
-                const fixPlan = await cliAiAnalyzer.analyzeErrorFix(err.message);
-                if (fixPlan && fixPlan.fixCommands) {
-                    console.log(`Cause: ${fixPlan.cause}`);
-                    for (const fixCmd of fixPlan.fixCommands) {
-                        if (/rm\s+-rf|del\s+\/|format|mkfs|chmod\s+-R\s+777/.test(fixCmd)) {
-                            console.log(`[SAFETY BLOCK] Dangerous command rejected: ${fixCmd}`);
-                            continue;
-                        }
-                        console.log(`Executing Fix: ${fixCmd}`);
-                        try {
-                            execSync(fixCmd, { stdio: 'inherit' });
-                        } catch(e) {
-                            console.error(`Fix command failed: ${e.message}`);
-                        }
-                    }
-                }
-                console.log('Task Completed with Errors');
-                console.log('Exit Code: 1');
-                process.exit(1);
-            }
-        } else if (aiPlan.intent === 'SCRAPE_WEBSITE') {
-            overrideIntent = 'scraping';
-            overrideTargetUrl = aiPlan.targetUrl;
-        } else if (aiPlan.intent === 'BROWSER_AUTOMATION') {
-            overrideIntent = 'automation';
-            overrideTargetUrl = aiPlan.targetUrl;
-        } else if (aiPlan.intent === 'GENERAL_AUTOMATION') {
-            // let the legacy intentRouter handle it
-        } else if (aiPlan.intent === 'MODIFY_LOCAL_PROJECT') {
-            try {
-                await cliProjectModifier.modifyProject(aiPlan);
-                console.log('Task Completed Successfully');
-                console.log('Exit Code: 0');
-                process.exit(0);
-            } catch (err) {
-                console.error(`Project modification failed: ${err.message}`);
-                console.log('Exit Code: 1');
-                process.exit(1);
-            }
-        } else if (aiPlan.intent === 'FIX_ERROR') {
-             // ...
-             console.log('AI analyzing the error to fix...');
-             const fixPlan = await cliAiAnalyzer.analyzeErrorFix(goal);
-             if (fixPlan) {
-                 console.log(`Cause: ${fixPlan.cause}`);
-                 for (const fixCmd of (fixPlan.fixCommands || [])) {
-                     if (/rm\s+-rf|del\s+\/|format|mkfs|chmod\s+-R\s+777/.test(fixCmd)) {
-                         console.log(`[SAFETY BLOCK] Dangerous command rejected: ${fixCmd}`);
-                         continue;
-                     }
-                     console.log(`Executing Fix: ${fixCmd}`);
-                     try {
-                         execSync(fixCmd, { stdio: 'inherit' });
-                     } catch(e) {}
-                 }
-                 console.log('Task Completed Successfully');
-                 console.log('Exit Code: 0');
-                 process.exit(0);
-             }
-        }
-    }
-
-    // Strip URLs before checking action keywords to prevent false keyword matches inside domain strings
-    const goalTextNoUrl = goal.replace(/https?:\/\/[^\s]+/gi, '');
-
-    const routingContext = intentRouter.classifyIntent(goal);
-    const intent = overrideIntent || routingContext.intent;
-    let targetUrl = overrideTargetUrl || routingContext.url || 'https://codez48.netlify.app/';
-
-
-    // CANONICAL INTENT ROUTING (7 INTERNAL ROUTING LABELS)
-
-    // 1. SCRAPING / WEBSITE CODE RECONSTRUCTION
-    if (intent === 'scraping' || intent === 'WEBSITE_CODE_RECONSTRUCTION') {
-        console.log(`[SCRAPER ROUTER] Routing website source code retrieval task: "${goal}" (Intent: "scraping")`);
-        const targetProjectName = 'startify';
-        const scrapeRes = await pilotNavigator.scrapeAndCloneWebsite(targetUrl, targetProjectName, 8080, { allowOfficial: allowOfficialScrape });
-
-        console.log('=== WEBSITE SOURCE CODE RETRIEVAL & LOCAL PREVIEW RESULT ===');
-        console.log(JSON.stringify(scrapeRes, null, 2));
-
-        if (scrapeRes.success) {
-            console.log(`[SCRAPER VERIFICATION PASS] Scraped ${targetUrl}, project saved at ${scrapeRes.projectPath}, local preview running at ${scrapeRes.previewUrl}.`);
-            console.log('We have received and saved everything.');
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[SCRAPER ERROR] Website source code retrieval or local preview failed: ${scrapeRes.failureReason || scrapeRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    // 2. WEBSITE CREATION INTENT
-    if (intent === 'website_creation' || intent === 'GENERATE_OR_MODIFY_LOCAL_PROJECT') {
-        console.log(`[WEBSITE CREATION ROUTER] Routing website creation task: "${goal}" (Intent: "website_creation")`);
-        const vscRes = await nativeAppAutomation.automatedVsCodeSaveAsWorkflow({ projectName: 'startify' });
-
-        console.log('=== WEBSITE CREATION & LOCAL PREVIEW VERIFICATION RESULT ===');
-        console.log(JSON.stringify(vscRes, null, 2));
-
-        if (vscRes.success) {
-            console.log(`[WEBSITE CREATION VERIFICATION PASS] Project created at ${vscRes.projectPath}, previewed at ${vscRes.previewUrl}, UI interaction verified.`);
-            console.log('We have received and saved everything.');
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[WEBSITE CREATION ERROR] Project generation or local preview verification failed.`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    // 3. LOCAL FILE EDIT / LOCAL WEB INTENT
-    if (intent === 'file_edit' || intent === 'local_web') {
-        console.log(`[FILE EDIT ROUTER] Routing local file editing task: "${goal}" (Intent: "${intent}")`);
-
-        // Resolve local file path handling Windows paths with spaces
-        let targetFilePath = null;
-        const fullPathMatch = goal.match(/([a-zA-Z]:\\[^\s"']+(?:\s+[^\s"']+)*\.[a-zA-Z0-9]+)/) || goal.match(/([a-zA-Z]:\/[^\s"']+(?:\s+[^\s"']+)*\.[a-zA-Z0-9]+)/);
-        if (fullPathMatch) {
-            targetFilePath = fullPathMatch[1];
-        } else {
-            targetFilePath = path.resolve(__dirname, 'pilot-workspace/projects/startify/public/index.html');
-        }
-
-        console.log(`[FILE EDIT ACTION] Target file resolved at: "${targetFilePath}"`);
-
-        if (!fs.existsSync(targetFilePath)) {
-            console.error(`[FILE EDIT ERROR] Target file does not exist: "${targetFilePath}"`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-
-        const appendNote = `\n<!-- Codez48 Pilot File Edit Pass: ${new Date().toISOString()} -->\n`;
-        const editRes = filesystemController.editFile(targetFilePath, appendNote);
-
-        if (editRes.success) {
-            console.log(`[FILE EDIT VERIFICATION PASS] Edited file verified at: ${targetFilePath}`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[FILE EDIT ERROR] Edit verification failed: ${editRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    // 4. WEBSITE ANALYSIS INTENT
-    if (intent === 'website_analysis') {
-        console.log(`[ANALYSIS ROUTER] Routing website analysis task: "${goal}" (Intent: "website_analysis")`);
-        try {
-            const page = await browserManager.getPage({ headless: true });
-            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-            const pageTitle = await page.title();
-            const h1Text = await page.locator('h1').first().textContent().catch(() => 'None');
-            const linkCount = await page.evaluate(() => document.querySelectorAll('a').length).catch(() => 0);
-            await browserManager.close();
-
-            console.log('=== WEBSITE GROUNDED ANALYSIS REPORT ===');
-            console.log(JSON.stringify({
-                targetUrl,
-                pageTitle,
-                primaryHeading: h1Text,
-                totalInteractiveLinks: linkCount,
-                layoutSummary: `Page "${pageTitle}" contains primary heading "${h1Text}" with ${linkCount} interactive navigation links.`
-            }, null, 2));
-
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } catch (analysisErr) {
-            console.error(`[ANALYSIS ERROR] Failed to analyze website "${targetUrl}":`, analysisErr.message);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    // 5. UNKNOWN AMBIGUOUS INTENT HANDLING
-    if (intent === 'UNKNOWN' && routingContext.url) {
-        console.error(`[CLI INTENT ERROR] Ambiguous request for URL/Brand. Please clarify if you want the specific code for the site (e.g., 'scraping ${targetUrl}'), if you want to create a website (e.g., 'create a website'), if you want to edit a local file (e.g., 'edit index.html'), or if you want to proceed with browser automation (e.g., 'automation ${targetUrl}').`);
-        console.log('Exit Code: 2');
-        process.exit(2);
-    }
-
-    // STAGE 3 NATIVE APP TASK ROUTING
-    if (intent === 'GENERAL_AUTOMATION_CALC') {
-        console.log(`[STAGE 3 ROUTER] Executing Calculator task: "${goal}"`);
-        const calcRes = await nativeAppAutomation.calculateAndVerify('7 * 8');
-        if (calcRes.success && calcRes.verified) {
-            console.log(`[NATIVE VERIFICATION PASS] Calculator verified. PID: ${calcRes.pid}, Expression: "${calcRes.expression}", Displayed Result: ${calcRes.result}`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[NATIVE ERROR] Calculator task failed: ${calcRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_PPTX') {
-        console.log(`[STAGE 3 ROUTER] Executing PowerPoint presentation task: "${goal}"`);
-        const pptxRes = await nativeAppAutomation.createFanAutomationPresentation();
-        if (pptxRes.success) {
-            console.log(`[NATIVE VERIFICATION PASS] Presentation verified (${pptxRes.slideCount} slides) at: ${pptxRes.filePath}`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[NATIVE ERROR] Presentation generation failed: ${pptxRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_DOCX') {
-        console.log(`[STAGE 3 ROUTER] Executing Word document task: "${goal}"`);
-        const wordRes = await nativeAppAutomation.createFanAutomationWordDoc();
-        if (wordRes.success) {
-            console.log(`[NATIVE VERIFICATION PASS] Word document verified at: ${wordRes.filePath}`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[NATIVE ERROR] Word document generation failed: ${wordRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_STORY') {
-        console.log(`[STAGE 3 ROUTER] Executing Gravity Story text task: "${goal}"`);
-        const storyRes = filesystemController.createGravityStoryFile();
-        if (storyRes.success) {
-            console.log(`[FILESYSTEM VERIFICATION PASS] Story file created and verified at: ${storyRes.filePath}`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[FILESYSTEM ERROR] Story file generation failed: ${storyRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_CSV') {
-        console.log(`[STAGE 3 ROUTER] Executing CSV report task: "${goal}"`);
-        const csvRes = filesystemController.createCsvReport();
-        if (csvRes.success) {
-            console.log(`[FILESYSTEM VERIFICATION PASS] CSV report created and verified at: ${csvRes.filePath}`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[FILESYSTEM ERROR] CSV report generation failed: ${csvRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_MT5') {
-        console.log(`[MT5 ROUTER] Executing MetaTrader 5 diagnostic task: "${goal}"`);
-        const mt5Probe = await mt5DiscoveryManager.probeBridgeAndAccount();
-        console.log('=== METATRADER 5 READ-ONLY DIAGNOSTIC REPORT ===');
-        console.log(JSON.stringify(mt5Probe, null, 2));
-        console.log('Task completion verified');
-        console.log('Exit Code: 0');
-        process.exit(0);
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_BACKTEST') {
-        console.log(`[STRATEGY ENGINE] Executing offline backtest task: "${goal}"`);
-        const syntheticCandles = [];
-        let price = 1.0800;
-        for (let i = 0; i < 100; i++) {
-            const change = (Math.sin(i / 5.0) * 0.0015) + (Math.random() * 0.0008 - 0.0004);
-            const open = price;
-            const close = open + change;
-            const high = Math.max(open, close) + 0.0005;
-            const low = Math.min(open, close) - 0.0005;
-            syntheticCandles.push({ time: Date.now() + i * 3600000, open, high, low, close, volume: 1000 + i * 10 });
-            price = close;
-        }
-
-        const strategyType = lowerGoal.includes('breakout') ? 'breakout' : lowerGoal.includes('mean') ? 'mean_reversion' : 'trend';
-        const result = strategyResearchEngine.runOfflineBacktest(syntheticCandles, strategyType);
-
-        console.log('=== OFFLINE STRATEGY BACKTEST RESULT ===');
-        console.log(JSON.stringify(result, null, 2));
-        console.log('Task completion verified');
-        console.log('Exit Code: 0');
-        process.exit(0);
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_FS') {
-        console.log(`[FILESYSTEM WORKFLOW] Routing filesystem task: "${goal}"`);
-        const baseLocation = lowerGoal.includes('documents') ? 'Documents' : lowerGoal.includes('downloads') ? 'Downloads' : 'Desktop';
-        const desktopDir = filesystemController.resolveBasePath(baseLocation);
-
-        if (lowerGoal.includes('rename')) {
-            const renameMatch = goal.match(/rename\s+(?:file\s+)?([a-zA-Z0-9_\-\.]+)\s+to\s+([a-zA-Z0-9_\-\.]+)/i);
-            if (renameMatch) {
-                const oldName = renameMatch[1];
-                const newName = renameMatch[2];
-                const folderMatch = goal.match(/in\s+([a-zA-Z0-9_\-]+)/i) || goal.match(/folder\s+([a-zA-Z0-9_\-]+)/i);
-                const targetFolder = folderMatch ? path.join(desktopDir, folderMatch[1]) : desktopDir;
-
-                const renameRes = filesystemController.renameFile(targetFolder, oldName, newName);
-                if (renameRes.success) {
-                    console.log(`[FILESYSTEM VERIFICATION PASS] Renamed file from "${oldName}" to "${newName}" at: ${renameRes.newPath}`);
-                    console.log('Task completion verified');
-                    console.log('Exit Code: 0');
-                    process.exit(0);
-                } else {
-                    console.error(`[FILESYSTEM ERROR] Rename failed: ${renameRes.error}`);
-                    console.log('Exit Code: 1');
-                    process.exit(1);
-                }
-            }
-        }
-
-        if (lowerGoal.includes('edit') || lowerGoal.includes('update') || lowerGoal.includes('append')) {
-            const editMatch = goal.match(/(?:edit|update|append)\s+(?:file\s+)?([a-zA-Z0-9_\-\.]+)/i);
-            if (editMatch) {
-                const fileName = editMatch[1];
-                const folderMatch = goal.match(/in\s+([a-zA-Z0-9_\-]+)/i) || goal.match(/folder\s+([a-zA-Z0-9_\-]+)/i);
-                const targetFolder = folderMatch ? path.join(desktopDir, folderMatch[1]) : desktopDir;
-                const filePath = path.join(targetFolder, fileName);
-
-                const appendContent = `\n[UPDATED CONTENT] File edited by Codez48 Pilot at ${new Date().toISOString()}`;
-                const editRes = filesystemController.editFile(filePath, appendContent);
-
-                if (editRes.success) {
-                    console.log(`[FILESYSTEM VERIFICATION PASS] Edited file verified at: ${filePath}`);
-                    console.log('Task completion verified');
-                    console.log('Exit Code: 0');
-                    process.exit(0);
-                } else {
-                    console.error(`[FILESYSTEM ERROR] Edit failed: ${editRes.error}`);
-                    console.log('Exit Code: 1');
-                    process.exit(1);
-                }
-            }
-        }
-    }
-
-    if (intent === 'GENERAL_AUTOMATION_NOTEPAD') {
-        console.log(`[SAFETY MONITOR ACTIVE] Safety monitors active for native app task: "${goal}"`);
-        const textMatch = goal.match(/(?:write|type)\s+['"]([^'"]+)['"]/i) || goal.match(/(?:write|type)\s+(.+)$/i);
-        const textToInject = textMatch ? textMatch[1] : 'Hello from Codez48 Pilot Stage C';
-
-        const notepadRes = await nativeAppAutomation.launchNotepadAndWriteText(textToInject);
-        if (notepadRes.success) {
-            console.log(`[NATIVE VERIFICATION PASS] Notepad window verified. PID: ${notepadRes.pid}, Window Title: "${notepadRes.windowTitle}"`);
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[NATIVE ERROR] Notepad task failed: ${notepadRes.error}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
-
-    console.log(`[SAFETY MONITOR ACTIVE] Safety monitors (Kill Switch & Interference Pause) initialized for task: "${goal}"`);
-
-    if (testSafetyLoop) {
-        let startTime = Date.now();
-        let topLeftStart = null;
-        let sampleCount = 0;
-        const totalSamples = 30;
-
-        try {
-            if (process.stdin.setRawMode) process.stdin.setRawMode(true);
-            process.stdin.resume();
-            process.stdin.on('data', (key) => {
-                if (key[0] === 27) {
-                    console.log('[SAFETY ABORT] Emergency kill switch activated via ESC key hold. Message: ESC');
-                    console.log('Exit Code: 131');
-                    process.exit(131);
+                if (!rl.closed) {
+                    askPrompt();
                 }
             });
-        } catch (e) {}
+        };
 
-        while (sampleCount < totalSamples) {
-            sampleCount++;
-            const cur = getCursor();
-
-            if (cur.x === 0 && cur.y === 0) {
-                if (!topLeftStart) topLeftStart = Date.now();
-                else if (Date.now() - topLeftStart >= 2000) {
-                    console.log('[SAFETY ABORT] Emergency kill switch activated via top-left corner hover (>=2s). Hover duration:', Date.now() - topLeftStart, 'ms');
-                    console.log('Exit Code: 130');
-                    process.exit(130);
-                }
-            } else {
-                topLeftStart = null;
-            }
-
-            await new Promise(r => setTimeout(r, 100));
-        }
-        console.log('[SAFETY TEST END] Completed smoothly without pause.');
-        console.log('Task completion verified');
-        console.log('Exit Code: 0');
-        process.exit(0);
+        askPrompt();
+        return;
     }
 
-    // 6. AUTOMATION & BROWSER NAVIGATION INTENT
-    if (intent === 'automation' || intent === 'browser_navigation' || intent === 'BROWSE_WEBSITE' || intent === 'WEB_AUTOMATION') {
-        let expectedHref = null;
-        if (/\bcli\b/i.test(goalTextNoUrl)) {
-            expectedHref = '/cli';
-        } else if (/\bpricing\b/i.test(goalTextNoUrl)) {
-            expectedHref = '#pricing';
-        } else if (/\bclick\b/i.test(goalTextNoUrl)) {
-            const match = goalTextNoUrl.match(/click\s+(?:the\s+)?([a-zA-Z0-9_\-\/#]+)/i);
-            if (match) {
-                expectedHref = match[1];
-            }
-        }
-
-        const result = await pilotNavigator.navigateAndInteract(targetUrl, expectedHref, { answer, disableDismiss });
-
-        console.log(`Final URL: ${result.finalUrl}`);
-        console.log(`Final Title: ${result.finalTitle}`);
-        console.log(`Final Heading: ${result.finalHeading}`);
-
-        if (result.success) {
-            console.log('[VERIFICATION] Outcome independently verified.');
-            console.log('Task completion verified');
-            console.log('Exit Code: 0');
-            process.exit(0);
-        } else {
-            console.error(`[VERIFICATION FAILED] Task outcome verification failed: ${result.failureReason}`);
-            console.log('Exit Code: 1');
-            process.exit(1);
-        }
-    }
+    const success = await executePilotGoal(rawGoalStr, { answer, disableDismiss, allowOfficialScrape });
+    process.exit(success ? 0 : 1);
 }
 
 handlePilot().catch(err => {

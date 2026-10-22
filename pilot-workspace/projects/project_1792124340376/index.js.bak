@@ -1,0 +1,39 @@
+// This is the main entry point
+// index.js
+// Simple JavaScript program showcasing functions and loops
+
+// Function that returns the factorial of a number using a for loop
+function factorial(n) {
+  if (n < 0) return undefined;
+  let result = 1;
+  for (let i = 2; i <= n; i++) {
+    result *= i;
+  }
+  return result;
+}
+
+// Function that prints numbers from 1 to limit using a while loop
+function printNumbers(limit) {
+  let i = 1;
+  while (i <= limit) {
+    console.log(i);
+    i++;
+  }
+}
+
+// Function that sums elements of an array using a for...of loop
+function sumArray(arr) {
+  let sum = 0;
+  for (const num of arr) {
+    sum += num;
+  }
+  return sum;
+}
+
+// Demonstration of the functions
+console.log('Factorial of 5:', factorial(5)); // 120
+console.log('Printing numbers up to 5:');
+printNumbers(5);
+
+const numbers = [1, 2, 3, 4, 5];
+console.log('Sum of array', numbers, ':', sumArray(numbers));

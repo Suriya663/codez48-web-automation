@@ -23,7 +23,7 @@ class AIPlanner {
                         model: "openai/gpt-oss-120b",
                         messages: promptMessages,
                         temperature: 0.2,
-                        max_tokens: 1500
+                        max_tokens: 4096
                     })
                 });
 
@@ -34,6 +34,24 @@ class AIPlanner {
             } catch (e) {
                 console.warn('[AI PLANNER] Groq API key rotation retry:', e.message);
             }
+        }
+
+        // Fallback to live Netlify proxy endpoint
+        try {
+            const response = await fetch("https://codez48.netlify.app/.netlify/functions/call-ai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: promptMessages })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.content) {
+                    return data.content;
+                }
+            }
+        } catch (e) {
+            console.warn('[AI PLANNER] Netlify call-ai proxy error:', e.message);
         }
 
         return null;

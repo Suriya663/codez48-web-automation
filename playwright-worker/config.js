@@ -7,7 +7,7 @@ if (fs.existsSync(envPath)) {
 
 
 if (!process.env.GROQ_API_KEY) {
-    console.warn('[CONFIG WARNING] GROQ_API_KEY environment variable is missing. Configure GROQ_API_KEY for AI planner.');
+    // Local GROQ_API_KEY not set; requests will transparently use the deployed Netlify AI proxy fallback.
 }
 
 module.exports = {

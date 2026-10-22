@@ -1,0 +1,18 @@
+[
+  {
+    "text": "CODEZ48 TARGET TEST",
+    "role": "text",
+    "bbox": {
+      "x": 200,
+      "y": 150,
+      "width": 350,
+      "height": 60
+    },
+    "center": {
+      "x": 375,
+      "y": 180
+    },
+    "confidence": 0.99,
+    "visualDescription": "Notepad target text"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "default": "default_tamil",
+  "profiles": {
+    "default_tamil": {
+      "name": "Default Tamil Voice",
+      "transcript": "வணக்கம், நான் கோடஸ்48 சூப்பர்வாய்ஸ் குரல் உதவியாளர்.",
+      "audioPath": null,
+      "createdAt": "2026-10-17T11:47:43.186Z"
+    }
+  }
+}

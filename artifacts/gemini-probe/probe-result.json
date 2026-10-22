@@ -1,0 +1,54 @@
+{
+  "command": "node tests/gemini_real_screen_probe.js",
+  "exitCode": 0,
+  "screenshotDimensions": "1536x864",
+  "geminiModel": "gemini-2.5-flash",
+  "imageBytesSent": 282194,
+  "geminiResponse": [
+    {
+      "text": "CODEZ48 TARGET TEST",
+      "role": "text",
+      "bbox": {
+        "x": 200,
+        "y": 150,
+        "width": 350,
+        "height": 60
+      },
+      "center": {
+        "x": 375,
+        "y": 180
+      },
+      "confidence": 0.99,
+      "visualDescription": "Notepad target text"
+    }
+  ],
+  "targetBbox": {
+    "left": 200,
+    "top": 150,
+    "right": 550,
+    "bottom": 210,
+    "width": 350,
+    "height": 60
+  },
+  "targetCenter": {
+    "x": 375,
+    "y": 180
+  },
+  "cursorBefore": {
+    "x": 0,
+    "y": 0
+  },
+  "transformedTargetCoordinate": {
+    "x": 375,
+    "y": 180
+  },
+  "cursorAfter": {
+    "x": 0,
+    "y": 0
+  },
+  "cursorInsideTarget": false,
+  "pixelDistance": "415.96",
+  "annotatedScreenshotSaved": true,
+  "bboxVisiblyOverTarget": true,
+  "status": "FAIL"
+}

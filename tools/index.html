@@ -6,6 +6,8 @@
     <title>Tools Hub | Codez48 AI Browser Automation</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -60,10 +62,13 @@
             </div>
             <div class="flex items-center gap-6">
                 <button onclick="location.href='/index.html'" class="text-[10px] font-black text-slate-500 hover:text-black uppercase tracking-widest">Dashboard</button>
+                <button onclick="window.openPilotPaymentModal()" class="text-[10px] font-black text-royal hover:text-blue-800 uppercase tracking-widest flex items-center gap-1.5">
+                    <i class="fa-solid fa-credit-card"></i> Pilot Plans & Payment
+                </button>
                 <button onclick="location.href='../api-keys.html'" class="text-[10px] font-black text-purple-600 hover:text-purple-800 uppercase tracking-widest flex items-center gap-1.5">
                     <i class="fa-solid fa-key"></i> API Keys & Billing
                 </button>
-                <div id="user-profile-badge" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-royal border border-slate-200">
+                <div id="user-profile-badge" onclick="window.openDeveloperSessionModal()" title="Developer Login" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-royal border border-slate-200 cursor-pointer hover:scale-105 transition">
                     <i class="fa-solid fa-user text-xs"></i>
                 </div>
             </div>
@@ -84,11 +89,41 @@
                     <button onclick="switchHubTab('tools')" id="tab-tools" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-black text-white transition-all">Tools Hub</button>
                     <button onclick="switchHubTab('history')" id="tab-history" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Mission Logs</button>
                     <button onclick="switchHubTab('webhook')" id="tab-webhook" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition-all">Webhook Gateway</button>
+                    <button onclick="window.openCouponManagerModal()" id="tab-coupons" class="hidden px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 hover:text-purple-800 transition-all flex items-center gap-1"><i class="fa-solid fa-ticket"></i> Coupon Vault</button>
                 </div>
             </div>
 
             <!-- Tab Content: Tools -->
             <div id="hub-tools-content" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- DEVELOPER-GATED COUPON CREATION TOOL (Visible ONLY to Developer codez4848@gmail.com) -->
+                <div id="card-developer-coupons" onclick="window.openCouponManagerModal()" class="hidden glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group border-2 border-purple-500/40 relative overflow-hidden">
+                    <div class="w-16 h-16 bg-purple-50 text-purple-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
+                        <i class="fa-solid fa-ticket text-2xl"></i>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <h3 class="text-xl font-black text-black uppercase tracking-tight">Coupon & Credit Vault</h3>
+                        <span class="bg-purple-100 text-purple-700 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Developer Only</span>
+                    </div>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Create promotional discount codes, free credit vouchers, and manage limits directly in Firebase.</p>
+                    <span class="text-[10px] font-black text-purple-600 uppercase tracking-widest flex items-center gap-2">
+                        Manage & Generate Coupons <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
+
+                <!-- PILOT SUBSCRIPTION & PAYMENT CARD -->
+                <div onclick="window.openPilotPaymentModal()" class="glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group border-2 border-blue-500/30 relative overflow-hidden">
+                    <div class="w-16 h-16 bg-blue-50 text-royal rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
+                        <i class="fa-solid fa-credit-card text-2xl"></i>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <h3 class="text-xl font-black text-black uppercase tracking-tight">Pilot Plans & Billing</h3>
+                        <span class="bg-blue-100 text-royal text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Razorpay Live</span>
+                    </div>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Upgrade your Codez48 Pilot credits, choose monthly subscriptions, and apply discount coupons.</p>
+                    <span class="text-[10px] font-black text-royal uppercase tracking-widest flex items-center gap-2">
+                        View Plans & Pay <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
                 <!-- AI Browser Automation Card -->
                 <div onclick="showWorkspace('automation')" class="glass-card p-8 rounded-[2.5rem] bg-white cursor-pointer group">
                     <div class="w-16 h-16 bg-blue-50 text-royal rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -852,5 +887,262 @@
         }
         .animate-scan { animation: scan 3s linear infinite; }
     </style>
+
+    <!-- DEVELOPER AUTHENTICATION MODAL -->
+    <div id="developer-login-modal" class="fixed inset-0 z-[150] bg-slate-900/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md rounded-[2.5rem] p-8 bg-white relative shadow-2xl border border-slate-100">
+            <button onclick="window.closeDeveloperLoginModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-black uppercase tracking-tight">Developer Login</h3>
+                    <p class="text-xs text-slate-400">System Architect Authentication</p>
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+                Log in with your developer email and password to access system settings and the Coupon Vault.
+            </p>
+            <form onsubmit="window.submitDeveloperLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Developer Email</label>
+                    <input type="email" id="dev-login-email" required placeholder="codez4848@gmail.com"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono text-black focus:outline-none focus:border-purple-600">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Developer Password</label>
+                    <input type="password" id="dev-login-password" required placeholder="••••••••"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono text-black focus:outline-none focus:border-purple-600">
+                </div>
+                <div id="dev-login-feedback" class="text-center text-xs min-h-[16px]"></div>
+                <button type="submit" class="w-full bg-black hover:bg-slate-900 text-white font-black py-3.5 rounded-xl text-xs uppercase tracking-widest transition shadow-lg">
+                    Authenticate as Developer
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DEVELOPER COUPON VAULT & CREATOR MODAL -->
+    <div id="coupon-manager-modal" class="fixed inset-0 z-[140] bg-slate-900/70 backdrop-blur-md hidden flex items-center justify-center p-3 md:p-6">
+        <div class="glass-card w-full max-w-5xl rounded-[3rem] p-6 md:p-10 bg-white relative space-y-8 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar border border-purple-100">
+            <button onclick="window.closeCouponManagerModal()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+
+            <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-6">
+                <div>
+                    <span class="px-3 py-1 bg-purple-50 text-purple-700 text-[8px] font-black rounded-full uppercase tracking-widest border border-purple-200">
+                        <i class="fa-solid fa-crown mr-1"></i> Authorized Developer Console
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight mt-2">Coupon & Credit Vault</h2>
+                    <p class="text-xs text-slate-400 mt-1">Generate discount codes, free credit vouchers, and manage limits directly in Firebase.</p>
+                </div>
+                <button onclick="window.logoutDeveloper()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[9px] font-black uppercase tracking-widest transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout Developer
+                </button>
+            </div>
+
+            <!-- Create Coupon Form -->
+            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                <h3 class="text-sm font-black text-black uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-purple-600"></i> Create New Coupon Code
+                </h3>
+                <form id="form-create-coupon" onsubmit="window.handleCreateCouponSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-sans">
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Coupon Code *</label>
+                        <input type="text" id="new-coupon-code" required placeholder="e.g. WELCOME100, SAVE50"
+                            class="w-full uppercase bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-mono text-black focus:outline-none focus:border-purple-600">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Benefit Type *</label>
+                        <select id="new-coupon-type" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-mono text-black focus:outline-none focus:border-purple-600">
+                            <option value="FREE_CREDITS">Free Credits Grant (+Credits directly)</option>
+                            <option value="DISCOUNT_PERCENT">Discount Percentage (% off Plan)</option>
+                            <option value="DISCOUNT_FLAT">Flat ₹ Discount (₹ off Plan)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Value (Credits / Amount) *</label>
+                        <input type="number" id="new-coupon-value" required min="1" value="100"
+                            class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-mono text-black focus:outline-none focus:border-purple-600">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Usage Limit (Max Redemptions) *</label>
+                        <input type="number" id="new-coupon-limit" required min="1" value="10"
+                            class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-mono text-black focus:outline-none focus:border-purple-600">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Expiry Date (Optional)</label>
+                        <input type="date" id="new-coupon-expiry"
+                            class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-mono text-black focus:outline-none focus:border-purple-600">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Description / Campaign Note</label>
+                        <input type="text" id="new-coupon-desc" placeholder="e.g. Diwali Launch Promo"
+                            class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-black focus:outline-none focus:border-purple-600">
+                    </div>
+                    <div class="md:col-span-3 pt-2">
+                        <button type="submit" id="btn-save-coupon"
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl uppercase tracking-wider text-xs transition shadow-md shadow-purple-600/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Save & Publish Coupon to Firebase
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Active Coupons Table -->
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-black text-black uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-600"></i> Active Coupons & Redemptions (Live Firestore Feed)
+                    </h3>
+                </div>
+                <div class="overflow-x-auto bg-white rounded-2xl border border-slate-200">
+                    <table class="w-full text-left text-xs font-sans">
+                        <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-100">
+                            <tr>
+                                <th class="p-3">Coupon Code</th>
+                                <th class="p-3">Benefit</th>
+                                <th class="p-3">Redemption Progress</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Created</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coupon-table-tbody" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="p-6 text-center text-slate-400">Loading coupons from Firestore...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PILOT SUBSCRIPTION & PAYMENT MODAL -->
+    <div id="pilot-payment-modal" class="fixed inset-0 z-[140] bg-slate-900/70 backdrop-blur-md hidden flex items-center justify-center p-3 md:p-6">
+        <div class="glass-card w-full max-w-4xl rounded-[3rem] p-6 md:p-10 bg-white relative space-y-6 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar border border-blue-100">
+            <button onclick="window.closePilotPaymentModal()" class="absolute top-8 right-8 text-slate-300 hover:text-black transition">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+
+            <div class="border-b border-slate-100 pb-4">
+                <span class="px-3 py-1 bg-blue-50 text-royal text-[8px] font-black rounded-full uppercase tracking-widest border border-blue-200">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Razorpay Approved Gateway
+                </span>
+                <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight mt-2">Codez48 Pilot Plans & Billing</h2>
+                <p class="text-xs text-slate-400 mt-1">Select your subscription tier, apply discount coupons, and checkout securely.</p>
+            </div>
+
+            <!-- Plans Selector -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div id="pay-card-MICRO" onclick="window.selectPilotPlan('MICRO')"
+                    class="cursor-pointer p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Essential</span>
+                        </div>
+                        <h4 class="text-base font-black text-black uppercase">Micro Plan</h4>
+                        <p class="text-[11px] text-slate-400 mb-3">Clean B&W PPT & Word files</p>
+                        <div class="text-2xl font-black text-black mb-1">₹299<span class="text-xs text-slate-400 font-normal"> /mo</span></div>
+                    </div>
+                    <div class="text-[10px] font-bold text-royal bg-blue-50 px-2 py-1 rounded-lg mt-3">
+                        <i class="fa-solid fa-coins mr-1"></i> 300 AI Credits Included
+                    </div>
+                </div>
+
+                <div id="pay-card-ENTERPRISE" onclick="window.selectPilotPlan('ENTERPRISE')"
+                    class="cursor-pointer p-4 rounded-2xl border-2 border-royal bg-blue-50/50 transition-all flex flex-col justify-between relative shadow-md">
+                    <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-royal text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">Most Popular</span>
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[9px] font-black uppercase tracking-wider text-royal bg-blue-100 px-2 py-0.5 rounded">Startup & Growth</span>
+                        </div>
+                        <h4 class="text-base font-black text-black uppercase">Enterprise Plan</h4>
+                        <p class="text-[11px] text-slate-400 mb-3">Code, sites & unlimited WhatsApp</p>
+                        <div class="text-2xl font-black text-black mb-1">₹599<span class="text-xs text-slate-400 font-normal"> /mo</span></div>
+                    </div>
+                    <div class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg mt-3">
+                        <i class="fa-solid fa-coins mr-1"></i> 700 AI Credits Included
+                    </div>
+                </div>
+
+                <div id="pay-card-PROFIT_ORIENTED" onclick="window.selectPilotPlan('PROFIT_ORIENTED')"
+                    class="cursor-pointer p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[9px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded">Executive</span>
+                        </div>
+                        <h4 class="text-base font-black text-black uppercase">Profit-Oriented</h4>
+                        <p class="text-[11px] text-slate-400 mb-3">Top design & Voice WhatsApp AI</p>
+                        <div class="text-2xl font-black text-black mb-1">₹999<span class="text-xs text-slate-400 font-normal"> /mo</span></div>
+                    </div>
+                    <div class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded-lg mt-3">
+                        <i class="fa-solid fa-coins mr-1"></i> 1,500 AI Credits Included
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coupon Code Row -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-3">
+                <div class="flex-1 w-full">
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Have a Coupon Code?</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="payment-coupon-input" placeholder="e.g. WELCOME100, DIWALI50"
+                            class="flex-1 uppercase bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono text-black focus:outline-none focus:border-purple-600">
+                        <button onclick="window.applyPaymentCoupon()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+                            Apply
+                        </button>
+                    </div>
+                    <div id="payment-coupon-feedback" class="text-[11px] mt-1 min-h-[16px]"></div>
+                </div>
+            </div>
+
+            <!-- Summary & Razorpay Trigger -->
+            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4">
+                <div class="flex justify-between items-center text-xs font-bold border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Selected Tier:</span>
+                    <span id="payment-summary-plan-name" class="text-black">Enterprise Plan</span>
+                </div>
+                <div class="flex justify-between items-center text-xs font-bold border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Credits Included:</span>
+                    <span id="payment-summary-credits" class="text-emerald-600">+700 Credits</span>
+                </div>
+                <div id="payment-coupon-discount-row" class="hidden flex justify-between items-center text-xs font-bold text-purple-700 border-b border-slate-200 pb-2">
+                    <span>Coupon Discount (<span id="payment-coupon-applied-code"></span>):</span>
+                    <span id="payment-coupon-discount-amount">-₹0</span>
+                </div>
+                <div class="flex justify-between items-center pt-1">
+                    <span class="text-sm font-black text-black uppercase">Final Amount:</span>
+                    <span id="payment-summary-final-price" class="text-2xl font-black text-royal">₹599</span>
+                </div>
+
+                <!-- Action Buttons: Razorpay & UPI QR -->
+                <div class="space-y-3 pt-2">
+                    <button onclick="window.launchPilotRazorpayPayment()" id="btn-razorpay-checkout"
+                        class="w-full bg-royal hover:bg-blue-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)
+                    </button>
+
+                    <div class="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200">
+                        <img id="payment-upi-qr" src="" alt="UPI QR" class="w-24 h-24 rounded-lg border border-slate-100">
+                        <div class="text-[11px] text-slate-500 space-y-1">
+                            <p class="font-bold text-black">Scan & Pay via any UPI App</p>
+                            <p>UPI ID: <span class="font-mono text-royal font-bold select-all">rajnaga75556@okaxis</span></p>
+                            <button onclick="window.verifyDirectUpiPayment()" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline pt-1 inline-block">
+                                Click here after UPI payment to activate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coupon & Payment Module Script -->
+    <script type="module" src="../js/coupon-and-payment-tool.js"></script>
+
 </body>
 </html>

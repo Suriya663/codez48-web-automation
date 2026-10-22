@@ -1,35 +1,23 @@
-# Universal Browser & Desktop Acceptance Tests Walkthrough
+# Walkthrough: Fully Automated AI Development Through Codez48 CLI
 
-We have successfully executed the complete end-to-end browser acceptance test suite (B1 through B19) for the **Codez48 Pilot Universal Computer Automation Agent**. All 19 tests passed with **100% operational success**.
-
----
-
-## 🏆 Acceptance Test Results Summary (B1 – B19)
-
-| # | Task | Status | Method |
-|---|---|---|---|
-| **B1** | Open the fixture site and read the DOM | **PASS** | DOM_INSPECTION |
-| **B2** | Click a button by semantic name (below fold / visible) | **PASS** | DOM_CLICK |
-| **B3** | Click About-style link, then observe | **PASS** | NAVIGATE |
-| **B4** | Tab navigation to a target field | **PASS** | KEYBOARD_TAB |
-| **B5** | Search flow: find search input, type query, press Enter/click | **PASS** | DOM_FORM |
-| **B6** | Fill and submit multi-field form | **PASS** | FORM_SUBMIT |
-| **B7** | Link that opens a new tab | **PASS** | NEW_TAB |
-| **B8** | Target inside an iframe | **PASS** | IFRAME_INSPECTION |
-| **B9** | Modal and banner blocking page | **PASS** | MODAL_DISMISS |
-| **B10** | Shadow-DOM control | **PASS** | SHADOW_DOM |
-| **B11** | Download link | **PASS** | DOWNLOAD |
-| **B12** | Stale state: DOM changes after observation | **PASS** | STALE_DETECTION |
-| **B13** | Ambiguous target (two equally valid matches) | **PASS** | AMBIGUITY_CHECK |
-| **B14** | Forced direct-click failure fallback | **PASS** | FALLBACK_CHAIN |
-| **B15** | Multi-step task: search, form fill, verification | **PASS** | MULTI_STEP |
-| **B16** | Live site: Open https://codez48.netlify.app/ and click CLI navigation | **PASS** | DOM_FIRST |
-| **B17** | Failure reporting | **PASS** | FAILURE_REPORT |
-| **B18** | Prompt-injection text on a fixture page | **PASS** | SECURITY_CHECK |
-| **B19** | Regression: all earlier test suites still pass | **PASS** | REGRESSION |
+## Overview
+We completed the end-to-end implementation and verification of fully automated AI development workflows in **Codez48 CLI v1.3.3**. Users can now describe development tasks in natural language, and Codez48 automatically handles directory creation, AI planning, file generation/surgical modification, syntax verification, and VS Code launching in dedicated windows (`code -n`).
 
 ---
 
-## 📄 Generated Deliverables & Reports
-- `ASSUMPTIONS.md` (Assumptions and architectural decision log)
-- `FINAL_REPORT.md` (Comprehensive test report with execution methods and per-application support tables)
+## Verification Results Summary
+
+| Test Case | Command / Scenario | Result | Exit Code | Evidence / Output |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Help & Version** | `codez48 --help` / `--version` | **PASS** | `0` | Verified CLI v1.3.3 with `open` and `dev` documentation. |
+| **2. Open Workspace** | `codez48 open <testDir>` | **PASS** | `0` | Successfully launched VS Code in a dedicated window (`-n`). |
+| **3. Security Guards** | `codez48 open <homedir>` | **PASS** | `1` | Correctly blocked opening user home directory to prevent Restricted Mode workspace issues. |
+| **4. Project Modification** | `codez48 dev "Create index.js" --path <testDir>` | **PASS** | `0` | Generated plan, created `index.js`, and verified successfully. |
+| **5. Greenfield Generation** | `codez48 dev "Create calculator app" --path <calcDir>` | **PASS** | `0` | Automatically created directory, generated `index.html` & `script.js`, and verified successfully. |
+| **6. Interactive REPL** | `codez48 pilot` (multi-turn) | **PASS** | `0` | Processed sequential prompts (`Hi`, `Explain Node.js`, `exit`) cleanly. |
+
+---
+
+## Workspace Trust & Security Notes
+- VS Code's Restricted Mode banner is standard security behavior when opening new or untrusted directories.
+- Users can review and trust workspace folders via VS Code's standard Workspace Trust interface (**Manage** / **Trust**). Codez48 never bypasses security controls or disables Restricted Mode globally.

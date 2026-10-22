@@ -1,0 +1,175 @@
+{
+  "tool": "Codez48 Scrap",
+  "version": "1.0.0",
+  "targetUrl": "https://codez48.netlify.app/",
+  "scrapedAt": "2026-10-16T13:31:10.545Z",
+  "scrapedTitle": "CODEZ48 | High-Performance Business Network",
+  "httpStatus": 200,
+  "totalDiscovered": 22,
+  "successfulDownloads": 23,
+  "failedDownloads": 0,
+  "resources": [
+    {
+      "url": "https://codez48.netlify.app/",
+      "localPath": "index.html",
+      "type": "html",
+      "sizeBytes": 143890,
+      "status": "success"
+    },
+    {
+      "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
+      "localPath": "assets/css/all.min.css",
+      "type": "css",
+      "sizeBytes": 102025,
+      "status": "success"
+    },
+    {
+      "url": "https://connect.facebook.net/signals/config/1318887030322672?v=2.9.419&amp;r=stable&amp;domain=codez48.netlify.app&amp;hme=7459fa3e38c2784dbaf309537bed5fa7e8560fab51fb61e53e5ffafeb46a02a9&amp;ex_m=118%2C241%2C171%2C27%2C82%2C83%2C162%2C78%2C77%2C11%2C181%2C102%2C20%2C153%2C141%2C46%2C85%2C90%2C149%2C176%2C183%2C8%2C4%2C5%2C7%2C6%2C3%2C103%2C115%2C32%2C17%2C31%2C18%2C33%2C34%2C35%2C37%2C55%2C163%2C87%2C126%2C22%2C24%2C51%2C47%2C49%2C48%2C95%2C104%2C108%2C124%2C160%2C164%2C53%2C125%2C29%2C26%2C133%2C79%2C43%2C166%2C165%2C167%2C157%2C155%2C30%2C42%2C66%2C123%2C178%2C80%2C21%2C128%2C93%2C76%2C23%2C97%2C98%2C130%2C96%2C151%2C150%2C154%2C109%2C177%2C180%2C41%2C56%2C127%2C54%2C161%2C72%2C185%2C110%2C184%2C210%2C255%2C84%2C274%2C273%2C272%2C14%2C25%2C28%2C40%2C62%2C117%2C68%2C10%2C73%2C111%2C112%2C113%2C119%2C144%2C38%2C36%2C146%2C147%2C148%2C143%2C142%2C172%2C86%2C175%2C173%2C174%2C57%2C69%2C67%2C137%2C19%2C179%2C52%2C324%2C325%2C326%2C323%2C339%2C361%2C248%2C237%2C70%2C238%2C236%2C364%2C355%2C59%2C249%2C121%2C145%2C92%2C135%2C61%2C134%2C140%2C139%2C65%2C74%2C168%2C88%2C89%2C129%2C44%2C39%2C60%2C63%2C114%2C182%2C1%2C138%2C16%2C136%2C12%2C2%2C64%2C105%2C15%2C75%2C71%2C132%2C101%2C100%2C187%2C188%2C106%2C107%2C9%2C116%2C186%2C58%2C158%2C99%2C91%2C81%2C131%2C120%2C169%2C50%2C159%2C0%2C94%2C152%2C156%2C170%2C45%2C122%2C13%2C189",
+      "localPath": "assets/js/1318887030322672.js",
+      "type": "js",
+      "sizeBytes": 591126,
+      "status": "success"
+    },
+    {
+      "url": "https://connect.facebook.net/en_US/fbevents.js",
+      "localPath": "assets/js/fbevents.js",
+      "type": "js",
+      "sizeBytes": 433365,
+      "status": "success"
+    },
+    {
+      "url": "https://cdn.tailwindcss.com/",
+      "localPath": "assets/js/index.js",
+      "type": "js",
+      "sizeBytes": 407279,
+      "status": "success"
+    },
+    {
+      "url": "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js",
+      "localPath": "assets/js/email.min.js",
+      "type": "js",
+      "sizeBytes": 3941,
+      "status": "success"
+    },
+    {
+      "url": "https://checkout.razorpay.com/v1/checkout.js",
+      "localPath": "assets/js/checkout.js",
+      "type": "js",
+      "sizeBytes": 189974,
+      "status": "success"
+    },
+    {
+      "url": "https://cdn.razorpay.com/static/cx/razorpay-risk-detection/bundle.js",
+      "localPath": "assets/js/bundle.js",
+      "type": "js",
+      "sizeBytes": 2953,
+      "status": "success"
+    },
+    {
+      "url": "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js",
+      "localPath": "assets/js/xlsx.full.min.js",
+      "type": "js",
+      "sizeBytes": 951904,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/translations.js",
+      "localPath": "assets/js/translations.js",
+      "type": "js",
+      "sizeBytes": 22074,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/analytics.js",
+      "localPath": "assets/js/analytics.js",
+      "type": "js",
+      "sizeBytes": 2932,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/onboarding.js",
+      "localPath": "assets/js/onboarding.js",
+      "type": "js",
+      "sizeBytes": 19829,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/tracker-tool.js",
+      "localPath": "assets/js/tracker-tool.js",
+      "type": "js",
+      "sizeBytes": 42552,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/init.js",
+      "localPath": "assets/js/init.js",
+      "type": "js",
+      "sizeBytes": 5989,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/admin.js",
+      "localPath": "assets/js/admin.js",
+      "type": "js",
+      "sizeBytes": 16459,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/index-secure.js",
+      "localPath": "assets/js/index-secure.js",
+      "type": "js",
+      "sizeBytes": 2600,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/mail-automation.js",
+      "localPath": "assets/js/mail-automation.js",
+      "type": "js",
+      "sizeBytes": 77209,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/ai-mail-campaign-modal.js",
+      "localPath": "assets/js/ai-mail-campaign-modal.js",
+      "type": "js",
+      "sizeBytes": 41897,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/developer-admin-modal.js",
+      "localPath": "assets/js/developer-admin-modal.js",
+      "type": "js",
+      "sizeBytes": 24248,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/push-notifications.js",
+      "localPath": "assets/js/push-notifications.js",
+      "type": "js",
+      "sizeBytes": 6993,
+      "status": "success"
+    },
+    {
+      "url": "https://codez48.netlify.app/js/api-key-manager.js",
+      "localPath": "assets/js/api-key-manager.js",
+      "type": "js",
+      "sizeBytes": 51422,
+      "status": "success"
+    },
+    {
+      "url": "https://www.facebook.com/tr?id=1318887030322672&ev=PageView&noscript=1",
+      "localPath": "assets/images/tr.png",
+      "type": "image",
+      "sizeBytes": 0,
+      "status": "success"
+    },
+    {
+      "url": "https://www.facebook.com/tr?id=2387499775323719&ev=PageView&noscript=1",
+      "localPath": "assets/images/tr.png",
+      "type": "image",
+      "sizeBytes": 0,
+      "status": "success"
+    }
+  ],
+  "limitations": "Some server-side APIs, protected origins, or cross-domain resources may not be fully extracted."
+}

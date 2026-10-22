@@ -1,0 +1,9 @@
+{
+  "model": "gemini-2.5-flash",
+  "imageWidth": 1536,
+  "imageHeight": 864,
+  "mimeType": "image/png",
+  "encodedBytes": 282194,
+  "timestamp": "2026-10-17T08:26:11.735Z",
+  "requestId": "PROBE-1792225571735"
+}

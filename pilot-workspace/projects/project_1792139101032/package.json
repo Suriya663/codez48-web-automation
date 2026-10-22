@@ -1,0 +1,18 @@
+{
+  "name": "express-user-routes",
+  "version": "1.0.0",
+  "description": "Express server with separate user routes",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.22.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+pilot-workspace/
+scratch/
+.artifacts/
+.git/
+.idea/
+*.tgz

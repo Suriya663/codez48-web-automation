@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawn } = require('child_process');
+const os = require('os');
+const terminalExecutor = require('./terminal-executor');
 
 class CliProjectGenerator {
     constructor() {
@@ -16,7 +17,7 @@ class CliProjectGenerator {
         const projectDir = path.join(this.baseDir, projectName);
         fs.mkdirSync(projectDir, { recursive: true });
 
-        console.log(`Generating Project Files in ${projectDir}...`);
+        console.log(`[45%] Generating source files...`);
 
         for (const file of aiPlan.files || []) {
             const filePath = path.join(projectDir, file.path);
@@ -25,15 +26,19 @@ class CliProjectGenerator {
                 fs.mkdirSync(dirName, { recursive: true });
             }
             fs.writeFileSync(filePath, file.content, 'utf8');
+            console.log(`Created: ${file.path}`);
         }
+
+        console.log(`[60%] Saving and validating files...`);
+        await this.validateSyntax(projectDir);
+
+        console.log(`[70%] Opening VS Code workspace...`);
+        await this.openVsCode(projectDir);
 
         if (aiPlan.dependencies && aiPlan.dependencies.length > 0) {
-            console.log(`Installing Dependencies...`);
-            this.installDependencies(projectDir, aiPlan.dependencies);
+            console.log(`[80%] Installing required dependencies...`);
+            await this.installDependencies(projectDir, aiPlan.dependencies);
         }
-
-        console.log(`Opening Project in VS Code...`);
-        this.openVsCode(projectDir);
 
         return {
             projectDir,
@@ -41,51 +46,98 @@ class CliProjectGenerator {
         };
     }
 
-    installDependencies(projectDir, dependencies) {
+    async validateSyntax(projectDir) {
+        if (!fs.existsSync(projectDir)) return;
+        const entries = fs.readdirSync(projectDir, { recursive: true });
+        for (const entry of entries) {
+            const relPath = String(entry);
+            if ((relPath.endsWith('.js') || relPath.endsWith('.mjs')) && !relPath.includes('node_modules')) {
+                const absPath = path.join(projectDir, relPath);
+                if (fs.existsSync(absPath) && fs.statSync(absPath).isFile()) {
+                    const checkRes = await terminalExecutor.runCommand('node', ['--check', absPath], projectDir);
+                    if (checkRes.exitCode !== 0) {
+                        throw new Error(`Syntax check failed for ${relPath}:\n${checkRes.stderr}`);
+                    }
+                }
+            }
+        }
+    }
+
+    async installDependencies(projectDir, dependencies) {
         if (dependencies.length === 0) return;
 
         try {
-            // Check if it's a node project (package.json should exist, or we can just init)
             if (!fs.existsSync(path.join(projectDir, 'package.json'))) {
-                execSync('npm init -y', { cwd: projectDir, stdio: 'ignore' });
+                await terminalExecutor.runCommand('npm', ['init', '-y'], projectDir);
             }
 
-            const depString = dependencies.join(' ');
-            console.log(`Running npm install ${depString}`);
-            execSync(`npm install ${depString}`, { cwd: projectDir, stdio: 'inherit' });
+            let installCommand = 'install';
+            if (fs.existsSync(path.join(projectDir, 'package-lock.json')) || fs.existsSync(path.join(projectDir, 'npm-shrinkwrap.json'))) {
+                if (dependencies.length === 1 && dependencies[0] === '--only=production') {
+                     installCommand = 'ci';
+                }
+            }
+
+            console.log(`Running npm ${installCommand} ${dependencies.join(' ')}`);
+            const installRes = await terminalExecutor.runCommand('npm', [installCommand, ...dependencies], projectDir);
+            if (installRes.exitCode !== 0) {
+                console.error(`Dependency installation error: ${installRes.stderr}`);
+            } else {
+                console.log(installRes.stdout);
+            }
         } catch (error) {
             console.error(`Dependency installation failed: ${error.message}`);
             throw error;
         }
     }
 
-    openVsCode(projectDir) {
+    async openVsCode(projectDir) {
         try {
-            execSync(`code "${projectDir}"`, { stdio: 'ignore' });
+            const checkCmd = os.platform() === 'win32' ? 'where' : 'which';
+            const checkStatus = await terminalExecutor.runCommand(checkCmd, ['code'], process.cwd());
+
+            if (checkStatus.exitCode !== 0) {
+                 console.error('[VS CODE ERROR] The "code" command was not found in PATH. Ensure Visual Studio Code is installed and in your environment variables.');
+                 return;
+            }
+
+            console.log(`Opening Modified Project in VS Code...`);
+
+            const { spawn } = require('child_process');
+            const useShell = os.platform() === 'win32';
+            const codeProc = spawn(useShell ? 'code.cmd' : 'code', [projectDir], { stdio: 'ignore', windowsHide: false, detached: true, shell: useShell });
+
+            codeProc.on('error', (err) => {
+                if (err.code === 'ENOENT') {
+                    console.error('[VS CODE ERROR] Failed to spawn VS Code process.');
+                } else {
+                    console.error('[VS CODE ERROR]', err.message);
+                }
+            });
+            codeProc.unref();
+
         } catch (e) {
-            console.log('[WARN] VS Code not available or failed to open.');
+            console.error('[VS CODE ERROR] Failed to check VS Code:', e.message);
         }
     }
 
     async startApplication(projectDir, startCommand) {
         if (!startCommand) return null;
 
-        console.log(`Starting Application... (${startCommand})`);
-        const [cmd, ...args] = startCommand.split(' ');
+        console.log(`[90%] Running program and tests... (${startCommand})`);
+        const parts = startCommand.split(' ');
+        const cmd = parts[0];
+        const args = parts.slice(1);
 
-        const child = spawn(cmd, args, {
-            cwd: projectDir,
-            shell: true,
-            detached: true,
-            stdio: 'ignore' // or pipe to logs
-        });
+        const result = await terminalExecutor.startAndMonitor(cmd, args, projectDir, 2000);
 
-        child.unref();
+        if (result.status === 'closed' && result.exitCode !== 0) {
+            throw new Error(result.stderr || `Process exited with code ${result.exitCode}`);
+        } else if (result.status === 'error') {
+            throw new Error(result.stderr || 'Failed to start process');
+        }
 
-        // Wait a little for server to start
-        await new Promise(r => setTimeout(r, 2000));
-
-        return child;
+        return result.child;
     }
 }
 
