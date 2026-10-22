@@ -37,14 +37,15 @@
             </div>
             <div class="flex items-center gap-4">
                 <button onclick="location.href='/tools/index.html'" class="text-xs font-bold text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-arrow-left mr-1"></i> Back to Tools
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Back to Tools Hub
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-5xl mx-auto px-4 py-10 w-full space-y-8">
+    <main class="flex-1 max-w-5xl mx-auto px-4 py-8 w-full space-y-8">
+        <!-- Title Banner -->
         <div class="text-center max-w-2xl mx-auto space-y-2">
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
                 <i class="fa-solid fa-shield-halved"></i> 256-Bit SSL Encrypted Razorpay & UPI Gateway
@@ -53,45 +54,63 @@
                 Codez48 Pilot Subscriptions
             </h2>
             <p class="text-slate-400 text-xs sm:text-sm">
-                Choose your monthly tier to unlock autonomous browser automation, document generation, and WhatsApp AI campaigns.
+                Unlock autonomous browser automation, document generation, and WhatsApp AI campaigns with fresh monthly credits.
             </p>
         </div>
 
-        <!-- User UID & Coupon Bar -->
+        <!-- 1. USER ACCOUNT INSPECTOR CARD -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
-                        <i class="fa-solid fa-fingerprint text-blue-400"></i> User Identifier (UID)
-                    </label>
-                    <input type="text" id="page-uid-input" placeholder="USR-CDZ48-XXXX-XXXX"
-                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
-                        <i class="fa-solid fa-tag text-purple-400"></i> Have a Coupon Code?
-                    </label>
-                    <div class="flex gap-2">
-                        <input type="text" id="page-coupon-input" placeholder="e.g. WELCOME100, DIWALI50"
-                            class="flex-1 uppercase bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-purple-300 focus:outline-none focus:border-purple-500">
-                        <button onclick="handleCouponApply()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition">
-                            Apply
-                        </button>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-user text-blue-400 text-lg"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">User Account & Credit Inspector</h3>
+                        <p class="text-[11px] text-slate-400">Enter your User ID to inspect active plan, credit balance, and expiration date.</p>
                     </div>
-                    <div id="page-coupon-feedback" class="text-[11px] mt-1 min-h-[16px]"></div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="text" id="page-uid-input" placeholder="USR-CDZ48-XXXX-XXXX"
+                        class="flex-1 sm:w-64 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500 uppercase">
+                    <button onclick="inspectUserAccount()" id="btn-check-account" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-magnifying-glass"></i> Check Account
+                    </button>
                 </div>
             </div>
+
+            <!-- Account Details Display -->
+            <div id="account-status-card" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Target User ID</span>
+                    <span id="display-user-id" class="text-blue-300 font-bold break-all">Loading...</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Active Plan</span>
+                    <span id="display-active-plan" class="text-emerald-400 font-bold">Checking...</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Credit Balance</span>
+                    <span id="display-credit-balance" class="text-yellow-400 font-bold">Checking...</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Plan Expiration</span>
+                    <span id="display-expiration" class="text-slate-300 font-bold">Checking...</span>
+                </div>
+            </div>
+            <div id="account-feedback" class="text-[11px] mt-2 min-h-[16px] font-sans"></div>
         </div>
 
-        <!-- Plans Selection Grid -->
+        <!-- 2. PLANS SELECTION GRID (BASE PRICES FRESH) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <!-- Micro Plan -->
             <div id="plan-card-MICRO" onclick="selectPlan('MICRO')"
                 class="cursor-pointer bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between transition-all hover:border-slate-700">
                 <div>
-                    <span class="text-[10px] font-bold uppercase text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Essential</span>
-                    <h3 class="text-xl font-bold text-white mt-2">Micro Plan</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold uppercase text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Essential</span>
+                        <span id="badge-micro" class="hidden text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/30">Current Plan</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Micro Plan</h3>
                     <p class="text-xs text-slate-400 mb-4">Clean B&W PPT & Word files</p>
                     <div class="text-3xl font-extrabold text-white mb-2">₹299<span class="text-xs text-slate-400 font-normal"> /mo</span></div>
                     <div class="text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg inline-block">
@@ -110,8 +129,11 @@
                 class="cursor-pointer bg-slate-900 border-2 border-blue-500 rounded-2xl p-6 flex flex-col justify-between transition-all relative shadow-xl shadow-blue-500/10">
                 <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-extrabold uppercase px-3 py-0.5 rounded-full tracking-wider shadow">Most Popular</span>
                 <div>
-                    <span class="text-[10px] font-bold uppercase text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded">Startup & Growth</span>
-                    <h3 class="text-xl font-bold text-white mt-2">Enterprise Plan</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold uppercase text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded">Startup & Growth</span>
+                        <span id="badge-enterprise" class="hidden text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/30">Current Plan</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Enterprise Plan</h3>
                     <p class="text-xs text-slate-400 mb-4">Code, websites & unlimited WhatsApp</p>
                     <div class="text-3xl font-extrabold text-white mb-2">₹599<span class="text-xs text-slate-400 font-normal"> /mo</span></div>
                     <div class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg inline-block">
@@ -130,8 +152,11 @@
             <div id="plan-card-PROFIT_ORIENTED" onclick="selectPlan('PROFIT_ORIENTED')"
                 class="cursor-pointer bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between transition-all hover:border-slate-700">
                 <div>
-                    <span class="text-[10px] font-bold uppercase text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">Executive</span>
-                    <h3 class="text-xl font-bold text-white mt-2">Profit-Oriented</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold uppercase text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">Executive</span>
+                        <span id="badge-profit" class="hidden text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/30">Current Plan</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Profit-Oriented</h3>
                     <p class="text-xs text-slate-400 mb-4">Top design & Voice WhatsApp AI</p>
                     <div class="text-3xl font-extrabold text-white mb-2">₹999<span class="text-xs text-slate-400 font-normal"> /mo</span></div>
                     <div class="text-xs font-semibold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-lg inline-block">
@@ -148,7 +173,25 @@
 
         </div>
 
-        <!-- Checkout Box -->
+        <!-- 3. COUPON CODE SECTION (WITH REMOVE BUTTON FOR FRESH BASE PRICING) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-tag text-purple-400"></i> Have a Promotional Coupon or Voucher?
+            </label>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" id="page-coupon-input" placeholder="e.g. WELCOME100, DIWALI50"
+                    class="flex-1 uppercase bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-purple-300 focus:outline-none focus:border-purple-500">
+                <button onclick="handleCouponApply()" id="btn-apply-coupon" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-ticket"></i> Apply Coupon
+                </button>
+                <button onclick="handleCouponRemove()" id="btn-remove-coupon" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i> Remove Coupon
+                </button>
+            </div>
+            <div id="page-coupon-feedback" class="text-[11px] mt-2 min-h-[16px]"></div>
+        </div>
+
+        <!-- 4. CHECKOUT SUMMARY & PAYMENT TRIGGERS -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto shadow-2xl space-y-6">
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
                 <i class="fa-solid fa-lock text-emerald-400"></i> Checkout Summary
@@ -156,20 +199,28 @@
 
             <div class="bg-slate-950 rounded-xl p-4 space-y-2.5 text-xs font-mono">
                 <div class="flex justify-between text-slate-400">
-                    <span>Plan:</span>
+                    <span>Target Account:</span>
+                    <span id="summary-uid-text" class="text-blue-300 font-bold break-all">Loading...</span>
+                </div>
+                <div class="flex justify-between text-slate-400">
+                    <span>Selected Plan:</span>
                     <span id="summary-plan-text" class="text-white font-bold">Enterprise Plan</span>
                 </div>
                 <div class="flex justify-between text-slate-400">
-                    <span>Credits:</span>
+                    <span>Credits Included:</span>
                     <span id="summary-credits-text" class="text-emerald-400 font-bold">+700 Credits</span>
                 </div>
+                <div class="flex justify-between text-slate-400">
+                    <span>Base Price:</span>
+                    <span id="summary-base-price" class="text-slate-300">₹599</span>
+                </div>
                 <div id="summary-discount-row" class="hidden flex justify-between text-purple-300">
-                    <span>Discount (<span id="summary-coupon-code"></span>):</span>
+                    <span>Coupon Discount (<span id="summary-coupon-code"></span>):</span>
                     <span id="summary-discount-text" class="font-bold">-₹0</span>
                 </div>
-                <div class="border-t border-slate-800 pt-2 flex justify-between text-sm">
+                <div class="border-t border-slate-800 pt-3 flex justify-between text-sm">
                     <span class="font-bold text-white">Final Amount:</span>
-                    <span id="summary-amount-text" class="font-black text-xl text-blue-400">₹599</span>
+                    <span id="summary-amount-text" class="font-black text-2xl text-blue-400">₹599</span>
                 </div>
             </div>
 
@@ -182,12 +233,14 @@
 
                 <!-- Direct UPI Alternative -->
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
-                    <img id="page-upi-qr" src="" alt="UPI QR" class="w-28 h-28 bg-white p-1 rounded-lg">
-                    <div class="text-xs text-slate-400 space-y-1.5 flex-1 text-center sm:text-left">
-                        <p class="font-bold text-white">Direct UPI Transfer</p>
+                    <img id="page-upi-qr" src="" alt="UPI QR" class="w-32 h-32 bg-white p-1 rounded-lg shadow">
+                    <div class="text-xs text-slate-400 space-y-2 flex-1 text-center sm:text-left">
+                        <p class="font-bold text-white flex items-center justify-center sm:justify-start gap-1.5">
+                            <i class="fa-brands fa-google-pay text-emerald-400 text-base"></i> Instant UPI Transfer
+                        </p>
                         <p>VPA: <span class="font-mono text-blue-300 bg-slate-900 px-2 py-0.5 rounded select-all font-bold">rajnaga75556@okaxis</span></p>
-                        <button onclick="handleDirectUpiComplete()" class="text-[11px] font-bold text-emerald-400 hover:underline pt-1 inline-block">
-                            <i class="fa-solid fa-circle-check"></i> Click here after payment to activate
+                        <button onclick="handleDirectUpiComplete()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-[11px] transition shadow flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> I Have Paid via UPI — Activate Now
                         </button>
                     </div>
                 </div>
@@ -195,6 +248,29 @@
         </div>
 
     </main>
+
+    <!-- SUCCESS MODAL -->
+    <div id="payment-success-modal" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center space-y-5 shadow-2xl shadow-emerald-500/10">
+            <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-3xl">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <h3 class="text-2xl font-black text-white">Payment Successful!</h3>
+                <p id="success-plan-title" class="text-sm text-emerald-400 font-bold mt-1">Enterprise Plan Activated</p>
+                <p class="text-xs text-slate-400 mt-2">Credits and subscription have been updated in Firestore for your User ID.</p>
+            </div>
+            <div class="bg-slate-950 rounded-xl p-4 text-xs font-mono text-left space-y-1.5 border border-slate-800">
+                <div class="flex justify-between"><span class="text-slate-500">User ID:</span><span id="succ-uid" class="text-blue-300 font-bold"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Credits Added:</span><span id="succ-credits" class="text-emerald-400 font-bold"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">New Total Balance:</span><span id="succ-balance" class="text-yellow-400 font-bold"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Transaction ID:</span><span id="succ-tx" class="text-slate-400"></span></div>
+            </div>
+            <button onclick="returnToDashboard()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-widest transition">
+                Return to Tools Dashboard
+            </button>
+        </div>
+    </div>
 
     <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-600">
         Codez48 Technologies • Razorpay Live Approved Gateway • codez48.netlify.app
@@ -219,11 +295,12 @@
         let currentPlan = 'ENTERPRISE';
         let activeCoupon = null;
         let discount = 0;
+        let userCurrentData = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const uid = params.get('uid') || localStorage.getItem('c48_user_uid') || 'USR-CDZ48-USER';
-            document.getElementById('page-uid-input').value = uid;
+            const uidParam = params.get('uid') || localStorage.getItem('c48_user_uid') || 'USR-CDZ48-AD63-D4DE-4AC9-711E';
+            document.getElementById('page-uid-input').value = uidParam;
 
             const planParam = (params.get('plan') || '').toUpperCase();
             if (PLANS[planParam]) {
@@ -235,10 +312,80 @@
             const couponParam = params.get('coupon');
             if (couponParam) {
                 document.getElementById('page-coupon-input').value = couponParam.toUpperCase();
-                setTimeout(handleCouponApply, 600);
+                setTimeout(handleCouponApply, 700);
             }
+
+            setTimeout(inspectUserAccount, 500);
         });
 
+        // 1. User Account Inspection
+        async function inspectUserAccount() {
+            const uid = (document.getElementById('page-uid-input').value || '').trim();
+            const feedback = document.getElementById('account-feedback');
+            if (!uid) {
+                feedback.innerHTML = `<span class="text-rose-400">Please enter a valid User ID.</span>`;
+                return;
+            }
+
+            localStorage.setItem('c48_user_uid', uid);
+            document.getElementById('display-user-id').textContent = uid;
+            document.getElementById('summary-uid-text').textContent = uid;
+
+            if (!window.firebaseDb || !window.firestoreTools) {
+                setTimeout(inspectUserAccount, 500);
+                return;
+            }
+
+            feedback.innerHTML = `<span class="text-blue-400"><i class="fa-solid fa-spinner animate-spin"></i> Fetching account data from Firestore...</span>`;
+
+            try {
+                const { doc, getDoc } = window.firestoreTools;
+                const snap = await getDoc(doc(window.firebaseDb, "pilot_users", uid));
+
+                if (snap.exists()) {
+                    userCurrentData = snap.data();
+                    const planName = userCurrentData.planName || userCurrentData.plan || 'Free Tier';
+                    const balance = userCurrentData.creditBalance || 0;
+                    
+                    let expiryStr = '30 Days';
+                    if (userCurrentData.planActivatedAt) {
+                        const actDate = new Date(userCurrentData.planActivatedAt);
+                        const expDate = new Date(actDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        expiryStr = expDate.toISOString().split('T')[0];
+                    }
+
+                    document.getElementById('display-active-plan').textContent = planName;
+                    document.getElementById('display-credit-balance').textContent = `${balance} Credits`;
+                    document.getElementById('display-expiration').textContent = expiryStr;
+
+                    // Update badges
+                    const currentPlanKey = (userCurrentData.plan || '').toUpperCase();
+                    ['MICRO', 'ENTERPRISE', 'PROFIT_ORIENTED'].forEach(p => {
+                        const badge = document.getElementById(`badge-${p.toLowerCase().replace('_', '')}`);
+                        if (badge) {
+                            if (p === currentPlanKey) {
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                    });
+
+                    feedback.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Account verified: ${planName} with ${balance} credits.</span>`;
+                } else {
+                    document.getElementById('display-active-plan').textContent = 'Free Tier (New)';
+                    document.getElementById('display-credit-balance').textContent = '10 Credits';
+                    document.getElementById('display-expiration').textContent = 'None';
+                    feedback.innerHTML = `<span class="text-amber-400"><i class="fa-solid fa-info-circle"></i> New User ID — Plan and credits will be initialized upon payment.</span>`;
+                }
+            } catch (err) {
+                feedback.innerHTML = `<span class="text-rose-400">Failed to fetch account: ${err.message}</span>`;
+            }
+
+            updateDisplay();
+        }
+
+        // 2. Plan Selection
         function selectPlan(planId) {
             if (!PLANS[planId]) return;
             currentPlan = planId;
@@ -255,6 +402,7 @@
             updateDisplay();
         }
 
+        // 3. Display Refresh
         function updateDisplay() {
             const plan = PLANS[currentPlan];
             let payable = plan.price;
@@ -271,23 +419,28 @@
                 document.getElementById('summary-discount-row').classList.remove('hidden');
                 document.getElementById('summary-coupon-code').textContent = activeCoupon.code;
                 document.getElementById('summary-discount-text').textContent = `-₹${discount}`;
+                document.getElementById('btn-remove-coupon').classList.remove('hidden');
             } else {
                 document.getElementById('summary-discount-row').classList.add('hidden');
+                document.getElementById('btn-remove-coupon').classList.add('hidden');
             }
 
+            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            document.getElementById('summary-uid-text').textContent = uid;
             document.getElementById('summary-plan-text').textContent = plan.name;
             document.getElementById('summary-credits-text').textContent = `+${plan.credits} Credits`;
+            document.getElementById('summary-base-price').textContent = `₹${plan.price}`;
             document.getElementById('summary-amount-text').textContent = `₹${payable}`;
 
-            const uid = document.getElementById('page-uid-input').value || 'USER';
             const upiUrl = `upi://pay?pa=rajnaga75556@okaxis&pn=Codez48&am=${payable}&cu=INR&tn=Codez48_${currentPlan}_${uid}`;
             document.getElementById('page-upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`;
         }
 
+        // 4. Coupon Handlers
         async function handleCouponApply() {
             const code = document.getElementById('page-coupon-input').value.trim().toUpperCase();
             const feedback = document.getElementById('page-coupon-feedback');
-            const uid = document.getElementById('page-uid-input').value.trim() || 'USER';
+            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
 
             if (!code) {
                 feedback.innerHTML = `<span class="text-amber-400">Please enter a coupon code.</span>`;
@@ -296,7 +449,7 @@
 
             if (!window.firebaseDb || !window.firestoreTools) {
                 feedback.innerHTML = `<span class="text-blue-400"><i class="fa-solid fa-spinner animate-spin"></i> Initializing database...</span>`;
-                setTimeout(handleCouponApply, 800);
+                setTimeout(handleCouponApply, 600);
                 return;
             }
 
@@ -359,6 +512,7 @@
                     }, { merge: true });
 
                     feedback.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> Free Credits Granted! +${c.value} Credits added to ${uid}!</span>`;
+                    inspectUserAccount();
                     alert(`🎉 Success! Coupon "${code}" granted +${c.value} Free Credits to your account (${uid})!`);
                 } else {
                     const discText = c.type === 'DISCOUNT_PERCENT' ? `${c.value}% OFF` : `₹${c.value} FLAT OFF`;
@@ -370,16 +524,25 @@
             }
         }
 
+        function handleCouponRemove() {
+            activeCoupon = null;
+            document.getElementById('page-coupon-input').value = '';
+            document.getElementById('page-coupon-feedback').innerHTML = `<span class="text-slate-400">Coupon removed. Base prices restored.</span>`;
+            updateDisplay();
+        }
+
+        // 5. Razorpay Checkout
         async function launchRazorpayCheckout() {
             const plan = PLANS[currentPlan];
             const finalRupees = Math.max(0, plan.price - discount);
             const finalPaise = finalRupees * 100;
-            const uid = document.getElementById('page-uid-input').value.trim() || 'USER';
+            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
             const btn = document.getElementById('page-btn-razorpay');
 
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Initializing Gateway...`;
 
+            let orderData = null;
             try {
                 const resp = await fetch('/.netlify/functions/razorpay-create-order', {
                     method: 'POST',
@@ -390,10 +553,12 @@
                         notes: { userId: uid, planId: plan.id, coupon: activeCoupon ? activeCoupon.code : 'NONE' }
                     })
                 });
-
-                let orderData = null;
                 if (resp.ok) orderData = await resp.json();
+            } catch (err) {
+                console.warn("Backend order creation warning:", err);
+            }
 
+            try {
                 const options = {
                     key: "rzp_live_TaX2zuAv0lLUKf",
                     amount: finalPaise,
@@ -415,25 +580,41 @@
                 };
 
                 const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function (response) {
+                    alert("Razorpay Payment Failed: " + response.error.description);
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
+                });
                 rzp.open();
             } catch (e) {
-                alert(`Razorpay checkout initialized for ₹${finalRupees}.\nYou can also complete via UPI QR Code directly.`);
+                console.error("Razorpay open error:", e);
+                alert(`Razorpay Checkout initialized for ₹${finalRupees}.\nYou can also complete via UPI QR Code directly.`);
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Pay with Razorpay (Cards, UPI, Netbanking)`;
             }
         }
 
+        // 6. Direct UPI Complete Handler
         async function handleDirectUpiComplete() {
             const plan = PLANS[currentPlan];
             const finalRupees = Math.max(0, plan.price - discount);
-            const uid = document.getElementById('page-uid-input').value.trim() || 'USER';
-            await recordSuccess(`upi_direct_${Date.now()}`, plan, finalRupees, uid);
+            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+
+            const utr = prompt(`Please enter your UPI Reference / UTR Number from your payment app (GPay/PhonePe/Paytm/BHIM):\n\n(Or press OK to complete direct activation for ${uid})`, `UPI-${Date.now()}`);
+            if (utr === null) return; // cancelled
+
+            const paymentId = utr.trim() || `upi_${Date.now()}`;
+            await recordSuccess(paymentId, plan, finalRupees, uid);
         }
 
+        // 7. Success Record in Firestore
         async function recordSuccess(paymentId, plan, amountPaid, uid) {
             const now = new Date().toISOString();
+            let newTotal = plan.credits;
+
             if (window.firebaseDb && window.firestoreTools) {
-                const { doc, setDoc, updateDoc, increment } = window.firestoreTools;
+                const { doc, setDoc, updateDoc, increment, getDoc } = window.firestoreTools;
+
                 await setDoc(doc(window.firebaseDb, "pilot_users", uid), {
                     userId: uid,
                     plan: plan.id,
@@ -453,12 +634,37 @@
                     amount: amountPaid,
                     creditsAdded: plan.credits,
                     paymentId,
+                    couponUsed: activeCoupon ? activeCoupon.code : null,
                     status: 'COMPLETED',
                     timestamp: now
                 });
+
+                if (activeCoupon) {
+                    await updateDoc(doc(window.firebaseDb, "coupons", activeCoupon.code), {
+                        timesUsed: increment(1),
+                        [`usedBy.${uid}`]: { redeemedAt: now, plan: plan.id, paymentId }
+                    }).catch(() => {});
+                }
+
+                // Fetch updated balance for receipt
+                try {
+                    const snap = await getDoc(doc(window.firebaseDb, "pilot_users", uid));
+                    if (snap.exists()) {
+                        newTotal = snap.data().creditBalance;
+                    }
+                } catch(e){}
             }
 
-            alert(`🎉 SUBSCRIPTION ACTIVATED!\n\n${plan.name} is now active!\n+${plan.credits} Credits added to ${uid}.\nCodez48 Pilot CLI will now reflect this status.`);
+            // Show success receipt modal
+            document.getElementById('success-plan-title').textContent = `${plan.name} Activated`;
+            document.getElementById('succ-uid').textContent = uid;
+            document.getElementById('succ-credits').textContent = `+${plan.credits} Credits`;
+            document.getElementById('succ-balance').textContent = `${newTotal} Credits`;
+            document.getElementById('succ-tx').textContent = paymentId;
+            document.getElementById('payment-success-modal').classList.remove('hidden');
+        }
+
+        function returnToDashboard() {
             window.location.href = '/tools/index.html';
         }
     </script>

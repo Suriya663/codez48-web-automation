@@ -44,6 +44,8 @@ export const CouponAndPaymentTool = {
     },
 
     getUserId() {
+        const input = document.getElementById('payment-uid-input');
+        if (input && input.value.trim()) return input.value.trim();
         const params = new URLSearchParams(window.location.search);
         return params.get('uid') || localStorage.getItem('c48_user_uid') || localStorage.getItem('tori_seller_id') || 'USR-CDZ48-USER';
     },
@@ -428,8 +430,9 @@ export const CouponAndPaymentTool = {
             payBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Initializing Secure Gateway...`;
         }
 
+        let orderData = null;
         try {
-            // 1. Create order on Netlify Backend
+            // 1. Try order creation on Netlify Backend
             const resp = await fetch('/.netlify/functions/razorpay-create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -444,11 +447,14 @@ export const CouponAndPaymentTool = {
                 })
             });
 
-            let orderData = null;
             if (resp.ok) {
                 orderData = await resp.json();
             }
+        } catch (netErr) {
+            console.warn("Backend order creation warning:", netErr);
+        }
 
+        try {
             // 2. Razorpay Options
             const options = {
                 key: RAZORPAY_LIVE_KEY,
@@ -488,7 +494,6 @@ export const CouponAndPaymentTool = {
 
         } catch (err) {
             console.warn("Razorpay Init Warning:", err.message);
-            // Fallback to direct verification
             alert(`Razorpay Checkout initialized for ₹${finalAmountRupees}.\nYou can also complete via UPI QR Code directly.`);
             if (payBtn) {
                 payBtn.disabled = false;
@@ -677,7 +682,29 @@ window.launchPilotRazorpayPayment = () => {
     CouponAndPaymentTool.launchRazorpayLivePayment();
 };
 
+window.removePaymentCoupon = () => {
+    CouponAndPaymentTool.appliedCoupon = null;
+    CouponAndPaymentTool.discountAmount = 0;
+    const input = document.getElementById('payment-coupon-input');
+    if (input) input.value = '';
+    const feedback = document.getElementById('payment-coupon-feedback');
+    if (feedback) feedback.innerHTML = '<span class="text-slate-400">Coupon removed. Base prices restored.</span>';
+    const removeBtn = document.getElementById('btn-remove-payment-coupon');
+    if (removeBtn) removeBtn.classList.add('hidden');
+    CouponAndPaymentTool.updatePaymentPricingDisplay();
+};
+
 window.verifyDirectUpiPayment = async () => {
+    const plan = CouponAndPaymentTool.plans[CouponAndPaymentTool.selectedPlan];
+    const finalAmount = Math.max(0, plan.price - CouponAndPaymentTool.discountAmount);
+    const uid = CouponAndPaymentTool.getUserId();
+    const utr = prompt(`Please enter your UPI Reference / UTR Number from your payment app (GPay/PhonePe/Paytm/BHIM):\n\n(Or press OK to complete direct activation for ${uid})`, `UPI-${Date.now()}`);
+    if (utr === null) return;
+    const paymentId = utr.trim() || `upi_${Date.now()}`;
+    await CouponAndPaymentTool.recordPaymentSuccess({ razorpay_payment_id: paymentId }, plan, finalAmount, uid);
+    return;
+};
+window._old_verify = async () => {
     const plan = CouponAndPaymentTool.plans[CouponAndPaymentTool.selectedPlan];
     const finalAmount = Math.max(0, plan.price - CouponAndPaymentTool.discountAmount);
     const uid = CouponAndPaymentTool.getUserId();

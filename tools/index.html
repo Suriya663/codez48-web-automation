@@ -1028,12 +1028,28 @@
                 <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
 
-            <div class="border-b border-slate-100 pb-4">
-                <span class="px-3 py-1 bg-blue-50 text-royal text-[8px] font-black rounded-full uppercase tracking-widest border border-blue-200">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> Razorpay Approved Gateway
-                </span>
-                <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight mt-2">Codez48 Pilot Plans & Billing</h2>
-                <p class="text-xs text-slate-400 mt-1">Select your subscription tier, apply discount coupons, and checkout securely.</p>
+            <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <span class="px-3 py-1 bg-blue-50 text-royal text-[8px] font-black rounded-full uppercase tracking-widest border border-blue-200">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Razorpay Approved Gateway
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight mt-2">Codez48 Pilot Plans & Billing</h2>
+                    <p class="text-xs text-slate-400 mt-1">Select your subscription tier, apply discount coupons, and checkout securely.</p>
+                </div>
+                <a href="/tools/payment.html" class="bg-blue-50 hover:bg-blue-100 text-royal text-[10px] font-black px-4 py-2 rounded-xl border border-blue-200 transition uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-up-right-from-square"></i> Open Full Checkout Page
+                </a>
+            </div>
+
+            <!-- User Identifier Row -->
+            <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex-1 w-full">
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-royal mb-1 flex items-center gap-1">
+                        <i class="fa-solid fa-fingerprint"></i> Target User Identifier (UID)
+                    </label>
+                    <input type="text" id="payment-uid-input" placeholder="USR-CDZ48-XXXX-XXXX"
+                        class="w-full uppercase bg-white border border-blue-200 rounded-xl px-4 py-2 text-xs font-mono text-black focus:outline-none focus:border-royal">
+                </div>
             </div>
 
             <!-- Plans Selector -->
@@ -1094,6 +1110,9 @@
                             class="flex-1 uppercase bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono text-black focus:outline-none focus:border-purple-600">
                         <button onclick="window.applyPaymentCoupon()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
                             Apply
+                        </button>
+                        <button onclick="window.removePaymentCoupon()" id="btn-remove-payment-coupon" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition">
+                            Remove
                         </button>
                     </div>
                     <div id="payment-coupon-feedback" class="text-[11px] mt-1 min-h-[16px]"></div>
