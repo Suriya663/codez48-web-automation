@@ -150,6 +150,136 @@ exports.handler = async (event, context) => {
         }
 
         // Handle Developer Payout Request Email Alerts (Sent to Developer Admin + Requesting User with 24h Guarantee)
+        // Handle Pilot Subscription & User ID Welcome Email (First-time user & renewal)
+        if (action === 'PILOT_SUBSCRIPTION_WELCOME') {
+            const targetEmail = data.userEmail || data.email || notificationEmail || 'rajnaga75556@gmail.com';
+            const userId = data.userId || 'USR-CDZ48-USER';
+            const planName = data.planName || 'Enterprise Plan';
+            const credits = data.credits || 700;
+            const amountPaid = data.amountPaid || 599;
+            const paymentId = data.paymentId || `pay_${Date.now()}`;
+            const timeStr = data.time || new Date().toISOString();
+
+            // Record to Firestore pilot_email_logs
+            if (initAdmin() && db) {
+                try {
+                    await db.collection('pilot_email_logs').add({
+                        userId,
+                        userEmail: targetEmail,
+                        action: 'PILOT_SUBSCRIPTION_WELCOME',
+                        planName,
+                        credits,
+                        amountPaid,
+                        paymentId,
+                        timestamp: timeStr,
+                        status: 'RECORDED'
+                    });
+                } catch (e) {
+                    console.error('[FIRESTORE EMAIL LOG ERROR]:', e.message);
+                }
+            }
+
+            // Attempt email dispatch via SMTP if credentials exist
+            let emailSent = false;
+            let emailError = null;
+
+            if (smtpHost && smtpUser && smtpPass) {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        host: smtpHost,
+                        port: smtpPort,
+                        secure: smtpPort === 465,
+                        connectionTimeout: 10000,
+                        auth: { user: smtpUser, pass: smtpPass }
+                    });
+
+                    const htmlContent = `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #090d16; border: 1px solid #1e293b; border-radius: 20px; overflow: hidden; color: #f8fafc;">
+                            <div style="background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%); padding: 32px 24px; text-align: center;">
+                                <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #ffffff;">CODEZ48 PILOT</h1>
+                                <p style="margin: 6px 0 0; font-size: 13px; color: #bfdbfe;">Subscription Activated • Official User Credentials</p>
+                            </div>
+                            
+                            <div style="padding: 32px 24px; background: #0f172a;">
+                                <h2 style="font-size: 18px; margin-top: 0; color: #ffffff; font-weight: 700;">Welcome to Codez48 Pilot!</h2>
+                                <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">
+                                    Your payment has been successfully verified, and your monthly subscription has been activated in the system.
+                                </p>
+
+                                <div style="background: #020617; border: 1px solid #3b82f6; border-radius: 14px; padding: 18px; margin: 20px 0;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; margin-bottom: 6px;">Your Official User Identifier (UID)</div>
+                                    <div style="font-size: 18px; font-family: monospace; font-weight: 800; color: #38bdf8; word-break: break-all;">${escapeHtml(userId)}</div>
+                                    <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Keep this User ID safe. It is required for CLI commands, credit tracking, and plan renewals.</div>
+                                </div>
+
+                                <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; background: #020617; border-radius: 12px; overflow: hidden; border: 1px solid #1e293b;">
+                                    <tr style="border-bottom: 1px solid #1e293b;">
+                                        <td style="padding: 12px 16px; color: #64748b;">Associated Email:</td>
+                                        <td style="padding: 12px 16px; color: #ffffff; font-weight: 600; text-align: right;">${escapeHtml(targetEmail)}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #1e293b;">
+                                        <td style="padding: 12px 16px; color: #64748b;">Activated Plan:</td>
+                                        <td style="padding: 12px 16px; color: #38bdf8; font-weight: 700; text-align: right;">${escapeHtml(planName)}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #1e293b;">
+                                        <td style="padding: 12px 16px; color: #64748b;">Credits Added:</td>
+                                        <td style="padding: 12px 16px; color: #34d399; font-weight: 700; text-align: right;">+${escapeHtml(String(credits))} Credits</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #1e293b;">
+                                        <td style="padding: 12px 16px; color: #64748b;">Amount Paid:</td>
+                                        <td style="padding: 12px 16px; color: #ffffff; font-weight: 600; text-align: right;">₹${escapeHtml(String(amountPaid))}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 16px; color: #64748b;">Payment / UTR Reference:</td>
+                                        <td style="padding: 12px 16px; color: #94a3b8; font-family: monospace; font-size: 11px; text-align: right;">${escapeHtml(paymentId)}</td>
+                                    </tr>
+                                </table>
+
+                                <div style="background: #1e1b4b; border-left: 4px solid #818cf8; padding: 14px 16px; border-radius: 8px; margin: 20px 0;">
+                                    <div style="font-size: 12px; font-weight: 700; color: #c7d2fe; margin-bottom: 4px;">Quick CLI Usage:</div>
+                                    <div style="font-family: monospace; font-size: 12px; color: #a5b4fc;">codez48 user ${escapeHtml(userId)}</div>
+                                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Run this command in your terminal to inspect your active plan and remaining credits.</div>
+                                </div>
+
+                                <div style="text-align: center; margin-top: 28px;">
+                                    <a href="https://codez48.netlify.app/tools/index.html" style="display: inline-block; background: #2563eb; color: #ffffff; font-weight: 700; font-size: 13px; text-decoration: none; padding: 12px 28px; border-radius: 10px;">Launch Tools Dashboard</a>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #020617; padding: 20px; text-align: center; border-top: 1px solid #1e293b; font-size: 11px; color: #475569;">
+                                Codez48 Technologies • Razorpay Live Approved Gateway • codez48.netlify.app
+                            </div>
+                        </div>
+                    `;
+
+                    await transporter.sendMail({
+                        from: smtpFrom,
+                        to: targetEmail,
+                        cc: DEVELOPER_EMAILS.join(', '),
+                        subject: `🎉 Codez48 Pilot Subscription Activated — User ID: ${userId}`,
+                        html: htmlContent
+                    });
+                    emailSent = true;
+                } catch (sendErr) {
+                    console.error('[SUBSCRIPTION EMAIL SEND ERROR]:', sendErr.message);
+                    emailError = sendErr.message;
+                }
+            }
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                body: JSON.stringify({
+                    success: true,
+                    emailSent,
+                    userId,
+                    userEmail: targetEmail,
+                    message: emailSent ? `Credentials successfully emailed to ${targetEmail}` : `Credentials logged to Firestore pilot_email_logs`,
+                    error: emailError
+                })
+            };
+        }
+
         if (action === 'DEVELOPER_PAYOUT_REQUEST_ALERT') {
             const targetEmail = data.email || data.userEmail || notificationEmail;
             const name = data.name || userName || 'Developer Partner';

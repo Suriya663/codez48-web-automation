@@ -505,11 +505,14 @@ export const CouponAndPaymentTool = {
     async recordPaymentSuccess(paymentResp, plan, amountPaid, uid) {
         const now = new Date().toISOString();
         const paymentId = paymentResp.razorpay_payment_id || `pay_direct_${Date.now()}`;
+        const emailInput = document.getElementById('payment-email-input');
+        const email = (emailInput ? emailInput.value.trim() : '') || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
 
         try {
             // Update pilot_users
             await setDoc(doc(db, "pilot_users", uid), {
                 userId: uid,
+                userEmail: email,
                 plan: plan.id,
                 planName: plan.name,
                 creditBalance: increment(plan.credits),
@@ -524,6 +527,7 @@ export const CouponAndPaymentTool = {
             await setDoc(doc(db, "pilot_transactions", txId), {
                 id: txId,
                 userId: uid,
+                userEmail: email,
                 planId: plan.id,
                 amount: amountPaid,
                 creditsAdded: plan.credits,
@@ -541,7 +545,27 @@ export const CouponAndPaymentTool = {
                 }).catch(() => {});
             }
 
-            alert(`🎉 PAYMENT SUCCESSFUL!\n\nYour ${plan.name} has been activated!\n+${plan.credits} Credits added to ${uid}.\nYour Codez48 Pilot CLI is now unlocked.`);
+            // Automated Email Dispatch
+            try {
+                await fetch('/.netlify/functions/send-login-notification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'PILOT_SUBSCRIPTION_WELCOME',
+                        userEmail: email,
+                        userId: uid,
+                        planName: plan.name,
+                        credits: plan.credits,
+                        amountPaid: amountPaid,
+                        paymentId: paymentId,
+                        time: now
+                    })
+                });
+            } catch(mErr) {
+                console.warn("Email notice:", mErr);
+            }
+
+            alert(`🎉 PAYMENT SUCCESSFUL!\n\nYour ${plan.name} has been activated!\n+${plan.credits} Credits added to ${uid}.\nCredentials emailed to ${email}.\nYour Codez48 Pilot CLI is now unlocked.`);
             window.location.reload();
 
         } catch (err) {

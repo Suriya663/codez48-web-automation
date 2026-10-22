@@ -58,21 +58,21 @@
             </p>
         </div>
 
-        <!-- 1. USER ACCOUNT INSPECTOR CARD -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+        <!-- 1. USER ACCOUNT INSPECTOR & EMAIL CARD -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto space-y-4">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-circle-user text-blue-400 text-lg"></i>
                     <div>
                         <h3 class="text-sm font-bold text-white uppercase tracking-wider">User Account & Credit Inspector</h3>
-                        <p class="text-[11px] text-slate-400">Enter your User ID to inspect active plan, credit balance, and expiration date.</p>
+                        <p class="text-[11px] text-slate-400">Auto-assigned User ID and live credit status retrieved from Firebase.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <input type="text" id="page-uid-input" placeholder="USR-CDZ48-XXXX-XXXX"
                         class="flex-1 sm:w-64 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500 uppercase">
                     <button onclick="inspectUserAccount()" id="btn-check-account" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="fa-solid fa-magnifying-glass"></i> Check Account
+                        <i class="fa-solid fa-magnifying-glass"></i> Refresh
                     </button>
                 </div>
             </div>
@@ -80,7 +80,7 @@
             <!-- Account Details Display -->
             <div id="account-status-card" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
                 <div>
-                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Target User ID</span>
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">User Identifier</span>
                     <span id="display-user-id" class="text-blue-300 font-bold break-all">Loading...</span>
                 </div>
                 <div>
@@ -88,7 +88,7 @@
                     <span id="display-active-plan" class="text-emerald-400 font-bold">Checking...</span>
                 </div>
                 <div>
-                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Credit Balance</span>
+                    <span class="text-[10px] text-slate-500 uppercase block font-sans font-bold">Remaining Credits</span>
                     <span id="display-credit-balance" class="text-yellow-400 font-bold">Checking...</span>
                 </div>
                 <div>
@@ -96,7 +96,22 @@
                     <span id="display-expiration" class="text-slate-300 font-bold">Checking...</span>
                 </div>
             </div>
-            <div id="account-feedback" class="text-[11px] mt-2 min-h-[16px] font-sans"></div>
+
+            <!-- Email Address Input for Delivery -->
+            <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-center gap-3">
+                <div class="flex-1 w-full">
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-envelope text-blue-400"></i> Delivery Email Address (For User ID & Payment Receipts)
+                    </label>
+                    <input type="email" id="page-email-input" placeholder="e.g. rajnaga75556@gmail.com"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="text-[11px] text-slate-500 sm:w-60 leading-tight">
+                    Your User ID and subscription activation details will be automatically sent to this address once payment is complete.
+                </div>
+            </div>
+
+            <div id="account-feedback" class="text-[11px] min-h-[16px] font-sans"></div>
         </div>
 
         <!-- 2. PLANS SELECTION GRID (BASE PRICES FRESH) -->
@@ -199,8 +214,12 @@
 
             <div class="bg-slate-950 rounded-xl p-4 space-y-2.5 text-xs font-mono">
                 <div class="flex justify-between text-slate-400">
-                    <span>Target Account:</span>
+                    <span>Target User ID:</span>
                     <span id="summary-uid-text" class="text-blue-300 font-bold break-all">Loading...</span>
+                </div>
+                <div class="flex justify-between text-slate-400">
+                    <span>Delivery Email:</span>
+                    <span id="summary-email-text" class="text-slate-300 font-bold">rajnaga75556@gmail.com</span>
                 </div>
                 <div class="flex justify-between text-slate-400">
                     <span>Selected Plan:</span>
@@ -261,10 +280,14 @@
                 <p class="text-xs text-slate-400 mt-2">Credits and subscription have been updated in Firestore for your User ID.</p>
             </div>
             <div class="bg-slate-950 rounded-xl p-4 text-xs font-mono text-left space-y-1.5 border border-slate-800">
-                <div class="flex justify-between"><span class="text-slate-500">User ID:</span><span id="succ-uid" class="text-blue-300 font-bold"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">User ID:</span><span id="succ-uid" class="text-blue-300 font-bold break-all"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Delivery Email:</span><span id="succ-email" class="text-slate-300 font-bold"></span></div>
                 <div class="flex justify-between"><span class="text-slate-500">Credits Added:</span><span id="succ-credits" class="text-emerald-400 font-bold"></span></div>
-                <div class="flex justify-between"><span class="text-slate-500">New Total Balance:</span><span id="succ-balance" class="text-yellow-400 font-bold"></span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Transaction ID:</span><span id="succ-tx" class="text-slate-400"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Total Balance:</span><span id="succ-balance" class="text-yellow-400 font-bold"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Transaction ID:</span><span id="succ-tx" class="text-slate-400 break-all"></span></div>
+            </div>
+            <div id="succ-email-notice" class="text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl">
+                <i class="fa-solid fa-paper-plane mr-1"></i> Official credentials and receipt sent to your email!
             </div>
             <button onclick="returnToDashboard()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-widest transition">
                 Return to Tools Dashboard
@@ -297,10 +320,35 @@
         let discount = 0;
         let userCurrentData = null;
 
+        function generateUniqueUserId() {
+            const seg = () => Math.random().toString(16).substring(2, 6).toUpperCase();
+            return `USR-CDZ48-${seg()}-${seg()}-${seg()}-${seg()}`;
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const uidParam = params.get('uid') || localStorage.getItem('c48_user_uid') || 'USR-CDZ48-AD63-D4DE-4AC9-711E';
+            let uidParam = (params.get('uid') || '').trim();
+            if (!uidParam) {
+                uidParam = localStorage.getItem('c48_user_uid');
+            }
+
+            // Auto-generate for first-time payer if not present
+            if (!uidParam || uidParam === 'USR-CDZ48-USER' || uidParam === '1' || uidParam.length < 5) {
+                uidParam = generateUniqueUserId();
+                localStorage.setItem('c48_user_uid', uidParam);
+            }
             document.getElementById('page-uid-input').value = uidParam;
+
+            const storedEmail = params.get('email') || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
+            document.getElementById('page-email-input').value = storedEmail;
+
+            document.getElementById('page-email-input').addEventListener('input', (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    localStorage.setItem('c48_user_email', val);
+                    document.getElementById('summary-email-text').textContent = val;
+                }
+            });
 
             const planParam = (params.get('plan') || '').toUpperCase();
             if (PLANS[planParam]) {
@@ -318,18 +366,22 @@
             setTimeout(inspectUserAccount, 500);
         });
 
-        // 1. User Account Inspection
+        // 1. User Account Inspection & Auto-Registration
         async function inspectUserAccount() {
-            const uid = (document.getElementById('page-uid-input').value || '').trim();
+            let uid = (document.getElementById('page-uid-input').value || '').trim();
             const feedback = document.getElementById('account-feedback');
-            if (!uid) {
-                feedback.innerHTML = `<span class="text-rose-400">Please enter a valid User ID.</span>`;
-                return;
+            if (!uid || uid === '1') {
+                uid = generateUniqueUserId();
+                document.getElementById('page-uid-input').value = uid;
             }
 
             localStorage.setItem('c48_user_uid', uid);
             document.getElementById('display-user-id').textContent = uid;
             document.getElementById('summary-uid-text').textContent = uid;
+
+            const emailInput = document.getElementById('page-email-input');
+            const emailVal = (emailInput ? emailInput.value : '').trim() || 'rajnaga75556@gmail.com';
+            document.getElementById('summary-email-text').textContent = emailVal;
 
             if (!window.firebaseDb || !window.firestoreTools) {
                 setTimeout(inspectUserAccount, 500);
@@ -339,13 +391,13 @@
             feedback.innerHTML = `<span class="text-blue-400"><i class="fa-solid fa-spinner animate-spin"></i> Fetching account data from Firestore...</span>`;
 
             try {
-                const { doc, getDoc } = window.firestoreTools;
+                const { doc, getDoc, setDoc } = window.firestoreTools;
                 const snap = await getDoc(doc(window.firebaseDb, "pilot_users", uid));
 
                 if (snap.exists()) {
                     userCurrentData = snap.data();
                     const planName = userCurrentData.planName || userCurrentData.plan || 'Free Tier';
-                    const balance = userCurrentData.creditBalance || 0;
+                    const balance = userCurrentData.creditBalance !== undefined ? userCurrentData.creditBalance : 0;
                     
                     let expiryStr = '30 Days';
                     if (userCurrentData.planActivatedAt) {
@@ -357,6 +409,11 @@
                     document.getElementById('display-active-plan').textContent = planName;
                     document.getElementById('display-credit-balance').textContent = `${balance} Credits`;
                     document.getElementById('display-expiration').textContent = expiryStr;
+
+                    if (userCurrentData.userEmail && emailInput && !emailInput.value) {
+                        emailInput.value = userCurrentData.userEmail;
+                        document.getElementById('summary-email-text').textContent = userCurrentData.userEmail;
+                    }
 
                     // Update badges
                     const currentPlanKey = (userCurrentData.plan || '').toUpperCase();
@@ -371,15 +428,27 @@
                         }
                     });
 
-                    feedback.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Account verified: ${planName} with ${balance} credits.</span>`;
+                    feedback.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Account verified: ${planName} with ${balance} remaining credits.</span>`;
                 } else {
-                    document.getElementById('display-active-plan').textContent = 'Free Tier (New)';
-                    document.getElementById('display-credit-balance').textContent = '10 Credits';
-                    document.getElementById('display-expiration').textContent = 'None';
-                    feedback.innerHTML = `<span class="text-amber-400"><i class="fa-solid fa-info-circle"></i> New User ID — Plan and credits will be initialized upon payment.</span>`;
+                    // First time payer! Create initial Firestore profile
+                    const now = new Date().toISOString();
+                    await setDoc(doc(window.firebaseDb, "pilot_users", uid), {
+                        userId: uid,
+                        userEmail: emailVal,
+                        creditBalance: 0,
+                        plan: 'PENDING',
+                        planName: 'New Account (Pending Checkout)',
+                        createdAt: now,
+                        updatedAt: now
+                    }, { merge: true });
+
+                    document.getElementById('display-active-plan').textContent = 'New Account (Pending)';
+                    document.getElementById('display-credit-balance').textContent = '0 Credits';
+                    document.getElementById('display-expiration').textContent = 'Activates upon payment';
+                    feedback.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-sparkles"></i> New User ID generated & saved in Firebase! Complete checkout to activate your subscription.</span>`;
                 }
             } catch (err) {
-                feedback.innerHTML = `<span class="text-rose-400">Failed to fetch account: ${err.message}</span>`;
+                feedback.innerHTML = `<span class="text-rose-400">Notice: ${err.message}</span>`;
             }
 
             updateDisplay();
@@ -426,7 +495,9 @@
             }
 
             const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
             document.getElementById('summary-uid-text').textContent = uid;
+            document.getElementById('summary-email-text').textContent = email;
             document.getElementById('summary-plan-text').textContent = plan.name;
             document.getElementById('summary-credits-text').textContent = `+${plan.credits} Credits`;
             document.getElementById('summary-base-price').textContent = `₹${plan.price}`;
@@ -537,6 +608,7 @@
             const finalRupees = Math.max(0, plan.price - discount);
             const finalPaise = finalRupees * 100;
             const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
             const btn = document.getElementById('page-btn-razorpay');
 
             btn.disabled = true;
@@ -550,7 +622,7 @@
                     body: JSON.stringify({
                         amount: finalPaise,
                         currency: "INR",
-                        notes: { userId: uid, planId: plan.id, coupon: activeCoupon ? activeCoupon.code : 'NONE' }
+                        notes: { userId: uid, userEmail: email, planId: plan.id, coupon: activeCoupon ? activeCoupon.code : 'NONE' }
                     })
                 });
                 if (resp.ok) orderData = await resp.json();
@@ -566,10 +638,10 @@
                     name: "Codez48 Technologies",
                     description: `${plan.name} (${plan.credits} AI Credits)`,
                     order_id: orderData ? orderData.id : undefined,
-                    prefill: { email: "rajnaga75556@gmail.com", contact: "9443210987" },
+                    prefill: { email: email, contact: "9443210987" },
                     theme: { color: "#2563EB" },
                     handler: async (paymentResp) => {
-                        await recordSuccess(paymentResp.razorpay_payment_id || `pay_${Date.now()}`, plan, finalRupees, uid);
+                        await recordSuccess(paymentResp.razorpay_payment_id || `pay_${Date.now()}`, plan, finalRupees, uid, email);
                     },
                     modal: {
                         ondismiss: () => {
@@ -599,24 +671,31 @@
             const plan = PLANS[currentPlan];
             const finalRupees = Math.max(0, plan.price - discount);
             const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
 
             const utr = prompt(`Please enter your UPI Reference / UTR Number from your payment app (GPay/PhonePe/Paytm/BHIM):\n\n(Or press OK to complete direct activation for ${uid})`, `UPI-${Date.now()}`);
             if (utr === null) return; // cancelled
 
             const paymentId = utr.trim() || `upi_${Date.now()}`;
-            await recordSuccess(paymentId, plan, finalRupees, uid);
+            await recordSuccess(paymentId, plan, finalRupees, uid, email);
         }
 
-        // 7. Success Record in Firestore
-        async function recordSuccess(paymentId, plan, amountPaid, uid) {
+        // 7. Success Record in Firestore & Automated Email Dispatch
+        async function recordSuccess(paymentId, plan, amountPaid, uid, emailArg) {
             const now = new Date().toISOString();
+            const email = emailArg || (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
+            localStorage.setItem('c48_user_email', email);
+            localStorage.setItem('c48_user_uid', uid);
+
             let newTotal = plan.credits;
 
             if (window.firebaseDb && window.firestoreTools) {
                 const { doc, setDoc, updateDoc, increment, getDoc } = window.firestoreTools;
 
+                // 1. Update pilot_users
                 await setDoc(doc(window.firebaseDb, "pilot_users", uid), {
                     userId: uid,
+                    userEmail: email,
                     plan: plan.id,
                     planName: plan.name,
                     creditBalance: increment(plan.credits),
@@ -626,10 +705,12 @@
                     updatedAt: now
                 }, { merge: true });
 
+                // 2. Record transaction
                 const txId = `tx_${Date.now()}`;
                 await setDoc(doc(window.firebaseDb, "pilot_transactions", txId), {
                     id: txId,
                     userId: uid,
+                    userEmail: email,
                     planId: plan.id,
                     amount: amountPaid,
                     creditsAdded: plan.credits,
@@ -639,6 +720,7 @@
                     timestamp: now
                 });
 
+                // 3. Mark coupon used if applicable
                 if (activeCoupon) {
                     await updateDoc(doc(window.firebaseDb, "coupons", activeCoupon.code), {
                         timesUsed: increment(1),
@@ -646,7 +728,7 @@
                     }).catch(() => {});
                 }
 
-                // Fetch updated balance for receipt
+                // 4. Fetch updated balance for receipt
                 try {
                     const snap = await getDoc(doc(window.firebaseDb, "pilot_users", uid));
                     if (snap.exists()) {
@@ -655,9 +737,31 @@
                 } catch(e){}
             }
 
-            // Show success receipt modal
+            // 5. AUTOMATED EMAIL DISPATCH: Send credentials email with User ID and Plan Details
+            try {
+                await fetch('/.netlify/functions/send-login-notification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'PILOT_SUBSCRIPTION_WELCOME',
+                        userEmail: email,
+                        notificationEmail: email,
+                        userId: uid,
+                        planName: plan.name,
+                        credits: plan.credits,
+                        amountPaid: amountPaid,
+                        paymentId: paymentId,
+                        time: now
+                    })
+                });
+            } catch (mailErr) {
+                console.warn("[PAYMENT MAIL DISPATCH WARNING]:", mailErr);
+            }
+
+            // 6. Show success receipt modal
             document.getElementById('success-plan-title').textContent = `${plan.name} Activated`;
             document.getElementById('succ-uid').textContent = uid;
+            document.getElementById('succ-email').textContent = email;
             document.getElementById('succ-credits').textContent = `+${plan.credits} Credits`;
             document.getElementById('succ-balance').textContent = `${newTotal} Credits`;
             document.getElementById('succ-tx').textContent = paymentId;
