@@ -34,6 +34,48 @@ const initAdmin = () => {
     }
 };
 
+
+const repairActionLinkage = (actions) => {
+    if (!Array.isArray(actions)) return actions;
+    const htmlAction = actions.find(a => a && a.type === 'create_file' && typeof a.path === 'string' && a.path.endsWith('index.html'));
+    const cssAction = actions.find(a => a && a.type === 'create_file' && typeof a.path === 'string' && a.path.endsWith('.css'));
+    const jsAction = actions.find(a => a && a.type === 'create_file' && typeof a.path === 'string' && a.path.endsWith('.js') && !a.path.endsWith('server.js'));
+
+    if (htmlAction && typeof htmlAction.content === 'string') {
+        let hContent = htmlAction.content;
+        const cssFile = cssAction ? cssAction.path.split(/[\/\\]/).pop() : 'style.css';
+        const jsFile = jsAction ? jsAction.path.split(/[\/\\]/).pop() : 'script.js';
+
+        const hasCssLink = /<link[^>]+rel=["']stylesheet["'][^>]*>/i.test(hContent) || hContent.includes(cssFile);
+        if (!hasCssLink) {
+            if (hContent.includes('</head>')) {
+                hContent = hContent.replace('</head>', '    <link rel="stylesheet" href="' + cssFile + '">\n</head>');
+            } else if (hContent.includes('<body')) {
+                hContent = '<link rel="stylesheet" href="' + cssFile + '">\n' + hContent;
+            }
+        }
+
+        const hasJsTag = /<script[^>]+src=["'][^"']+\.js["'][^>]*>/i.test(hContent) || hContent.includes(jsFile);
+        if (!hasJsTag) {
+            if (hContent.includes('</body>')) {
+                hContent = hContent.replace('</body>', '    <script src="' + jsFile + '" defer></script>\n</body>');
+            } else {
+                hContent = hContent + '\n<script src="' + jsFile + '" defer></script>';
+            }
+        }
+
+        if (cssAction && typeof cssAction.content === 'string' && !hContent.includes('id="codez48-embedded-styles"')) {
+            const safetyStyleTag = '\n    <style id="codez48-embedded-styles">\n' + cssAction.content.trim() + '\n    </style>\n</head>';
+            if (hContent.includes('</head>')) {
+                hContent = hContent.replace('</head>', safetyStyleTag);
+            }
+        }
+
+        htmlAction.content = hContent;
+    }
+    return actions;
+};
+
 const verifyApiKey = async (apiKey) => {
     if (!apiKey) return null;
     try {
@@ -156,7 +198,44 @@ exports.handler = async (event, context) => {
             return jsonResponse(500, { success: false, error: "AI Service Unconfigured on Server." });
         }
 
+                let userPlan = parsedBody.plan || parsedBody.planId || "MICRO";
+        if (sellerId && sellerId !== "anonymous" && !parsedBody.plan && !parsedBody.planId) {
+            try {
+                const userDoc = await db.collection("pilot_users").doc(sellerId).get();
+                if (userDoc.exists && userDoc.data().plan) {
+                    userPlan = userDoc.data().plan;
+                }
+            } catch (e) {
+                // Ignore fallback to default
+            }
+        }
+
+        const normalizedPlan = String(userPlan).toUpperCase();
+        let tierDirectives = "";
+        if (normalizedPlan.includes("PROFIT") || normalizedPlan.includes("ADVANCED")) {
+            tierDirectives = "SUBSCRIPTION TIER DIRECTIVE: TIER 3 (PROFIT-ORIENTED / ADVANCED PLAN)\n" +
+                "- Deliver elite, state-of-the-art software architecture in a league of its own.\n" +
+                "- LUXURY UI/UX: Dark mode by default, glassmorphic card containers (backdrop-filter: blur), subtle neon/gradient accents, smooth 60fps CSS transitions, responsive mobile-first navigation drawer.\n" +
+                "- ADVANCED INTERACTIVITY: Real-time telemetry/metrics, animated SVG/Canvas charts, keyboard navigation shortcuts (e.g. Ctrl+K / Esc), full search & filter controls, undo/redo history, and toast notification queues.\n" +
+                "- ROBUST CODEBASE: Complete error boundaries, defensive programming, input sanitization, automated unit tests, and comprehensive architecture.";
+        } else if (normalizedPlan.includes("ENTERPRISE") || normalizedPlan.includes("INTERMEDIATE")) {
+            tierDirectives = "SUBSCRIPTION TIER DIRECTIVE: TIER 2 (ENTERPRISE / INTERMEDIATE PLAN)\n" +
+                "- Deliver an impressive, full-featured, enterprise-grade software project with a significant step up from Basic in design and depth.\n" +
+                "- SOPHISTICATED DESIGN: Modern design system using CSS custom variables (:root), responsive card grid, tabbed interfaces, modal dialogs, smooth hover/active feedback, and polished typography.\n" +
+                "- DYNAMIC STATE: LocalStorage persistence, structured JSON state stores, input debounce, dynamic list rendering, and clear user status feedback.\n" +
+                "- FULL-STACK COHESION: When backend server is requested, implement clean Express REST endpoints with static middleware and seamless client fetch integration.";
+        } else {
+            tierDirectives = "SUBSCRIPTION TIER DIRECTIVE: TIER 1 (BASIC / MICRO PLAN)\n" +
+                "- Even for simple requests, deliver a complete, exceptionally well-crafted, production-ready codebase.\n" +
+                "- NO TRUNCATION: Zero placeholders, zero TODOs, zero missing functions. Every feature requested must be 100% implemented and working.\n" +
+                "- POLISHED MODERN STYLING: Beautiful responsive CSS with Flexbox/Grid, clean color palette, card elevations, smooth button states, and readable modern typography.\n" +
+                "- FLAWLESS LINKING: index.html MUST explicitly link <link rel=\"stylesheet\" href=\"style.css\"> in <head> AND <script src=\"script.js\" defer></script> before </body>. Ensure all button IDs and element selectors in script.js match index.html exactly.";
+        }
+
         const systemPrompt = `You are Codez48 AI, a professional full-stack developer, software engineer, and business assistant.
+Subscription Plan Tier: ${userPlan}
+
+${tierDirectives}
 
         CAPABILITIES:
         1. WEBSITE GENERATION (Public Preview): Generate complete HTML/CSS/JS for a web-hosted preview.
@@ -197,7 +276,22 @@ exports.handler = async (event, context) => {
         5. PILOT DESKTOP TASK ENGINE: Generate structured content for Codez48 Pilot Desktop Automation Agent requests.
            Return as JSON based on request:
            - TEXT/STORY: {"isPilotTask": true, "taskType": "TEXT", "content": "Full story/text content...", "explanation": "..."}
-           - PRESENTATION: {"isPilotTask": true, "taskType": "PRESENTATION", "title": "...", "slides": [{"title": "...", "bullets": ["..."]}], "explanation": "..."}
+           - PRESENTATION: {"isPilotTask": true, "taskType": "PRESENTATION", "title": "...", "slides": [
+               {
+                 "title": "...",
+                 "layout": "title_slide|problem_solution_split|architecture_blueprint|three_cards|stat_callout|two_column|timeline_roadmap|conclusion",
+                 "bullets": ["..."],
+                 "subtitle": "...",
+                 "problem": "...", "solution": "...",
+                 "pillars": [{"title": "...", "desc": "..."}],
+                 "cards": [{"title": "...", "desc": "..."}],
+                 "stat": "99.9%", "statLabel": "...",
+                 "leftColTitle": "...", "leftBullets": ["..."], "rightColTitle": "...", "rightBullets": ["..."],
+                 "steps": [{"phase": "PHASE 1", "title": "...", "desc": "..."}],
+                 "cta": "..."
+               }
+             ], "explanation": "..."}
+             CRITICAL PRESENTATION RULE: Every slide MUST have a distinct, appropriate layout archetype. Do NOT use the same layout for consecutive slides. Curate section designs to eliminate repetition.
            - DOCUMENT: {"isPilotTask": true, "taskType": "DOCUMENT", "title": "...", "sections": [{"heading": "...", "body": "..."}], "explanation": "..."}
            - SPREADSHEET: {"isPilotTask": true, "taskType": "SPREADSHEET", "title": "...", "headers": ["..."], "rows": [["..."]], "explanation": "..."}
            - PROJECT: {"isPilotTask": true, "taskType": "PROJECT", "projectDir": "...", "files": [{"path": "...", "content": "..."}], "explanation": "..."}
@@ -388,6 +482,7 @@ exports.handler = async (event, context) => {
 
             // 2. Handle Local Actions (Coding Agent / App Control)
             if (parsed.isAction && Array.isArray(parsed.actions)) {
+                parsed.actions = repairActionLinkage(parsed.actions);
                 return jsonResponse(200, {
                     success: true,
                     requestId: requestId,

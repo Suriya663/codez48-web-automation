@@ -270,6 +270,163 @@ export const CouponAndPaymentTool = {
         }
     },
 
+    /**
+     * DEVELOPER ONLY: Directly assign a subscription plan to a client UID (Bypassing payment)
+     */
+    async adminAssignPlan(targetUid, planId, clientEmail = '') {
+        if (!this.isDeveloper) {
+            alert("Unauthorized. Only the developer (codez4848@gmail.com) can manually assign subscription plans.");
+            return false;
+        }
+
+        const uid = String(targetUid || '').trim().toUpperCase();
+        if (!uid || uid.length < 5) {
+            alert("Please enter a valid Client User ID (e.g. USR-CDZ48-XXXX-XXXX).");
+            return false;
+        }
+
+        const plan = this.plans[planId] || this.plans.MICRO;
+        const now = new Date().toISOString();
+        const feedbackEl = document.getElementById('admin-assign-feedback');
+        const submitBtn = document.getElementById('btn-admin-assign-plan');
+
+        if (feedbackEl) {
+            feedbackEl.innerHTML = `<span class="text-indigo-600 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Activating ${plan.name} for ${uid}...</span>`;
+        }
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+            // Retrieve current user document if it exists to preserve existing details
+            let existingBalance = 0;
+            let existingEmail = '';
+            try {
+                const existingSnap = await getDoc(doc(db, "pilot_users", uid));
+                if (existingSnap.exists()) {
+                    const existingData = existingSnap.data();
+                    existingBalance = Number(existingData.creditBalance) || 0;
+                    existingEmail = existingData.userEmail || '';
+                }
+            } catch (_) {}
+
+            const finalEmail = clientEmail || existingEmail || 'rajnaga75556@gmail.com';
+            const paymentId = `ADMIN_BYPASS_${Date.now()}`;
+
+            const userUpdate = {
+                userId: uid,
+                userEmail: finalEmail,
+                plan: plan.id,
+                planName: plan.name,
+                creditBalance: increment(plan.credits),
+                planActivatedAt: now,
+                lastPaymentId: paymentId,
+                lastPaymentAmount: 0,
+                assignedByDeveloper: DEVELOPER_EMAIL,
+                bypassPayment: true,
+                updatedAt: now
+            };
+
+            await setDoc(doc(db, "pilot_users", uid), userUpdate, { merge: true });
+
+            // Record audit transaction in pilot_transactions
+            const txId = `tx_admin_${Date.now()}`;
+            await setDoc(doc(db, "pilot_transactions", txId), {
+                id: txId,
+                userId: uid,
+                userEmail: finalEmail,
+                planId: plan.id,
+                planName: plan.name,
+                amount: 0,
+                creditsAdded: plan.credits,
+                paymentId,
+                status: 'ADMIN_ACTIVATED',
+                assignedBy: DEVELOPER_EMAIL,
+                bypassPayment: true,
+                timestamp: now
+            });
+
+            const newTotalCredits = existingBalance + plan.credits;
+
+            if (feedbackEl) {
+                feedbackEl.innerHTML = `
+                    <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 font-sans space-y-1 mt-2">
+                        <div class="font-black flex items-center gap-1.5 text-xs">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i> Plan Successfully Activated! Payment Step Bypassed.
+                        </div>
+                        <div class="text-[11px] text-slate-700">
+                            <strong>User ID:</strong> <span class="font-mono">${uid}</span> |
+                            <strong>Assigned Plan:</strong> <span class="font-bold text-indigo-700">${plan.name}</span> |
+                            <strong>Credits Granted:</strong> <span class="font-bold text-emerald-700">+${plan.credits}</span> (New Balance: ${newTotalCredits} Credits)
+                        </div>
+                    </div>
+                `;
+            }
+
+            alert(`✔ Success! ${plan.name} activated for User ID: ${uid}.\n+${plan.credits} credits added (New Balance: ${newTotalCredits}).\nPayment bypassed.`);
+            return true;
+        } catch (err) {
+            console.error("Failed to assign plan:", err);
+            if (feedbackEl) {
+                feedbackEl.innerHTML = `<span class="text-rose-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Error: ${err.message}</span>`;
+            }
+            alert("Failed to assign plan: " + err.message);
+            return false;
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    },
+
+    /**
+     * DEVELOPER ONLY: Look up client user details, current plan, and credit balance
+     */
+    async lookupClientUser(targetUid) {
+        const uid = String(targetUid || '').trim().toUpperCase();
+        const feedbackEl = document.getElementById('admin-assign-feedback');
+        if (!uid) {
+            alert("Please enter a User ID to look up.");
+            return;
+        }
+
+        if (feedbackEl) {
+            feedbackEl.innerHTML = `<span class="text-slate-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Checking Firestore for ${uid}...</span>`;
+        }
+
+        try {
+            const userSnap = await getDoc(doc(db, "pilot_users", uid));
+            if (userSnap.exists()) {
+                const u = userSnap.data();
+                if (feedbackEl) {
+                    feedbackEl.innerHTML = `
+                        <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-950 font-sans space-y-1 mt-2">
+                            <div class="font-black text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-check text-indigo-600"></i> Existing User Account Found
+                            </div>
+                            <div class="text-[11px] text-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                                <div><strong>User ID:</strong> <span class="font-mono">${u.userId}</span></div>
+                                <div><strong>Email:</strong> ${u.userEmail || 'Not specified'}</div>
+                                <div><strong>Current Plan:</strong> <span class="font-bold text-indigo-700">${u.planName || u.plan || 'Trial Free Plan'}</span></div>
+                                <div><strong>Credit Balance:</strong> <span class="font-bold text-emerald-700">${u.creditBalance || 0} Credits</span></div>
+                                <div><strong>Activated:</strong> ${u.planActivatedAt ? new Date(u.planActivatedAt).toLocaleDateString() : 'N/A'}</div>
+                                <div><strong>Last Payment ID:</strong> <span class="font-mono text-[10px]">${u.lastPaymentId || 'None'}</span></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                if (feedbackEl) {
+                    feedbackEl.innerHTML = `
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 font-sans text-xs mt-2">
+                            <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i> User ID <strong>${uid}</strong> is not yet in Firestore. Assigning a plan will automatically create their account and initialize their balance!
+                        </div>
+                    `;
+                }
+            }
+        } catch (err) {
+            if (feedbackEl) {
+                feedbackEl.innerHTML = `<span class="text-rose-600">Lookup failed: ${err.message}</span>`;
+            }
+        }
+    },
+
     async toggleCouponStatus(code, currentStatus) {
         if (!this.isDeveloper) return;
         const nextStatus = currentStatus === 'ACTIVE' ? 'EXPIRED' : 'ACTIVE';
@@ -753,6 +910,19 @@ window.claimPilotTrialPass = () => {
     CouponAndPaymentTool.selectedPlan = 'TRIAL';
     CouponAndPaymentTool.updatePaymentPricingDisplay();
     CouponAndPaymentTool.launchRazorpayLivePayment();
+};
+
+window.handleAdminAssignPlanSubmit = async (e) => {
+    e.preventDefault();
+    const uid = document.getElementById('admin-assign-uid').value;
+    const planId = document.getElementById('admin-assign-plan-select').value;
+    const email = document.getElementById('admin-assign-email').value;
+    await CouponAndPaymentTool.adminAssignPlan(uid, planId, email);
+};
+
+window.checkTargetUserStatus = async () => {
+    const uid = document.getElementById('admin-assign-uid').value;
+    await CouponAndPaymentTool.lookupClientUser(uid);
 };
 
 // Initialize when DOM is ready
