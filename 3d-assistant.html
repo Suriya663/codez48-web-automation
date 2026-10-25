@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codez48 3D AI Assistant - Premium Floating Avatar</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>3D Floating AI Assistant - Official Codez48 Specification</title>
     <style>
         :root {
-            --bg-deep: #060913;
-            --bg-card: rgba(13, 20, 42, 0.75);
+            --bg-deep: #030712;
+            --bg-card: rgba(8, 14, 34, 0.85);
             --cyan-glow: #00e5ff;
-            --blue-glow: #0077fe;
+            --blue-accent: #0077fe;
             --text-main: #f0f6fc;
-            --text-muted: #8ba2c4;
+            --text-muted: #8ca3c7;
             --border-glow: rgba(0, 229, 255, 0.35);
         }
 
@@ -25,214 +24,217 @@
         body {
             background-color: var(--bg-deep);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 20% 25%, rgba(0, 119, 254, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 80% 75%, rgba(0, 229, 255, 0.10) 0%, transparent 50%);
+                radial-gradient(circle at 15% 20%, rgba(0, 119, 254, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(0, 229, 255, 0.12) 0%, transparent 45%);
+            padding: 30px 20px;
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1140px;
             margin: 0 auto;
-            padding: 40px 24px;
         }
 
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 36px;
-        }
-
-        .badge-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 999px;
-            background: rgba(0, 229, 255, 0.1);
-            border: 1px solid var(--border-glow);
-            color: var(--cyan-glow);
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            margin-bottom: 16px;
+            margin-bottom: 28px;
         }
 
         .header h1 {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #ffffff 30%, #70e1ff 80%, #0088ff 100%);
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 40%, #70e1ff 80%, #0088ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .header p {
             color: var(--text-muted);
-            font-size: 15px;
-            max-width: 680px;
-            margin: 0 auto;
-            line-height: 1.5;
-        }
-
-        /* 4-State Visual Gallery */
-        .states-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .state-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 18px;
-            padding: 24px 16px;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .state-card:hover {
-            border-color: var(--cyan-glow);
-            box-shadow: 0 8px 30px rgba(0, 229, 255, 0.2);
-            transform: translateY(-3px);
-        }
-
-        .state-card.active {
-            border-color: var(--cyan-glow);
-            box-shadow: 0 0 25px rgba(0, 229, 255, 0.35);
-            background: rgba(0, 229, 255, 0.06);
-        }
-
-        .stage-canvas-box {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 16px;
-            position: relative;
-        }
-
-        .state-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 6px;
-        }
-
-        .state-desc {
-            font-size: 12.5px;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
-        /* Live Control Center */
-        .control-panel {
-            background: var(--bg-card);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .panel-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: #ffffff;
-            padding: 10px 18px;
-            border-radius: 12px;
-            font-size: 13.5px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            background: rgba(0, 229, 255, 0.15);
-            border-color: var(--cyan-glow);
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
-            transform: translateY(-1px);
-        }
-
-        .btn.active {
-            background: linear-gradient(135deg, #00e5ff 0%, #0077fe 100%);
-            border-color: #70e1ff;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
-        }
-
-        .input-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .text-input {
-            flex: 1;
-            background: rgba(5, 10, 24, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: #ffffff;
             font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s ease;
+            max-width: 650px;
+            margin: 0 auto;
         }
 
-        .text-input:focus {
-            border-color: var(--cyan-glow);
-            box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+        /* 4-Stage Exact Reproduction Showcase */
+        .hero-showcase {
+            background: rgba(4, 9, 24, 0.95);
+            border: 1px solid rgba(0, 229, 255, 0.35);
+            box-shadow: 0 0 35px rgba(0, 229, 255, 0.25), inset 0 0 30px rgba(0, 119, 254, 0.15);
+            border-radius: 24px;
+            padding: 36px 20px;
+            margin-bottom: 30px;
+            position: relative;
         }
 
-        /* Proximity Notice Card */
-        .notice-card {
-            margin-top: 24px;
-            padding: 16px 20px;
-            border-radius: 14px;
-            background: rgba(0, 229, 255, 0.08);
+        .stages-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .stage-item {
+            flex: 1;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .stage-visual {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-arrow {
+            font-size: 22px;
+            color: rgba(0, 229, 255, 0.45);
+            flex-shrink: 0;
+            user-select: none;
+            padding: 0 4px;
+        }
+
+        .stage-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.2px;
+        }
+
+        /* Spec Prompt Card matching reference image */
+        .prompt-card {
+            margin-top: 28px;
+            background: rgba(8, 16, 40, 0.85);
             border: 1px solid rgba(0, 229, 255, 0.25);
+            border-radius: 16px;
+            padding: 18px 22px;
             display: flex;
             align-items: flex-start;
             gap: 14px;
         }
 
-        .notice-card svg {
-            flex-shrink: 0;
+        .prompt-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(0, 229, 255, 0.15);
+            border: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: var(--cyan-glow);
-            margin-top: 2px;
+            font-size: 16px;
+            flex-shrink: 0;
         }
 
-        .notice-title {
+        .prompt-content h3 {
             font-size: 13.5px;
             font-weight: 700;
-            color: #ffffff;
+            color: var(--cyan-glow);
             margin-bottom: 4px;
         }
 
-        .notice-desc {
+        .prompt-content p {
             font-size: 12.5px;
-            color: var(--text-muted);
-            line-height: 1.45;
+            color: #c0d3ec;
+            line-height: 1.5;
+        }
+
+        /* Interactive Controls (Tight, compact icons) */
+        .controls-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+        }
+
+        .controls-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+        }
+
+        .btn-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px; /* Tightly clustered buttons as requested */
+            margin-bottom: 16px;
+        }
+
+        .btn-compact {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 229, 255, 0.35);
+            color: #ffffff;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.16s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-compact:hover {
+            background: rgba(0, 229, 255, 0.2);
+            border-color: var(--cyan-glow);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+            transform: scale(1.03);
+        }
+
+        .btn-compact.active {
+            background: linear-gradient(135deg, #00e5ff 0%, #0077fe 100%);
+            border-color: #70e1ff;
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.55);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .custom-input {
+            flex: 1;
+            background: rgba(4, 9, 24, 0.9);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 10px;
+            padding: 9px 14px;
+            color: #ffffff;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .custom-input:focus {
+            border-color: var(--cyan-glow);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+        }
+
+        @keyframes threeDotPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.85); }
+            50% { opacity: 1; transform: scale(1.15); }
         }
     </style>
 </head>
@@ -240,194 +242,210 @@
 
     <div class="container">
         <div class="header">
-            <div class="badge-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 6v6l4 2"></path>
-                </svg>
-                OFFICIAL 3D AI ASSISTANT AVATAR
-            </div>
-            <h1>Clean, Minimal, Premium 3D AI Assistant</h1>
-            <p>Genuine 3D WebGL robot head with physical glossy materials, expressive glowing eyes, animated smiling mouth, 3D rotating halo, and snug cursor proximity.</p>
+            <h1>3D Floating AI Assistant Avatar</h1>
+            <p>Pixel-perfect reproduction of official reference design with glossy white helmet, cyan glowing eyes, antenna with glowing orb, earcups, and tight cursor proximity.</p>
         </div>
 
-        <!-- 4-State Visual Breakdown -->
-        <div class="states-grid">
-            <div class="state-card" id="card-idle" onclick="switchState('idle', 'AI Ready')">
-                <div class="stage-canvas-box" id="stage-idle"></div>
-                <div class="state-title">1. Idle (AI Ready)</div>
-                <div class="state-desc">Open glowing cyan eyes, gentle sweet smile, and subtle floating bobbing.</div>
-            </div>
-
-            <div class="state-card" id="card-thinking" onclick="switchState('thinking', 'Analyzing request • • •')">
-                <div class="stage-canvas-box" id="stage-thinking"></div>
-                <div class="state-title">2. Thinking / Loading</div>
-                <div class="state-desc">Closed eyes (︶ ︶), spinning circular loading ring, and curious 3D tilt.</div>
-            </div>
-
-            <div class="state-card" id="card-generating" onclick="switchState('generating', 'Generating code & solution...')">
-                <div class="stage-canvas-box" id="stage-generating"></div>
-                <div class="state-title">3. Generating (3D Rotate)</div>
-                <div class="state-desc">Smooth continuous 3D rotation on vertical axis with orbiting aura.</div>
-            </div>
-
-            <div class="state-card" id="card-completed" onclick="switchState('completed', 'Task Completed! ✨')">
-                <div class="stage-canvas-box" id="stage-completed"></div>
-                <div class="state-title">4. Completed (Back to Active)</div>
-                <div class="state-desc">Smooth de-rotation to front view, happy smile, and message bubble.</div>
-            </div>
-        </div>
-
-        <!-- Live Interactive Control Center -->
-        <div class="control-panel">
-            <div class="panel-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-glow)" stroke-width="2">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                Live Assistant State & Cursor Proximity Controls
-            </div>
-
-            <div class="button-group">
-                <button class="btn active" id="btn-idle" onclick="switchState('idle', 'AI Ready')">
-                    <span>🟢</span> Idle State
-                </button>
-                <button class="btn" id="btn-thinking" onclick="switchState('thinking', 'Processing your prompt • • •')">
-                    <span>🔄</span> Thinking State
-                </button>
-                <button class="btn" id="btn-generating" onclick="switchState('generating', 'Generating in 3D...')">
-                    <span>💫</span> Generating State
-                </button>
-                <button class="btn" id="btn-completed" onclick="switchState('completed', 'Task Completed! ✨')">
-                    <span>✅</span> Completed State
-                </button>
-                <button class="btn" id="btn-toggle-cursor" onclick="toggleCursorFollow()">
-                    <span id="cursor-icon">🖱️</span> Follow Mouse (Snug Proximity)
-                </button>
-                <button class="btn" id="btn-show-canteen" onclick="showCanteenOptions()">
-                    <span>🍱</span> Show Canteen / Content Options
-                </button>
-            </div>
-
-            <div class="input-row">
-                <input type="text" class="text-input" id="custom-message-input" placeholder="Type a message to display in the floating bubble near the cursor..." value="Task complete! Canteen order is ready.">
-                <button class="btn active" onclick="sendCustomMessage()">
-                    <span>💬</span> Send to Assistant
-                </button>
-            </div>
-
-            <div class="notice-card">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <div>
-                    <div class="notice-title">Snug Cursor Proximity Calibration</div>
-                    <div class="notice-desc">The assistant and newly generated elements are anchored at a snug <strong>+8px, +6px</strong> cursor offset, eliminating the distance drift so content and canteen options appear directly beside your cursor and remain fully visible.</div>
+        <!-- 4-Stage Exact Reproduction Showcase matching user uploaded image -->
+        <div class="hero-showcase">
+            <div class="stages-flow">
+                <!-- 1. Idle -->
+                <div class="stage-item">
+                    <div class="stage-visual" id="avatar-stage-idle"></div>
+                    <div class="stage-title">1. Idle (AI Ready)</div>
                 </div>
+
+                <div class="flow-arrow">›</div>
+
+                <!-- 2. Thinking / Loading -->
+                <div class="stage-item">
+                    <div class="stage-visual" id="avatar-stage-thinking"></div>
+                    <div class="stage-title">2. Thinking / Loading</div>
+                </div>
+
+                <div class="flow-arrow">›</div>
+
+                <!-- 3. Generating (3D Rotate) -->
+                <div class="stage-item">
+                    <div class="stage-visual" id="avatar-stage-generating"></div>
+                    <div class="stage-title">3. Generating (3D Rotate)</div>
+                </div>
+
+                <div class="flow-arrow">›</div>
+
+                <!-- 4. Completed -->
+                <div class="stage-item">
+                    <div class="stage-visual" id="avatar-stage-completed"></div>
+                    <div class="stage-title">4. Completed (Back to Active)</div>
+                </div>
+            </div>
+
+            <!-- Reference Prompt Note Card -->
+            <div class="prompt-card">
+                <div class="prompt-icon">📄</div>
+                <div class="prompt-content">
+                    <h3>Design Specification</h3>
+                    <p>3D animated AI assistant icon in a circular badge with a cute face, glowing cyan eyes, and smile. During processing, smoothly rotates in 3D, and the face transitions into closed curved eyes with circular loading crescents. Upon completion, restores open eyes, happy smile, and message bubble.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Sandbox Controls (Snug, Tightly Clustered) -->
+        <div class="controls-card">
+            <div class="controls-title">
+                <span>⚡</span> Interactive Live 3D Assistant Controls
+            </div>
+
+            <div class="btn-toolbar">
+                <button class="btn-compact active" id="btn-idle" onclick="setLiveState('idle', '')">
+                    <span>🟢</span> 1. Idle
+                </button>
+                <button class="btn-compact" id="btn-thinking" onclick="setLiveState('thinking', '')">
+                    <span>🔄</span> 2. Thinking
+                </button>
+                <button class="btn-compact" id="btn-generating" onclick="setLiveState('generating', '')">
+                    <span>💫</span> 3. Generating
+                </button>
+                <button class="btn-compact" id="btn-completed" onclick="setLiveState('completed', 'Task Completed! ✨')">
+                    <span>✅</span> 4. Completed
+                </button>
+                <button class="btn-compact active" id="btn-cursor" onclick="toggleCursor()">
+                    <span id="cursor-indicator">🖱️</span> Follow Cursor (Snug +8px, +6px)
+                </button>
+                <button class="btn-compact" id="btn-canteen" onclick="toggleCanteenOptions()">
+                    <span>🍱</span> Canteen / Dosa Options
+                </button>
+            </div>
+
+            <div class="input-group">
+                <input type="text" class="custom-input" id="msg-input" placeholder="Enter message to display in the upper-right bubble..." value="Dosa thickness adjusted! Ready at canteen.">
+                <button class="btn-compact active" onclick="dispatchCustomMessage()">
+                    <span>💬</span> Update Bubble
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Vendor Three.js script -->
+    <!-- Three.js Library -->
     <script src="js/vendor/three.min.js"></script>
     <script src="js/three-ai-assistant.js"></script>
 
     <script>
-        let mainAssistant = null;
-        let isCursorFollowing = true;
+        let liveFloatingAssistant = null;
+        let isCursorActive = true;
+        let canteenActive = false;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize the main interactive floating assistant
-            mainAssistant = new ThreeAiAssistant({
+            // 1. Render the 4 exact states in the showcase banner
+            new ThreeAiAssistant({
+                container: document.getElementById('avatar-stage-idle'),
+                size: 130,
+                initialState: 'idle',
+                cursorFollow: false,
+                floating: true,
+                showBubble: true
+            });
+
+            new ThreeAiAssistant({
+                container: document.getElementById('avatar-stage-thinking'),
+                size: 130,
+                initialState: 'thinking',
+                cursorFollow: false,
+                floating: true,
+                showBubble: false
+            });
+
+            new ThreeAiAssistant({
+                container: document.getElementById('avatar-stage-generating'),
+                size: 130,
+                initialState: 'generating',
+                cursorFollow: false,
+                floating: true,
+                showBubble: false
+            });
+
+            new ThreeAiAssistant({
+                container: document.getElementById('avatar-stage-completed'),
+                size: 130,
+                initialState: 'completed',
+                cursorFollow: false,
+                floating: true,
+                showBubble: true
+            });
+
+            // 2. Initialize the live floating cursor assistant
+            liveFloatingAssistant = new ThreeAiAssistant({
                 size: 96,
                 initialState: 'idle',
-                initialMessage: 'AI Ready',
                 cursorFollow: true,
-                cursorOffset: { x: 8, y: 6 },
+                cursorOffset: { x: 8, y: 6 }, // Snug immediate offset
+                showBubble: true,
                 onActionClick: (actionId, opt) => {
-                    alert(`Selected Option: ${opt.label} (${actionId})`);
-                    mainAssistant.showMessage(`Selected: ${opt.label}! ✨`, 3500);
+                    liveFloatingAssistant.showMessage(`Selected: ${opt.label}! ✨`, 3000);
                 }
             });
 
-            // Set up Canteen / Content Options by default so they are immediately visible
-            mainAssistant.setContentOptions([
-                { label: 'Standard Dosa', actionId: 'dosa_standard', primary: true },
+            // Set Canteen & Dosa thickness options immediately adjacent
+            liveFloatingAssistant.setContentOptions([
+                { label: 'Standard Dosa', actionId: 'dosa_std', primary: true },
                 { label: 'Crisp & Thin', actionId: 'dosa_thin' },
                 { label: 'Canteen Order', actionId: 'canteen_confirm', primary: true }
             ]);
-
-            // Create 4 preview avatars in the 4 grid state cards
-            createPreviewAvatar('stage-idle', 'idle');
-            createPreviewAvatar('stage-thinking', 'thinking');
-            createPreviewAvatar('stage-generating', 'generating');
-            createPreviewAvatar('stage-completed', 'completed');
+            canteenActive = true;
         });
 
-        function createPreviewAvatar(containerId, state) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+        function setLiveState(stateName, msg) {
+            if (!liveFloatingAssistant) return;
+            liveFloatingAssistant.setState(stateName, msg);
 
-            new ThreeAiAssistant({
-                container: container,
-                size: 110,
-                initialState: state,
-                cursorFollow: false,
-                floating: true,
-                autoHideMessageMs: 0
-            });
-        }
-
-        function switchState(stateName, msg) {
-            if (!mainAssistant) return;
-
-            mainAssistant.setState(stateName, msg);
-
-            // Update UI buttons
-            document.querySelectorAll('.btn').forEach(b => {
+            document.querySelectorAll('.btn-toolbar .btn-compact').forEach(b => {
                 if (b.id === `btn-${stateName}`) b.classList.add('active');
-                else if (b.id.startsWith('btn-') && b.id !== 'btn-toggle-cursor' && b.id !== 'btn-show-canteen') b.classList.remove('active');
+                else if (b.id.startsWith('btn-') && b.id !== 'btn-cursor' && b.id !== 'btn-canteen') b.classList.remove('active');
             });
-
-            // Highlight card
-            document.querySelectorAll('.state-card').forEach(c => c.classList.remove('active'));
-            const activeCard = document.getElementById(`card-${stateName}`);
-            if (activeCard) activeCard.classList.add('active');
         }
 
-        function toggleCursorFollow() {
-            if (!mainAssistant) return;
-            isCursorFollowing = !isCursorFollowing;
-            mainAssistant.setCursorFollow(isCursorFollowing, { x: 8, y: 6 });
+        function toggleCursor() {
+            if (!liveFloatingAssistant) return;
+            isCursorActive = !isCursorActive;
+            liveFloatingAssistant.setCursorFollow(isCursorActive, { x: 8, y: 6 });
 
-            const btn = document.getElementById('btn-toggle-cursor');
-            const icon = document.getElementById('cursor-icon');
-            if (isCursorFollowing) {
+            const btn = document.getElementById('btn-cursor');
+            const ind = document.getElementById('cursor-indicator');
+            if (isCursorActive) {
                 btn.classList.add('active');
-                icon.textContent = '🖱️';
-                mainAssistant.showMessage('Snug Cursor Follow: ON (+8px, +6px)', 3000);
+                ind.textContent = '🖱️';
+                liveFloatingAssistant.showMessage('Cursor Proximity: Snug', 2500);
             } else {
                 btn.classList.remove('active');
-                icon.textContent = '📍';
-                mainAssistant.showMessage('Docked to bottom-right', 3000);
+                ind.textContent = '📍';
+                liveFloatingAssistant.showMessage('Docked to Corner', 2500);
             }
         }
 
-        function showCanteenOptions() {
-            if (!mainAssistant) return;
-            mainAssistant.showMessage('Select Canteen / Dosa Setting:');
-            mainAssistant.setContentOptions([
-                { label: 'Standard Dosa', actionId: 'dosa_standard', primary: true },
-                { label: 'Crisp & Thin', actionId: 'dosa_thin' },
-                { label: 'Canteen Order', actionId: 'canteen_confirm', primary: true }
-            ]);
+        function toggleCanteenOptions() {
+            if (!liveFloatingAssistant) return;
+            canteenActive = !canteenActive;
+            const btn = document.getElementById('btn-canteen');
+
+            if (canteenActive) {
+                btn.classList.add('active');
+                liveFloatingAssistant.setContentOptions([
+                    { label: 'Standard Dosa', actionId: 'dosa_std', primary: true },
+                    { label: 'Crisp & Thin', actionId: 'dosa_thin' },
+                    { label: 'Canteen Order', actionId: 'canteen_confirm', primary: true }
+                ]);
+                liveFloatingAssistant.showMessage('Canteen Options Visible');
+            } else {
+                btn.classList.remove('active');
+                liveFloatingAssistant.setContentOptions([]);
+                liveFloatingAssistant.showMessage('');
+            }
         }
 
-        function sendCustomMessage() {
-            const text = document.getElementById('custom-message-input').value.trim();
-            if (text && mainAssistant) {
-                mainAssistant.showMessage(text, 6000);
+        function dispatchCustomMessage() {
+            const val = document.getElementById('msg-input').value.trim();
+            if (val && liveFloatingAssistant) {
+                liveFloatingAssistant.showMessage(val, 5000);
             }
         }
     </script>
