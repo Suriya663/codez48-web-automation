@@ -39,9 +39,9 @@ export const CouponAndPaymentTool = {
 
     plans: {
         TRIAL: { id: 'TRIAL', name: 'Starter Trial Pass', price: 1, credits: 50, isTrial: true },
-        MICRO: { id: 'MICRO', name: 'Micro Plan', price: 299, credits: 300, desc: 'Clean B&W PPT & Word document automation' },
-        ENTERPRISE: { id: 'ENTERPRISE', name: 'Enterprise Plan', price: 599, credits: 700, desc: 'High-quality code, static websites & unlimited WhatsApp automation' },
-        PROFIT_ORIENTED: { id: 'PROFIT_ORIENTED', name: 'Profit-Oriented Plan', price: 999, credits: 1500, desc: 'Top-tier design with real-time Voice AI & WhatsApp Voice Supervisor' }
+        MICRO: { id: 'MICRO', name: 'Micro Plan', price: 299, credits: 300, interactionRate: 2, docCost: 2, whatsAppAllowed: false, desc: '1 credit per 2 messages | 2 credits per doc | Clean B&W output' },
+        ENTERPRISE: { id: 'ENTERPRISE', name: 'Enterprise Plan', price: 599, credits: 700, interactionRate: 3, docCost: 1, whatsAppAllowed: true, whatsAppCost: 1, desc: '1 credit per 3 messages | 1 credit per doc | WhatsApp 1 credit/msg' },
+        PROFIT_ORIENTED: { id: 'PROFIT_ORIENTED', name: 'Profit-Oriented Plan', price: 999, credits: 1500, interactionRate: 4, docCost: 1, whatsAppAllowed: true, whatsAppUnlimited: true, desc: '1 credit per 4 messages | 1 credit per doc | Unlimited WhatsApp & Voice AI' }
     },
 
     sanitizeUserId(raw) {

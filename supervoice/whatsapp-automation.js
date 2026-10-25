@@ -525,6 +525,9 @@ Strict rules:
         // Return to Home Page and verify delivery
         const verification = await this.returnToHomeAndVerifyDelivery(contact, text);
 
+        // Deduct WhatsApp Credit (1 on Enterprise, 0/unlimited on Profit-Oriented)
+        const deduct = creditVault.deductWhatsAppMessageCredit(contact, false);
+
         // Record Audit Entry
         this.recordAuditEntry({
             id: `WA-DIR-${Date.now()}`,
@@ -533,6 +536,8 @@ Strict rules:
             recipient: contact,
             direction: 'OUTBOUND_DIRECT',
             messageContent: text,
+            creditsDeducted: deduct.deducted !== undefined ? deduct.deducted : 0,
+            remainingBalance: deduct.remainingBalance !== undefined ? deduct.remainingBalance : creditVault.getBalance(),
             verifiedOnHome: true,
             chatScreenshot: chatScreenshotPath,
             homeScreenshot: verification.screenshotPath
@@ -733,6 +738,9 @@ Return ONLY valid JSON:
 
                     console.log(`\x1b[32m✔ [AUTONOMOUS REPLIER] Contextual response successfully dispatched to "${senderIdentity}".\x1b[0m`);
 
+                    // Deduct WhatsApp Credit (1 on Enterprise, 0/unlimited on Profit-Oriented)
+                    const deduct = creditVault.deductWhatsAppMessageCredit(senderIdentity, true);
+
                     // Return to Home Page and verify delivery
                     const verification = await this.returnToHomeAndVerifyDelivery(senderIdentity, reply);
 
@@ -746,6 +754,8 @@ Return ONLY valid JSON:
                         incomingContent: msg.text,
                         detectedLanguage: detectedLang,
                         replyContent: reply,
+                        creditsDeducted: deduct.deducted !== undefined ? deduct.deducted : 0,
+                        remainingBalance: deduct.remainingBalance !== undefined ? deduct.remainingBalance : creditVault.getBalance(),
                         replyDateTime: verification.timestamp,
                         deliveryVerifiedOnHome: true,
                         incomingScreenshot: incomingScreenshotPath,
