@@ -43,7 +43,7 @@
                     z-index: 999999;
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 6px;
                     transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                     opacity: 0;
                     transform: scale(0.6);
@@ -252,14 +252,19 @@
                         </div>
                     </div>
                     <span class="pilot-badge-text" id="pilot-badge-detail">Codez48 Autonomous Pilot</span>
+                    <div class="pilot-options-row" id="pilot-options-row" style="display: flex; gap: 4px; margin-top: 3px;">
+                        <button class="pilot-opt-btn" onclick="window.dispatchEvent(new CustomEvent('c48-action', {detail: 'dosa_standard'}))" style="pointer-events: auto; background: rgba(0,229,255,0.2); border: 1px solid rgba(0,229,255,0.5); color: #fff; border-radius: 6px; padding: 1px 6px; font-size: 9.5px; font-weight: 600; cursor: pointer;">Standard</button>
+                        <button class="pilot-opt-btn" onclick="window.dispatchEvent(new CustomEvent('c48-action', {detail: 'dosa_crisp'}))" style="pointer-events: auto; background: rgba(0,229,255,0.2); border: 1px solid rgba(0,229,255,0.5); color: #fff; border-radius: 6px; padding: 1px 6px; font-size: 9.5px; font-weight: 600; cursor: pointer;">Crisp Dosa</button>
+                        <button class="pilot-opt-btn" onclick="window.dispatchEvent(new CustomEvent('c48-action', {detail: 'canteen_menu'}))" style="pointer-events: auto; background: linear-gradient(135deg,#00e5ff,#0077fe); border: 1px solid #70e1ff; color: #fff; border-radius: 6px; padding: 1px 6px; font-size: 9.5px; font-weight: 600; cursor: pointer;">Canteen</button>
+                    </div>
                 </div>
             `;
             document.body.appendChild(root);
             this.container = root;
 
             window.addEventListener('mousemove', (e) => {
-                this.targetX = e.clientX + 20;
-                this.targetY = e.clientY + 18;
+                this.targetX = e.clientX + 8;
+                this.targetY = e.clientY + 6;
 
                 // Edge collision handling
                 if (this.targetX + 320 > window.innerWidth) {
@@ -299,6 +304,27 @@
             if (this.container) {
                 this.container.classList.remove('active');
             }
+        }
+
+        setOptions(optionsList) {
+            const row = document.getElementById('pilot-options-row');
+            if (!row) return;
+            if (!optionsList || optionsList.length === 0) {
+                row.style.display = 'none';
+                return;
+            }
+            row.style.display = 'flex';
+            row.innerHTML = '';
+            optionsList.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.textContent = opt.label;
+                btn.style.cssText = 'pointer-events: auto; background: ' + (opt.primary ? 'linear-gradient(135deg,#00e5ff,#0077fe)' : 'rgba(0,229,255,0.2)') + '; border: 1px solid ' + (opt.primary ? '#70e1ff' : 'rgba(0,229,255,0.5)') + '; color: #fff; border-radius: 6px; padding: 1px 6px; font-size: 9.5px; font-weight: 600; cursor: pointer;';
+                btn.onclick = () => {
+                    if (opt.action) opt.action();
+                    else window.dispatchEvent(new CustomEvent('c48-action', { detail: opt.id || opt.label }));
+                };
+                row.appendChild(btn);
+            });
         }
 
         setState(state, text) {
