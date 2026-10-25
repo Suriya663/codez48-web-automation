@@ -300,14 +300,17 @@
                 <button class="btn-compact active" id="btn-idle" onclick="setLiveState('idle', '')">
                     <span>🟢</span> 1. Idle
                 </button>
-                <button class="btn-compact" id="btn-thinking" onclick="setLiveState('thinking', '')">
-                    <span>🔄</span> 2. Thinking
+                <button class="btn-compact" id="btn-thinking" onclick="setLiveState('thinking', 'Analyzing instructions: Processing multi-modal input, verifying system state, and planning execution steps with zero clipping...')">
+                    <span>🧠</span> 2. Thinking (Full Thought)
+                </button>
+                <button class="btn-compact" id="btn-loading" onclick="setLiveState('loading', 'Loading data: Synchronizing neural vision and eye ripple pulse waves...')">
+                    <span>⚡</span> 3. Loading (Eye Ripples)
                 </button>
                 <button class="btn-compact" id="btn-generating" onclick="setLiveState('generating', '')">
-                    <span>💫</span> 3. Generating
+                    <span>💫</span> 4. Generating (3D Spin)
                 </button>
                 <button class="btn-compact" id="btn-completed" onclick="setLiveState('completed', 'Task Completed! ✨')">
-                    <span>✅</span> 4. Completed
+                    <span>✅</span> 5. Completed
                 </button>
                 <button class="btn-compact active" id="btn-cursor" onclick="toggleCursor()">
                     <span id="cursor-indicator">🖱️</span> Follow Cursor (Snug +8px, +6px)
