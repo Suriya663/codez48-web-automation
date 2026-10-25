@@ -44,31 +44,96 @@ export const CouponAndPaymentTool = {
         PROFIT_ORIENTED: { id: 'PROFIT_ORIENTED', name: 'Profit-Oriented Plan', price: 999, credits: 1500, desc: 'Top-tier design with real-time Voice AI & WhatsApp Voice Supervisor' }
     },
 
-    getUserId() {
-        const input = document.getElementById('payment-uid-input');
-        if (input && input.value.trim()) return input.value.trim();
-        const params = new URLSearchParams(window.location.search);
-        return params.get('uid') || localStorage.getItem('c48_user_uid') || localStorage.getItem('tori_seller_id') || 'USR-CDZ48-USER';
+    sanitizeUserId(raw) {
+        if (!raw || typeof raw !== 'string') return '';
+        let clean = raw.trim();
+        // Remove pipe suffixes (e.g. USR-CDZ48-...|enterprise or |ENTERPRISE)
+        if (clean.includes('|')) clean = clean.split('|')[0].trim();
+        if (clean.includes('/')) clean = clean.split('/')[0].trim();
+        // Strip box-drawing or terminal characters, non-alphanumeric except hyphen
+        clean = clean.replace(/[^A-Za-z0-9-]/g, '').trim().toUpperCase();
+        const match = clean.match(/USR-CDZ48-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
+        if (match) return match[0];
+        return clean;
     },
 
-    async checkUserEligibility() {
-        const uid = this.getUserId();
+    generateUniqueUserId() {
+        const seg = () => Math.random().toString(16).substring(2, 6).toUpperCase();
+        return 'USR-CDZ48-' + seg() + '-' + seg() + '-' + seg() + '-' + seg();
+    },
+
+    getUserId() {
+        const input = document.getElementById('payment-uid-input') || document.getElementById('page-uid-input');
+        let raw = '';
+        if (input && input.value && input.value.trim()) {
+            raw = input.value.trim();
+        } else {
+            const params = new URLSearchParams(window.location.search);
+            raw = params.get('uid') || localStorage.getItem('c48_user_uid') || localStorage.getItem('tori_seller_id') || '';
+        }
+        let clean = this.sanitizeUserId(raw);
+        if (!clean || clean === 'USR-CDZ48-USER' || clean === '1' || clean === 'GUEST_USER' || clean.length < 5) {
+            clean = this.generateUniqueUserId();
+        }
+        localStorage.setItem('c48_user_uid', clean);
+        return clean;
+    },
+
+    async refreshUserAccountStatus(targetUid) {
+        const uid = this.sanitizeUserId(targetUid || this.getUserId());
+        const displayUid = document.getElementById('modal-display-uid');
+        const displayPlan = document.getElementById('modal-display-plan');
+        const displayCredits = document.getElementById('modal-display-credits');
+        const displayStatus = document.getElementById('modal-display-status');
         const trialModalCard = document.getElementById('first-time-trial-card-modal');
-        if (!trialModalCard) return;
+        const fullCheckoutLink = document.getElementById('btn-open-full-checkout');
+        const emailInput = document.getElementById('payment-email-input');
+        const email = (emailInput && emailInput.value.trim()) || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
+
+        if (displayUid) displayUid.textContent = uid;
+        if (fullCheckoutLink) {
+            fullCheckoutLink.href = '/tools/payment.html?uid=' + encodeURIComponent(uid) + '&plan=' + encodeURIComponent(this.selectedPlan) + '&email=' + encodeURIComponent(email);
+        }
+
+        if (!uid || uid.length < 5) return;
 
         try {
             const userSnap = await getDoc(doc(db, "pilot_users", uid));
             if (userSnap.exists()) {
-                const data = userSnap.data();
-                if (data.lastPaymentId || data.trialClaimed) {
-                    trialModalCard.remove();
-                    return;
+                const u = userSnap.data();
+                const planName = u.planName || u.plan || 'Free Tier';
+                const balance = u.creditBalance !== undefined ? u.creditBalance : 0;
+                if (displayPlan) displayPlan.textContent = planName;
+                if (displayCredits) displayCredits.textContent = balance + ' Credits';
+                if (displayStatus) displayStatus.innerHTML = '<span class="text-emerald-400">● Live Active</span>';
+
+                if (u.userEmail && emailInput && !emailInput.value) {
+                    emailInput.value = u.userEmail;
+                    localStorage.setItem('c48_user_email', u.userEmail);
                 }
+
+                // First-time users only see trial: returning or paying users have trial card hidden
+                const hasPaid = !!(u.lastPaymentId || u.trialClaimed || (u.plan && u.plan !== 'PENDING' && u.plan !== 'FREE'));
+                if (trialModalCard) {
+                    if (hasPaid) {
+                        trialModalCard.classList.add('hidden');
+                    } else {
+                        trialModalCard.classList.remove('hidden');
+                    }
+                }
+            } else {
+                if (displayPlan) displayPlan.textContent = 'New Account (Free)';
+                if (displayCredits) displayCredits.textContent = '0 Credits';
+                if (displayStatus) displayStatus.innerHTML = '<span class="text-blue-400">● Ready</span>';
+                if (trialModalCard) trialModalCard.classList.remove('hidden');
             }
-            trialModalCard.classList.remove('hidden');
-        } catch (_) {
-            trialModalCard.classList.remove('hidden');
+        } catch (err) {
+            console.warn("[ACCOUNT STATUS CHECK WARNING]:", err);
         }
+    },
+
+    async checkUserEligibility() {
+        return this.refreshUserAccountStatus();
     },
 
     init() {
@@ -279,7 +344,7 @@ export const CouponAndPaymentTool = {
             return false;
         }
 
-        const uid = String(targetUid || '').trim().toUpperCase();
+        const uid = this.sanitizeUserId(targetUid);
         if (!uid || uid.length < 5) {
             alert("Please enter a valid Client User ID (e.g. USR-CDZ48-XXXX-XXXX).");
             return false;
@@ -379,7 +444,7 @@ export const CouponAndPaymentTool = {
      * DEVELOPER ONLY: Look up client user details, current plan, and credit balance
      */
     async lookupClientUser(targetUid) {
-        const uid = String(targetUid || '').trim().toUpperCase();
+        const uid = this.sanitizeUserId(targetUid);
         const feedbackEl = document.getElementById('admin-assign-feedback');
         if (!uid) {
             alert("Please enter a User ID to look up.");
@@ -861,8 +926,31 @@ window.openPilotPaymentModal = (planId = 'ENTERPRISE') => {
     const modal = document.getElementById('pilot-payment-modal');
     if (!modal) return;
     modal.classList.remove('hidden');
+
+    const cleanUid = CouponAndPaymentTool.getUserId();
+    const uidInput = document.getElementById('payment-uid-input');
+    if (uidInput) {
+        uidInput.value = cleanUid;
+        if (!uidInput.dataset.listenerAttached) {
+            uidInput.dataset.listenerAttached = 'true';
+            uidInput.addEventListener('input', (e) => {
+                let sanitized = CouponAndPaymentTool.sanitizeUserId(e.target.value);
+                if (e.target.value.includes('|') || e.target.value.includes('/')) {
+                    e.target.value = sanitized;
+                }
+                localStorage.setItem('c48_user_uid', sanitized);
+                CouponAndPaymentTool.refreshUserAccountStatus(sanitized);
+            });
+        }
+    }
+
+    const emailInput = document.getElementById('payment-email-input');
+    if (emailInput && !emailInput.value) {
+        emailInput.value = localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
+    }
+
     window.selectPilotPlan(planId || 'ENTERPRISE');
-    CouponAndPaymentTool.checkUserEligibility();
+    CouponAndPaymentTool.refreshUserAccountStatus(cleanUid);
 };
 
 window.closePilotPaymentModal = () => {
@@ -873,7 +961,7 @@ window.closePilotPaymentModal = () => {
 window.selectPilotPlan = (planId) => {
     CouponAndPaymentTool.selectedPlan = planId;
     ['MICRO', 'ENTERPRISE', 'PROFIT_ORIENTED'].forEach(p => {
-        const card = document.getElementById(`pay-card-${p}`);
+        const card = document.getElementById('pay-card-' + p);
         if (card) {
             if (p === planId) {
                 card.className = "cursor-pointer p-4 rounded-2xl border-2 border-royal bg-blue-50/50 transition-all";
@@ -883,6 +971,14 @@ window.selectPilotPlan = (planId) => {
         }
     });
     CouponAndPaymentTool.updatePaymentPricingDisplay();
+
+    const fullCheckoutLink = document.getElementById('btn-open-full-checkout');
+    if (fullCheckoutLink) {
+        const uid = CouponAndPaymentTool.getUserId();
+        const emailInput = document.getElementById('payment-email-input');
+        const email = (emailInput && emailInput.value.trim()) || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
+        fullCheckoutLink.href = '/tools/payment.html?uid=' + encodeURIComponent(uid) + '&plan=' + encodeURIComponent(planId) + '&email=' + encodeURIComponent(email);
+    }
 };
 
 window.applyPaymentCoupon = () => {

@@ -16,8 +16,20 @@ export const ApiKeyManager = {
     userKeys: [],
     recoveredKeys: [],
 
+    sanitizeUserId(raw) {
+        if (!raw || typeof raw !== 'string') return '';
+        let clean = raw.trim();
+        if (clean.includes('|')) clean = clean.split('|')[0].trim();
+        if (clean.includes('/')) clean = clean.split('/')[0].trim();
+        clean = clean.replace(/[^A-Za-z0-9-]/g, '').trim().toUpperCase();
+        const match = clean.match(/USR-CDZ48-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
+        if (match) return match[0];
+        return clean;
+    },
+
     getUserId() {
-        return auth.currentUser?.uid || localStorage.getItem('c48_user_uid') || localStorage.getItem('tori_seller_id') || 'guest_user';
+        const raw = auth.currentUser?.uid || localStorage.getItem('c48_user_uid') || localStorage.getItem('tori_seller_id') || 'guest_user';
+        return this.sanitizeUserId(raw) || raw;
     },
 
     /**

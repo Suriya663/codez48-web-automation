@@ -343,26 +343,47 @@
         let discount = 0;
         let userCurrentData = null;
 
+        function sanitizeUserId(raw) {
+            if (!raw || typeof raw !== 'string') return '';
+            let clean = raw.trim();
+            if (clean.includes('|')) clean = clean.split('|')[0].trim();
+            if (clean.includes('/')) clean = clean.split('/')[0].trim();
+            clean = clean.replace(/[^A-Za-z0-9-]/g, '').trim().toUpperCase();
+            const match = clean.match(/USR-CDZ48-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
+            if (match) return match[0];
+            return clean;
+        }
+
         function generateUniqueUserId() {
             const seg = () => Math.random().toString(16).substring(2, 6).toUpperCase();
-            return `USR-CDZ48-${seg()}-${seg()}-${seg()}-${seg()}`;
+            return 'USR-CDZ48-' + seg() + '-' + seg() + '-' + seg() + '-' + seg();
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            let uidParam = (params.get('uid') || '').trim();
-            if (!uidParam) {
-                uidParam = localStorage.getItem('c48_user_uid');
-            }
+            let uidParam = sanitizeUserId(params.get('uid') || localStorage.getItem('c48_user_uid') || '');
 
             // Auto-generate for first-time payer if not present
             if (!uidParam || uidParam === 'USR-CDZ48-USER' || uidParam === '1' || uidParam.length < 5) {
                 uidParam = generateUniqueUserId();
-                localStorage.setItem('c48_user_uid', uidParam);
             }
+            localStorage.setItem('c48_user_uid', uidParam);
             document.getElementById('page-uid-input').value = uidParam;
 
-            const storedEmail = params.get('email') || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
+            // Real-time input sanitization & instant account inspection on typing
+            let inspectDebounce = null;
+            document.getElementById('page-uid-input').addEventListener('input', (e) => {
+                let sanitized = sanitizeUserId(e.target.value);
+                if (e.target.value.includes('|') || e.target.value.includes('/')) {
+                    e.target.value = sanitized;
+                }
+                localStorage.setItem('c48_user_uid', sanitized);
+                clearTimeout(inspectDebounce);
+                inspectDebounce = setTimeout(() => {
+                    inspectUserAccount();
+                }, 400);
+            });
+const storedEmail = params.get('email') || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
             document.getElementById('page-email-input').value = storedEmail;
 
             document.getElementById('page-email-input').addEventListener('input', (e) => {
@@ -402,9 +423,10 @@
 
         // 1. User Account Inspection & First-Time Trial Detection
         async function inspectUserAccount() {
-            let uid = (document.getElementById('page-uid-input').value || '').trim();
+            let raw = (document.getElementById('page-uid-input').value || '').trim();
+            let uid = sanitizeUserId(raw);
             const feedback = document.getElementById('account-feedback');
-            if (!uid || uid === '1') {
+            if (!uid || uid === '1' || uid.length < 5) {
                 uid = generateUniqueUserId();
                 document.getElementById('page-uid-input').value = uid;
             }
@@ -414,7 +436,7 @@
             document.getElementById('summary-uid-text').textContent = uid;
 
             const emailInput = document.getElementById('page-email-input');
-            const emailVal = (emailInput ? emailInput.value : '').trim() || 'rajnaga75556@gmail.com';
+            const emailVal = (emailInput ? emailInput.value : '').trim() || localStorage.getItem('c48_user_email') || 'rajnaga75556@gmail.com';
             document.getElementById('summary-email-text').textContent = emailVal;
 
             if (!window.firebaseDb || !window.firestoreTools) {
@@ -422,19 +444,18 @@
                 return;
             }
 
-            feedback.innerHTML = `<span class="text-blue-400"><i class="fa-solid fa-spinner animate-spin"></i> Fetching account data from Firestore...</span>`;
+            feedback.innerHTML = '<span class="text-blue-400"><i class="fa-solid fa-spinner animate-spin"></i> Fetching account data from Firestore for ' + uid + '...</span>';
 
             try {
                 const { doc, getDoc, setDoc } = window.firestoreTools;
                 const snap = await getDoc(doc(window.firebaseDb, "pilot_users", uid));
-
                 const trialCard = document.getElementById('first-time-trial-card');
 
                 if (snap.exists()) {
                     userCurrentData = snap.data();
                     const planName = userCurrentData.planName || userCurrentData.plan || 'Free Tier';
                     const balance = userCurrentData.creditBalance !== undefined ? userCurrentData.creditBalance : 0;
-                    
+
                     let expiryStr = '30 Days';
                     if (userCurrentData.planActivatedAt) {
                         const actDate = new Date(userCurrentData.planActivatedAt);
@@ -443,7 +464,7 @@
                     }
 
                     document.getElementById('display-active-plan').textContent = planName;
-                    document.getElementById('display-credit-balance').textContent = `${balance} Credits`;
+                    document.getElementById('display-credit-balance').textContent = balance + ' Credits';
                     document.getElementById('display-expiration').textContent = expiryStr;
 
                     if (userCurrentData.userEmail && emailInput && !emailInput.value) {
@@ -451,24 +472,21 @@
                         document.getElementById('summary-email-text').textContent = userCurrentData.userEmail;
                     }
 
-                    // Check if returning user or first time user
+                    // Check if returning user or first time user: returning users who paid NEVER see the ₹1 trial card
                     const hasPaid = !!(userCurrentData.lastPaymentId || userCurrentData.trialClaimed || (userCurrentData.plan && userCurrentData.plan !== 'PENDING' && userCurrentData.plan !== 'FREE'));
 
                     if (trialCard) {
                         if (!hasPaid) {
-                            // First-time user: display the one-time ₹1 trial offer!
                             trialCard.classList.remove('hidden');
                         } else {
-                            // Returning user: remove from DOM permanently!
                             trialCard.classList.add('hidden');
-                            trialCard.remove();
                         }
                     }
 
                     // Update badges
                     const currentPlanKey = (userCurrentData.plan || '').toUpperCase();
                     ['MICRO', 'ENTERPRISE', 'PROFIT_ORIENTED'].forEach(p => {
-                        const badge = document.getElementById(`badge-${p.toLowerCase().replace('_', '')}`);
+                        const badge = document.getElementById('badge-' + p.toLowerCase().replace('_', ''));
                         if (badge) {
                             if (p === currentPlanKey) {
                                 badge.classList.remove('hidden');
@@ -478,31 +496,20 @@
                         }
                     });
 
-                    feedback.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Account verified: ${planName} with ${balance} remaining credits.</span>`;
+                    feedback.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Account verified: ' + planName + ' with ' + balance + ' remaining credits.</span>';
                 } else {
                     // New first-time user: show the one-time ₹1 trial pass
                     if (trialCard) {
                         trialCard.classList.remove('hidden');
                     }
 
-                    const now = new Date().toISOString();
-                    await setDoc(doc(window.firebaseDb, "pilot_users", uid), {
-                        userId: uid,
-                        userEmail: emailVal,
-                        creditBalance: 0,
-                        plan: 'PENDING',
-                        planName: 'New Account (Pending Checkout)',
-                        createdAt: now,
-                        updatedAt: now
-                    }, { merge: true });
-
                     document.getElementById('display-active-plan').textContent = 'New Account (Pending)';
                     document.getElementById('display-credit-balance').textContent = '0 Credits';
                     document.getElementById('display-expiration').textContent = 'Activates upon payment';
-                    feedback.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-sparkles"></i> New User ID generated & saved in Firebase! Claim your ₹1 trial pass or choose a monthly plan.</span>`;
+                    feedback.innerHTML = '<span class="text-blue-400"><i class="fa-solid fa-circle-info"></i> User ID verified: Ready for subscription or ₹1 Starter Trial Pass.</span>';
                 }
             } catch (err) {
-                feedback.innerHTML = `<span class="text-rose-400">Notice: ${err.message}</span>`;
+                feedback.innerHTML = '<span class="text-rose-400">Notice: ' + err.message + '</span>';
             }
 
             updateDisplay();
@@ -555,7 +562,7 @@
                 document.getElementById('btn-remove-coupon').classList.add('hidden');
             }
 
-            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            const uid = sanitizeUserId((document.getElementById('page-uid-input').value || '').trim()) || generateUniqueUserId();
             const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
             document.getElementById('summary-uid-text').textContent = uid;
             document.getElementById('summary-email-text').textContent = email;
@@ -569,7 +576,7 @@
         async function handleCouponApply() {
             const code = document.getElementById('page-coupon-input').value.trim().toUpperCase();
             const feedback = document.getElementById('page-coupon-feedback');
-            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            const uid = sanitizeUserId((document.getElementById('page-uid-input').value || '').trim()) || generateUniqueUserId();
 
             if (!code) {
                 feedback.innerHTML = `<span class="text-amber-400">Please enter a coupon code.</span>`;
@@ -665,7 +672,7 @@
             const plan = PLANS[currentPlan] || PLANS.ENTERPRISE;
             const finalRupees = Math.max(1, plan.price - (plan.id === 'TRIAL' ? 0 : discount));
             const finalPaise = finalRupees * 100;
-            const uid = (document.getElementById('page-uid-input').value || '').trim() || 'USER';
+            const uid = sanitizeUserId((document.getElementById('page-uid-input').value || '').trim()) || generateUniqueUserId();
             const email = (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
             const btn = document.getElementById('page-btn-razorpay');
 
@@ -736,7 +743,8 @@
         }
 
         // 7. Success Record in Firestore & Automated Email Dispatch
-        async function recordSuccess(paymentId, plan, amountPaid, uid, emailArg) {
+        async function recordSuccess(paymentId, plan, amountPaid, uidRaw, emailArg) {
+            const uid = sanitizeUserId(uidRaw || (document.getElementById('page-uid-input').value || '').trim()) || generateUniqueUserId();
             const now = new Date().toISOString();
             const email = emailArg || (document.getElementById('page-email-input').value || '').trim() || 'rajnaga75556@gmail.com';
             localStorage.setItem('c48_user_email', email);
