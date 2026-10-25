@@ -9,7 +9,6 @@
  * - "Thinking / Doing / Next" Status Badge:
  *     - Displays what the AI is thinking, what it is currently doing, and what it plans to do next
  *     - Auto-wrapping, line-height 1.45, zero clipping
- *     - Snug Action Pills: Standard Dosa, Crisp & Thin, Canteen
  * - Auto-lowering when near top of viewport (Y < 180)
  * - Remains active throughout task execution until user closes (Ctrl+C)
  */
@@ -65,18 +64,18 @@
                     transform: scale(1);
                 }
 
-                /* 3D Circular AI Avatar Sphere */
+                /* 3D Circular AI Avatar Sphere - Scaled Down */
                 .pilot-3d-avatar {
-                    width: 54px;
-                    height: 54px;
+                    width: 40px;
+                    height: 40px;
                     border-radius: 50%;
                     position: relative;
                     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #dbeafe 30%, #38bdf8 70%, #0284c7 100%);
                     box-shadow: 
-                        inset 0 2px 4px rgba(255, 255, 255, 0.9),
-                        inset 0 -4px 8px rgba(15, 23, 42, 0.6),
-                        0 0 24px rgba(0, 229, 255, 0.65),
-                        0 8px 18px rgba(0, 0, 0, 0.5);
+                        inset 0 1.5px 3px rgba(255, 255, 255, 0.9),
+                        inset 0 -3px 6px rgba(15, 23, 42, 0.6),
+                        0 0 18px rgba(0, 229, 255, 0.6),
+                        0 6px 14px rgba(0, 0, 0, 0.5);
                     animation: pilotAvatarPulse 3.2s infinite ease-in-out;
                     pointer-events: auto;
                     cursor: grab;
@@ -86,9 +85,9 @@
                 /* Outer Rotating Halo */
                 .pilot-orbit-ring {
                     position: absolute;
-                    inset: -5px;
+                    inset: -4px;
                     border-radius: 50%;
-                    border: 2px dashed rgba(0, 229, 255, 0.85);
+                    border: 1.5px dashed rgba(0, 229, 255, 0.85);
                     opacity: 0;
                     transition: opacity 0.3s ease;
                 }
@@ -112,29 +111,29 @@
                 /* EYES WITH NATURAL BLINKING ACROSS ALL STATES */
                 .pilot-eye {
                     position: absolute;
-                    width: 11px;
-                    height: 15px;
+                    width: 8px;
+                    height: 11px;
                     background: radial-gradient(circle at 35% 35%, #ffffff 0%, #70e1ff 35%, #00b4d8 75%, #0077fe 100%);
                     border-radius: 50%;
-                    top: 14px;
-                    box-shadow: 0 0 10px #00f0ff;
+                    top: 10px;
+                    box-shadow: 0 0 8px #00f0ff;
                     animation: pilotEyeBlink 3.4s infinite;
                     transform-origin: center;
                     overflow: visible;
                 }
 
-                .pilot-eye.left { left: 12px; }
-                .pilot-eye.right { right: 12px; }
+                .pilot-eye.left { left: 9px; }
+                .pilot-eye.right { right: 9px; }
 
                 /* NORMAL PUPIL WITH CATCHLIGHTS */
                 .pilot-pupil-normal {
                     position: absolute;
-                    width: 5.5px;
-                    height: 6.5px;
+                    width: 4px;
+                    height: 5px;
                     background: #051428;
                     border-radius: 50%;
-                    top: 4px;
-                    left: 2.5px;
+                    top: 3px;
+                    left: 2px;
                     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
                     opacity: 1;
                     transform: scale(1);
@@ -242,22 +241,22 @@
                     border-bottom-width: 3px;
                 }
 
-                /* Snug Glassmorphic Status Card (Autonomous Playwright Action) */
+                /* Snug Glassmorphic Status Card (Autonomous Playwright Action) - Scaled Down */
                 .pilot-status-badge {
                     background: linear-gradient(135deg, rgba(8, 20, 52, 0.96), rgba(4, 12, 34, 0.96));
-                    border: 1.5px solid rgba(0, 229, 255, 0.7);
-                    border-radius: 16px;
-                    padding: 8px 14px 9px 14px;
-                    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 229, 255, 0.35);
-                    backdrop-filter: blur(12px);
+                    border: 1.2px solid rgba(0, 229, 255, 0.65);
+                    border-radius: 12px;
+                    padding: 6px 11px 7px 11px;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 229, 255, 0.3);
+                    backdrop-filter: blur(10px);
                     color: #ffffff;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    max-width: 380px;
-                    min-width: 260px;
+                    max-width: 290px;
+                    min-width: 210px;
                     pointer-events: auto;
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
+                    gap: 3px;
                     transition: top 0.25s ease;
                 }
 
@@ -266,20 +265,20 @@
                     align-items: center;
                     justify-content: space-between;
                     gap: 6px;
-                    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
-                    padding-bottom: 3px;
+                    border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+                    padding-bottom: 2px;
                 }
 
                 .pilot-badge-tag-group {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 5px;
                 }
 
                 .pilot-badge-tag {
-                    font-size: 10px;
+                    font-size: 8.5px;
                     font-weight: 900;
-                    letter-spacing: 0.8px;
+                    letter-spacing: 0.6px;
                     text-transform: uppercase;
                     color: #00e5ff;
                 }
@@ -287,15 +286,15 @@
                 /* Moving Animated Dots (• • •) */
                 .pilot-moving-dots {
                     display: inline-flex;
-                    gap: 3.5px;
+                    gap: 3px;
                     align-items: center;
                 }
 
                 .pilot-dot {
-                    width: 4.5px;
-                    height: 4.5px;
+                    width: 3.5px;
+                    height: 3.5px;
                     background: #ffffff;
-                    box-shadow: 0 0 6px #00e5ff;
+                    box-shadow: 0 0 5px #00e5ff;
                     border-radius: 50%;
                     opacity: 0.3;
                 }
@@ -317,7 +316,7 @@
                 }
 
                 .pilot-title-text {
-                    font-size: 11.5px;
+                    font-size: 10px;
                     font-weight: 700;
                     color: #ffffff;
                     margin-top: 1px;
@@ -328,12 +327,12 @@
                     display: flex;
                     flex-direction: column;
                     gap: 2px;
-                    margin-top: 2px;
+                    margin-top: 1px;
                 }
 
                 .pilot-doing-row, .pilot-next-row {
-                    font-size: 11px;
-                    line-height: 1.4;
+                    font-size: 9.5px;
+                    line-height: 1.35;
                     white-space: normal;
                     word-break: break-word;
                 }
@@ -346,50 +345,19 @@
                 .pilot-doing-row strong {
                     color: #00f5ff;
                     font-weight: 700;
-                    margin-right: 4px;
+                    margin-right: 3px;
                 }
 
                 .pilot-next-row {
                     color: #94a3b8;
                     font-weight: 400;
-                    font-size: 10px;
+                    font-size: 9px;
                 }
 
                 .pilot-next-row strong {
                     color: #7dd3fc;
                     font-weight: 600;
-                    margin-right: 4px;
-                }
-
-                /* Snug Option Pills directly attached */
-                .pilot-options-container {
-                    display: flex;
-                    gap: 4px;
-                    margin-top: 4px;
-                }
-
-                .pilot-pill-btn {
-                    background: rgba(0, 229, 255, 0.2);
-                    border: 1px solid rgba(0, 229, 255, 0.6);
-                    color: #ffffff;
-                    border-radius: 6px;
-                    padding: 2.5px 7px;
-                    font-size: 9px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: transform 0.15s ease, background 0.15s ease;
-                    outline: none;
-                }
-
-                .pilot-pill-btn:hover {
-                    transform: scale(1.05);
-                    background: rgba(0, 229, 255, 0.4);
-                }
-
-                .pilot-pill-btn.primary {
-                    background: linear-gradient(135deg, #00d2ff, #0077fe);
-                    border-color: #70e1ff;
-                    font-weight: 700;
+                    margin-right: 3px;
                 }
 
                 @keyframes pilotEyeBlink {
@@ -482,13 +450,6 @@
                             <strong>Next:</strong><span id="pilot-next-text">Formulating next browser action sequence</span>
                         </div>
                     </div>
-
-                    <!-- Action Pills -->
-                    <div class="pilot-options-container">
-                        <button class="pilot-pill-btn" onclick="window.onPilotPillClick && window.onPilotPillClick('dosa_std')">Standard Dosa</button>
-                        <button class="pilot-pill-btn" onclick="window.onPilotPillClick && window.onPilotPillClick('dosa_thin')">Crisp &amp; Thin</button>
-                        <button class="pilot-pill-btn primary" onclick="window.onPilotPillClick && window.onPilotPillClick('canteen')">Canteen</button>
-                    </div>
                 </div>
             `;
             document.body.appendChild(root);
@@ -506,17 +467,17 @@
                 // Snug cursor offset (+8px, +6px)
                 this.targetX = this.mouseX + 8;
 
-                // Dynamic auto-lowering: If cursor is near top of screen (mouseY < 180), drop down lower
-                if (this.mouseY < 180) {
-                    this.targetY = this.mouseY + 45;
+                // Dynamic auto-lowering: If cursor is near top of screen (mouseY < 140), drop down slightly
+                if (this.mouseY < 140) {
+                    this.targetY = this.mouseY + 30;
                 } else {
                     this.targetY = this.mouseY + 6;
                 }
 
                 // Prevent overflowing right viewport boundary
-                const maxRight = window.innerWidth - 410;
+                const maxRight = window.innerWidth - 310;
                 if (this.targetX > maxRight) {
-                    this.targetX = this.mouseX - 360;
+                    this.targetX = this.mouseX - 290;
                 }
             }, { passive: true });
         }
