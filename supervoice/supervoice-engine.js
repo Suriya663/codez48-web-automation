@@ -228,13 +228,14 @@ class SupervoiceEngine {
 
         console.log(`[SUPERVOICE] Enrolling voice clone for profile '${profile.name}' via ElevenLabs IVC API...`);
 
-        const tempScript = path.join(this.outputDir, `enroll_${Date.now()}.js`);
+        const os = require('os');
+        const tempScript = path.join(os.tmpdir(), `c48_enroll_${Date.now()}_${Math.random().toString(36).slice(2)}.js`);
         const scriptContent = `
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const apiKey = ${JSON.stringify(elevenKey.trim())};
+const apiKey = (process.env.SUPERVOICE_SECRET_KEY || '').trim();
 const samplePath = ${JSON.stringify(profile.audioPath)};
 const voiceName = ${JSON.stringify('Codez48_' + (profile.name || profileId))};
 
@@ -297,13 +298,15 @@ req.end();
         fs.writeFileSync(tempScript, scriptContent, 'utf8');
 
         try {
-            const res = spawnSync('node', [tempScript], { encoding: 'utf8', timeout: 35000 });
-            try { fs.unlinkSync(tempScript); } catch (e) {}
+            const res = spawnSync('node', [tempScript], {
+                encoding: 'utf8',
+                timeout: 35000,
+                env: { ...process.env, SUPERVOICE_SECRET_KEY: elevenKey.trim() }
+            });
 
             if (res.status === 0 && res.stdout) {
                 const parsed = JSON.parse(res.stdout);
                 if (parsed.voice_id) {
-                    // Store voice_id back in profile
                     voiceProfileManager.updateProfile(profileId, {
                         voice_id: parsed.voice_id,
                         enrolledAt: new Date().toISOString(),
@@ -317,8 +320,9 @@ req.end();
             console.error(`[SUPERVOICE] ❌ Voice enrollment failed: ${errMsg}`);
             return { success: false, error: errMsg };
         } catch (e) {
-            try { fs.unlinkSync(tempScript); } catch (e2) {}
             return { success: false, error: e.message };
+        } finally {
+            try { if (fs.existsSync(tempScript)) fs.unlinkSync(tempScript); } catch(e) {}
         }
     }
 
@@ -461,6 +465,7 @@ req.end();
     }
 
     _callElevenLabsTTSSync(text, voiceId, outputPath, apiKey) {
+        const os = require('os');
         const script = `
 const https = require('https');
 const fs = require('fs');
@@ -473,7 +478,7 @@ const url = new URL('https://api.elevenlabs.io/v1/text-to-speech/' + ${JSON.stri
 const req = https.request(url, {
     method: 'POST',
     headers: {
-        'xi-api-key': ${JSON.stringify(apiKey.trim())},
+        'xi-api-key': (process.env.SUPERVOICE_SECRET_KEY || '').trim(),
         'Content-Type': 'application/json',
         'Accept': 'audio/mpeg'
     },
@@ -493,19 +498,24 @@ req.on('error', err => { console.error(err.message); process.exit(1); });
 req.write(payload);
 req.end();
         `;
-        const tempScript = path.join(this.outputDir, `eleven_sync_${Date.now()}.js`);
+        const tempScript = path.join(os.tmpdir(), `c48_eleven_sync_${Date.now()}_${Math.random().toString(36).slice(2)}.js`);
         fs.writeFileSync(tempScript, script, 'utf8');
         try {
-            const res = spawnSync('node', [tempScript], { encoding: 'utf8', timeout: 35000 });
-            try { fs.unlinkSync(tempScript); } catch(e) {}
+            const res = spawnSync('node', [tempScript], {
+                encoding: 'utf8',
+                timeout: 35000,
+                env: { ...process.env, SUPERVOICE_SECRET_KEY: apiKey.trim() }
+            });
             return res.status === 0 && fs.existsSync(outputPath);
         } catch (e) {
-            try { fs.unlinkSync(tempScript); } catch(e) {}
             return false;
+        } finally {
+            try { if (fs.existsSync(tempScript)) fs.unlinkSync(tempScript); } catch(e) {}
         }
     }
 
     _callGroqOrpheusSync(text, outputPath, apiKey, voice = 'hannah') {
+        const os = require('os');
         const script = `
 const https = require('https');
 const fs = require('fs');
@@ -519,7 +529,7 @@ const url = new URL('https://api.groq.com/openai/v1/audio/speech');
 const req = https.request(url, {
     method: 'POST',
     headers: {
-        'Authorization': 'Bearer ' + ${JSON.stringify(apiKey.trim())},
+        'Authorization': 'Bearer ' + (process.env.SUPERVOICE_SECRET_KEY || '').trim(),
         'Content-Type': 'application/json',
         'User-Agent': 'Codez48-Supervoice/2.0'
     },
@@ -539,15 +549,19 @@ req.on('error', err => { console.error(err.message); process.exit(1); });
 req.write(payload);
 req.end();
         `;
-        const tempScript = path.join(this.outputDir, `groq_sync_${Date.now()}.js`);
+        const tempScript = path.join(os.tmpdir(), `c48_groq_sync_${Date.now()}_${Math.random().toString(36).slice(2)}.js`);
         fs.writeFileSync(tempScript, script, 'utf8');
         try {
-            const res = spawnSync('node', [tempScript], { encoding: 'utf8', timeout: 35000 });
-            try { fs.unlinkSync(tempScript); } catch(e) {}
+            const res = spawnSync('node', [tempScript], {
+                encoding: 'utf8',
+                timeout: 35000,
+                env: { ...process.env, SUPERVOICE_SECRET_KEY: apiKey.trim() }
+            });
             return res.status === 0 && fs.existsSync(outputPath);
         } catch (e) {
-            try { fs.unlinkSync(tempScript); } catch(e) {}
             return false;
+        } finally {
+            try { if (fs.existsSync(tempScript)) fs.unlinkSync(tempScript); } catch(e) {}
         }
     }
 }

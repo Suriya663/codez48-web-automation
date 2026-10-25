@@ -44,15 +44,15 @@ async function transcribeWithGroq(audioPath) {
 
     // Use Groq Whisper transcription
     // We write a temp Node.js script to do multipart upload (spawnSync compatible)
-    const tempScript = path.join(OUTPUT_DIR, `whisper_${Date.now()}.js`);
+    const os = require('os');
+    const tempScript = path.join(os.tmpdir(), `c48_whisper_${Date.now()}_${Math.random().toString(36).slice(2)}.js`);
     const scriptContent = `
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const audioPath = ${JSON.stringify(audioPath)};
-const apiKey = ${JSON.stringify(apiKey)};
+const apiKey = (process.env.SUPERVOICE_SECRET_KEY || '').trim();
 
 // Build multipart/form-data manually
 const boundary = '----GroqBoundary' + Date.now();
@@ -112,18 +112,21 @@ req.write(body);
 req.end();
 `;
 
-    if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     fs.writeFileSync(tempScript, scriptContent, 'utf8');
 
     try {
-        const result = spawnSync('node', [tempScript], { encoding: 'utf8', timeout: 40000 });
-        try { fs.unlinkSync(tempScript); } catch (e) {}
+        const result = spawnSync('node', [tempScript], {
+            encoding: 'utf8',
+            timeout: 40000,
+            env: { ...process.env, SUPERVOICE_SECRET_KEY: apiKey.trim() }
+        });
         if (result.status === 0 && result.stdout) {
             const parsed = JSON.parse(result.stdout);
             if (parsed.success && parsed.text) return parsed.text;
         }
     } catch (e) {
-        try { fs.unlinkSync(tempScript); } catch (e2) {}
+    } finally {
+        try { if (fs.existsSync(tempScript)) fs.unlinkSync(tempScript); } catch (e) {}
     }
     return null;
 }
