@@ -413,15 +413,18 @@ Strict rules:
         console.log(`[WHATSAPP GUI] Directing physical cursor to WhatsApp conversation for ${sender}...`);
         await this.focusWhatsAppWindow();
 
-        // Position cursor on message compose box (bottom of screen at ~800px on 864p resolution)
-        const composeBoxX = Math.round(this.screenWidth * 0.55);
-        const composeBoxY = Math.round(this.screenHeight * 0.92);
+        // Position cursor on message compose box using safe clamped coordinates (never taskbar)
+        const { composeX: vComposeX, composeY: vComposeY } = this.getSafeComposeCoordinates();
 
-        await guiDriver.moveCursorSmoothlyWithFeedback(composeBoxX, composeBoxY, 800);
-        await guiDriver.clickPhysicalMouse(composeBoxX, composeBoxY);
+        await guiDriver.moveCursorSmoothlyWithFeedback(vComposeX, vComposeY, 500);
+        await guiDriver.clickPhysicalMouse(vComposeX, vComposeY);
 
-        console.log(`[WHATSAPP GUI] Typing contextual response into chat with ${sender}...`);
-        await guiDriver.typeText(replyText);
+        console.log(`[WHATSAPP GUI] Directly pasting contextual response into chat with ${sender}...`);
+        if (typeof guiDriver.pasteText === 'function') {
+            await guiDriver.pasteText(replyText);
+        } else {
+            await guiDriver.typeText(replyText);
+        }
         await new Promise(r => setTimeout(r, 400));
         await guiDriver.sendHotkey('{ENTER}');
 
@@ -436,6 +439,48 @@ Strict rules:
             replyAudio: audioReplyPath,
             plan: creditVault.getPlan().name
         };
+    }
+
+    /**
+     * Compute safe, clamped coordinates for compose box and send button
+     * Guarantees cursor NEVER moves past the input box into the Windows Taskbar
+     */
+    getSafeComposeCoordinates(layoutCoords = null) {
+        const workingHeight = Math.max(700, this.screenHeight - 48); // Safe taskbar deduction
+        const defaultComposeY = Math.round(workingHeight - 52);
+        let composeX = Math.round(this.screenWidth * 0.55);
+        let composeY = defaultComposeY;
+        let sendBtnX = Math.round(this.screenWidth * 0.965);
+        let sendBtnY = defaultComposeY;
+
+        if (layoutCoords && layoutCoords.composeBox) {
+            if (layoutCoords.composeBox.x) composeX = Math.round(layoutCoords.composeBox.x);
+            if (layoutCoords.composeBox.y) {
+                let targetY = Math.round(layoutCoords.composeBox.y);
+                if (layoutCoords.composeBox.height) {
+                    targetY = Math.round(layoutCoords.composeBox.y + (layoutCoords.composeBox.height / 2));
+                }
+                if (targetY > (workingHeight - 35) || targetY < (workingHeight - 95)) {
+                    composeY = defaultComposeY;
+                } else {
+                    composeY = targetY;
+                }
+            }
+        }
+
+        if (layoutCoords && layoutCoords.sendButton) {
+            if (layoutCoords.sendButton.x) sendBtnX = Math.round(layoutCoords.sendButton.x);
+            if (layoutCoords.sendButton.y) {
+                let targetSendY = Math.round(layoutCoords.sendButton.y);
+                if (targetSendY > (workingHeight - 30) || targetSendY < (workingHeight - 95)) {
+                    sendBtnY = defaultComposeY;
+                } else {
+                    sendBtnY = targetSendY;
+                }
+            }
+        }
+
+        return { composeX, composeY, sendBtnX, sendBtnY };
     }
 
     /**
@@ -462,16 +507,21 @@ Strict rules:
         const isPhoneNumber = cleanNumber.length >= 10;
 
         if (isPhoneNumber) {
-            // Direct protocol URL: 100% reliable for saved AND unsaved numbers
+            // Direct protocol URL with native message pre-population:
             console.log(`[WHATSAPP NAV] Opening direct conversation URL for phone: ${cleanNumber}...`);
-            const url = `whatsapp://send?phone=${cleanNumber}`;
+            const url = text
+                ? `whatsapp://send?phone=${cleanNumber}&text=${encodeURIComponent(text)}`
+                : `whatsapp://send?phone=${cleanNumber}`;
             try {
                 const { execSync } = require('child_process');
                 execSync(`start "" "${url}"`, { stdio: 'ignore' });
             } catch (_) {
                 try {
                     const { execSync } = require('child_process');
-                    execSync(`start "" "https://web.whatsapp.com/send?phone=${cleanNumber}"`, { stdio: 'ignore' });
+                    const webUrl = text
+                        ? `https://web.whatsapp.com/send?phone=${cleanNumber}&text=${encodeURIComponent(text)}`
+                        : `https://web.whatsapp.com/send?phone=${cleanNumber}`;
+                    execSync(`start "" "${webUrl}"`, { stdio: 'ignore' });
                 } catch (_) {}
             }
             await new Promise(r => setTimeout(r, 2500));
@@ -489,19 +539,24 @@ Strict rules:
             await new Promise(r => setTimeout(r, 1000));
         }
 
-        // Compose box and send button coordinates
-        const composeX = Math.round(this.screenWidth * 0.55);
-        const composeY = Math.round(this.screenHeight * 0.92);
-        const sendBtnX = Math.round(this.screenWidth * 0.965);
-        const sendBtnY = Math.round(this.screenHeight * 0.93);
+        // Calibrate safe coordinates inside compose box (never moves past into taskbar)
+        const { composeX, composeY, sendBtnX, sendBtnY } = this.getSafeComposeCoordinates();
 
-        await guiDriver.moveCursorSmoothlyWithFeedback(composeX, composeY, 600);
+        // 1. Gently position and click safely inside the compose field to guarantee focus
+        await guiDriver.moveCursorSmoothlyWithFeedback(composeX, composeY, 400);
         await guiDriver.clickPhysicalMouse(composeX, composeY);
-        await new Promise(r => setTimeout(r, 250));
-        await guiDriver.typeText(text);
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 200));
 
-        // Dual-Action Send (Keystroke Enter + Send Button Click)
+        // 2. Directly paste message into input field
+        console.log(`[WHATSAPP DISPATCH] Directly pasting message into field...`);
+        if (typeof guiDriver.pasteText === 'function') {
+            await guiDriver.pasteText(text);
+        } else {
+            await guiDriver.typeText(text);
+        }
+        await new Promise(r => setTimeout(r, 350));
+
+        // 3. Dual-Action Send (Keystroke Enter + Send Button Click)
         console.log(`[WHATSAPP DISPATCH] Executing send via Enter keystroke...`);
         await guiDriver.sendHotkey('{ENTER}');
         await new Promise(r => setTimeout(r, 300));
@@ -600,8 +655,8 @@ Return ONLY valid JSON:
     "isVoiceNote": false,
     "timestamp": "..."
   },
-  "composeBox": { "x": 844, "y": 800, "width": 450, "height": 45 },
-  "sendButton": { "x": 1475, "y": 815 }
+  "composeBox": { "x": 844, "y": 765, "width": 450, "height": 45 },
+  "sendButton": { "x": 1475, "y": 765 }
 }`;
 
         let parsedState = null;
@@ -647,19 +702,8 @@ Return ONLY valid JSON:
             if (!this.processedMessageIds.has(msgSig)) {
                 this.processedMessageIds.add(msgSig);
 
-                const composeX = (parsedState.composeBox && parsedState.composeBox.x)
-                    ? Math.round(parsedState.composeBox.x + (parsedState.composeBox.width ? parsedState.composeBox.width / 2 : 0))
-                    : Math.round(this.screenWidth * 0.55);
-                const composeY = (parsedState.composeBox && parsedState.composeBox.y)
-                    ? Math.round(parsedState.composeBox.y + (parsedState.composeBox.height ? parsedState.composeBox.height / 2 : 0))
-                    : Math.round(this.screenHeight * 0.92);
-
-                const sendBtnX = (parsedState.sendButton && parsedState.sendButton.x)
-                    ? Math.round(parsedState.sendButton.x)
-                    : Math.round(this.screenWidth * 0.965);
-                const sendBtnY = (parsedState.sendButton && parsedState.sendButton.y)
-                    ? Math.round(parsedState.sendButton.y)
-                    : Math.round(this.screenHeight * 0.93);
+                // Calibrate safe coordinates inside compose box (never moves past into taskbar)
+                const { composeX, composeY, sendBtnX, sendBtnY } = this.getSafeComposeCoordinates(parsedState);
 
                 const now = new Date();
                 const receivedDateTime = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'medium' });
@@ -718,14 +762,18 @@ Return ONLY valid JSON:
                     console.log(`  \x1b[33mDetected Language:\x1b[0m           \x1b[35m${detectedLang}\x1b[0m`);
                     console.log(`  \x1b[33mAI Contextual Reply (${detectedLang}):\x1b[0m \x1b[32m"${reply}"\x1b[0m`);
 
-                    console.log(`[WHATSAPP GUI] Focusing compose box at (${composeX}, ${composeY})...`);
-                    await guiDriver.moveCursorSmoothlyWithFeedback(composeX, composeY, 500);
+                    console.log(`[WHATSAPP GUI] Focusing compose box at safe coordinates (${composeX}, ${composeY})...`);
+                    await guiDriver.moveCursorSmoothlyWithFeedback(composeX, composeY, 400);
                     await guiDriver.clickPhysicalMouse(composeX, composeY);
-                    await new Promise(r => setTimeout(r, 250));
+                    await new Promise(r => setTimeout(r, 200));
 
-                    console.log(`[WHATSAPP GUI] Typing contextual response into chat...`);
-                    await guiDriver.typeText(reply);
-                    await new Promise(r => setTimeout(r, 400));
+                    console.log(`[WHATSAPP GUI] Directly pasting contextual response into chat...`);
+                    if (typeof guiDriver.pasteText === 'function') {
+                        await guiDriver.pasteText(reply);
+                    } else {
+                        await guiDriver.typeText(reply);
+                    }
+                    await new Promise(r => setTimeout(r, 350));
 
                     // Dual-Action Send (Keystroke Enter + Send Button Click)
                     console.log(`[WHATSAPP GUI] Executing Dual-Action Send (Enter + Send Button)...`);

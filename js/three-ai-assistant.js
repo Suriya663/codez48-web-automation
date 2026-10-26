@@ -43,7 +43,7 @@
                 initialState: 'idle',         // 'idle' | 'thinking' | 'loading' | 'generating' | 'completed'
                 initialMessage: '',
                 cursorFollow: false,          // Follow mouse cursor
-                cursorOffset: { x: 8, y: 6 }, // Snug cursor offset
+                cursorOffset: { x: 6, y: 4 }, // Snug cursor offset: tightly docked to cursor tip and icons
                 floating: true,               // Subtle floating bob
                 showBubble: true,             // Show top-right message pill
                 onActionClick: null

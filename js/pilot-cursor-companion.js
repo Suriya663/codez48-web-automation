@@ -22,12 +22,12 @@
         constructor() {
             this.container = null;
             this.isActive = false;
-            this.mouseX = window.innerWidth / 2;
-            this.mouseY = window.innerHeight / 2;
-            this.targetX = this.mouseX;
-            this.targetY = this.mouseY;
-            this.currentX = this.mouseX;
-            this.currentY = this.mouseY;
+            this.mouseX = (typeof window !== 'undefined' && window.__lastMouseX !== undefined) ? window.__lastMouseX : -9999;
+            this.mouseY = (typeof window !== 'undefined' && window.__lastMouseY !== undefined) ? window.__lastMouseY : -9999;
+            this.targetX = this.mouseX > -1000 ? this.mouseX + 6 : 20;
+            this.targetY = this.mouseY > -1000 ? this.mouseY + 4 : 20;
+            this.currentX = this.targetX;
+            this.currentY = this.targetY;
             this.state = 'idle'; // 'idle' | 'thinking' | 'loading' | 'generating' | 'acting' | 'success'
             this.statusTitle = 'Autonomous Playwright Active';
             this.currentDoing = 'Analyzing screen elements...';
@@ -475,23 +475,31 @@
 
         bindEvents() {
             window.addEventListener('mousemove', (e) => {
+                const isFirst = this.mouseX < -1000;
                 this.mouseX = e.clientX;
                 this.mouseY = e.clientY;
-
-                // Snug cursor offset (+8px, +6px)
-                this.targetX = this.mouseX + 8;
-
-                // Dynamic auto-lowering: If cursor is near top of screen (mouseY < 140), drop down slightly
-                if (this.mouseY < 140) {
-                    this.targetY = this.mouseY + 26;
-                } else {
-                    this.targetY = this.mouseY + 6;
+                if (typeof window !== 'undefined') {
+                    window.__lastMouseX = e.clientX;
+                    window.__lastMouseY = e.clientY;
                 }
+
+                // Snug cursor offset: directly adjacent to cursor tip and icons (+6px, +4px)
+                this.targetX = this.mouseX + 6;
+                this.targetY = this.mouseY + 4;
 
                 // Prevent overflowing right viewport boundary (scaled down width ~235px)
                 const maxRight = window.innerWidth - 235;
                 if (this.targetX > maxRight) {
-                    this.targetX = this.mouseX - 225;
+                    this.targetX = Math.max(10, this.mouseX - 225);
+                }
+
+                // Snap immediately on first move so there is zero initial drift or glide
+                if (isFirst) {
+                    this.currentX = this.targetX;
+                    this.currentY = this.targetY;
+                    if (this.container) {
+                        this.container.style.transform = `translate3d(${Math.round(this.currentX)}px, ${Math.round(this.currentY)}px, 0)`;
+                    }
                 }
             }, { passive: true });
 
