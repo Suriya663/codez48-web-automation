@@ -3,14 +3,16 @@
  * 3D Circular AI Avatar with Cursor Following & Live Animations:
  * - Single Instance Enforcement: Only one instance on screen
  * - Eye-Originating Loading Transformation:
- *     - Natural blinking across ALL states
- *     - In 'loading' / 'thinking' states, pupils smoothly transform into a rotating loading symbol
+ *     - Natural blinking across idle/generating states
+ *     - In 'loading' / 'thinking' states, pupils smoothly transform into a mathematically PERFECT circular loading ring
  *     - When loaded, pupils smoothly transform back into normal eyes with specular catchlights
  * - "Thinking / Doing / Next" Status Badge:
  *     - Displays what the AI is thinking, what it is currently doing, and what it plans to do next
- *     - Auto-wrapping, line-height 1.45, zero clipping
- * - Auto-lowering when near top of viewport (Y < 180)
- * - Remains active throughout task execution until user closes (Ctrl+C)
+ *     - Auto-wrapping, line-height 1.35, zero clipping
+ *     - Scaled down, ultra-compact minimal footprint (28px avatar, 220px card)
+ * - Scroll Tracking: Fluidly follows page scroll and user reading position
+ * - Auto-lowering when near top of viewport (Y < 140)
+ * - Remains active throughout task execution until user closes
  */
 
 (function () {
@@ -52,7 +54,7 @@
                     z-index: 2147483647; /* Highest z-index */
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 6px;
                     transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                     opacity: 0;
                     transform: scale(0.6);
@@ -64,30 +66,37 @@
                     transform: scale(1);
                 }
 
-                /* 3D Circular AI Avatar Sphere - Scaled Down */
+                /* 3D Circular AI Avatar Sphere - Scaled Down (28px) */
                 .pilot-3d-avatar {
-                    width: 40px;
-                    height: 40px;
+                    width: 28px;
+                    height: 28px;
+                    min-width: 28px;
+                    min-height: 28px;
+                    max-width: 28px;
+                    max-height: 28px;
+                    aspect-ratio: 1 / 1;
                     border-radius: 50%;
                     position: relative;
                     background: radial-gradient(circle at 35% 30%, #ffffff 0%, #dbeafe 30%, #38bdf8 70%, #0284c7 100%);
                     box-shadow: 
-                        inset 0 1.5px 3px rgba(255, 255, 255, 0.9),
-                        inset 0 -3px 6px rgba(15, 23, 42, 0.6),
-                        0 0 18px rgba(0, 229, 255, 0.6),
-                        0 6px 14px rgba(0, 0, 0, 0.5);
+                        inset 0 1px 2px rgba(255, 255, 255, 0.9),
+                        inset 0 -2px 4px rgba(15, 23, 42, 0.6),
+                        0 0 12px rgba(0, 229, 255, 0.6),
+                        0 4px 10px rgba(0, 0, 0, 0.5);
                     animation: pilotAvatarPulse 3.2s infinite ease-in-out;
                     pointer-events: auto;
                     cursor: grab;
                     flex-shrink: 0;
+                    overflow: visible;
                 }
 
-                /* Outer Rotating Halo */
+                /* Outer Rotating Halo - Strict 1:1 Circle */
                 .pilot-orbit-ring {
                     position: absolute;
-                    inset: -4px;
+                    inset: -3px;
                     border-radius: 50%;
-                    border: 1.5px dashed rgba(0, 229, 255, 0.85);
+                    aspect-ratio: 1 / 1;
+                    border: 1px dashed rgba(0, 229, 255, 0.9);
                     opacity: 0;
                     transition: opacity 0.3s ease;
                 }
@@ -108,32 +117,43 @@
                     justify-content: center;
                 }
 
-                /* EYES WITH NATURAL BLINKING ACROSS ALL STATES */
+                /* EYES - STRICT CIRCULAR GEOMETRY WITH ZERO OVAL DISTORTION */
                 .pilot-eye {
                     position: absolute;
-                    width: 8px;
-                    height: 11px;
+                    width: 6.5px;
+                    height: 6.5px;
+                    aspect-ratio: 1 / 1;
+                    min-width: 6.5px;
+                    min-height: 6.5px;
                     background: radial-gradient(circle at 35% 35%, #ffffff 0%, #70e1ff 35%, #00b4d8 75%, #0077fe 100%);
                     border-radius: 50%;
-                    top: 10px;
-                    box-shadow: 0 0 8px #00f0ff;
+                    top: 7px;
+                    box-shadow: 0 0 6px #00f0ff;
                     animation: pilotEyeBlink 3.4s infinite;
                     transform-origin: center;
                     overflow: visible;
                 }
 
-                .pilot-eye.left { left: 9px; }
-                .pilot-eye.right { right: 9px; }
+                .pilot-eye.left { left: 6px; }
+                .pilot-eye.right { right: 6px; }
+
+                /* Disable vertical scaleY blink during loading/thinking so circle is never deformed into oval */
+                #pilot-companion-root.thinking .pilot-eye,
+                #pilot-companion-root.loading .pilot-eye {
+                    animation: none !important;
+                    transform: none !important;
+                }
 
                 /* NORMAL PUPIL WITH CATCHLIGHTS */
                 .pilot-pupil-normal {
                     position: absolute;
-                    width: 4px;
-                    height: 5px;
+                    width: 3.2px;
+                    height: 3.2px;
+                    aspect-ratio: 1 / 1;
                     background: #051428;
                     border-radius: 50%;
-                    top: 3px;
-                    left: 2px;
+                    top: 1.65px;
+                    left: 1.65px;
                     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
                     opacity: 1;
                     transform: scale(1);
@@ -141,43 +161,51 @@
 
                 .pilot-catchlight-1 {
                     position: absolute;
-                    width: 2.2px;
-                    height: 2.2px;
+                    width: 1.5px;
+                    height: 1.5px;
+                    aspect-ratio: 1 / 1;
                     background: #ffffff;
                     border-radius: 50%;
-                    top: 1px;
-                    left: 1px;
-                    box-shadow: 0 0 3px #ffffff;
+                    top: 0.5px;
+                    left: 0.5px;
+                    box-shadow: 0 0 2px #ffffff;
                 }
 
                 .pilot-catchlight-2 {
                     position: absolute;
-                    width: 1.2px;
-                    height: 1.2px;
+                    width: 0.8px;
+                    height: 0.8px;
+                    aspect-ratio: 1 / 1;
                     background: #ffffff;
                     border-radius: 50%;
-                    bottom: 1.2px;
-                    right: 1.2px;
+                    bottom: 0.5px;
+                    right: 0.5px;
                 }
 
-                /* LOADING SPINNER INSIDE PUPIL */
+                /* LOADING SPINNER - STRICT 1:1 PERFECT CIRCLE */
                 .pilot-pupil-loading {
                     position: absolute;
-                    width: 12px;
-                    height: 12px;
-                    top: 1.5px;
-                    left: -0.5px;
+                    width: 9px;
+                    height: 9px;
+                    min-width: 9px;
+                    min-height: 9px;
+                    aspect-ratio: 1 / 1;
+                    border-radius: 50%;
+                    top: -1.25px;
+                    left: -1.25px;
                     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
                     opacity: 0;
                     transform: scale(0.2) rotate(0deg);
                     pointer-events: none;
+                    transform-origin: 50% 50%;
                 }
 
                 .pilot-loading-svg {
                     width: 100%;
                     height: 100%;
+                    aspect-ratio: 1 / 1;
                     display: block;
-                    filter: drop-shadow(0 0 4px #00f5ff);
+                    filter: drop-shadow(0 0 3px #00f5ff);
                 }
 
                 /* IN LOADING / THINKING STATE: Pupils transform into spinning loading symbol! */
@@ -191,7 +219,7 @@
                 #pilot-companion-root.thinking .pilot-pupil-loading {
                     opacity: 1;
                     transform: scale(1);
-                    animation: pupilSpinnerRotation 1.1s linear infinite;
+                    animation: pupilSpinnerRotation 1.1s linear infinite !important;
                 }
 
                 @keyframes pupilSpinnerRotation {
@@ -199,20 +227,21 @@
                     to { transform: scale(1) rotate(360deg); }
                 }
 
-                /* Eye Concentric Pulse Ripples */
+                /* Eye Concentric Pulse Ripples - Strict 1:1 Circle */
                 .pilot-eye-ripple {
                     position: absolute;
-                    width: 16px;
-                    height: 16px;
-                    border: 1.5px solid #00f5ff;
+                    width: 12px;
+                    height: 12px;
+                    aspect-ratio: 1 / 1;
+                    border: 1px solid #00f5ff;
                     border-radius: 50%;
-                    top: 13.5px;
+                    top: 4.25px;
                     pointer-events: none;
                     opacity: 0;
-                    box-shadow: 0 0 8px #00f5ff;
+                    box-shadow: 0 0 6px #00f5ff;
                 }
-                .pilot-eye-ripple.left { left: 9.5px; }
-                .pilot-eye-ripple.right { right: 9.5px; }
+                .pilot-eye-ripple.left { left: 3.25px; }
+                .pilot-eye-ripple.right { right: 3.25px; }
 
                 #pilot-companion-root.thinking .pilot-eye-ripple,
                 #pilot-companion-root.loading .pilot-eye-ripple {
@@ -222,13 +251,13 @@
                 /* Smiling Mouth */
                 .pilot-mouth {
                     position: absolute;
-                    bottom: 12px;
+                    bottom: 6px;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 18px;
-                    height: 8px;
-                    border-bottom: 2.5px solid #ffffff;
-                    border-radius: 0 0 12px 12px;
+                    width: 12px;
+                    height: 5px;
+                    border-bottom: 2px solid #ffffff;
+                    border-radius: 0 0 8px 8px;
                     transition: all 0.3s ease;
                 }
 
@@ -236,27 +265,27 @@
                 #pilot-companion-root.acting .pilot-mouth,
                 #pilot-companion-root.smile .pilot-mouth,
                 #pilot-companion-root.success .pilot-mouth {
-                    height: 12px;
-                    border-radius: 0 0 16px 16px;
-                    border-bottom-width: 3px;
+                    height: 7px;
+                    border-radius: 0 0 10px 10px;
+                    border-bottom-width: 2.2px;
                 }
 
-                /* Snug Glassmorphic Status Card (Autonomous Playwright Action) - Scaled Down */
+                /* Snug Glassmorphic Status Card - Compact Scaled Down */
                 .pilot-status-badge {
                     background: linear-gradient(135deg, rgba(8, 20, 52, 0.96), rgba(4, 12, 34, 0.96));
-                    border: 1.2px solid rgba(0, 229, 255, 0.65);
-                    border-radius: 12px;
-                    padding: 6px 11px 7px 11px;
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 229, 255, 0.3);
-                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(0, 229, 255, 0.65);
+                    border-radius: 8px;
+                    padding: 4px 8px 5px 8px;
+                    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 229, 255, 0.25);
+                    backdrop-filter: blur(8px);
                     color: #ffffff;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    max-width: 290px;
-                    min-width: 210px;
+                    max-width: 220px;
+                    min-width: 170px;
                     pointer-events: auto;
                     display: flex;
                     flex-direction: column;
-                    gap: 3px;
+                    gap: 2.5px;
                     transition: top 0.25s ease;
                 }
 
@@ -264,7 +293,7 @@
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    gap: 6px;
+                    gap: 5px;
                     border-bottom: 1px solid rgba(0, 229, 255, 0.18);
                     padding-bottom: 2px;
                 }
@@ -272,13 +301,13 @@
                 .pilot-badge-tag-group {
                     display: flex;
                     align-items: center;
-                    gap: 5px;
+                    gap: 4px;
                 }
 
                 .pilot-badge-tag {
-                    font-size: 8.5px;
-                    font-weight: 900;
-                    letter-spacing: 0.6px;
+                    font-size: 7px;
+                    font-weight: 800;
+                    letter-spacing: 0.5px;
                     text-transform: uppercase;
                     color: #00e5ff;
                 }
@@ -286,72 +315,57 @@
                 /* Moving Animated Dots (• • •) */
                 .pilot-moving-dots {
                     display: inline-flex;
-                    gap: 3px;
+                    gap: 2.5px;
                     align-items: center;
                 }
 
                 .pilot-dot {
-                    width: 3.5px;
-                    height: 3.5px;
+                    width: 3px;
+                    height: 3px;
                     background: #ffffff;
-                    box-shadow: 0 0 5px #00e5ff;
+                    box-shadow: 0 0 4px #00e5ff;
                     border-radius: 50%;
                     opacity: 0.3;
                 }
 
-                #pilot-companion-root.thinking .pilot-dot:nth-child(1),
-                #pilot-companion-root.loading .pilot-dot:nth-child(1),
-                #pilot-companion-root.generating .pilot-dot:nth-child(1) {
-                    animation: pilotDotBounce 0.8s infinite 0.0s;
-                }
-                #pilot-companion-root.thinking .pilot-dot:nth-child(2),
-                #pilot-companion-root.loading .pilot-dot:nth-child(2),
-                #pilot-companion-root.generating .pilot-dot:nth-child(2) {
-                    animation: pilotDotBounce 0.8s infinite 0.2s;
-                }
-                #pilot-companion-root.thinking .pilot-dot:nth-child(3),
-                #pilot-companion-root.loading .pilot-dot:nth-child(3),
-                #pilot-companion-root.generating .pilot-dot:nth-child(3) {
-                    animation: pilotDotBounce 0.8s infinite 0.4s;
-                }
+                .pilot-dot:nth-child(1) { animation: pilotDotBounce 1.4s infinite ease-in-out; }
+                .pilot-dot:nth-child(2) { animation: pilotDotBounce 1.4s infinite ease-in-out 0.2s; }
+                .pilot-dot:nth-child(3) { animation: pilotDotBounce 1.4s infinite ease-in-out 0.4s; }
 
                 .pilot-title-text {
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: #ffffff;
-                    margin-top: 1px;
+                    font-size: 8px;
+                    font-weight: 600;
+                    color: #f8fafc;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
 
-                /* CURRENT DOING & NEXT PLANNING ROWS (Full Thought Visibility) */
                 .pilot-activity-block {
                     display: flex;
                     flex-direction: column;
                     gap: 2px;
-                    margin-top: 1px;
-                }
-
-                .pilot-doing-row, .pilot-next-row {
-                    font-size: 9.5px;
-                    line-height: 1.35;
-                    white-space: normal;
-                    word-break: break-word;
                 }
 
                 .pilot-doing-row {
-                    color: #e2f4ff;
-                    font-weight: 500;
+                    color: #e2e8f0;
+                    font-size: 7.5px;
+                    line-height: 1.35;
+                    word-break: break-word;
                 }
 
                 .pilot-doing-row strong {
-                    color: #00f5ff;
-                    font-weight: 700;
+                    color: #38bdf8;
+                    font-weight: 600;
                     margin-right: 3px;
                 }
 
                 .pilot-next-row {
                     color: #94a3b8;
                     font-weight: 400;
-                    font-size: 9px;
+                    font-size: 7px;
+                    line-height: 1.3;
+                    word-break: break-word;
                 }
 
                 .pilot-next-row strong {
@@ -362,7 +376,7 @@
 
                 @keyframes pilotEyeBlink {
                     0%, 90%, 100% { transform: scaleY(1); }
-                    93% { transform: scaleY(0.08); }
+                    93% { transform: scaleY(0.1); }
                     96% { transform: scaleY(1); }
                 }
 
@@ -372,8 +386,8 @@
                 }
 
                 @keyframes pilotAvatarPulse {
-                    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.6)); }
-                    50% { transform: scale(1.03); filter: drop-shadow(0 0 18px rgba(0, 229, 255, 0.9)); }
+                    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.6)); }
+                    50% { transform: scale(1.02); filter: drop-shadow(0 0 14px rgba(0, 229, 255, 0.85)); }
                 }
 
                 @keyframes pilotRotateRing {
@@ -383,7 +397,7 @@
 
                 @keyframes pilotDotBounce {
                     0%, 100% { opacity: 0.3; transform: translateY(0); }
-                    50% { opacity: 1; transform: translateY(-2.5px); }
+                    50% { opacity: 1; transform: translateY(-2px); }
                 }
             `;
             document.head.appendChild(style);
@@ -401,7 +415,7 @@
                                 <div class="pilot-catchlight-2"></div>
                             </div>
                             <div class="pilot-pupil-loading">
-                                <svg viewBox="0 0 24 24" class="pilot-loading-svg">
+                                <svg viewBox="0 0 24 24" class="pilot-loading-svg" preserveAspectRatio="xMidYMid meet">
                                     <circle cx="12" cy="12" r="9" stroke="rgba(0,229,255,0.25)" stroke-width="2.5" fill="none"/>
                                     <path d="M 12,3 A 9,9 0 0 1 21,12" stroke="#00f5ff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
                                 </svg>
@@ -416,7 +430,7 @@
                                 <div class="pilot-catchlight-2"></div>
                             </div>
                             <div class="pilot-pupil-loading">
-                                <svg viewBox="0 0 24 24" class="pilot-loading-svg">
+                                <svg viewBox="0 0 24 24" class="pilot-loading-svg" preserveAspectRatio="xMidYMid meet">
                                     <circle cx="12" cy="12" r="9" stroke="rgba(0,229,255,0.25)" stroke-width="2.5" fill="none"/>
                                     <path d="M 12,3 A 9,9 0 0 1 21,12" stroke="#00f5ff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
                                 </svg>
@@ -469,16 +483,24 @@
 
                 // Dynamic auto-lowering: If cursor is near top of screen (mouseY < 140), drop down slightly
                 if (this.mouseY < 140) {
-                    this.targetY = this.mouseY + 30;
+                    this.targetY = this.mouseY + 26;
                 } else {
                     this.targetY = this.mouseY + 6;
                 }
 
-                // Prevent overflowing right viewport boundary
-                const maxRight = window.innerWidth - 310;
+                // Prevent overflowing right viewport boundary (scaled down width ~235px)
+                const maxRight = window.innerWidth - 235;
                 if (this.targetX > maxRight) {
-                    this.targetX = this.mouseX - 290;
+                    this.targetX = this.mouseX - 225;
                 }
+            }, { passive: true });
+
+            // Fluid scroll tracking: smoothly moves companion along with page scroll and content reading
+            let lastScrollY = window.scrollY;
+            window.addEventListener('scroll', () => {
+                const deltaY = window.scrollY - lastScrollY;
+                lastScrollY = window.scrollY;
+                this.targetY = Math.max(12, Math.min(window.innerHeight - 70, this.targetY - deltaY * 0.35));
             }, { passive: true });
         }
 
@@ -539,23 +561,23 @@
                 switch (state) {
                     case 'thinking':
                     case 'loading':
-                        stateEl.textContent = 'THINKING';
+                        stateEl.textContent = 'THINKING & REASONING';
                         stateEl.style.color = '#00f0ff';
                         break;
                     case 'generating':
-                        stateEl.textContent = 'GENERATING';
+                        stateEl.textContent = 'GENERATING RESPONSE';
                         stateEl.style.color = '#a855f7';
                         break;
                     case 'acting':
-                        stateEl.textContent = 'AUTOMATING';
+                        stateEl.textContent = 'EXECUTING ACTION';
                         stateEl.style.color = '#10b981';
                         break;
                     case 'success':
-                        stateEl.textContent = 'COMPLETED';
+                        stateEl.textContent = 'TASK COMPLETED';
                         stateEl.style.color = '#34d399';
                         break;
                     default:
-                        stateEl.textContent = 'AUTONOMOUS PLAYWRIGHT';
+                        stateEl.textContent = 'AI COPILOT ACTIVE';
                         stateEl.style.color = '#38bdf8';
                         break;
                 }

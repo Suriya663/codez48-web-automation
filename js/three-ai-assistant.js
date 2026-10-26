@@ -16,7 +16,7 @@
  *   below the avatar so thoughts are 100% visible and never cut off off-screen
  * - Snug Cursor Proximity (+8px, +6px) with zero distant drift
  * - Docked Upper-Right Message Pill (• • •) matching official reference spec
- * - Immediate Action Pills (Standard Dosa, Crisp & Thin, Canteen)
+ * - Autonomous Action Companion & Real-Time Status Flow
  */
 
 (function (root, factory) {
@@ -470,13 +470,14 @@
 
             const eyeDist = 90;
             const eyeY = -12;
-            const eyeRadiusX = 34;
-            const eyeRadiusY = 46;
-            const blinkScale = 1 - this.blinkProgress * 0.92;
+            const eyeRadius = 36; // Equal radii for a 100% PERFECT geometric circle
+            const eyeRadiusX = eyeRadius;
+            const eyeRadiusY = eyeRadius;
+            const isLoadingState = (this.state === 'thinking' || this.state === 'loading');
+            const blinkScale = isLoadingState ? 1 : (1 - this.blinkProgress * 0.92);
 
             // 1. Eye-Originating Loading Animation
             // Concentric radiant waves and scanner arcs pulse directly outward from both eye pupils!
-            const isLoadingState = (this.state === 'thinking' || this.state === 'loading');
             if (isLoadingState) {
                 const drawEyeLoadingRipples = (cx, cy) => {
                     ctx.save();
@@ -527,7 +528,7 @@
                 ctx.shadowBlur = 32;
 
                 // Eye Gradient
-                const eyeGrad = ctx.createRadialGradient(-6, -10, 4, 0, 0, eyeRadiusY);
+                const eyeGrad = ctx.createRadialGradient(-6, -10, 4, 0, 0, eyeRadius);
                 eyeGrad.addColorStop(0, '#ffffff');
                 eyeGrad.addColorStop(0.3, '#70e1ff');
                 eyeGrad.addColorStop(0.75, '#00b4d8');
@@ -535,13 +536,13 @@
 
                 ctx.fillStyle = eyeGrad;
                 ctx.beginPath();
-                ctx.ellipse(0, 0, eyeRadiusX, eyeRadiusY, 0, 0, Math.PI * 2);
+                ctx.arc(0, 0, eyeRadius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Pupil (Deep Cyan)
+                // Pupil (Deep Cyan) - Perfect Circle
                 ctx.fillStyle = '#05182e';
                 ctx.beginPath();
-                ctx.ellipse(2, 4, eyeRadiusX * 0.54, eyeRadiusY * 0.56, 0, 0, Math.PI * 2);
+                ctx.arc(2, 2, eyeRadius * 0.54, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Primary Catchlight (Upper Left)
