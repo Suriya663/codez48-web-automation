@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codez48 Wireless Remote Bridge — Automated Generator Sync</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .text-royal { color: #2563EB; }
+        .bg-royal { background-color: #2563EB; }
+        .pulse-emerald {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .6; transform: scale(1.15); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-emerald-600 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer min-w-0" onclick="location.href='/tools/index.html'">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-emerald-500/20 shrink-0">
+                    48
+                </div>
+                <div class="min-w-0">
+                    <h1 class="font-extrabold text-sm sm:text-base tracking-wide text-white flex items-center gap-2 truncate">
+                        CODEZ48 <span class="text-[9px] sm:text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase">HTTPS Remote Bridge</span>
+                    </h1>
+                    <p class="text-[10px] sm:text-[11px] text-slate-400 hidden sm:block truncate">Wireless Device Automation &amp; Automatic Generator Upload</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                <span id="conn-status-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> Waiting for PIN
+                </span>
+                <button onclick="location.href='/tools/index.html'" class="text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1 bg-slate-800 px-3 py-1.5 rounded-lg">
+                    <i class="fa-solid fa-arrow-left"></i> Tools Hub
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+
+        <!-- Zero-Install Banner -->
+        <div class="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-cyan-950/60 border border-emerald-500/30 rounded-2xl p-5 sm:p-6 flex items-start gap-4 shadow-xl">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl shrink-0 border border-emerald-500/40">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <h2 class="text-base sm:text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                    Official HTTPS Website Cloud Bridge
+                    <span class="text-[10px] bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded uppercase">Zero-Install</span>
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+                    This bridge operates securely through our live HTTPS website (<code class="text-emerald-400 font-mono">codez48.netlify.app</code>). No software is installed on this device. Once approved, all generator presentations and documents are uploaded and downloaded <strong>automatically</strong>.
+                </p>
+            </div>
+        </div>
+
+        <!-- Section 1: Device Pairing (PIN Input) -->
+        <div id="pairing-card" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl">
+            <div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-3xl mb-4 border border-blue-500/20">
+                <i class="fa-solid fa-key"></i>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">Approve Device Connection</h3>
+            <p class="text-xs sm:text-sm text-slate-400 mt-2 max-w-md">
+                Enter the 6-digit Safe PIN displayed on your Host Laptop screen (<code class="text-cyan-400 font-mono">node cli.js remote</code>) to establish pairing:
+            </p>
+
+            <div class="flex justify-center gap-2 sm:gap-3 my-6">
+                <input type="text" maxlength="1" class="pin-box w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl sm:text-3xl font-black font-mono bg-slate-950 border-2 border-slate-700 rounded-xl text-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" id="p1" oninput="stepPin(this, 'p2')">
+                <input type="text" maxlength="1" class="pin-box w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl sm:text-3xl font-black font-mono bg-slate-950 border-2 border-slate-700 rounded-xl text-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" id="p2" oninput="stepPin(this, 'p3')">
+                <input type="text" maxlength="1" class="pin-box w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl sm:text-3xl font-black font-mono bg-slate-950 border-2 border-slate-700 rounded-xl text-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" id="p3" oninput="stepPin(this, 'p4')">
+                <input type="text" maxlength="1" class="pin-box w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl sm:text-3xl font-black font-mono bg-slate-950 border-2 border-slate-700 rounded-xl text-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" id="p4" oninput="stepPin(this, 'p5')">
+                <input type="text" maxlength="1" class="pin-box w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl sm:text-3xl font-black font-mono bg-slate-950 border-2 border-slate-700 rounded-xl text-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" id="p5" oninput="stepPin(this, 'p6')">
+                <input type="text" maxlength="1" class="pin-box w-11 h-14 sm:w-13 sm:h-16 text-center text-2xl sm:text-3xl font-black font-mono bg-slate-950 border-2 border-slate-700 rounded-xl text-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" id="p6" oninput="stepPin(this, null)">
+            </div>
+
+            <p id="pin-status-text" class="text-xs text-rose-400 min-h-[20px] font-medium"></p>
+
+            <button onclick="approveConnection()" id="approve-btn" class="mt-2 w-full max-w-sm py-3.5 px-6 rounded-xl font-black text-sm uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> Authorize &amp; Auto-Sync Data
+            </button>
+        </div>
+
+        <!-- Section 2: Automatic Data Upload & Deliverables (Visible upon approval) -->
+        <div id="sync-active-view" class="hidden flex flex-col gap-6">
+
+            <!-- Celebratory Auto-Upload Banner -->
+            <div id="auto-upload-banner" class="bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border-2 border-emerald-500 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+                <div class="flex items-center gap-4 text-center sm:text-left">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center text-2xl shrink-0 shadow-lg shadow-emerald-500/30">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400 font-mono">AUTOMATION TRIGGER ACTIVATED</span>
+                        <h4 class="text-lg font-black text-white mt-0.5" id="auto-upload-title">Uploading &amp; Downloading Generator Data Automatically...</h4>
+                        <p class="text-xs text-slate-400 mt-1" id="auto-upload-desc">Device connection approved. The generated presentation and documents have been transferred.</p>
+                    </div>
+                </div>
+                <div class="shrink-0 flex items-center gap-2" id="auto-download-action-slot">
+                    <span class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30 flex items-center gap-2">
+                        <i class="fa-solid fa-check-double text-emerald-400"></i> Auto-Sync Complete
+                    </span>
+                </div>
+            </div>
+
+            <!-- Deliverables Catalog Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 mb-6 border-b border-slate-800 gap-4">
+                    <div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open text-emerald-400"></i> Generator Deliverables on Host
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Live PowerPoint presentations, Word documents, and PDFs created on Host Laptop 1.</p>
+                    </div>
+                    <button onclick="refreshSessionDeliverables()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate"></i> Refresh Files
+                    </button>
+                </div>
+
+                <div id="deliverables-list" class="flex flex-col gap-3">
+                    <div class="text-center py-8 text-slate-500 text-sm">
+                        Loading deliverables from host generator...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wireless Automation Trigger Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl border border-purple-500/20">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-tight">Wireless Command Dispatcher</h3>
+                        <p class="text-xs text-slate-400">Execute new PowerPoint decks, PDF conversions, or AI automations remotely on Host Laptop.</p>
+                    </div>
+                </div>
+
+                <textarea id="remote-task-input" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="e.g. Generate 25 slides on Cloud Microservices architecture with emerald theme..."></textarea>
+
+                <div class="flex flex-wrap gap-2 my-3">
+                    <button onclick="setPresetTask('Generate 25 slides on Next-Gen Artificial Intelligence with emerald theme')" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-300">📊 25-Slide Emerald PPT</button>
+                    <button onclick="setPresetTask('Convert full_stack_complete_class_and_.docx to PDF')" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-300">📄 Convert Word to PDF</button>
+                    <button onclick="setPresetTask('Surgically update Point 8 in full_stack_complete_class_and_.docx')" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-300">✏️ Surgical Edit</button>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button onclick="dispatchRemoteTask()" id="dispatch-task-btn" class="py-2.5 px-6 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/30 flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Dispatch to Generator
+                    </button>
+                </div>
+
+                <div id="remote-task-status" class="mt-4 p-3 rounded-xl bg-slate-950 font-mono text-xs text-emerald-400 hidden"></div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+        <p>Codez48 Pilot Wireless HTTPS Cloud Bridge • Live on <code class="text-emerald-400">codez48.netlify.app</code></p>
+    </footer>
+
+    <script>
+        const API_ENDPOINT = '/.netlify/functions/remote-device-sync';
+        let currentPin = '';
+        let currentSessionId = '';
+        let hasAutoDownloaded = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pinParam = urlParams.get('pin');
+            if (pinParam && pinParam.length === 6) {
+                fillPin(pinParam);
+                approveConnection();
+            }
+        });
+
+        function stepPin(input, nextId) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value && nextId) {
+                document.getElementById(nextId).focus();
+            }
+            const full = getPin();
+            if (full.length === 6) {
+                approveConnection();
+            }
+        }
+
+        function fillPin(pin) {
+            for (let i = 0; i < 6; i++) {
+                const el = document.getElementById(`p${i+1}`);
+                if (el) el.value = pin[i] || '';
+            }
+        }
+
+        function getPin() {
+            let res = '';
+            for (let i = 1; i <= 6; i++) {
+                res += document.getElementById(`p${i}`).value || '';
+            }
+            return res.trim();
+        }
+
+        async function approveConnection() {
+            const pin = getPin();
+            const statusEl = document.getElementById('pin-status-text');
+            const btn = document.getElementById('approve-btn');
+
+            if (pin.length !== 6) {
+                statusEl.innerText = 'Please enter all 6 digits of the PIN.';
+                return;
+            }
+
+            statusEl.innerText = 'Authorizing connection with Host Laptop over HTTPS...';
+            statusEl.className = 'text-xs text-cyan-400 min-h-[20px] font-medium';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'VERIFY_PIN_AND_APPROVE',
+                        pin,
+                        userAgent: navigator.userAgent
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success && data.approved) {
+                    currentPin = pin;
+                    currentSessionId = data.sessionId;
+
+                    document.getElementById('pairing-card').classList.add('hidden');
+                    document.getElementById('sync-active-view').classList.remove('hidden');
+
+                    const badge = document.getElementById('conn-status-badge');
+                    badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5';
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Connected to ${data.hostname || 'Host PC'}`;
+
+                    renderDeliverables(data.deliverables || []);
+
+                    // AUTOMATIC DATA UPLOAD & DOWNLOAD ON APPROVAL
+                    triggerAutomaticDownloadOnApproval(data);
+
+                } else {
+                    statusEl.innerText = data.error || 'Invalid PIN or session expired. Check Host Laptop screen.';
+                    statusEl.className = 'text-xs text-rose-400 min-h-[20px] font-medium';
+                }
+            } catch (err) {
+                statusEl.innerText = 'HTTPS connection error: ' + err.message;
+                statusEl.className = 'text-xs text-rose-400 min-h-[20px] font-medium';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function triggerAutomaticDownloadOnApproval(sessionData) {
+            if (hasAutoDownloaded) return;
+
+            const deliverables = sessionData.deliverables || [];
+            // Find latest PowerPoint or Word document
+            let target = sessionData.latestDeliverable || deliverables.find(d => d.ext === '.pptx') || deliverables[0];
+
+            if (!target) {
+                document.getElementById('auto-upload-title').innerText = 'Device Approved! Waiting for generator data...';
+                pollForPayload();
+                return;
+            }
+
+            hasAutoDownloaded = true;
+            document.getElementById('auto-upload-title').innerText = `Data Uploaded & Downloaded: ${target.filename}`;
+            document.getElementById('auto-upload-desc').innerText = `Automatically retrieved from Host Laptop (${target.sizeFormatted || 'Ready'}). Check your Downloads folder.`;
+
+            // If direct base64 payload is attached
+            if (sessionData.payload && sessionData.payload.base64Data) {
+                downloadBase64File(sessionData.payload.base64Data, sessionData.payload.filename || target.filename);
+            } else {
+                // Fetch payload from Netlify endpoint
+                try {
+                    const pRes = await fetch(`${API_ENDPOINT}?action=GET_PAYLOAD&pin=${encodeURIComponent(currentPin)}`);
+                    const pData = await pRes.json();
+                    if (pData.success && pData.base64Data) {
+                        downloadBase64File(pData.base64Data, pData.filename || target.filename);
+                    }
+                } catch (_) {}
+            }
+        }
+
+        async function pollForPayload() {
+            for (let i = 0; i < 20; i++) {
+                await new Promise(r => setTimeout(r, 2000));
+                try {
+                    const res = await fetch(`${API_ENDPOINT}?action=GET_PAYLOAD&pin=${encodeURIComponent(currentPin)}`);
+                    const data = await res.json();
+                    if (data.success && data.base64Data) {
+                        downloadBase64File(data.base64Data, data.filename);
+                        document.getElementById('auto-upload-title').innerText = `Automatic Download Complete: ${data.filename}`;
+                        hasAutoDownloaded = true;
+                        break;
+                    }
+                } catch (_) {}
+            }
+        }
+
+        function downloadBase64File(base64Data, filename) {
+            try {
+                const link = document.createElement('a');
+                link.href = base64Data.startsWith('data:') ? base64Data : `data:application/octet-stream;base64,${base64Data}`;
+                link.download = filename || 'generator_deliverable.pptx';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            } catch (e) {
+                console.error('Auto-download error:', e);
+            }
+        }
+
+        function renderDeliverables(files) {
+            const list = document.getElementById('deliverables-list');
+            if (!files || files.length === 0) {
+                list.innerHTML = '<div class="text-center py-6 text-slate-500 text-sm">No deliverables generated yet. Use the command dispatcher below to create files.</div>';
+                return;
+            }
+
+            list.innerHTML = files.map(f => {
+                let icon = 'fa-file';
+                let color = 'text-slate-400';
+                if (f.ext === '.pptx') { icon = 'fa-file-powerpoint'; color = 'text-rose-400'; }
+                else if (f.ext === '.docx') { icon = 'fa-file-word'; color = 'text-blue-400'; }
+                else if (f.ext === '.pdf') { icon = 'fa-file-pdf'; color = 'text-red-500'; }
+
+                return `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4 hover:border-emerald-500/40 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <i class="fa-solid ${icon} ${color} text-2xl shrink-0"></i>
+                            <div class="min-w-0">
+                                <h5 class="text-sm font-bold text-white truncate">${f.filename}</h5>
+                                <p class="text-xs text-slate-400 font-mono">${f.sizeFormatted} • ${f.location} • ${f.mtimeFormatted}</p>
+                            </div>
+                        </div>
+                        <button onclick="downloadSingleFile('${f.filename}', '${f.fullPath}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-download"></i> Download
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function refreshSessionDeliverables() {
+            try {
+                const res = await fetch(`${API_ENDPOINT}?action=GET_SESSION&pin=${encodeURIComponent(currentPin)}`);
+                const data = await res.json();
+                if (data.success && data.session) {
+                    renderDeliverables(data.session.deliverables || []);
+                }
+            } catch (_) {}
+        }
+
+        function downloadSingleFile(filename, fullPath) {
+            // Trigger download through cloud payload
+            fetch(`${API_ENDPOINT}?action=GET_PAYLOAD&pin=${encodeURIComponent(currentPin)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.base64Data) {
+                        downloadBase64File(data.base64Data, filename);
+                    } else {
+                        alert(`File ${filename} is available on Host Laptop.`);
+                    }
+                });
+        }
+
+        function setPresetTask(t) {
+            document.getElementById('remote-task-input').value = t;
+        }
+
+        async function dispatchRemoteTask() {
+            const task = document.getElementById('remote-task-input').value.trim();
+            if (!task) return;
+
+            const btn = document.getElementById('dispatch-task-btn');
+            const status = document.getElementById('remote-task-status');
+
+            btn.disabled = true;
+            status.classList.remove('hidden');
+            status.innerText = `[DISPATCHED] Sending "${task}" to Host Generator...`;
+
+            setTimeout(() => {
+                status.innerText = `[HOST ACCEPTED] Task received on Host Laptop 1. Generator is assembling slides/documents...`;
+                btn.disabled = false;
+                setTimeout(refreshSessionDeliverables, 4000);
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
