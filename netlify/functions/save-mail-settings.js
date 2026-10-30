@@ -73,22 +73,24 @@ exports.handler = async (event, context) => {
         // GET SAVED SETTINGS
         if (action === 'GET') {
             const docSnap = await settingsRef.get();
-            if (docSnap.exists) {
-                return {
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ success: true, settings: docSnap.data() })
-                };
-            } else {
-                return {
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        success: true,
-                        settings: { siteId, notificationEmail: '', mailAutomation: true, enableDailyCron: false }
-                    })
-                };
-            }
+            let baseSettings = docSnap.exists ? docSnap.data() : { siteId, notificationEmail: '', mailAutomation: true, enableDailyCron: false };
+
+            try {
+                const cSnap = await db.collection('user_custom_smtp').doc(siteId).get();
+                if (cSnap.exists) {
+                    const cData = cSnap.data();
+                    baseSettings.customSmtpHost = cData.customSmtpHost || 'smtp.gmail.com';
+                    baseSettings.customSmtpPort = cData.customSmtpPort || 587;
+                    baseSettings.customSmtpUser = cData.customSmtpUser || '';
+                    baseSettings.customSmtpPass = cData.customSmtpPass || '';
+                }
+            } catch (e) {}
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ success: true, settings: baseSettings })
+            };
         }
 
         // SAVE SETTINGS
@@ -119,6 +121,24 @@ exports.handler = async (event, context) => {
             activeApiKey: activeApiKey || '',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+
+        // Save custom SMTP credentials if supplied
+        if (payload.customSmtpUser && payload.customSmtpPass) {
+            try {
+                const customSmtpRef = db.collection('user_custom_smtp').doc(siteId);
+                await customSmtpRef.set({
+                    siteId,
+                    customSmtpHost: payload.customSmtpHost || 'smtp.gmail.com',
+                    customSmtpPort: Number(payload.customSmtpPort) || 587,
+                    customSmtpUser: payload.customSmtpUser.trim(),
+                    customSmtpPass: payload.customSmtpPass.trim(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                console.log(`[USER CUSTOM SMTP SAVED] for siteId: ${siteId}`);
+            } catch (e) {
+                console.error('Error saving user_custom_smtp:', e.message);
+            }
+        }
 
         console.log(`[MAIL SETTINGS & SCHEDULE SAVED] Site: ${siteId} -> Email: ${targetEmail} | Daily Cron: ${enableDailyCron}`);
 

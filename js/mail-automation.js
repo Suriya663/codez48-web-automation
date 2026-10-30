@@ -327,6 +327,40 @@ export const MailAutomationController = {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- 8. Custom Direct SMTP Gateway (Optional Pro) -->
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                                <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('custom-smtp-panel').classList.toggle('hidden')">
+                                    <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
+                                        <i class="fa-solid fa-server text-purple-600"></i> Custom Direct SMTP Settings (Optional)
+                                    </span>
+                                    <span class="text-[8px] font-black text-purple-600 uppercase bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-200">Toggle Setup ▾</span>
+                                </div>
+                                <div id="custom-smtp-panel" class="space-y-2 hidden pt-2 border-t border-slate-200">
+                                    <p class="text-[9px] text-slate-500 font-medium leading-relaxed">Direct SMTP bypasses default serverless limits. If using Gmail, generate a 16-character App Password.</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">SMTP Host</label>
+                                            <input type="text" id="custom-smtp-host" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="smtp.gmail.com" value="smtp.gmail.com">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">SMTP Port</label>
+                                            <input type="number" id="custom-smtp-port" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="587" value="587">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Gmail / Sender Address</label>
+                                        <input type="email" id="custom-smtp-user" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="your-email@gmail.com">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label class="block text-[8px] font-black text-slate-400 uppercase tracking-widest">16-Character App Password</label>
+                                            <a href="https://myaccount.google.com/apppasswords" target="_blank" class="text-[8px] font-bold text-purple-600 hover:underline">Get Google App Password ↗</a>
+                                        </div>
+                                        <input type="password" id="custom-smtp-pass" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-mono text-slate-800" placeholder="xxxx xxxx xxxx xxxx">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Right Column: Interactive Real-Time Email Template Previewer -->
@@ -739,6 +773,24 @@ export const MailAutomationController = {
                     if (toggleInput) toggleInput.checked = Boolean(data.settings.mailAutomation);
                     if (cronInput) cronInput.checked = Boolean(data.settings.enableDailyCron);
                     if (statusText) statusText.innerText = data.settings.enableDailyCron ? '🟢 Daily Automatic Email Schedule Active (24h Background Cron)' : (data.settings.notificationEmail ? `Active Recipient: ${data.settings.notificationEmail}` : 'Ready to dispatch.');
+                    if (data.settings.customSmtpHost) {
+                        const el = document.getElementById('custom-smtp-host');
+                        if (el) el.value = data.settings.customSmtpHost;
+                    }
+                    if (data.settings.customSmtpPort) {
+                        const el = document.getElementById('custom-smtp-port');
+                        if (el) el.value = data.settings.customSmtpPort;
+                    }
+                    if (data.settings.customSmtpUser) {
+                        const el = document.getElementById('custom-smtp-user');
+                        if (el) el.value = data.settings.customSmtpUser;
+                        const panel = document.getElementById('custom-smtp-panel');
+                        if (panel) panel.classList.remove('hidden');
+                    }
+                    if (data.settings.customSmtpPass) {
+                        const el = document.getElementById('custom-smtp-pass');
+                        if (el) el.value = data.settings.customSmtpPass;
+                    }
                 }
             }
         } catch (e) {
@@ -781,7 +833,11 @@ export const MailAutomationController = {
                     enableDailyCron: cronVal,
                     recipients: recipients,
                     templatePayload: templatePayload,
-                    activeApiKey: activeKey
+                    activeApiKey: activeKey,
+                    customSmtpHost: document.getElementById('custom-smtp-host')?.value || 'smtp.gmail.com',
+                    customSmtpPort: Number(document.getElementById('custom-smtp-port')?.value) || 587,
+                    customSmtpUser: document.getElementById('custom-smtp-user')?.value || '',
+                    customSmtpPass: document.getElementById('custom-smtp-pass')?.value || ''
                 })
             });
 
@@ -839,6 +895,11 @@ export const MailAutomationController = {
             const siteId = MailAutomationController.getSiteId();
             const templatePayload = MailAutomationController.getTemplatePayload();
 
+            const customHost = document.getElementById('custom-smtp-host')?.value || undefined;
+            const customPort = document.getElementById('custom-smtp-port')?.value || undefined;
+            const customUser = document.getElementById('custom-smtp-user')?.value || undefined;
+            const customPass = document.getElementById('custom-smtp-pass')?.value || undefined;
+
             const res = await fetch('/.netlify/functions/send-login-notification', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -847,6 +908,10 @@ export const MailAutomationController = {
                     siteId,
                     notificationEmail: targetRecipient,
                     ...templatePayload,
+                    smtpHost: customHost,
+                    smtpPort: customPort,
+                    smtpUser: customUser,
+                    smtpPass: customPass,
                     time: new Date().toISOString()
                 })
             });
@@ -857,8 +922,13 @@ export const MailAutomationController = {
             } catch (pErr) {}
 
             if (res.ok && (result.success || res.status === 200)) {
-                if (statusText) statusText.innerText = `Welcome Email Sent Successfully to ${targetRecipient}!`;
-                alert(`Welcome Email Dispatched Successfully!\nPlease check inbox/spam for ${targetRecipient}.`);
+                if (result.simulated) {
+                    if (statusText) statusText.innerText = `Verified: ${result.message}`;
+                    alert(`✅ Template Verified & Recorded!\n\n${result.message}`);
+                } else {
+                    if (statusText) statusText.innerText = `Welcome Email Sent Successfully to ${targetRecipient}!`;
+                    alert(`🎉 Welcome Email Dispatched Successfully!\nPlease check inbox/spam for ${targetRecipient}.`);
+                }
             } else {
                 throw new Error(result.error || result.message || `HTTP ${res.status}: Failed to send test email.`);
             }
@@ -1064,6 +1134,11 @@ export const MailAutomationController = {
                     if (activeEl) activeEl.innerText = `Dispatching batch: ${recipient}...`;
 
                     try {
+                        const customHost = document.getElementById('custom-smtp-host')?.value || undefined;
+                        const customPort = document.getElementById('custom-smtp-port')?.value || undefined;
+                        const customUser = document.getElementById('custom-smtp-user')?.value || undefined;
+                        const customPass = document.getElementById('custom-smtp-pass')?.value || undefined;
+
                         const res = await fetch('/.netlify/functions/send-login-notification', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1072,6 +1147,10 @@ export const MailAutomationController = {
                                 siteId,
                                 notificationEmail: recipient,
                                 ...templatePayload,
+                                smtpHost: customHost,
+                                smtpPort: customPort,
+                                smtpUser: customUser,
+                                smtpPass: customPass,
                                 time: new Date().toISOString()
                             })
                         });
