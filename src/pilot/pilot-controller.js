@@ -139,6 +139,16 @@ class PilotController {
             return { success: true, profile };
         }
 
+                // 0.083 Business Services, Best Offerings & Stock Sentinel Query
+        if (intent === 'BUSINESS_SERVICES' || sub_intent === 'SHOW_BUSINESS_SERVICES_AND_PRODUCTS') {
+            pilotHud.setGenerating('Retrieving Business Services & AI Intelligence from Firestore...');
+            const bizAdapter = require('./adapters/business-services-adapter');
+            const result = await bizAdapter.handleInquiry(goal);
+            pilotHud.setSuccess('Business Services & Products Ready');
+            setTimeout(() => pilotHud.hide(), 4000);
+            return result;
+        }
+
         // 0.084 Seller Onboarding, Own Product Upload & Storefront Creation
         if (intent === 'SELLER_WEBSITE_CREATION' || sub_intent === 'ONBOARD_SELLER_AND_PRODUCT') {
             pilotHud.setGenerating('Creating your dedicated storefront and product catalog...');

@@ -110,6 +110,33 @@ class IntentClassifier {
             };
         }
 
+                // 0.045 Business Services, Best Offerings & Stock Sentinel Query Intent
+        const isBusinessServicesIntent = (
+            lower.includes('business services') || lower.includes('best services') ||
+            lower.includes('services offered') || lower.includes('our services') ||
+            lower.includes('சர்வீசஸ்') || lower.includes('சேவைகள்') || lower.includes('பெஸ்ட் சர்வீசஸ்') ||
+            lower.includes('பிசினஸ் ப்ராடக்ட்') || lower.includes('பிசினஸ் சர்வீஸ்') ||
+            lower.includes('stock threshold') || lower.includes('low stock sentence') || lower.includes('த்ரெட் ஹோல்ட்') ||
+            (lower.includes('service') && (lower.includes('list') || lower.includes('show') || lower.includes('details') || lower.includes('பத்தி')))
+        ) && !lower.includes('create storefront') && !lower.includes('own product upload');
+
+        if (isBusinessServicesIntent) {
+            return {
+                intent: 'BUSINESS_SERVICES',
+                sub_intent: 'SHOW_BUSINESS_SERVICES_AND_PRODUCTS',
+                keywords: ['business_services', 'best_services', 'stock_threshold', 'low_stock_sentinel'],
+                user_goal: goal,
+                target: 'Codez48 Pilot Business Services & AI Intelligence',
+                output_format: 'BUSINESS_SERVICES_REPORT',
+                workflow: 'PILOT_BUSINESS_SERVICES_ADAPTER',
+                required_parameters: {},
+                confidence: 1.0,
+                needs_clarification: false,
+                requires_confirmation: false,
+                reason: 'Deterministic Business Services, Stock Sentinel & Product Intelligence Query'
+            };
+        }
+
         // 0.046 Seller Onboarding, Own Product Upload & Storefront Creation (Tamil & English)
         const isSellerWebsiteCreationIntent = (
             lower.includes('own product') || lower.includes('ஓன் ப்ராடக்ட்') || lower.includes('ஓன் பிராடக்ட்') ||
@@ -1074,7 +1101,8 @@ class IntentClassifier {
             local.intent === 'PROJECT_PURCHASE' ||
             local.intent === 'FULL_STACK_COURSE' ||
             local.intent === 'PRODUCT_SEARCH_AND_ORDER' ||
-            local.intent === 'SELLER_WEBSITE_CREATION'
+            local.intent === 'SELLER_WEBSITE_CREATION' ||
+            local.intent === 'BUSINESS_SERVICES'
         )) {
             return local;
         }
