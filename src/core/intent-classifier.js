@@ -88,8 +88,9 @@ class IntentClassifier {
         const isFullStackCourseIntent = (
             lower.includes('full stack') || lower.includes('fullstack') || lower.includes('full-stack') ||
             lower.includes('ஃபுல் ஸ்டாக்') || lower.includes('ஃபுல்ஸ்டாக்') ||
-            ((lower.includes('course') || lower.includes('கோர்ஸ்') || lower.includes('webinar') || lower.includes('tutorial') || lower.includes('படிக்க') || lower.includes('class')) &&
-             (lower.includes('online') || lower.includes('web') || lower.includes('2 month') || lower.includes('இரண்டு மாதம்') || lower.includes('நவம்பர்') || lower.includes('nov 15') || lower.includes('develop'))) ||
+            lower.includes('வெபினார்') || lower.includes('டுடோரியல்') || lower.includes('webinar') || lower.includes('tutorial') ||
+            ((lower.includes('course') || lower.includes('கோர்ஸ்') || lower.includes('படிக்க') || lower.includes('class') || lower.includes('படிப்பு')) &&
+             (lower.includes('online') || lower.includes('web') || lower.includes('2 month') || lower.includes('இரண்டு மாதம்') || lower.includes('நவம்பர்') || lower.includes('nov 15') || lower.includes('develop') || lower.includes('python') || lower.includes('django'))) ||
             lower.includes('official registration link') || lower.includes('registration link for the full stack')
         );
         if (isFullStackCourseIntent) {

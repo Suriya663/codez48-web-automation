@@ -49,27 +49,15 @@ class SellerWebsiteCreatorAdapter {
         return 'CDZ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
     }
 
-    async ask(rl, query, defaultVal = '', timeoutMs = 12000) {
+    ask(rl, query, defaultVal = '') {
         return new Promise(resolve => {
             if (!rl || !process.stdin.isTTY) {
                 console.log(query + (defaultVal || ''));
                 return resolve(defaultVal);
             }
-            let settled = false;
-            const timer = setTimeout(() => {
-                if (!settled) {
-                    settled = true;
-                    console.log(`\x1b[90m [Auto-confirmed: ${defaultVal || 'Default'}]\x1b[0m`);
-                    resolve(defaultVal);
-                }
-            }, timeoutMs);
-
             rl.question(query, answer => {
-                if (!settled) {
-                    settled = true;
-                    clearTimeout(timer);
-                    resolve(answer.trim() || defaultVal);
-                }
+                const trimmed = answer.trim();
+                resolve(trimmed || defaultVal);
             });
         });
     }
