@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codez48 Interactive AI Quiz Studio — 10-Question Challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti Library for 10/10 Perfect Score Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-card: rgba(17, 24, 39, 0.95);
+      --surface-border: rgba(255, 255, 255, 0.1);
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.35);
+      --success: #10b981;
+      --gold: #f59e0b;
+      --danger: #ef4444;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+    
+    .quiz-container {
+      width: 100%;
+      max-width: 680px;
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      position: relative;
+    }
+
+    /* Header & Progress */
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 16px;
+    }
+    .brand-pill {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+    .progress-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
+      width: 10%;
+      transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Question & Options */
+    .question-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.45;
+      color: #ffffff;
+      margin-bottom: 24px;
+    }
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .option-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .option-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateX(4px);
+    }
+    .option-card.selected {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1.5px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.25);
+    }
+    .option-letter {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    .option-card.selected .option-letter {
+      background: #3b82f6;
+      color: white;
+    }
+    .option-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      flex: 1;
+    }
+
+    /* Actions */
+    .action-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-next {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-next:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
+    }
+    .btn-next:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Results Screen */
+    .results-screen {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    .trophy-icon {
+      font-size: 4rem;
+      margin-bottom: 12px;
+      animation: float 2s infinite ease-in-out;
+    }
+    @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0); } }
+
+    .score-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 3px solid #10b981;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px auto;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+    }
+    .score-num {
+      font-size: 2.75rem;
+      font-weight: 900;
+      color: #34d399;
+      line-height: 1;
+    }
+    .score-total {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .perfect-banner {
+      display: none;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 900;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      margin: 14px auto 20px auto;
+      width: fit-content;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      animation: pulse 1.5s infinite;
+    }
+    .results-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .results-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    .btn-restart {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--surface-border);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-restart:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-container">
+    
+    <!-- Question Card -->
+    <div id="quizCard">
+      <div class="quiz-header">
+        <div class="brand-pill">CODEZ48 AI QUIZ</div>
+        <div class="progress-tag" id="progressTag">QUESTION 1 OF 10</div>
+      </div>
+
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+
+      <div class="question-title" id="questionTitle">
+        Loading question...
+      </div>
+
+      <div class="options-grid" id="optionsGrid">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="action-row">
+        <button class="btn-next" id="btnNext" disabled>
+          <span>Next</span>
+          <span>➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div class="results-screen" id="resultsScreen">
+      <div class="trophy-icon" id="resultTrophy">🏆</div>
+      <div class="perfect-banner" id="perfectBanner">🎉 PERFECT SCORE! 10 OUT OF 10 🎉</div>
+
+      <div class="score-circle" id="scoreCircle">
+        <div class="score-num" id="finalScoreNum">10</div>
+        <div class="score-total">OUT OF 10</div>
+      </div>
+
+      <div class="results-title" id="resultsTitle">Outstanding Mastery!</div>
+      <div class="results-desc" id="resultsDesc">
+        You answered all 10 questions flawlessly. Full celebration unlocked!
+      </div>
+
+      <button class="btn-restart" onclick="restartQuiz()">🔄 Retake Challenge</button>
+    </div>
+
+  </div>
+
+  <script>
+    // 10 Structured Quiz Questions (Autonomous Systems, Cloud & AI)
+    const QUESTIONS = [
+      {
+        question: "1. What is the primary role of Playwright in browser automation?",
+        options: [
+          "Compiling Python scripts to C++ binaries",
+          "Fast, reliable end-to-end automation across Chromium, Firefox, and WebKit",
+          "Managing local SQLite database migrations",
+          "Generating vector illustrations in SVG format"
+        ],
+        answer: 1
+      },
+      {
+        question: "2. When automating websites, why is Microsoft Edge often preferred on Windows?",
+        options: [
+          "It has fewer features than other browsers",
+          "It is a native OS-signed binary trusted by Windows Defender and local AVs",
+          "It does not support modern JavaScript",
+          "It requires elevated administrative permissions for every tab"
+        ],
+        answer: 1
+      },
+      {
+        question: "3. What does Model Context Protocol (MCP) enable for AI assistants?",
+        options: [
+          "It limits LLMs to only 256 tokens per response",
+          "A standardized open protocol for connecting AI models to secure local tools and data",
+          "A proprietary video codec used by YouTube",
+          "A cryptocurrency blockchain consensus algorithm"
+        ],
+        answer: 1
+      },
+      {
+        question: "4. In MetaTrader (MT4/MT5), what does toggling 'Algo Trading' (Ctrl+E) do?",
+        options: [
+          "Deletes all existing indicators from the chart",
+          "Enables or disables automated Expert Advisors (EAs) from placing orders",
+          "Changes the timeframe from H1 to D1",
+          "Deposits demo funds into the account"
+        ],
+        answer: 1
+      },
+      {
+        question: "5. What is the fundamental purpose of the Zero-Loss Trailing Breakeven protection?",
+        options: [
+          "It guarantees infinite profit on every trade",
+          "Once a position moves into profit, it automatically moves the Stop-Loss to Entry (+1 pip) so capital cannot be lost",
+          "It increases the lot size when the market drops",
+          "It disables the broker connection"
+        ],
+        answer: 1
+      },
+      {
+        question: "6. If a user provides only a website name without a URL, what should the AI system do?",
+        options: [
+          "Throw an error and refuse to proceed",
+          "Ask the AI to identify the canonical URL, open the browser, and perform the automation",
+          "Close the terminal immediately",
+          "Open random websites until one works"
+        ],
+        answer: 1
+      },
+      {
+        question: "7. Why is line-clearing (\\r\\x1b[K) crucial for interactive CLI loading spinners?",
+        options: [
+          "To format the text into uppercase",
+          "To clean up the progress line completely so it doesn't collide with active prompts",
+          "To terminate background Node.js processes",
+          "To send an email notification"
+        ],
+        answer: 1
+      },
+      {
+        question: "8. In PowerPoint slide architecture, what is the standard widescreen aspect ratio?",
+        options: [
+          "4:3",
+          "16:9",
+          "21:9",
+          "1:1"
+        ],
+        answer: 1
+      },
+      {
+        question: "9. How does the Anti-Hacker Army Shield protect automated trading accounts?",
+        options: [
+          "By strictly capping the maximum lot size (0.05 lot ceiling) and enforcing mandatory Stop-Loss",
+          "By deleting all charts on startup",
+          "By trading with maximum leverage of 1:1000",
+          "By turning off the computer monitor"
+        ],
+        answer: 0
+      },
+      {
+        question: "10. What does the Codez48 Presentation Studio 100+ Template Gallery provide?",
+        options: [
+          "Only unstyled plain text files",
+          "Pure 16:9 visual slide mockups with tiered subscription plans and instant browser-to-PowerPoint compilation",
+          "A replacement for Windows Paint",
+          "An audio synthesizer"
+        ],
+        answer: 1
+      }
+    ];
+
+    let currentIdx = 0;
+    let selectedOption = null;
+    let score = 0;
+    const userAnswers = [];
+
+    const quizCard = document.getElementById('quizCard');
+    const resultsScreen = document.getElementById('resultsScreen');
+    const progressTag = document.getElementById('progressTag');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const questionTitle = document.getElementById('questionTitle');
+    const optionsGrid = document.getElementById('optionsGrid');
+    const btnNext = document.getElementById('btnNext');
+
+    function loadQuestion(idx) {
+      selectedOption = null;
+      btnNext.disabled = true;
+
+      const q = QUESTIONS[idx];
+      progressTag.textContent = `QUESTION ${idx + 1} OF ${QUESTIONS.length}`;
+      progressBarFill.style.width = `${((idx + 1) / QUESTIONS.length) * 100}%`;
+      questionTitle.textContent = q.question;
+
+      optionsGrid.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+
+      q.options.forEach((opt, oIdx) => {
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.innerHTML = `
+          <div class="option-letter">${letters[oIdx]}</div>
+          <div class="option-text">${opt}</div>
+        `;
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedOption = oIdx;
+          btnNext.disabled = false;
+        });
+        optionsGrid.appendChild(card);
+      });
+
+      if (idx === QUESTIONS.length - 1) {
+        btnNext.innerHTML = '<span>Finish & View Score</span> <span>🏆</span>';
+      } else {
+        btnNext.innerHTML = '<span>Next</span> <span>➔</span>';
+      }
+    }
+
+    btnNext.addEventListener('click', () => {
+      if (selectedOption === null) return;
+
+      const isCorrect = (selectedOption === QUESTIONS[currentIdx].answer);
+      if (isCorrect) score++;
+      userAnswers.push({ question: currentIdx, selected: selectedOption, correct: isCorrect });
+
+      currentIdx++;
+      if (currentIdx < QUESTIONS.length) {
+        loadQuestion(currentIdx);
+      } else {
+        showResults();
+      }
+    });
+
+    function showResults() {
+      quizCard.style.display = 'none';
+      resultsScreen.style.display = 'block';
+
+      const finalScoreNum = document.getElementById('finalScoreNum');
+      const scoreCircle = document.getElementById('scoreCircle');
+      const perfectBanner = document.getElementById('perfectBanner');
+      const resultsTitle = document.getElementById('resultsTitle');
+      const resultsDesc = document.getElementById('resultsDesc');
+
+      finalScoreNum.textContent = score;
+
+      if (score === 10) {
+        // PERFECT SCORE! Trigger Celebration Animation
+        perfectBanner.style.display = 'block';
+        resultsTitle.textContent = 'Flawless Victory! 10 / 10';
+        resultsDesc.textContent = 'Incredible mastery! You answered every question with 100% precision. Full confetti celebration unlocked!';
+        scoreCircle.style.borderColor = '#f59e0b';
+        scoreCircle.style.boxShadow = '0 0 40px rgba(245, 158, 11, 0.5)';
+        finalScoreNum.style.color = '#f59e0b';
+
+        triggerConfettiCelebration();
+      } else if (score >= 7) {
+        resultsTitle.textContent = 'Great Job!';
+        resultsDesc.textContent = `You scored ${score} out of 10. Solid domain proficiency across cloud, automation, and AI concepts!`;
+      } else {
+        resultsTitle.textContent = 'Good Attempt!';
+        resultsDesc.textContent = `You scored ${score} out of 10. Review the questions and try again to achieve the perfect 10/10 animation!`;
+      }
+    }
+
+    function triggerConfettiCelebration() {
+      if (typeof confetti === 'function') {
+        // Initial burst
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+
+        // Continuous celebratory fireworks for 3 seconds
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        const interval = setInterval(function() {
+          if (Date.now() > end) {
+            return clearInterval(interval);
+          }
+          confetti({
+            startVelocity: 30,
+            spread: 360,
+            ticks: 60,
+            origin: { x: Math.random(), y: Math.random() - 0.2 }
+          });
+        }, 350);
+      }
+    }
+
+    function restartQuiz() {
+      currentIdx = 0;
+      score = 0;
+      selectedOption = null;
+      userAnswers.length = 0;
+      quizCard.style.display = 'block';
+      resultsScreen.style.display = 'none';
+      loadQuestion(0);
+    }
+
+    // Start
+    loadQuestion(0);
+  </script>
+</body>
+</html>

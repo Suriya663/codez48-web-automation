@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codez48 Presentation Studio — 100+ Visual Slide Design Templates</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-card: rgba(17, 24, 39, 0.9);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --primary: #f58220;
+      --primary-glow: rgba(245, 130, 32, 0.25);
+      --slate-navy: #1e252b;
+      --accent: #10b981;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* Header */
+    .app-header {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--surface-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, #f58220, #ea580c);
+      color: white;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 6px 14px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(245, 130, 32, 0.3);
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff, #fdba74);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .plan-pill {
+      background: linear-gradient(135deg, rgba(245, 130, 32, 0.15), rgba(234, 88, 12, 0.25));
+      color: #fb923c;
+      border: 1px solid rgba(245, 130, 32, 0.4);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f58220;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+    /* Main Container */
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1720px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1200px) {
+      .main-container { grid-template-columns: 1fr; }
+    }
+
+    /* Controls Bar */
+    .catalog-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .search-row {
+      display: flex;
+      gap: 12px;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    
+    /* Tier Filters */
+    .tier-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tier-btn {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--surface-border);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tier-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+    .tier-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 0 14px var(--primary-glow);
+    }
+    .tier-badge-pill {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    /* Template Cards Grid */
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .template-card {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .template-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    }
+    .template-card.selected {
+      border-color: var(--primary);
+      background: rgba(245, 130, 32, 0.08);
+      box-shadow: 0 0 0 2px var(--primary), 0 12px 28px rgba(245, 130, 32, 0.25);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .template-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fdba74;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .template-tier-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.3px;
+    }
+    .badge-tier3 {
+      background: rgba(245, 130, 32, 0.2);
+      color: #f58220;
+      border: 1px solid rgba(245, 130, 32, 0.4);
+    }
+    .badge-tier2 {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    .badge-tier1 {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .badge-free {
+      background: rgba(148, 163, 184, 0.2);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    /* 16:9 Visual Slide Mockup Canvas */
+    .mockup-container {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.15);
+      transition: transform 0.2s;
+    }
+    .template-card:hover .mockup-container {
+      transform: scale(1.02);
+    }
+
+    .template-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .template-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #f8fafc;
+    }
+    .template-category {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Generator Sidebar */
+    .generator-panel {
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: fit-content;
+      position: sticky;
+      top: 90px;
+    }
+    .panel-header {
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 14px;
+    }
+    .panel-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: white;
+    }
+    .selected-banner {
+      background: rgba(245, 130, 32, 0.1);
+      border: 1px solid rgba(245, 130, 32, 0.3);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .selected-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .selected-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: white;
+      margin-top: 4px;
+    }
+    .selected-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    /* 9-Slide Visual Preview Tabs */
+    .slides-preview-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .slide-thumb-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .slide-thumb-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .form-textarea {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: white;
+      font-size: 0.9rem;
+      min-height: 80px;
+      resize: vertical;
+      outline: none;
+    }
+    .form-textarea:focus {
+      border-color: var(--primary);
+    }
+    .slider {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .btn-apply-design {
+      background: linear-gradient(135deg, #f58220, #ea580c);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(245, 130, 32, 0.4);
+      transition: all 0.2s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-apply-design:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(245, 130, 32, 0.5);
+    }
+
+    /* Confirmation Modal / Status */
+    .confirm-toast {
+      display: none;
+      background: #10b981;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-align: center;
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-wrap">
+      <div class="brand-badge">CODEZ48</div>
+      <div>
+        <div class="brand-title">Presentation Studio & 100+ Visual Slide Mockups</div>
+        <div class="brand-sub">Pure 16:9 Slide Designs • Executive Orange Chevron Flagship Suite</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="plan-pill">
+        <div class="status-dot"></div>
+        <span>Tier 3: Profit-Oriented Luxury Plan (Active)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="main-container">
+
+    <!-- Left: Templates Catalog -->
+    <div class="catalog-section">
+      <div class="catalog-controls">
+        <div class="search-row">
+          <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search slide designs: chevron, orange, pitch, executive, college, tech, medical...">
+        </div>
+        
+        <!-- Plan Tier Tabs -->
+        <div class="tier-tabs" id="tierTabs">
+          <button class="tier-btn active" data-tier="all">
+            <span>All Designs (105)</span>
+          </button>
+          <button class="tier-btn" data-tier="TIER_3_PROFIT_ORIENTED">
+            <span>⭐ Tier 3: Profit-Oriented Flagship</span>
+            <span class="tier-badge-pill">Your Plan</span>
+          </button>
+          <button class="tier-btn" data-tier="TIER_2_ENTERPRISE">
+            <span>Tier 2: Enterprise Growth</span>
+          </button>
+          <button class="tier-btn" data-tier="TIER_1_STARTUP">
+            <span>Tier 1: Modern Startup</span>
+          </button>
+          <button class="tier-btn" data-tier="FREE_PLAN">
+            <span>Free Plan: Minimalist</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Templates Grid: Pure Visual Slide Mockups -->
+      <div class="templates-grid" id="templatesGrid">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- Right: Selected Design & Apply Panel -->
+    <div class="generator-panel">
+      <div class="panel-header">
+        <div class="panel-title">Slide Design Selection</div>
+      </div>
+
+      <!-- Selected Banner -->
+      <div class="selected-banner" id="selectedBanner">
+        <div class="selected-label">Selected Visual Suite:</div>
+        <div class="selected-name" id="selectedName">Executive Chevron Orange & Charcoal Suite</div>
+        <div class="selected-desc" id="selectedDesc">
+          Flagship 9-slide layout featuring vibrant orange chevron geometry, 4-hexagon creative team cards, dual capsule mission/vision, curved service panels, stacked column charts, and 3-tier pricing tables.
+        </div>
+
+        <!-- Dynamic Slide Thumbnails Selector (Expands dynamically to exact slide count) -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:6px;">
+          <div style="font-size: 0.75rem; font-weight:700; color:#cbd5e1;">Dynamic Slide Layouts:</div>
+          <div id="slideCounterBadge" style="font-size:0.7rem; font-weight:800; color:var(--primary); background:rgba(229,184,11,0.15); padding:2px 8px; border-radius:10px;">11 Slides Active</div>
+        </div>
+        <div class="slides-preview-tabs" id="slidesTabs">
+          <!-- Dynamically populated buttons for slides 1 to N -->
+        </div>
+      </div>
+
+      <!-- Big Slide Preview Canvas -->
+      <div class="mockup-container" id="mainSlidePreview" style="box-shadow: 0 8px 24px rgba(0,0,0,0.6);">
+        <!-- Active Slide SVG / HTML -->
+      </div>
+
+      <!-- Topic Input -->
+      <div class="form-group">
+        <label class="form-label">
+          <span>Presentation Topic / Domain:</span>
+        </label>
+        <textarea id="promptInput" class="form-textarea" placeholder="e.g. Cloud Automation, WhatsApp Security, AI Trading Guardian & College Symposium..."></textarea>
+      </div>
+
+      <!-- Slide Count Slider -->
+      <div class="form-group">
+        <label class="form-label">
+          <span>Target Slide Count:</span>
+          <span id="slideCountVal" style="color:var(--primary); font-weight:800;">9 Slides</span>
+        </label>
+        <input type="range" id="slideCountSlider" class="slider" min="1" max="100" value="11">
+      </div>
+
+      <!-- Submit / Confirm Design Button -->
+      <button class="btn-apply-design" id="btnApplyDesign">
+        <span>✔ Apply Design & Compile in PowerPoint</span>
+      </button>
+
+      <!-- Confirmation Toast -->
+      <div class="confirm-toast" id="confirmToast">
+        ✓ Design Confirmed! Returning to CLI & Opening PowerPoint...
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+
+    // =========================================================================
+    // VISUAL TEMPLATE CATALOG WITH 107 REAL 16:9 SLIDE DESIGNS
+    // =========================================================================
+    let CATALOG = [
+  {
+    "id": "executive_chevron_orange",
+    "number": 1,
+    "name": "Executive Chevron Orange & Charcoal Suite (9-Slide Strategic Business Deck)",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Governance",
+    "recommendedTheme": "EXECUTIVE_CHEVRON_ORANGE",
+    "description": "Flagship executive deck featuring vibrant orange chevron geometry, 4-hexagon creative team cards, dual capsule mission/vision, curved service panels, stacked column charts, and 3-tier pricing tables."
+  },
+  {
+    "id": "college_naac_accreditation",
+    "number": 2,
+    "name": "College Accreditation & Assessment Defense (NAAC / NBA / ABET)",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Comprehensive institutional defense deck covering curricular aspects, teaching-learning, research metrics, student support, and governance."
+  },
+  {
+    "id": "college_annual_academic_review",
+    "number": 3,
+    "name": "University Annual Academic & Financial Review",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CORPORATE",
+    "description": "Annual progress report on enrollment, academic results, faculty publications, funded research grants, and infrastructure development."
+  },
+  {
+    "id": "college_placement_brochure",
+    "number": 4,
+    "name": "Campus Placement & Corporate Recruitment Pitch",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "PITCH",
+    "description": "Showcase of graduating batch demographics, technical skill matrices, previous recruiters, internship highlights, and placement policies."
+  },
+  {
+    "id": "college_tech_symposium",
+    "number": 5,
+    "name": "Department National Technical Symposium & Hackathon",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Event overview, keynote speakers, technical tracks, competitive hackathon problem statements, judging rubrics, and sponsor benefits."
+  },
+  {
+    "id": "college_capstone_defense",
+    "number": 6,
+    "name": "Final Year Engineering Capstone Project Defense",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Formal student project defense: problem statement, literature review, architecture, implementation, test cases, results, and conclusion."
+  },
+  {
+    "id": "college_phd_viva_defense",
+    "number": 7,
+    "name": "Ph.D. Doctoral Dissertation Viva Voce Defense",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Rigorous doctoral thesis defense: research novelty, theoretical framework, methodology, experimental findings, publications, and future scope."
+  },
+  {
+    "id": "college_freshers_orientation",
+    "number": 8,
+    "name": "College Freshers Induction & Campus Orientation",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CREATIVE",
+    "description": "Welcoming first-year students: college heritage, academic calendar, campus rules, anti-ragging policies, clubs, and student welfare."
+  },
+  {
+    "id": "college_board_of_studies",
+    "number": 9,
+    "name": "Autonomous College Board of Studies (BOS) Curriculum Revision",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CORPORATE",
+    "description": "Detailed syllabus revision, credit distribution, elective basket offerings, industry feedback integration, and course outcome mappings."
+  },
+  {
+    "id": "college_faculty_fdp",
+    "number": 10,
+    "name": "Faculty Development Program (FDP) & Pedagogy Workshop",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Pedagogical training on Outcome-Based Education (OBE), modern teaching tools, research grant writing, and academic publishing ethics."
+  },
+  {
+    "id": "college_research_grant_proposal",
+    "number": 11,
+    "name": "Government & Industrial Funded Research Grant Proposal",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Research grant pitch: objective, socio-economic impact, methodology, budget breakdown, milestones, and deliverable timeline."
+  },
+  {
+    "id": "college_iqac_audit",
+    "number": 12,
+    "name": "Internal Quality Assurance Cell (IQAC) Audit Report",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "Academic audit findings, student-teacher ratio, attainment of CO-PO metrics, feedback analysis, and action taken reports."
+  },
+  {
+    "id": "college_innovation_incubation",
+    "number": 13,
+    "name": "Campus Startup Incubation & Entrepreneurship Cell (E-Cell)",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "PITCH",
+    "description": "Incubation facilities, seed fund allocation, student-led startups, patent filings, mentor networks, and prototype showcase."
+  },
+  {
+    "id": "college_convocation_ceremony",
+    "number": 14,
+    "name": "Annual College Convocation & Graduation Address",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "Ceremonial presentation: presidential address, gold medalists, department rank holders, degree conferral order, and pledge."
+  },
+  {
+    "id": "college_alumni_global_meet",
+    "number": 15,
+    "name": "Global Alumni Association Annual Reunion & Fundraising",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CREATIVE",
+    "description": "Celebrating alumni achievements, endowment fund status, student mentorship programs, global chapter updates, and networking gala."
+  },
+  {
+    "id": "college_cultural_sports_fest",
+    "number": 16,
+    "name": "Inter-Collegiate Cultural & Sports Extravaganza",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CREATIVE",
+    "description": "Mega-fest prospectus: competition categories, celebrity performers, schedule, prize pool, rulebook, and sponsorship packages."
+  },
+  {
+    "id": "college_medical_case_conference",
+    "number": 17,
+    "name": "Medical College Clinical Grand Rounds & Case Conference",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Clinical case presentation: patient history, physical examination, diagnostic investigations, differential diagnosis, and management."
+  },
+  {
+    "id": "college_pharmacy_drug_seminar",
+    "number": 18,
+    "name": "College of Pharmacy Novel Drug Delivery Seminar",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Pharmacokinetics, molecular formulation, clinical safety trials, bio-availability data, and therapeutic application analysis."
+  },
+  {
+    "id": "college_law_moot_court",
+    "number": 19,
+    "name": "Law School National Moot Court Competition Briefing",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CORPORATE",
+    "description": "Moot problem proposition, statutory provisions, constitutional law precedents, submission guidelines, and memorial evaluation criteria."
+  },
+  {
+    "id": "college_mba_case_study",
+    "number": 20,
+    "name": "Business School (MBA) Harvard Case Study Analysis",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CORPORATE",
+    "description": "Business case breakdown: industry macro-environment, SWOT, Porter's 5 forces, financial ratios, strategic alternatives, and recommendations."
+  },
+  {
+    "id": "college_architecture_thesis",
+    "number": 21,
+    "name": "Architecture & Design Urban Planning Thesis Review",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CREATIVE",
+    "description": "Site analysis, zoning laws, conceptual sketches, spatial programming, 3D renderings, material selection, and sustainability metrics."
+  },
+  {
+    "id": "college_polytechnic_skills",
+    "number": 22,
+    "name": "Polytechnic Diploma Technical Skill Showcase",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Vocational training, CAD/CAM machining, electrical circuit wiring, workshop safety, industry apprenticeship, and live prototypes."
+  },
+  {
+    "id": "college_agricultural_summit",
+    "number": 23,
+    "name": "Agricultural College Sustainable Farming & AgTech Summit",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Precision farming, drip irrigation, organic pest management, drone soil analysis, crop yield economics, and farmer outreach."
+  },
+  {
+    "id": "college_nep_curriculum",
+    "number": 24,
+    "name": "National Education Policy (NEP 2020) Institutional Framework",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Multidisciplinary credit framework, multiple entry-exit pathways, skill enhancement courses, Academic Bank of Credits (ABC) compliance."
+  },
+  {
+    "id": "college_social_outreach_nss",
+    "number": 25,
+    "name": "College NSS & Social Outreach Rural Immersion Camp",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CREATIVE",
+    "description": "Community service initiatives: village health camps, digital literacy drives, environmental cleanliness, and impact assessment."
+  },
+  {
+    "id": "college_mou_industry_partnership",
+    "number": 26,
+    "name": "Industry-Academia Memorandum of Understanding (MoU) Signing",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Higher Education & Colleges",
+    "recommendedTheme": "CORPORATE",
+    "description": "Partnership scope: joint R&D projects, student internships, faculty sabbatical training, curriculum co-creation, and center of excellence."
+  },
+  {
+    "id": "corp_executive_luxury",
+    "number": 27,
+    "name": "Executive Luxury Boardroom Strategy Deck",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "Ultra-premium dark obsidian & champagne gold deck for CEO briefings, board meetings, and high-stakes M&A proposals."
+  },
+  {
+    "id": "corp_quarterly_business_review",
+    "number": 28,
+    "name": "Quarterly Business Review (QBR) & Performance Deck",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "Executive KPI tracking, revenue growth, customer acquisition costs, churn rates, operating margin analysis, and next quarter OKRs."
+  },
+  {
+    "id": "corp_annual_strategic_roadmap",
+    "number": 29,
+    "name": "5-Year Enterprise Vision & Strategic Roadmap",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CORPORATE",
+    "description": "Long-term corporate goals, market expansion vectors, technological modernization pillars, and organizational talent strategy."
+  },
+  {
+    "id": "corp_mergers_acquisitions",
+    "number": 30,
+    "name": "Mergers & Acquisitions (M&A) Due Diligence & Valuation",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "Target company profile, synergy modeling, DCF financial valuation, regulatory clearances, integration risks, and deal terms."
+  },
+  {
+    "id": "corp_digital_transformation",
+    "number": 31,
+    "name": "Enterprise Digital Transformation Blueprint",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Legacy system sunsetting, cloud adoption timeline, automated business processes, data lake architecture, and change management."
+  },
+  {
+    "id": "corp_esg_sustainability",
+    "number": 32,
+    "name": "Corporate ESG & Net-Zero Sustainability Report",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Environmental impact, carbon footprint reduction milestones, diversity & inclusion metrics, corporate governance, and green audits."
+  },
+  {
+    "id": "corp_crisis_management",
+    "number": 33,
+    "name": "Executive Crisis Management & Business Continuity Plan",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CORPORATE",
+    "description": "Incident severity matrix, immediate response protocols, stakeholder communications, brand reputation defense, and business continuity."
+  },
+  {
+    "id": "corp_product_launch",
+    "number": 34,
+    "name": "Flagship Enterprise Product Go-To-Market (GTM) Deck",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "PITCH",
+    "description": "Product positioning, ICP customer personas, competitive pricing tiers, omnichannel marketing blitz, and sales enablement strategy."
+  },
+  {
+    "id": "corp_sales_enablement",
+    "number": 35,
+    "name": "Enterprise B2B Sales Enablement & Playbook",
+    "tier": "TIER_3_PROFIT_ORIENTED",
+    "tierLabel": "⭐ Tier 3 Profit-Oriented",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CORPORATE",
+    "description": "Discovery call scripts, objection handling battlecards, enterprise value calculators, case studies, and closing incentives."
+  },
+  {
+    "id": "corp_operations_optimization",
+    "number": 36,
+    "name": "Supply Chain & Operational Efficiency Audit",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "Inventory turnover ratios, bottleneck diagnosis, vendor SLA performance, logistics cost reduction, and Six Sigma milestones."
+  },
+  {
+    "id": "corp_hr_talent_retention",
+    "number": 37,
+    "name": "Global Talent Acquisition & Employee Retention Strategy",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CORPORATE",
+    "description": "Talent pipeline health, competitive compensation benchmarking, leadership development tracks, and employee engagement surveys."
+  },
+  {
+    "id": "corp_investor_relations",
+    "number": 38,
+    "name": "Annual General Meeting (AGM) Investor Relations Deck",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "Audited financial statements, EBITDA margin expansion, dividend announcements, share price performance, and board resolutions."
+  },
+  {
+    "id": "corp_customer_success",
+    "number": 39,
+    "name": "Customer Success & Net Promoter Score (NPS) Analysis",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "Customer health scoring, onboarding time-to-value, net retention rate (NRR), customer feedback sentiment, and expansion playbook."
+  },
+  {
+    "id": "corp_procurement_vendor",
+    "number": 40,
+    "name": "Strategic Procurement & Global Vendor Selection",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CORPORATE",
+    "description": "RFP evaluation scorecard, total cost of ownership (TCO), supplier risk mitigation, contract negotiation parameters, and compliance."
+  },
+  {
+    "id": "corp_brand_repositioning",
+    "number": 41,
+    "name": "Global Brand Identity & Market Repositioning Strategy",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CREATIVE",
+    "description": "Brand equity assessment, consumer perception gap, updated brand archetype, visual identity revamp, and transition timeline."
+  },
+  {
+    "id": "corp_compliance_governance",
+    "number": 42,
+    "name": "Regulatory Compliance & Corporate Governance Framework",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CORPORATE",
+    "description": "Sarbanes-Oxley (SOX), GDPR compliance, whistleblower mechanism, anti-corruption policies, and internal audit findings."
+  },
+  {
+    "id": "corp_internal_townhall",
+    "number": 43,
+    "name": "All-Hands Company Townhall & Milestone Celebration",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "CREATIVE",
+    "description": "Company-wide updates, team shoutouts, product demo previews, cultural highlights, and interactive live Q&A session."
+  },
+  {
+    "id": "corp_pricing_strategy",
+    "number": 44,
+    "name": "SaaS & Enterprise Value-Based Pricing Strategy",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "Price elasticity curves, competitor pricing matrices, packaging tiers, feature gating thresholds, and revenue upside modeling."
+  },
+  {
+    "id": "corp_franchise_expansion",
+    "number": 45,
+    "name": "Franchise Partner Expansion & Business Opportunity",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "PITCH",
+    "description": "Franchise unit economics, initial capex breakdown, marketing support, territory exclusivity, and projected ROI horizons."
+  },
+  {
+    "id": "corp_venture_capital_fund",
+    "number": 46,
+    "name": "Corporate Venture Capital (CVC) Strategic Investment Fund",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Corporate Strategy & Boardroom",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "Strategic investment thesis, emerging tech deal flow, portfolio synergy with parent company, and follow-on reserve modeling."
+  },
+  {
+    "id": "tech_ai_ml_architecture",
+    "number": 47,
+    "name": "Generative AI & LLM Systems Production Architecture",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Foundation model selection, RAG vector pipeline, fine-tuning infrastructure, latency optimizations, and safety guardrails."
+  },
+  {
+    "id": "tech_cloud_migration_aws",
+    "number": 48,
+    "name": "Multi-Cloud Migration & Hybrid Cloud Architecture",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Lift-and-shift vs refactor strategy, Kubernetes cluster sizing, database replication, networking VPC peering, and cost forecast."
+  },
+  {
+    "id": "tech_cybersecurity_incident",
+    "number": 49,
+    "name": "Cybersecurity Threat Intelligence & SOC Incident Report",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "CORPORATE",
+    "description": "Zero-trust architecture, threat vector analysis, MITRE ATT&CK mapping, incident response forensics, and patching checklist."
+  },
+  {
+    "id": "tech_devops_ci_cd",
+    "number": 50,
+    "name": "DevSecOps Automation & Continuous Deployment Pipeline",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "GitOps workflow, static code analysis (SAST), automated container vulnerability scans, canary deployments, and MTTR telemetry."
+  },
+  {
+    "id": "tech_microservices_event_driven",
+    "number": 51,
+    "name": "Event-Driven Microservices Architecture (Kafka / RabbitMQ)",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Domain-Driven Design (DDD), distributed saga transactions, event sourcing, circuit breakers, and distributed tracing with OpenTelemetry."
+  },
+  {
+    "id": "tech_blockchain_smart_contracts",
+    "number": 52,
+    "name": "Enterprise Blockchain & Web3 Smart Contract Protocol",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Consensus mechanisms, smart contract security audits, gas optimization, decentralized oracle integration, and tokenomics."
+  },
+  {
+    "id": "tech_data_engineering_lakehouse",
+    "number": 53,
+    "name": "Modern Data Stack & Snowflake / Databricks Lakehouse",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "ETL/ELT pipelines, dbt data modeling, medallion architecture (Bronze/Silver/Gold), data governance, and BI reporting."
+  },
+  {
+    "id": "tech_iot_edge_computing",
+    "number": 54,
+    "name": "Industrial IoT (IIoT) & Edge Computing Ecosystem",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Sensor data ingestion via MQTT, edge inferencing, telemetry monitoring, predictive maintenance algorithms, and hardware specs."
+  },
+  {
+    "id": "tech_quantum_computing",
+    "number": 55,
+    "name": "Quantum Computing Algorithms & Cryptographic Impact",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Qubits, quantum superposition, Shor's algorithm, post-quantum cryptography (PQC), and commercial application horizons."
+  },
+  {
+    "id": "tech_api_gateway_developer_portal",
+    "number": 56,
+    "name": "Enterprise API Gateway & Developer Ecosystem Strategy",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "REST vs GraphQL vs gRPC, rate-limiting policies, OAuth2 security, SDK generation, and developer onboarding experience."
+  },
+  {
+    "id": "tech_robotics_automation_ros",
+    "number": 57,
+    "name": "Autonomous Robotics & ROS2 Control Systems",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Kinematics, SLAM navigation, LIDAR perception, computer vision obstacle avoidance, and industrial factory automation."
+  },
+  {
+    "id": "tech_frontend_design_system",
+    "number": 58,
+    "name": "Next.js & Design System Component Architecture",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "CREATIVE",
+    "description": "Atomic design hierarchy, accessibility (WCAG AAA), state management patterns, Core Web Vitals optimization, and storybook specs."
+  },
+  {
+    "id": "tech_database_sharding_nosql",
+    "number": 59,
+    "name": "High-Scale Distributed Database Sharding & Partitioning",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "CAP theorem tradeoffs, consistent hashing, multi-region active-active replication, indexing strategies, and failover."
+  },
+  {
+    "id": "tech_computer_vision_deep_learning",
+    "number": 60,
+    "name": "Deep Learning Computer Vision & YOLO Object Detection",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "CNN architectures, synthetic dataset augmentation, mAP benchmark scoring, ONNX runtime deployment, and edge camera FPS."
+  },
+  {
+    "id": "tech_ar_vr_spatial_computing",
+    "number": 61,
+    "name": "Spatial Computing & AR/VR Simulation Systems",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "CREATIVE",
+    "description": "Spatial audio, 6-DoF tracking, Unity/Unreal real-time rendering, haptic feedback integration, and medical/industrial simulation."
+  },
+  {
+    "id": "tech_nlp_speech_recognition",
+    "number": 62,
+    "name": "Speech-to-Text & Voice AI Conversational Intelligence",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Whisper architecture, real-time audio chunking, phonetic alignment, emotional tone analysis, and multilingual localization."
+  },
+  {
+    "id": "tech_green_software_engineering",
+    "number": 63,
+    "name": "Green Software Engineering & Carbon-Efficient Algorithms",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "SCI (Software Carbon Intensity) metrics, carbon-aware cloud scheduling, idle resource pruning, and efficient compilers."
+  },
+  {
+    "id": "tech_5g_telecom_network_slicing",
+    "number": 64,
+    "name": "5G Core Network Slicing & Private Cellular Infrastructure",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Open RAN architecture, ultra-reliable low latency communication (URLLC), network functions virtualization (NFV), and spectrum."
+  },
+  {
+    "id": "tech_autonomous_vehicles_perception",
+    "number": 65,
+    "name": "Autonomous Driving Perception & Sensor Fusion Architecture",
+    "tier": "TIER_2_ENTERPRISE",
+    "tierLabel": "Tier 2: Enterprise Growth",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Camera-Radar-LIDAR fusion, Kalman filters, behavioral path planning, safety redundancy layers, and ISO 26262 compliance."
+  },
+  {
+    "id": "tech_site_reliability_sre",
+    "number": 66,
+    "name": "Site Reliability Engineering (SRE) & Chaos Engineering Deck",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Technology & Software Engineering",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "SLO/SLA error budgets, Chaos Monkey failure injection, automated rollback triggers, alerting thresholds, and post-mortems."
+  },
+  {
+    "id": "pitch_seed_round_classic",
+    "number": 67,
+    "name": "Seed Round Silicon Valley Investor Pitch Deck",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "PITCH",
+    "description": "Classic 15-slide venture format: Problem, Solution, Market Size (TAM/SAM/SOM), Product Demo, Traction, Business Model, Team, Ask."
+  },
+  {
+    "id": "pitch_series_a_growth",
+    "number": 68,
+    "name": "Series A Growth & Metric-Heavy Investor Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "Proven unit economics, cohort retention curves, viral coefficient (K-factor), capital efficiency, and Series A expansion plan."
+  },
+  {
+    "id": "pitch_fintech_neobank",
+    "number": 69,
+    "name": "FinTech Neobank & Next-Gen Payments Pitch Deck",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "PITCH",
+    "description": "Interchange revenue, regulatory banking licenses, AI credit underwriting, customer acquisition loops, and cross-border remittance."
+  },
+  {
+    "id": "pitch_b2b_saas_metrics",
+    "number": 70,
+    "name": "B2B Enterprise SaaS Investor Deck with Rule of 40",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "DATA_DRIVEN",
+    "description": "ARR milestones, Rule of 40 calculation, LTV/CAC ratio, net dollar retention (NDR), sales cycle velocity, and pipeline coverage."
+  },
+  {
+    "id": "pitch_healthtech_telemedicine",
+    "number": 71,
+    "name": "HealthTech & AI Telemedicine Diagnostics Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "CORPORATE",
+    "description": "Healthcare provider shortage, HIPAA/FDA compliance, remote patient monitoring devices, reimbursement models, and pilot results."
+  },
+  {
+    "id": "pitch_edtech_gamified_learning",
+    "number": 72,
+    "name": "EdTech Adaptive & Gamified Learning Platform Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "CREATIVE",
+    "description": "K-12 & professional reskilling market, interactive gamification mechanics, retention rates, B2C subscription + B2B institutional tiers."
+  },
+  {
+    "id": "pitch_climate_tech_carbon_removal",
+    "number": 73,
+    "name": "ClimateTech & Direct Air Carbon Capture Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Gigaton-scale carbon removal technology, cost per ton reduction curve, carbon credit market buyers, and plant capex plans."
+  },
+  {
+    "id": "pitch_ecommerce_d2c_brand",
+    "number": 74,
+    "name": "Direct-to-Consumer (D2C) Consumer Brand Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "CREATIVE",
+    "description": "Brand storytelling, proprietary manufacturing, gross margins, influencer marketing ROAS, repeat purchase frequency, and retail rollout."
+  },
+  {
+    "id": "pitch_proptech_real_estate",
+    "number": 75,
+    "name": "PropTech AI Real Estate Valuation & Marketplace",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "CORPORATE",
+    "description": "Fractional property ownership, automated valuation models (AVM), title tokenization, rental yield security, and transaction fee model."
+  },
+  {
+    "id": "pitch_cybersecurity_saas",
+    "number": 76,
+    "name": "Cybersecurity Zero-Day Threat Prevention Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Ransomware epidemic, agentless cloud security posture management (CSPM), proof-of-concept win rates, and enterprise ACV growth."
+  },
+  {
+    "id": "pitch_logistics_last_mile",
+    "number": 77,
+    "name": "Autonomous Last-Mile Delivery & Micro-Fulfillment Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "PITCH",
+    "description": "Delivery cost per parcel, route optimization algorithms, dark store hub networks, carbon emissions reduction, and enterprise partnerships."
+  },
+  {
+    "id": "pitch_creator_economy_monetization",
+    "number": 78,
+    "name": "Creator Economy & Web3 Fan Monetization Platform",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "CREATIVE",
+    "description": "Community-driven commerce, exclusive subscriber content paywalls, digital merch drops, platform take-rate, and GMV growth."
+  },
+  {
+    "id": "pitch_gaming_metaverse_studio",
+    "number": 79,
+    "name": "AAA Game Studio & Unreal Engine 5 Metaverse Pitch",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "CREATIVE",
+    "description": "Gameplay mechanics, cinematic world-building, in-game economy, battle pass monetization, live-ops roadmap, and publishing partners."
+  },
+  {
+    "id": "pitch_agtech_vertical_farming",
+    "number": 80,
+    "name": "AgTech Urban Vertical Farming & Controlled Agriculture",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Hydroponic crop yields, 95% water reduction, LED spectrum optimization, hyper-local grocery distribution, and unit profitability."
+  },
+  {
+    "id": "pitch_spacetech_satellite_data",
+    "number": 81,
+    "name": "SpaceTech Low Earth Orbit (LEO) Geospatial Analytics",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Startups & Venture Capital Pitch",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Cubesat constellation launch schedule, synthetic aperture radar (SAR), defense and climate monitoring clients, and launch insurance."
+  },
+  {
+    "id": "healthcare_hospital_administration",
+    "number": 82,
+    "name": "Multispecialty Hospital & Healthcare Administration Suite",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "EXECUTIVE_CHEVRON_ORANGE",
+    "description": "Comprehensive hospital administration: emergency trauma triage, ICU capacity, robotic surgical wings, JCI/NABH clinical governance, specialist medical board, inpatient recovery metrics, and 24/7 care desk."
+  },
+  {
+    "id": "sci_clinical_trial_outcomes",
+    "number": 83,
+    "name": "Phase III Clinical Trial Outcomes & Efficacy Presentation",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Randomized controlled trial methodology, patient cohorts, primary/secondary endpoints, Kaplan-Meier curves, and safety tolerability."
+  },
+  {
+    "id": "sci_oncology_immunotherapy",
+    "number": 84,
+    "name": "Oncology CAR-T Cell Immunotherapy Research Seminar",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Tumor micro-environment, chimeric antigen receptor engineering, cytokine release syndrome management, and remission durability."
+  },
+  {
+    "id": "sci_genomics_crispr_editing",
+    "number": 85,
+    "name": "Genomic Medicine & CRISPR-Cas9 Gene Editing Symposium",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Targeted base editing, in vivo lipid nanoparticle delivery, off-target cleavage assays, clinical trial patients, and bioethics."
+  },
+  {
+    "id": "sci_neuroscience_brain_computer",
+    "number": 86,
+    "name": "Neuroscience & Brain-Computer Interface (BCI) Systems",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Neural signal spike sorting, micro-electrode arrays, motor cortex decoding algorithms, neuro-prosthetics, and clinical trials."
+  },
+  {
+    "id": "sci_epidemiology_public_health",
+    "number": 87,
+    "name": "Global Public Health & Pandemic Preparedness Framework",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Pathogen genomic surveillance, basic reproduction number (R0) modeling, vaccine cold chain logistics, and health equity."
+  },
+  {
+    "id": "sci_biochemistry_protein_folding",
+    "number": 88,
+    "name": "Structural Biochemistry & AlphaFold Protein Dynamics",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Cryo-EM structural validation, conformational state transitions, ligand binding pockets, and de novo computational drug design."
+  },
+  {
+    "id": "sci_renewable_energy_perovskite",
+    "number": 89,
+    "name": "Renewable Materials: Perovskite Solar Cell Efficiency",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Photovoltaic tandem efficiency curves, crystal stability degradation assays, roll-to-roll manufacturing, and levelized cost of energy."
+  },
+  {
+    "id": "sci_marine_biology_ocean_acidification",
+    "number": 90,
+    "name": "Marine Biology & Coral Reef Ocean Acidification Study",
+    "tier": "TIER_1_STARTUP",
+    "tierLabel": "Tier 1: Modern Startup",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Aragonite saturation levels, thermal bleaching vulnerability, symbiodiniaceae genomics, marine protected zones, and restoration."
+  },
+  {
+    "id": "sci_astrophysics_gravitational_waves",
+    "number": 91,
+    "name": "Astrophysics & LIGO Gravitational Wave Event Analysis",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "Binary neutron star coalescence, strain amplitude spectrograms, kilonova nucleosynthesis, and cosmological Hubble constants."
+  },
+  {
+    "id": "sci_nanotechnology_materials",
+    "number": 92,
+    "name": "Nanotechnology & Graphene Composite Material Defense",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Scientific Research & Healthcare",
+    "recommendedTheme": "TECHNICAL",
+    "description": "CVD synthesis protocols, tensile strength to weight ratio, electrical conductivity, thermal dissipation, and industrial applications."
+  },
+  {
+    "id": "creative_brand_guidelines",
+    "number": 93,
+    "name": "Comprehensive Brand Identity & Styleguide Showcase",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CREATIVE",
+    "description": "Logo usage clear space, color psychology palettes, typography pairings, imagery tone, icon sets, and brand voice guidelines."
+  },
+  {
+    "id": "creative_digital_marketing_campaign",
+    "number": 94,
+    "name": "360° Digital Marketing & Influencer Campaign Strategy",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CREATIVE",
+    "description": "Audience segmentation, creative ad mockups, paid social channel allocation, influencer tiering, UTM tracking, and CPA targets."
+  },
+  {
+    "id": "creative_ui_ux_case_study",
+    "number": 95,
+    "name": "Mobile App UI/UX Redesign & User Testing Case Study",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CREATIVE",
+    "description": "User empathy mapping, wireframe iterations, usability heuristic evaluation, design system tokens, and conversion rate lift."
+  },
+  {
+    "id": "creative_portfolio_creative_director",
+    "number": 96,
+    "name": "Creative Director / Agency Work Portfolio Showcase",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "High-impact case studies, client testimonial quotes, award recognitions (Cannes Lions, D&AD), and creative philosophies."
+  },
+  {
+    "id": "creative_architectural_monograph",
+    "number": 97,
+    "name": "Architectural Monograph & Built Project Showcase",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "MINIMAL",
+    "description": "Photographic gallery, spatial blueprints, lighting daylighting studies, material tactility, and client commissioning narrative."
+  },
+  {
+    "id": "creative_fashion_lookbook",
+    "number": 98,
+    "name": "Haute Couture & Seasonal Fashion Collection Lookbook",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "MINIMAL",
+    "description": "Textile sourcing origins, collection theme moodboard, runway lookbook photography, retail buyer order sheets, and press release."
+  },
+  {
+    "id": "creative_film_pitch_deck",
+    "number": 99,
+    "name": "Feature Film / Television Series Pitch Deck",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CREATIVE",
+    "description": "Logline, synopsis, character arcs, visual aesthetic lookbook, comparable titles (Comps), production budget, and distribution strategy."
+  },
+  {
+    "id": "creative_hospitality_boutique_hotel",
+    "number": 100,
+    "name": "Luxury Boutique Resort & Hospitality Experience Concept",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "EXECUTIVE_LUXURY",
+    "description": "Architectural villas, farm-to-table culinary curation, wellness spa amenities, target guest demographics, and RevPAR projections."
+  },
+  {
+    "id": "creative_culinary_fine_dining",
+    "number": 101,
+    "name": "Michelin Star Fine Dining Restaurant Concept & Menu",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "MINIMAL",
+    "description": "Chef's tasting menu narrative, wine pairing provenance, interior ambience aesthetics, table turnover metrics, and private dining."
+  },
+  {
+    "id": "creative_photography_monograph",
+    "number": 102,
+    "name": "Fine Art Documentary Photography Exhibition Portfolio",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "BW_TEXT",
+    "description": "Curatorial artist statement, high-contrast monochrome prints, archival print specifications, gallery floor plan, and collector catalog."
+  },
+  {
+    "id": "creative_music_album_rollout",
+    "number": 103,
+    "name": "Music Album Release & Global Concert Tour Strategy",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CREATIVE",
+    "description": "Album sonic aesthetic, DSP streaming playlist pitch, music video creative treatment, arena tour dates, and merchandising lines."
+  },
+  {
+    "id": "creative_publishing_book_proposal",
+    "number": 104,
+    "name": "Non-Fiction Trade Book Publishing Proposal & Sample",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CORPORATE",
+    "description": "Target readership demographics, competitive title analysis, author platform reach, chapter-by-chapter outline, and marketing hook."
+  },
+  {
+    "id": "creative_interior_design_residential",
+    "number": 105,
+    "name": "Luxury Residential Interior Design Concept & FF&E",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "MINIMAL",
+    "description": "Living, master suite, and culinary layouts, furniture fixtures & equipment (FF&E) schedule, bespoke material palette, and 3D walkthrough."
+  },
+  {
+    "id": "creative_public_relations_pr_crisis",
+    "number": 106,
+    "name": "Strategic Public Relations (PR) & Media Outreach Plan",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "CORPORATE",
+    "description": "Tier-1 media targeting (Bloomberg, TechCrunch), executive thought leadership op-eds, press release distribution, and media training."
+  },
+  {
+    "id": "creative_nonprofit_donor_gala",
+    "number": 107,
+    "name": "Nonprofit Philanthropic Gala & Impact Investment Deck",
+    "tier": "FREE_PLAN",
+    "tierLabel": "Free Plan: Minimalist",
+    "category": "Creative, Design & Portfolios",
+    "recommendedTheme": "EDUCATIONAL",
+    "description": "Beneficiary human stories, program efficacy metrics, capital deployment transparency, matching gift challenge, and donor tiers."
+  }
+];
+
+    // =========================================================================
+    // UNIVERSAL MULTI-SLIDE DESIGN ENGINE & PALETTE RESOLVER (100+ SLIDES READY)
+    // =========================================================================
+    function getTemplatePalette(t) {
+      const id = (t.id || '').toLowerCase();
+      const cat = (t.category || '').toLowerCase();
+      const theme = (t.recommendedTheme || '').toUpperCase();
+
+      if (id.includes('chevron') || theme.includes('CHEVRON')) {
+        return {
+          bg: '#FFFFFF', cardBg: '#1E252B', accent: '#F58220', accent2: '#1E252B',
+          title: '#1E252B', body: '#475569', cardBorder: '#E2E8F0', pillBg: '#F58220',
+          pillText: '#FFFFFF', isDark: false, archetype: 'CHEVRON'
+        };
+      }
+      if (cat.includes('technology') || cat.includes('software') || id.includes('cyber') || theme.includes('CYBER') || id.includes('cloud') || id.includes('ai')) {
+        return {
+          bg: '#0A0F1D', cardBg: '#131B2E', accent: '#38BDF8', accent2: '#34D399',
+          title: '#FFFFFF', body: '#94A3B8', cardBorder: '#1E293B', pillBg: '#1E293B',
+          pillText: '#38BDF8', isDark: true, archetype: 'CYBER'
+        };
+      }
+      if (cat.includes('scientific') || id.includes('nano') || id.includes('emerald') || id.includes('nature') || id.includes('graphene')) {
+        return {
+          bg: '#061C17', cardBg: '#0D2D25', accent: '#34D399', accent2: '#10B981',
+          title: '#FFFFFF', body: '#A7F3D0', cardBorder: '#10B981', pillBg: '#064E3B',
+          pillText: '#6EE7B7', isDark: true, archetype: 'EMERALD'
+        };
+      }
+      if (cat.includes('boardroom') || cat.includes('corporate') || id.includes('luxury') || theme.includes('LUXURY') || id.includes('gold')) {
+        return {
+          bg: '#0A0E17', cardBg: '#141A29', accent: '#E5B80B', accent2: '#D4AF37',
+          title: '#FFFFFF', body: '#CBD5E1', cardBorder: '#334155', pillBg: '#1E293B',
+          pillText: '#E5B80B', isDark: true, archetype: 'GOLD'
+        };
+      }
+      if (cat.includes('higher education') || cat.includes('college') || id.includes('naac') || id.includes('academic') || id.includes('placement')) {
+        return {
+          bg: '#0B132B', cardBg: '#1C2541', accent: '#F59E0B', accent2: '#3A86FF',
+          title: '#FFFFFF', body: '#E2E8F0', cardBorder: '#334155', pillBg: '#1E3A8A',
+          pillText: '#93C5FD', isDark: true, archetype: 'ACADEMIC'
+        };
+      }
+      if (cat.includes('startup') || cat.includes('pitch') || id.includes('pitch')) {
+        return {
+          bg: '#0F172A', cardBg: '#1E293B', accent: '#8B5CF6', accent2: '#10B981',
+          title: '#FFFFFF', body: '#CBD5E1', cardBorder: '#334155', pillBg: '#4C1D95',
+          pillText: '#C4B5FD', isDark: true, archetype: 'PITCH'
+        };
+      }
+      if (id.includes('amber') || id.includes('sunset') || id.includes('retail')) {
+        return {
+          bg: '#1A1016', cardBg: '#2B1822', accent: '#FB923C', accent2: '#F43F5E',
+          title: '#FFFFFF', body: '#FECDD3', cardBorder: '#4C1D2C', pillBg: '#4C1D2C',
+          pillText: '#FB923C', isDark: true, archetype: 'AMBER'
+        };
+      }
+      if (id.includes('minimal') || id.includes('clean') || id.includes('light')) {
+        return {
+          bg: '#F8FAFC', cardBg: '#FFFFFF', accent: '#2563EB', accent2: '#475569',
+          title: '#0F172A', body: '#334155', cardBorder: '#E2E8F0', pillBg: '#DBEAFE',
+          pillText: '#1E40AF', isDark: false, archetype: 'LIGHT'
+        };
+      }
+      return {
+        bg: '#0A1628', cardBg: '#112240', accent: '#60A5FA', accent2: '#2563EB',
+        title: '#FFFFFF', body: '#BFDBFE', cardBorder: '#1E3A8A', pillBg: '#1E3A8A',
+        pillText: '#93C5FD', isDark: true, archetype: 'COBALT'
+      };
+    }
+
+    function generateSlideSvg(t, slideNum = 1, totalSlides = 11) {
+      const p = getTemplatePalette(t);
+      const name = (t.name || 'Executive Presentation').substring(0, 32);
+      const cat = (t.category || 'Strategic Deck').toUpperCase();
+      const normSlide = ((slideNum - 1) % 11) + 1;
+
+      // 1. HERO TITLE SLIDE
+      if (normSlide === 1) {
+        if (p.archetype === 'CHEVRON') {
+          return `
+            <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+              <rect width="400" height="225" fill="${p.bg}"/>
+              <polygon points="280,0 350,0 290,225 220,225" fill="${p.cardBg}"/>
+              <polygon points="320,0 400,0 400,225 340,225 310,112.5" fill="${p.accent}"/>
+              <circle cx="45" cy="40" r="10" fill="${p.accent}" opacity="0.8"/>
+              <text x="62" y="44" font-size="12" font-weight="900" fill="${p.title}">LOGO</text>
+              <text x="45" y="88" font-size="22" font-weight="900" fill="${p.accent}">${name.split(' ')[0] || 'EXECUTIVE'}</text>
+              <text x="45" y="114" font-size="20" font-weight="900" fill="${p.title}">${name.split(' ').slice(1, 3).join(' ') || 'BUSINESS SLIDE'}</text>
+              <rect x="45" y="132" width="130" height="4" rx="2" fill="#E2E8F0"/>
+              <rect x="45" y="142" width="100" height="4" rx="2" fill="#E2E8F0"/>
+              <polygon points="80,225 120,225 100,195 60,195" fill="${p.accent}"/>
+              <circle cx="360" cy="112.5" r="18" fill="#FFFFFF" opacity="0.9"/>
+              <circle cx="360" cy="112.5" r="7" fill="${p.accent}"/>
+            </svg>
+          `;
+        }
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <polygon points="0,0 280,0 220,225 0,225" fill="${p.cardBg}"/>
+            <rect x="30" y="25" width="110" height="20" rx="10" fill="${p.pillBg}"/>
+            <text x="85" y="38" font-size="8" font-weight="800" fill="${p.pillText}" text-anchor="middle">${cat.substring(0, 18)}</text>
+            <text x="30" y="85" font-size="18" font-weight="900" fill="${p.title}">${name}</text>
+            <text x="30" y="105" font-size="10" font-weight="600" fill="${p.accent}">High-Performance Strategic Presentation Deck</text>
+            <line x1="30" y1="120" x2="190" y2="120" stroke="${p.accent}" stroke-width="2"/>
+            <text x="30" y="145" font-size="8.5" font-weight="500" fill="${p.body}">• Multi-Department Execution Framework</text>
+            <text x="30" y="160" font-size="8.5" font-weight="500" fill="${p.body}">• Quantitative Governance & Delivery Metrics</text>
+            <circle cx="330" cy="112" r="45" fill="${p.accent}" opacity="0.15"/>
+            <circle cx="330" cy="112" r="25" fill="${p.accent}" opacity="0.4"/>
+            <circle cx="330" cy="112" r="10" fill="${p.accent}"/>
+          </svg>
+        `;
+      }
+
+      // 2. THE PROBLEM & MARKET OPPORTUNITY
+      if (normSlide === 2) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <polygon points="260,0 400,0 400,225 210,225 230,112.5" fill="${p.cardBg}"/>
+            <polygon points="205,0 235,0 205,112.5 180,225 150,225" fill="${p.accent}"/>
+            <text x="35" y="45" font-size="16" font-weight="900" fill="${p.title}">ABOUT</text>
+            <text x="35" y="65" font-size="16" font-weight="900" fill="${p.accent}">OPERATIONS</text>
+            <rect x="35" y="85" width="120" height="4" fill="${p.cardBorder}"/>
+            <rect x="35" y="95" width="100" height="4" fill="${p.cardBorder}"/>
+            <circle cx="280" cy="60" r="12" fill="${p.accent}"/>
+            <text x="300" y="64" font-size="10" font-weight="700" fill="#FFFFFF">Global Vision</text>
+            <circle cx="280" cy="115" r="12" fill="${p.accent}"/>
+            <text x="300" y="119" font-size="10" font-weight="700" fill="#FFFFFF">Agile Execution</text>
+            <circle cx="280" cy="170" r="12" fill="${p.accent}"/>
+            <text x="300" y="174" font-size="10" font-weight="700" fill="#FFFFFF">Market Rigour</text>
+          </svg>
+        `;
+      }
+
+      // 3. MISSION & VISION CAPSULES
+      if (normSlide === 3) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <text x="35" y="55" font-size="17" font-weight="900" fill="${p.title}">OUR MISSION</text>
+            <text x="35" y="78" font-size="17" font-weight="900" fill="${p.accent}">OUR VISION</text>
+            <rect x="180" y="35" width="200" height="65" rx="30" fill="${p.accent}"/>
+            <circle cx="215" cy="67" r="18" fill="#FFFFFF"/>
+            <circle cx="215" cy="67" r="8" fill="${p.accent}"/>
+            <text x="245" y="65" font-size="12" font-weight="800" fill="#FFFFFF">OUR MISSION</text>
+            <rect x="180" y="115" width="200" height="65" rx="30" fill="${p.cardBg}"/>
+            <circle cx="215" cy="147" r="18" fill="#FFFFFF"/>
+            <circle cx="215" cy="147" r="8" fill="${p.cardBg}"/>
+            <text x="245" y="145" font-size="12" font-weight="800" fill="#FFFFFF">OUR VISION</text>
+          </svg>
+        `;
+      }
+
+      // 4. CORE SERVICES & 4 PILLARS
+      if (normSlide === 4) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <text x="30" y="45" font-size="15" font-weight="900" fill="${p.title}">OUR PLATFORM</text>
+            <text x="30" y="65" font-size="15" font-weight="900" fill="${p.accent}">SERVICES</text>
+            <path d="M 160,225 Q 140,80 180,30 L 400,30 L 400,225 Z" fill="${p.accent}"/>
+            <rect x="190" y="55" width="85" height="65" rx="8" fill="#FFFFFF"/>
+            <circle cx="215" cy="75" r="10" fill="${p.accent}"/>
+            <rect x="290" y="55" width="85" height="65" rx="8" fill="#FFFFFF"/>
+            <circle cx="315" cy="75" r="10" fill="${p.accent}"/>
+            <rect x="190" y="135" width="85" height="65" rx="8" fill="#FFFFFF"/>
+            <circle cx="215" cy="155" r="10" fill="${p.accent}"/>
+            <rect x="290" y="135" width="85" height="65" rx="8" fill="#FFFFFF"/>
+            <circle cx="315" cy="155" r="10" fill="${p.accent}"/>
+          </svg>
+        `;
+      }
+
+      // 5. LEADERSHIP & CREATIVE TEAM (4 HEXAGONS)
+      if (normSlide === 5) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <rect x="15" y="15" width="370" height="195" rx="8" fill="${p.cardBg}"/>
+            <text x="130" y="50" font-size="16" font-weight="900" fill="#FFFFFF">OUR EXECUTIVE TEAM</text>
+            <g transform="translate(45, 75)">
+              <polygon points="30,0 60,18 60,52 30,70 0,52 0,18" fill="#FFFFFF" stroke="${p.accent}" stroke-width="4"/>
+              <circle cx="30" cy="35" r="12" fill="${p.accent}"/>
+            </g>
+            <g transform="translate(130, 75)">
+              <polygon points="30,0 60,18 60,52 30,70 0,52 0,18" fill="#FFFFFF" stroke="${p.accent}" stroke-width="4"/>
+              <circle cx="30" cy="35" r="12" fill="${p.accent}"/>
+            </g>
+            <g transform="translate(215, 75)">
+              <polygon points="30,0 60,18 60,52 30,70 0,52 0,18" fill="#FFFFFF" stroke="${p.accent}" stroke-width="4"/>
+              <circle cx="30" cy="35" r="12" fill="${p.accent}"/>
+            </g>
+            <g transform="translate(300, 75)">
+              <polygon points="30,0 60,18 60,52 30,70 0,52 0,18" fill="#FFFFFF" stroke="${p.accent}" stroke-width="4"/>
+              <circle cx="30" cy="35" r="12" fill="${p.accent}"/>
+            </g>
+          </svg>
+        `;
+      }
+
+      // 6. QUANTITATIVE GROWTH & STACKED COLUMN CHART
+      if (normSlide === 6) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <text x="140" y="45" font-size="16" font-weight="900" fill="${p.title}">BUSINESS CHART</text>
+            <line x1="60" y1="70" x2="350" y2="70" stroke="${p.cardBorder}"/>
+            <line x1="60" y1="105" x2="350" y2="105" stroke="${p.cardBorder}"/>
+            <line x1="60" y1="140" x2="350" y2="140" stroke="${p.cardBorder}"/>
+            <line x1="60" y1="175" x2="350" y2="175" stroke="${p.title}" stroke-width="1.5"/>
+            <rect x="90" y="130" width="22" height="45" fill="${p.cardBg}"/>
+            <rect x="90" y="105" width="22" height="25" fill="#94A3B8"/>
+            <rect x="90" y="80" width="22" height="25" fill="${p.accent}"/>
+            <text x="90" y="192" font-size="9" font-weight="700" fill="#64748B">2018</text>
+            <rect x="160" y="140" width="22" height="35" fill="${p.cardBg}"/>
+            <rect x="160" y="120" width="22" height="20" fill="#94A3B8"/>
+            <rect x="160" y="105" width="22" height="15" fill="${p.accent}"/>
+            <text x="160" y="192" font-size="9" font-weight="700" fill="#64748B">2019</text>
+            <rect x="230" y="125" width="22" height="50" fill="${p.cardBg}"/>
+            <rect x="230" y="100" width="22" height="25" fill="#94A3B8"/>
+            <rect x="230" y="85" width="22" height="15" fill="${p.accent}"/>
+            <text x="230" y="192" font-size="9" font-weight="700" fill="#64748B">2020</text>
+            <rect x="300" y="145" width="22" height="30" fill="${p.cardBg}"/>
+            <rect x="300" y="130" width="22" height="15" fill="#94A3B8"/>
+            <rect x="300" y="120" width="22" height="10" fill="${p.accent}"/>
+            <text x="300" y="192" font-size="9" font-weight="700" fill="#64748B">2021</text>
+          </svg>
+        `;
+      }
+
+      // 7. COMMERCIAL PRICE TABLE
+      if (normSlide === 7) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <rect x="0" y="170" width="400" height="55" fill="${p.accent}"/>
+            <text x="135" y="40" font-size="16" font-weight="900" fill="${p.title}">OUR PRICE TABLE</text>
+            <rect x="50" y="60" width="85" height="130" rx="4" fill="#FFFFFF" stroke="${p.cardBorder}"/>
+            <rect x="50" y="60" width="85" height="35" rx="4" fill="${p.accent}"/>
+            <text x="75" y="82" font-size="14" font-weight="900" fill="#FFFFFF">$500</text>
+            <rect x="155" y="60" width="85" height="130" rx="4" fill="#FFFFFF" stroke="${p.cardBorder}"/>
+            <rect x="155" y="60" width="85" height="35" rx="4" fill="${p.cardBg}"/>
+            <text x="180" y="82" font-size="14" font-weight="900" fill="#FFFFFF">$800</text>
+            <rect x="260" y="60" width="85" height="130" rx="4" fill="#FFFFFF" stroke="${p.cardBorder}"/>
+            <rect x="260" y="60" width="85" height="35" rx="4" fill="${p.accent}"/>
+            <text x="282" y="82" font-size="14" font-weight="900" fill="#FFFFFF">$1000</text>
+          </svg>
+        `;
+      }
+
+      // 8. TRUSTED CLIENTS / TESTIMONIALS
+      if (normSlide === 8) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <polygon points="180,0 400,0 400,225 240,225" fill="${p.cardBg}"/>
+            <polygon points="160,225 200,225 180,180 140,180" fill="${p.accent}"/>
+            <text x="35" y="60" font-size="15" font-weight="900" fill="${p.title}">OUR</text>
+            <text x="35" y="80" font-size="15" font-weight="900" fill="${p.accent}">TRUSTED</text>
+            <text x="35" y="100" font-size="15" font-weight="900" fill="${p.title}">CLIENT</text>
+            <circle cx="260" cy="55" r="10" fill="${p.accent}"/>
+            <circle cx="330" cy="55" r="10" fill="#FFFFFF"/>
+            <circle cx="260" cy="135" r="10" fill="#FFFFFF"/>
+            <circle cx="330" cy="135" r="10" fill="${p.accent}"/>
+          </svg>
+        `;
+      }
+
+      // 9. STRATEGIC ROADMAP / PIPELINE
+      if (normSlide === 9) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <text x="35" y="45" font-size="15" font-weight="900" fill="${p.title}">IMPLEMENTATION ROADMAP</text>
+            <line x1="40" y1="120" x2="360" y2="120" stroke="${p.accent}" stroke-width="3"/>
+            <circle cx="65" cy="120" r="12" fill="${p.accent}"/>
+            <text x="65" y="124" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">Q1</text>
+            <text x="65" y="150" font-size="8" font-weight="700" fill="${p.title}" text-anchor="middle">Architecture</text>
+            <circle cx="155" cy="120" r="12" fill="${p.accent}"/>
+            <text x="155" y="124" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">Q2</text>
+            <text x="155" y="150" font-size="8" font-weight="700" fill="${p.title}" text-anchor="middle">Pilot Build</text>
+            <circle cx="245" cy="120" r="12" fill="${p.accent}"/>
+            <text x="245" y="124" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">Q3</text>
+            <text x="245" y="150" font-size="8" font-weight="700" fill="${p.title}" text-anchor="middle">Scale Ops</text>
+            <circle cx="335" cy="120" r="12" fill="${p.accent}"/>
+            <text x="335" y="124" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">Q4</text>
+            <text x="335" y="150" font-size="8" font-weight="700" fill="${p.title}" text-anchor="middle">Full Rollout</text>
+          </svg>
+        `;
+      }
+
+      // 10. TECHNICAL DEEP-DIVE / MATRIX
+      if (normSlide === 10) {
+        return `
+          <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+            <rect width="400" height="225" fill="${p.bg}"/>
+            <text x="35" y="42" font-size="15" font-weight="900" fill="${p.title}">TECHNICAL CAPABILITY MATRIX</text>
+            <rect x="35" y="60" width="155" height="65" rx="6" fill="${p.cardBg}" stroke="${p.accent}" stroke-width="1"/>
+            <text x="48" y="85" font-size="11" font-weight="800" fill="${p.accent}">01. Security Guard</text>
+            <text x="48" y="105" font-size="8.5" font-weight="500" fill="${p.body}">Zero-Trust & Compliance</text>
+            <rect x="210" y="60" width="155" height="65" rx="6" fill="${p.cardBg}" stroke="${p.accent}" stroke-width="1"/>
+            <text x="223" y="85" font-size="11" font-weight="800" fill="${p.accent}">02. Performance Scale</text>
+            <text x="223" y="105" font-size="8.5" font-weight="500" fill="${p.body}">Sub-10ms Latency SLA</text>
+            <rect x="35" y="135" width="155" height="65" rx="6" fill="${p.cardBg}" stroke="${p.accent}" stroke-width="1"/>
+            <text x="48" y="160" font-size="11" font-weight="800" fill="${p.accent}">03. Governance Telemetry</text>
+            <text x="48" y="180" font-size="8.5" font-weight="500" fill="${p.body}">Automated Audit Logs</text>
+            <rect x="210" y="135" width="155" height="65" rx="6" fill="${p.cardBg}" stroke="${p.accent}" stroke-width="1"/>
+            <text x="223" y="160" font-size="11" font-weight="800" fill="${p.accent}">04. Cloud Deployment</text>
+            <text x="223" y="180" font-size="8.5" font-weight="500" fill="${p.body}">Multi-Region Redundancy</text>
+          </svg>
+        `;
+      }
+
+      // 11. CLOSING & CONTACT SLIDE
+      return `
+        <svg viewBox="0 0 400 225" width="100%" height="100%" style="display:block;">
+          <rect width="400" height="225" fill="${p.bg}"/>
+          <polygon points="280,0 400,0 400,225 340,225 310,112.5" fill="${p.cardBg}"/>
+          <polygon points="340,0 400,0 400,100 370,100" fill="${p.accent}"/>
+          <polygon points="310,225 370,225 350,180 290,180" fill="${p.accent}"/>
+          <text x="35" y="45" font-size="12" font-weight="900" fill="${p.accent}">LOGO</text>
+          <text x="35" y="85" font-size="20" font-weight="900" fill="${p.title}">GET IN TOUCH!</text>
+          <text x="35" y="115" font-size="10" font-weight="700" fill="${p.accent}">Location • Web • Phone Number • Social Media</text>
+          <circle cx="355" cy="112.5" r="15" fill="#FFFFFF"/>
+          <circle cx="355" cy="112.5" r="6" fill="${p.accent}"/>
+        </svg>
+      `;
+    }
+
+    // Attach renderMockup function to every template in the catalog
+    CATALOG.forEach(t => {
+      t.renderMockup = function() {
+        return generateSlideSvg(t, 1, 11);
+      };
+    });
+
+        // =========================================================================
+    // STATE & CONTROLS
+    // =========================================================================
+    let selectedTemplate = CATALOG[0];
+    let activeTierFilter = 'all';
+
+    const templatesGrid = document.getElementById('templatesGrid');
+    const selectedName = document.getElementById('selectedName');
+    const selectedDesc = document.getElementById('selectedDesc');
+    const mainSlidePreview = document.getElementById('mainSlidePreview');
+    const searchInput = document.getElementById('searchInput');
+    const tierTabs = document.getElementById('tierTabs');
+    const promptInput = document.getElementById('promptInput');
+    const slideCountSlider = document.getElementById('slideCountSlider');
+    const slideCountVal = document.getElementById('slideCountVal');
+    const btnApplyDesign = document.getElementById('btnApplyDesign');
+    const confirmToast = document.getElementById('confirmToast');
+
+    function renderTemplates() {
+      const q = searchInput.value.toLowerCase().trim();
+      templatesGrid.innerHTML = '';
+
+      const filtered = CATALOG.filter(t => {
+        const matchesTier = (activeTierFilter === 'all' || t.tier === activeTierFilter);
+        const matchesSearch = !q || t.name.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
+        return matchesTier && matchesSearch;
+      });
+
+      filtered.forEach(t => {
+        const card = document.createElement('div');
+        card.className = `template-card ${selectedTemplate.id === t.id ? 'selected' : ''}`;
+        
+        let badgeClass = 'badge-tier3';
+        if (t.tier === 'TIER_2_ENTERPRISE') badgeClass = 'badge-tier2';
+        else if (t.tier === 'TIER_1_STARTUP') badgeClass = 'badge-tier1';
+        else if (t.tier === 'FREE_PLAN') badgeClass = 'badge-free';
+
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="template-num">#${t.number}</span>
+            <span class="template-tier-badge ${badgeClass}">${t.tierLabel}</span>
+          </div>
+          <!-- 16:9 Aspect Ratio Pure Visual Slide Mockup -->
+          <div class="mockup-container">
+            ${t.renderMockup()}
+          </div>
+          <div class="template-info">
+            <div class="template-title">${t.name}</div>
+            <div class="template-category">${t.category}</div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          selectTemplate(t);
+        });
+
+        templatesGrid.appendChild(card);
+      });
+    }
+
+    function renderSlideTabs(count, activeIndex = 1) {
+      const tabs = document.getElementById('slidesTabs');
+      const counterBadge = document.getElementById('slideCounterBadge');
+      if (!tabs) return;
+      tabs.innerHTML = '';
+      if (counterBadge) counterBadge.textContent = `${count} Slides Active`;
+
+      const slideNames = [
+        "1. Business Slide",
+        "2. About Company",
+        "3. Mission & Vision",
+        "4. Services Panel",
+        "5. Creative Team",
+        "6. Business Chart",
+        "7. Price Table",
+        "8. Trusted Client",
+        "9. Roadmap Timeline",
+        "10. Deep Dive",
+        "11. Get in Touch"
+      ];
+
+      for (let i = 1; i <= count; i++) {
+        const btn = document.createElement('button');
+        btn.className = `slide-thumb-btn ${i === activeIndex ? 'active' : ''}`;
+        const nameIdx = ((i - 1) % slideNames.length);
+        const name = (i <= 11) ? slideNames[nameIdx] : `Slide ${i} (${slideNames[nameIdx].replace(/^\d+\.\s*/, '')})`;
+        btn.textContent = name;
+        btn.title = `Preview Slide ${i}`;
+        btn.addEventListener('click', () => {
+          showSlideLayout(i);
+        });
+        tabs.appendChild(btn);
+      }
+    }
+
+    function selectTemplate(t) {
+      selectedTemplate = t;
+      selectedName.textContent = t.name;
+      selectedDesc.textContent = (t.id === 'executive_chevron_orange')
+        ? 'Flagship 9-slide layout featuring vibrant orange chevron geometry, 4-hexagon creative team cards, dual capsule mission/vision, curved service panels, stacked column charts, and 3-tier pricing tables.'
+        : (t.description || `Ultra-refined ${t.category} slide suite styled for executive clarity and high-stakes presentation.`);
+      
+      const count = parseInt(slideCountSlider.value, 10) || 11;
+      renderSlideTabs(count, 1);
+      showSlideLayout(1);
+
+      // Re-highlight cards
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+      renderTemplates();
+    }
+
+    function showSlideLayout(num) {
+      document.querySelectorAll('.slide-thumb-btn').forEach((b, idx) => {
+        if (idx + 1 === num) {
+          b.classList.add('active');
+          b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        } else {
+          b.classList.remove('active');
+        }
+      });
+
+      const total = parseInt(slideCountSlider.value, 10) || 11;
+      mainSlidePreview.innerHTML = generateSlideSvg(selectedTemplate, num, total);
+    }
+
+    // Tier filtering
+    tierTabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tier-btn');
+      if (!btn) return;
+      document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTierFilter = btn.dataset.tier;
+      renderTemplates();
+    });
+
+    // Search filter
+    searchInput.addEventListener('input', renderTemplates);
+
+    // Slider
+    slideCountSlider.addEventListener('input', () => {
+      const count = parseInt(slideCountSlider.value, 10);
+      slideCountVal.textContent = `${count} Slides`;
+      renderSlideTabs(count, 1);
+      showSlideLayout(1);
+    });
+
+    // Submit / Apply Design Button -> Sends POST to /api/select
+    btnApplyDesign.addEventListener('click', async () => {
+      btnApplyDesign.disabled = true;
+      btnApplyDesign.style.opacity = '0.7';
+      confirmToast.style.display = 'block';
+
+      try {
+        await fetch('/api/select', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            templateId: selectedTemplate.id,
+            templateName: selectedTemplate.name,
+            slideCount: parseInt(slideCountSlider.value, 10),
+            topic: promptInput.value.trim()
+          })
+        });
+      } catch (e) {
+        console.log('Template confirmed:', selectedTemplate.id);
+      }
+
+      setTimeout(() => {
+        confirmToast.textContent = '✔ Confirmed! You can now switch back to your terminal.';
+      }, 1200);
+    });
+
+    // Initialize with URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramTopic = urlParams.get('topic');
+    if (paramTopic && paramTopic.trim()) {
+      promptInput.value = decodeURIComponent(paramTopic.trim());
+    }
+
+    const paramSlides = urlParams.get('slides');
+    let initialSlides = null;
+    if (paramSlides && !isNaN(parseInt(paramSlides, 10))) {
+      initialSlides = parseInt(paramSlides, 10);
+    } else if (paramTopic) {
+      const sm = decodeURIComponent(paramTopic).match(/(\d+)\s*[-_]?\s*slides?/i);
+      if (sm) initialSlides = parseInt(sm[1], 10);
+    }
+    if (initialSlides && initialSlides >= 1 && initialSlides <= 100) {
+      slideCountSlider.value = initialSlides;
+      slideCountVal.textContent = `${initialSlides} Slides`;
+    }
+
+    // Try fetching fresh catalog from server if live
+    async function initCatalog() {
+      try {
+        const res = await fetch('/api/catalog');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.templates && data.templates.length > 0) {
+            console.log('Live catalog loaded from /api/catalog:', data.total);
+          }
+        }
+      } catch (_) {}
+      renderTemplates();
+      const count = parseInt(slideCountSlider.value, 10) || 11;
+      renderSlideTabs(count, 1);
+      showSlideLayout(1);
+    }
+
+    initCatalog();
+  </script>
+</body>
+</html>

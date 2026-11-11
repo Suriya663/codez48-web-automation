@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codez48 — Wireless Remote Device Bridge</title>
+    <style>
+        :root {
+            --bg-canvas: #0a0f1d;
+            --bg-card: #131b2e;
+            --bg-card-hover: #1c2742;
+            --border-card: #253352;
+            --accent-emerald: #10b981;
+            --accent-mint: #34d399;
+            --accent-gold: #e5b80b;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --text-title: #ffffff;
+            --text-body: #e2e8f0;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-body);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(229, 184, 11, 0.06) 0%, transparent 40%);
+        }
+
+        /* Top Header */
+        header {
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-card);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #000;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-title);
+            letter-spacing: -0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-emerald);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px var(--accent-emerald);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .pill-badge {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-card);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pill-gold {
+            background: rgba(229, 184, 11, 0.12);
+            border-color: rgba(229, 184, 11, 0.35);
+            color: var(--accent-gold);
+        }
+
+        .pill-emerald {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--accent-emerald);
+        }
+
+        /* Container */
+        .main-container {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px 20px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Tab Navigation */
+        .tab-bar {
+            display: flex;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-title);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: #000;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        /* Tab Panes */
+        .tab-pane {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tab-pane.active {
+            display: flex;
+        }
+
+        /* Cards */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-title);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* File List Table */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .file-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .icon-pptx { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .icon-docx { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .icon-pdf  { background: rgba(220, 38, 38, 0.15); color: #ef4444; border: 1px solid rgba(220, 38, 38, 0.3); }
+        .icon-other{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-title);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border-card);
+            border-radius: 12px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.01);
+            margin-top: 14px;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        /* Automation Console */
+        .task-input-box {
+            width: 100%;
+            background: rgba(10, 15, 29, 0.7);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            color: var(--text-title);
+            padding: 14px 16px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 90px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .task-input-box:focus {
+            border-color: var(--accent-emerald);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .presets-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0 16px;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-card);
+            color: var(--text-body);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-emerald);
+            color: var(--accent-mint);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .execute-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .execute-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .execute-btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        }
+
+        /* Live Terminal */
+        .terminal-box {
+            background: #060913;
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #a7f3d0;
+            max-height: 380px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Gallery */
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .screenshot-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .screenshot-card:hover {
+            border-color: var(--accent-emerald);
+            transform: scale(1.02);
+        }
+
+        .screenshot-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: #000;
+            display: block;
+        }
+
+        .screenshot-caption {
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Zero Install / Antivirus Card */
+        .shield-banner {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .shield-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .bookmarklet-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px dashed var(--border-card);
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .bookmarklet-drag-pill {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: grab;
+            display: inline-block;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .pin-inputs-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .pin-digit {
+            width: 48px;
+            height: 56px;
+            background: rgba(10, 15, 29, 0.8);
+            border: 2px solid var(--border-card);
+            border-radius: 10px;
+            color: var(--accent-mint);
+            font-size: 26px;
+            font-weight: 800;
+            text-align: center;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .pin-digit:focus {
+            border-color: var(--accent-emerald);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+            transform: scale(1.05);
+        }
+
+        .pin-error {
+            color: var(--danger);
+            font-size: 13px;
+            margin-top: 10px;
+            min-height: 18px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .header-meta {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .tab-btn {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            .pin-digit {
+                width: 40px;
+                height: 48px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand-section">
+            <div class="brand-badge">48</div>
+            <div>
+                <div class="brand-title">Codez48 Remote Device Bridge</div>
+                <div class="brand-subtitle">
+                    <span class="pulse-dot"></span>
+                    <span id="host-name-label">Connecting to Host...</span>
+                    <span>•</span>
+                    <span id="host-ip-label">Wi-Fi LAN Safe Bridge</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-meta">
+            <div class="pill-badge pill-gold" id="plan-badge">
+                <span>⭐</span> <span id="plan-name">Loading Plan...</span>
+            </div>
+            <div class="pill-badge pill-emerald" id="credits-badge">
+                <span>⚡</span> <span id="credit-count">--- Credits</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+
+        <!-- Antivirus Immune Zero-Install Banner -->
+        <div class="shield-banner">
+            <div class="shield-icon">🛡️</div>
+            <div>
+                <div style="font-weight: 700; color: #fff; font-size: 15px; margin-bottom: 4px;">
+                    Zero-Install Antivirus-Immune Architecture
+                </div>
+                <div style="font-size: 13px; color: var(--text-body); line-height: 1.5;">
+                    This remote client runs 100% in your standard web browser. No software, no scripts, and no background binaries are downloaded on this machine. Third-party antivirus programs will not block or flag this session.
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('deliverables')">
+                <span>📁</span> Deliverables & File Transfer
+            </button>
+            <button class="tab-btn" onclick="switchTab('automation')">
+                <span>⚡</span> Wireless Automation
+            </button>
+            <button class="tab-btn" onclick="switchTab('evidence')">
+                <span>📸</span> Visual Evidence
+            </button>
+            <button class="tab-btn" onclick="switchTab('client-tools')">
+                <span>🔗</span> Client Tools & Bluetooth
+            </button>
+        </div>
+
+        <!-- TAB 1: DELIVERABLES & FILE TRANSFER -->
+        <div id="pane-deliverables" class="tab-pane active">
+            <div class="glass-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>📁</span> Generated Deliverables & Files on Host Laptop
+                    </div>
+                    <button class="preset-btn" onclick="fetchDeliverables()">🔄 Refresh Files</button>
+                </div>
+
+                <div class="file-list" id="deliverables-container">
+                    <div style="text-align: center; color: var(--text-muted); padding: 30px 0;">
+                        Loading deliverables from host machine...
+                    </div>
+                </div>
+
+                <!-- Upload to Host Zone -->
+                <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-upload-input').click()">
+                    <input type="file" id="file-upload-input" style="display: none;" onchange="handleFileUpload(this.files)">
+                    <div style="font-size: 28px; margin-bottom: 8px;">📤</div>
+                    <div style="font-weight: 600; color: #fff; font-size: 14px;">Click or Drag Files Here to Send to Host Laptop</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transfers safely over local Wi-Fi with zero file lock contention</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: WIRELESS AUTOMATION -->
+        <div id="pane-automation" class="tab-pane">
+            <div class="glass-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>⚡</span> Remote Pilot Command Dispatcher
+                    </div>
+                    <span class="pill-badge" style="font-size: 11px;">Powered by Host Laptop AI Engines</span>
+                </div>
+
+                <textarea class="task-input-box" id="task-prompt-input" placeholder="Type instructions to execute on the host laptop (e.g., 'Generate a 25-slide presentation on Artificial Intelligence', 'Convert full_stack.docx to PDF', 'Send WhatsApp message')..."></textarea>
+
+                <div class="presets-bar">
+                    <span style="font-size: 12px; color: var(--text-muted); align-self: center;">Quick Presets:</span>
+                    <button class="preset-btn" onclick="setPreset('Create a 25-slide presentation on Artificial Intelligence with emerald theme')">📊 25-Slide Emerald PPT</button>
+                    <button class="preset-btn" onclick="setPreset('Convert full_stack_complete_class_and_.docx to PDF')">📄 Convert Word to PDF</button>
+                    <button class="preset-btn" onclick="setPreset('Open Claude AI website and perform automated sign-in with screenshot verification')">🤖 Claude AI Automation</button>
+                    <button class="preset-btn" onclick="setPreset('Show family activity telemetry summary')">👥 Family Telemetry</button>
+                    <button class="preset-btn" onclick="setPreset('List all installed applications on desktop')">💻 List Desktop Apps</button>
+                </div>
+
+                <div class="action-row">
+                    <button class="execute-btn" id="run-task-btn" onclick="dispatchWirelessTask()">
+                        <span>🚀</span> Run Wireless Task on Host
+                    </button>
+                </div>
+            </div>
+
+            <!-- Real-time Terminal Log -->
+            <div class="glass-card">
+                <div class="terminal-header">
+                    <span>LIVE HOST EXECUTION STREAM</span>
+                    <span id="task-status-label" style="color: var(--accent-mint);">READY</span>
+                </div>
+                <div class="terminal-box" id="terminal-output">Codez48 Remote Device Bridge connected. Waiting for commands...</div>
+            </div>
+        </div>
+
+        <!-- TAB 3: VISUAL EVIDENCE -->
+        <div id="pane-evidence" class="tab-pane">
+            <div class="glass-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>📸</span> Live Screenshots & Automation Proof
+                    </div>
+                    <button class="preset-btn" onclick="fetchScreenshots()">🔄 Refresh Gallery</button>
+                </div>
+                <div class="screenshots-grid" id="screenshots-container">
+                    <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">
+                        No screenshots captured yet. Run an automation task to view visual evidence.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: CLIENT TOOLS & BLUETOOTH -->
+        <div id="pane-client-tools" class="tab-pane">
+            <div class="glass-card">
+                <div class="card-title" style="margin-bottom: 12px;">
+                    <span>🔗</span> Zero-Install Client Bookmarklet
+                </div>
+                <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.6;">
+                    If you want this secondary laptop to perform browser automation within its own open browser tabs without installing any CLI or Node.js packages, drag the bookmarklet button below to your browser Bookmarks Bar:
+                </p>
+                <div class="bookmarklet-box">
+                    <span style="font-size: 13px; color: var(--text-muted);">Drag to Bookmarks Bar:</span>
+                    <a class="bookmarklet-drag-pill" href="javascript:(function(){const s=document.createElement('script');s.src='http://HOST_IP_PLACEHOLDER:4848/client-runner.js';document.body.appendChild(s);})();">
+                        ⭐ Codez48 Client Runner
+                    </a>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-title" style="margin-bottom: 12px;">
+                    <span>📶</span> Bluetooth Offline Fallback
+                </div>
+                <p style="font-size: 13.5px; color: var(--text-body); line-height: 1.6;">
+                    If local Wi-Fi is disconnected, files can be pushed wirelessly from Host Laptop 1 to this device via native Windows Bluetooth File Transfer (OBEX):
+                </p>
+                <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; margin-top: 12px; font-family: var(--font-mono); font-size: 12px; color: #a7f3d0;">
+                    Host Laptop command: node cli.js remote send &lt;filePath&gt; --bluetooth
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PIN Pairing Modal -->
+    <div class="modal-overlay" id="pin-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-icon">🔐</div>
+            <h2 style="color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 8px;">Safe Mode Device Pairing</h2>
+            <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5;">
+                Enter the 6-digit PIN displayed on Host Laptop 1's terminal to safely pair this device:
+            </p>
+
+            <div class="pin-inputs-row">
+                <input type="text" maxlength="1" class="pin-digit" id="pin-1" oninput="handlePinInput(this, 'pin-2')" onkeydown="handlePinBackspace(event, this, null)">
+                <input type="text" maxlength="1" class="pin-digit" id="pin-2" oninput="handlePinInput(this, 'pin-3')" onkeydown="handlePinBackspace(event, this, 'pin-1')">
+                <input type="text" maxlength="1" class="pin-digit" id="pin-3" oninput="handlePinInput(this, 'pin-4')" onkeydown="handlePinBackspace(event, this, 'pin-2')">
+                <input type="text" maxlength="1" class="pin-digit" id="pin-4" oninput="handlePinInput(this, 'pin-5')" onkeydown="handlePinBackspace(event, this, 'pin-3')">
+                <input type="text" maxlength="1" class="pin-digit" id="pin-5" oninput="handlePinInput(this, 'pin-6')" onkeydown="handlePinBackspace(event, this, 'pin-4')">
+                <input type="text" maxlength="1" class="pin-digit" id="pin-6" oninput="handlePinInput(this, null)" onkeydown="handlePinBackspace(event, this, 'pin-5')">
+            </div>
+
+            <div class="pin-error" id="pin-error-msg"></div>
+
+            <button class="execute-btn" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="verifyPin()">
+                <span>🔓</span> Authorize & Connect Device
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('cdz48_remote_token') || '';
+        let eventSource = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+
+        async function initApp() {
+            try {
+                const res = await fetch('/api/status', {
+                    headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+                });
+                const data = await res.json();
+
+                if (!data.authenticated) {
+                    showPinModal();
+                    return;
+                }
+
+                document.getElementById('pin-modal').style.display = 'none';
+                document.getElementById('host-name-label').innerText = data.hostname || 'Host Laptop';
+                document.getElementById('host-ip-label').innerText = `Wi-Fi: ${data.hostIp || location.hostname}`;
+                document.getElementById('plan-name').innerText = data.plan || 'Active Plan';
+                document.getElementById('credit-count').innerText = `${data.credits} Credits`;
+
+                // Update bookmarklet host
+                const bm = document.querySelector('.bookmarklet-drag-pill');
+                if (bm) bm.href = bm.href.replace('HOST_IP_PLACEHOLDER', data.hostIp || location.hostname);
+
+                initEventStream();
+                fetchDeliverables();
+                fetchScreenshots();
+            } catch (err) {
+                console.error('Failed to connect to host bridge:', err);
+            }
+        }
+
+        function showPinModal() {
+            document.getElementById('pin-modal').style.display = 'flex';
+            setTimeout(() => {
+                const first = document.getElementById('pin-1');
+                if (first) first.focus();
+            }, 100);
+        }
+
+        function handlePinInput(current, nextId) {
+            current.value = current.value.replace(/[^0-9]/g, '');
+            if (current.value && nextId) {
+                document.getElementById(nextId).focus();
+            }
+            const fullPin = getEnteredPin();
+            if (fullPin.length === 6) {
+                verifyPin();
+            }
+        }
+
+        function handlePinBackspace(e, current, prevId) {
+            if (e.key === 'Backspace' && !current.value && prevId) {
+                document.getElementById(prevId).focus();
+            }
+        }
+
+        function getEnteredPin() {
+            let pin = '';
+            for (let i = 1; i <= 6; i++) {
+                pin += document.getElementById(`pin-${i}`).value;
+            }
+            return pin;
+        }
+
+        async function verifyPin() {
+            const pin = getEnteredPin();
+            const errMsg = document.getElementById('pin-error-msg');
+            errMsg.innerText = '';
+
+            if (pin.length < 6) {
+                errMsg.innerText = 'Please enter all 6 digits of the PIN.';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+                const data = await res.json();
+
+                if (data.success && data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('cdz48_remote_token', authToken);
+                    document.getElementById('pin-modal').style.display = 'none';
+                    initApp();
+                } else {
+                    errMsg.innerText = data.error || 'Invalid PIN. Check Host Laptop screen.';
+                }
+            } catch (e) {
+                errMsg.innerText = 'Connection error. Check host connection.';
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById(`pane-${tabId}`).classList.add('active');
+        }
+
+        async function fetchDeliverables() {
+            try {
+                const res = await fetch('/api/files', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                renderDeliverables(data.files || []);
+            } catch (err) {
+                console.error('Failed to fetch deliverables:', err);
+            }
+        }
+
+        function renderDeliverables(files) {
+            const container = document.getElementById('deliverables-container');
+            if (!files || files.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 30px 0;">No deliverables found on Desktop or Workspace.</div>';
+                return;
+            }
+
+            container.innerHTML = files.map(f => {
+                let iconClass = 'icon-other';
+                let iconText = '📄';
+                if (f.ext === '.pptx') { iconClass = 'icon-pptx'; iconText = 'PPT'; }
+                else if (f.ext === '.docx') { iconClass = 'icon-docx'; iconText = 'DOC'; }
+                else if (f.ext === '.pdf') { iconClass = 'icon-pdf'; iconText = 'PDF'; }
+
+                return `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-icon ${iconClass}">${iconText}</div>
+                            <div class="file-details">
+                                <div class="file-name" title="${f.filename}">${f.filename}</div>
+                                <div class="file-meta">
+                                    <span>${f.sizeFormatted}</span>
+                                    <span>•</span>
+                                    <span>${f.location}</span>
+                                    <span>•</span>
+                                    <span>${f.mtimeFormatted}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="/api/download?file=${encodeURIComponent(f.fullPath)}&token=${encodeURIComponent(authToken)}" download="${f.filename}" class="download-btn">
+                            <span>⬇️</span> Download to Device
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function handleFileUpload(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            appendTerminal(`[WIRELESS UPLOAD] Sending ${file.name} (${(file.size / 1024).toFixed(1)} KB) to Host...`);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    appendTerminal(`[UPLOAD SUCCESS] File saved on Host: ${data.filePath}`);
+                    fetchDeliverables();
+                } else {
+                    appendTerminal(`[UPLOAD ERROR] ${data.error}`);
+                }
+            } catch (err) {
+                appendTerminal(`[UPLOAD FAILED] ${err.message}`);
+            }
+        }
+
+        function setPreset(text) {
+            document.getElementById('task-prompt-input').value = text;
+        }
+
+        async function dispatchWirelessTask() {
+            const promptInput = document.getElementById('task-prompt-input');
+            const task = promptInput.value.trim();
+            if (!task) return;
+
+            const runBtn = document.getElementById('run-task-btn');
+            runBtn.disabled = true;
+            document.getElementById('task-status-label').innerText = 'EXECUTING ON HOST...';
+            document.getElementById('task-status-label').style.color = 'var(--accent-gold)';
+
+            appendTerminal(`\n======================================================`);
+            appendTerminal(`[REMOTE DISPATCH] "${task}"`);
+            appendTerminal(`[ROUTING] Executing on Host Laptop 1 with Antivirus-Immune Engine...`);
+
+            try {
+                const res = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ task })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    appendTerminal(`[HOST TASK COMPLETED] ${data.message || 'Execution finished successfully.'}`);
+                    document.getElementById('task-status-label').innerText = 'COMPLETED';
+                    document.getElementById('task-status-label').style.color = 'var(--accent-mint)';
+                    fetchDeliverables();
+                    fetchScreenshots();
+                    initApp(); // refresh credits
+                } else {
+                    appendTerminal(`[HOST TASK FAILED] ${data.error || 'Execution encountered error.'}`);
+                    document.getElementById('task-status-label').innerText = 'FAILED';
+                    document.getElementById('task-status-label').style.color = 'var(--danger)';
+                }
+            } catch (err) {
+                appendTerminal(`[BRIDGE ERROR] ${err.message}`);
+            } finally {
+                runBtn.disabled = false;
+            }
+        }
+
+        async function fetchScreenshots() {
+            try {
+                const res = await fetch('/api/screenshots', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                const container = document.getElementById('screenshots-container');
+
+                if (!data.screenshots || data.screenshots.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">No screenshots captured yet.</div>';
+                    return;
+                }
+
+                container.innerHTML = data.screenshots.map(s => `
+                    <div class="screenshot-card" onclick="window.open('/api/screenshot?name=${encodeURIComponent(s.name)}&token=${encodeURIComponent(authToken)}', '_blank')">
+                        <img src="/api/screenshot?name=${encodeURIComponent(s.name)}&token=${encodeURIComponent(authToken)}" class="screenshot-img" alt="${s.name}" loading="lazy">
+                        <div class="screenshot-caption">${s.name} (${s.mtimeFormatted})</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to fetch screenshots:', err);
+            }
+        }
+
+        function initEventStream() {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(`/api/events?token=${encodeURIComponent(authToken)}`);
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.text) appendTerminal(data.text);
+                } catch (_) {
+                    appendTerminal(event.data);
+                }
+            };
+
+            eventSource.onerror = () => {
+                // Reconnect silently
+            };
+        }
+
+        function appendTerminal(line) {
+            const terminal = document.getElementById('terminal-output');
+            terminal.innerText += '\n' + line;
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+    </script>
+</body>
+</html>
