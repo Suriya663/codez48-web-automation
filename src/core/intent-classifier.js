@@ -109,6 +109,38 @@ class IntentClassifier {
             };
         }
 
+        // 0.045 Product Discovery, Search & Autonomous Order Intent (Tamil & English)
+        const isProductDiscoveryOrOrderIntent = (
+            lower.includes('t-shirt') || lower.includes('tshirt') || lower.includes('t shirt') ||
+            lower.includes('டீ-ஷர்ட்') || lower.includes('டீஷர்ட்') || lower.includes('டீ ஷர்ட்') ||
+            lower.includes('saree') || lower.includes('சேலை') || lower.includes('பட்டு') || lower.includes('handloom') ||
+            lower.includes('ஷூ') || lower.includes('shoe') || lower.includes('shoes') || lower.includes('shirt') ||
+            lower.includes('laptop') || lower.includes('mobile') || lower.includes('போன்') ||
+            lower.includes('வாங்கணும்') || lower.includes('வாங்க வேண்டும்') || lower.includes('வாங்கு') ||
+            lower.includes('வேணும்') || lower.includes('வேண்டும்') || lower.includes('பர்சேஸ்') ||
+            lower.includes('ஆர்டர்') || lower.includes('பொருட்கள்') || lower.includes('தயாரிப்பு') ||
+            lower.includes('விலை என்ன') || lower.includes('இருக்கா') ||
+            /\b(?:buy\s+(?:a\s+)?|order\s+(?:a\s+)?|purchase\s+(?:a\s+)?|search\s+for\s+product|find\s+product|products?\s+catalog|show\s+products?|available\s+products?|cash\s+on\s+delivery)\b/i.test(lower)
+        ) && !lower.includes('course') && !lower.includes('full stack') && !lower.includes('webinar') && !lower.includes('class') &&
+             !lower.includes('credit') && !lower.includes('subscription') && !lower.includes('plan');
+
+        if (isProductDiscoveryOrOrderIntent) {
+            return {
+                intent: 'PRODUCT_SEARCH_AND_ORDER',
+                sub_intent: 'DISCOVER_OR_ORDER_PRODUCT',
+                keywords: ['product_search', 'product_catalog', 'order_flow', 'seller_business'],
+                user_goal: goal,
+                target: 'Codez48 Product Discovery & Autonomous Checkout',
+                output_format: 'PRODUCT_CONSULTATIVE_PRESENTATION',
+                workflow: 'PILOT_PRODUCT_CATALOG_ADAPTER',
+                required_parameters: {},
+                confidence: 1.0,
+                needs_clarification: false,
+                requires_confirmation: false,
+                reason: 'Deterministic Product Discovery, Consultation & Autonomous Order Intent'
+            };
+        }
+
         // 0.05 Family & User Activity Analytics Query Intent (English & Tamil)
         const isFamilyAnalyticsIntent = /\b(?:family\s+analytics|user\s+analytics|how\s+many\s+(?:people|users?)\s+(?:used|have\s+used|are\s+using)|active\s+users?|unique\s+users?|user\s+count|who\s+used|telemetry\s+logs?)\b/i.test(lower) ||
             (/[\u0B80-\u0BFF]/.test(lower) && (
@@ -1011,7 +1043,8 @@ class IntentClassifier {
             local.intent === 'VIDEO_EDITING' ||
             local.intent === 'WEBSITE_SECURITY_AUDIT' ||
             local.intent === 'PROJECT_PURCHASE' ||
-            local.intent === 'FULL_STACK_COURSE'
+            local.intent === 'FULL_STACK_COURSE' ||
+            local.intent === 'PRODUCT_SEARCH_AND_ORDER'
         )) {
             return local;
         }

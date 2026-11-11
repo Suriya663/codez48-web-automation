@@ -139,6 +139,16 @@ class PilotController {
             return { success: true, profile };
         }
 
+        // 0.085 Product Discovery, Search & Autonomous Order Dispatch
+        if (intent === 'PRODUCT_SEARCH_AND_ORDER' || sub_intent === 'DISCOVER_OR_ORDER_PRODUCT') {
+            pilotHud.setGenerating('Analyzing Codez48 Seller Network & Product Database...');
+            const productAdapter = require('./adapters/product-catalog-adapter');
+            const result = await productAdapter.handleProductRequest(goal, rl);
+            pilotHud.setSuccess('Product Consultation & Discovery Ready');
+            setTimeout(() => pilotHud.hide(), 4000);
+            return result;
+        }
+
         // 0.08 Full Stack Online Course Masterclass Inquiry & Autonomous Registration
         if (intent === 'FULL_STACK_COURSE' || sub_intent === 'COURSE_INQUIRY_AND_ENROLL') {
             pilotHud.setGenerating('Loading Full Stack Masterclass Curriculum & Scholarship...');
