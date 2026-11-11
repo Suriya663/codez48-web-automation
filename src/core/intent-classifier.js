@@ -109,6 +109,34 @@ class IntentClassifier {
             };
         }
 
+        // 0.046 Seller Onboarding, Own Product Upload & Storefront Creation (Tamil & English)
+        const isSellerWebsiteCreationIntent = (
+            lower.includes('own product') || lower.includes('ஓன் ப்ராடக்ட்') || lower.includes('ஓன் பிராடக்ட்') ||
+            lower.includes('என்னோட ப்ராடக்ட்') || lower.includes('என் ப்ராடக்ட்') ||
+            lower.includes('என்னோட ஓன்') || lower.includes('என் தயாரிப்பு') ||
+            ((lower.includes('website') || lower.includes('வெப்சைட்') || lower.includes('store') || lower.includes('கடை') || lower.includes('ஸ்டோர்')) &&
+             (lower.includes('create') || lower.includes('வேணும்') || lower.includes('வேண்டும்') || lower.includes('உருவாக்க') || lower.includes('build') || lower.includes('make') || lower.includes('upload') || lower.includes('அப்லோட்'))) ||
+            lower.includes('upload my product') || lower.includes('sell my product') || lower.includes('seller registration') ||
+            lower.includes('register my business') || lower.includes('register my shop') || lower.includes('create storefront')
+        ) && !lower.includes('course') && !lower.includes('full stack') && !lower.includes('webinar');
+
+        if (isSellerWebsiteCreationIntent) {
+            return {
+                intent: 'SELLER_WEBSITE_CREATION',
+                sub_intent: 'ONBOARD_SELLER_AND_PRODUCT',
+                keywords: ['seller_onboarding', 'own_product_upload', 'website_creation', 'storefront'],
+                user_goal: goal,
+                target: 'Codez48 Seller Network & Storefront Engine',
+                output_format: 'STOREFRONT_AND_CREDENTIALS',
+                workflow: 'PILOT_SELLER_WEBSITE_CREATOR',
+                required_parameters: {},
+                confidence: 1.0,
+                needs_clarification: false,
+                requires_confirmation: false,
+                reason: 'Deterministic Seller Storefront Creation & Own Product Upload Intent'
+            };
+        }
+
         // 0.045 Product Discovery, Search & Autonomous Order Intent (Tamil & English)
         const isProductDiscoveryOrOrderIntent = (
             lower.includes('t-shirt') || lower.includes('tshirt') || lower.includes('t shirt') ||
@@ -1044,7 +1072,8 @@ class IntentClassifier {
             local.intent === 'WEBSITE_SECURITY_AUDIT' ||
             local.intent === 'PROJECT_PURCHASE' ||
             local.intent === 'FULL_STACK_COURSE' ||
-            local.intent === 'PRODUCT_SEARCH_AND_ORDER'
+            local.intent === 'PRODUCT_SEARCH_AND_ORDER' ||
+            local.intent === 'SELLER_WEBSITE_CREATION'
         )) {
             return local;
         }

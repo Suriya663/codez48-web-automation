@@ -139,6 +139,16 @@ class PilotController {
             return { success: true, profile };
         }
 
+        // 0.084 Seller Onboarding, Own Product Upload & Storefront Creation
+        if (intent === 'SELLER_WEBSITE_CREATION' || sub_intent === 'ONBOARD_SELLER_AND_PRODUCT') {
+            pilotHud.setGenerating('Creating your dedicated storefront and product catalog...');
+            const sellerAdapter = require('./adapters/seller-website-creator-adapter');
+            const result = await sellerAdapter.handleSellerOnboarding(goal, rl);
+            pilotHud.setSuccess('Storefront & Product Successfully Activated');
+            setTimeout(() => pilotHud.hide(), 4000);
+            return result;
+        }
+
         // 0.085 Product Discovery, Search & Autonomous Order Dispatch
         if (intent === 'PRODUCT_SEARCH_AND_ORDER' || sub_intent === 'DISCOVER_OR_ORDER_PRODUCT') {
             pilotHud.setGenerating('Analyzing Codez48 Seller Network & Product Database...');
