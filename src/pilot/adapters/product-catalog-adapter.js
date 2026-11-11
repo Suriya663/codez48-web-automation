@@ -229,23 +229,17 @@ class ProductCatalogAdapter {
     }
 
     /**
-     * Truthfully notifies when a requested item is not registered in Firestore
+     * Concise notice when a requested item is not registered in Firestore
      */
     displayNotFound(keyword, allProducts) {
-        console.log(`\n\x1b[33m╭─────────────────────────────────────────────────────────────────────────────╮\x1b[0m`);
-        console.log(`\x1b[33m│\x1b[0m   \x1b[1m\x1b[31m⚠️ தயாரிப்பு பதிவு தகவல் (PRODUCT NOT LISTED NOTICE)\x1b[0m                       \x1b[33m│\x1b[0m`);
-        console.log(`\x1b[33m├─────────────────────────────────────────────────────────────────────────────┤\x1b[0m`);
-        console.log(`\x1b[33m│\x1b[0m  மன்னிக்கவும்! நீங்கள் குறிப்பிட்ட \x1b[1m\x1b[37m"${keyword}"\x1b[0m தற்போது எங்கள் தளத்தில் பதிவு செய்யப்படவில்லை.`);
-        console.log(`\x1b[33m│\x1b[0m  (No registered seller currently offers "${keyword}" in Codez48 catalog).`);
-        console.log(`\x1b[33m├─────────────────────────────────────────────────────────────────────────────┤\x1b[0m`);
-        console.log(`\x1b[33m│\x1b[0m  \x1b[1m\x1b[32m📋 தற்போது கிடைக்கக்கூடிய அதிகாரப்பூர்வ தயாரிப்புகள் (Available Now):\x1b[0m        \x1b[33m│\x1b[0m`);
-        allProducts.slice(0, 4).forEach((p, idx) => {
-            console.log(`\x1b[33m│\x1b[0m    ${idx + 1}. \x1b[1m${p.name}\x1b[0m - \x1b[32m₹${Number(p.price).toLocaleString('en-IN')}\x1b[0m (\x1b[36m${p.sellerBrand}\x1b[0m)`);
-        });
-        console.log(`\x1b[33m├─────────────────────────────────────────────────────────────────────────────┤\x1b[0m`);
-        console.log(`\x1b[33m│\x1b[0m  💡 \x1b[1mவணிகர்களுக்கான குறிப்பு:\x1b[0m புதிய வணிகப் பொருட்களை எங்கள் தளத்தில் சேர்க்க         \x1b[33m│\x1b[0m`);
-        console.log(`\x1b[33m│\x1b[0m     \x1b[36mseller/developer.html\x1b[0m போர்ட்டல் வழியாக உடனடியாக பதிவு செய்யலாம்.             \x1b[33m│\x1b[0m`);
-        console.log(`\x1b[33m╰─────────────────────────────────────────────────────────────────────────────╯\x1b[0m\n`);
+        console.log(`\n\x1b[33mℹ️  மன்னிக்கவும், "${keyword}" என்ற தயாரிப்பு தற்போது பட்டியலில் இல்லை.\x1b[0m`);
+        if (allProducts && allProducts.length > 0) {
+            console.log(`\x1b[32m   தற்போது ஆர்டர் செய்யக்கூடிய தயாரிப்புகள்:\x1b[0m`);
+            allProducts.slice(0, 3).forEach((p, idx) => {
+                console.log(`   ${idx + 1}. \x1b[1m${p.name}\x1b[0m - \x1b[32m₹${Number(p.price).toLocaleString('en-IN')}\x1b[0m (\x1b[36m${p.sellerBrand}\x1b[0m)`);
+            });
+        }
+        console.log('');
     }
 
     /**
@@ -257,28 +251,26 @@ class ProductCatalogAdapter {
         console.log(`\x1b[36m  - Brand: ${product.sellerBrand}\x1b[0m`);
         console.log(`\x1b[36m  - Official Seller Support: +91 ${product.sellerMobile}\x1b[0m\n`);
 
-        const ask = (query, defaultVal = '', timeoutMs = 2500) => new Promise(resolve => {
+        const ask = async (query, defaultVal = '') => {
             if (!rl || !process.stdin.isTTY) {
                 console.log(query + (defaultVal || '1'));
-                return resolve(defaultVal);
+                return defaultVal;
             }
-            let settled = false;
-            const timer = setTimeout(() => {
-                if (!settled) {
-                    settled = true;
-                    console.log(`\x1b[90m [Auto-selected: ${defaultVal || 'Default'}]\x1b[0m`);
-                    resolve(defaultVal);
+            try {
+                const res = rl.question(query);
+                if (res && typeof res.then === 'function') {
+                    const ans = await res;
+                    return (ans || '').trim() || defaultVal;
                 }
-            }, timeoutMs);
-
-            rl.question(query, answer => {
-                if (!settled) {
-                    settled = true;
-                    clearTimeout(timer);
-                    resolve(answer.trim() || defaultVal);
-                }
-            });
-        });
+                return await new Promise(resolve => {
+                    rl.question(query, answer => {
+                        resolve((answer || '').trim() || defaultVal);
+                    });
+                });
+            } catch (_) {
+                return defaultVal;
+            }
+        };
 
         // 1. Inquire / Confirm Quantity
         let quantity = 1;

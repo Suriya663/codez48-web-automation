@@ -283,7 +283,10 @@ class PilotController {
 
             // Single Hardware Request
             let res;
-            if (sub_intent === 'GET_BATTERY') {
+            if (sub_intent === 'GET_STORAGE' || /(?:storage|disk|hard\s+disk|space|ஸ்டோரேஜ்|டிரைவ்)/i.test(lower)) {
+                pilotHud.setActing('Reading laptop hard disk storage and free space...');
+                res = await laptopHardwareController.getStorageStatus();
+            } else if (sub_intent === 'GET_BATTERY') {
                 pilotHud.setActing('Reading battery percentage and power status...');
                 res = await laptopHardwareController.getBatteryStatus();
             } else if (sub_intent === 'CONTROL_WIFI') {

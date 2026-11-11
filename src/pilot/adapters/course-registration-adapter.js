@@ -244,19 +244,27 @@ class CourseRegistrationAdapter {
     }
 
     /**
-     * Ask user in CLI without any auto-timeout defaulting
+     * Ask user in CLI supporting both node:readline/promises and callback readline
      */
-    ask(rl, query, defaultVal = '') {
-        return new Promise(resolve => {
-            if (!rl || !process.stdin.isTTY) {
-                console.log(query + (defaultVal || ''));
-                return resolve(defaultVal);
+    async ask(rl, query, defaultVal = '') {
+        if (!rl || !process.stdin.isTTY) {
+            console.log(query + (defaultVal || ''));
+            return defaultVal;
+        }
+        try {
+            const res = rl.question(query);
+            if (res && typeof res.then === 'function') {
+                const answer = await res;
+                return (answer || '').trim() || defaultVal;
             }
-            rl.question(query, answer => {
-                const trimmed = answer.trim();
-                resolve(trimmed || defaultVal);
+            return await new Promise(resolve => {
+                rl.question(query, answer => {
+                    resolve((answer || '').trim() || defaultVal);
+                });
             });
-        });
+        } catch (_) {
+            return defaultVal;
+        }
     }
 
     /**

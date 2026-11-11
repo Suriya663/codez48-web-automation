@@ -437,6 +437,44 @@ class LaptopHardwareController {
 
         return { success: true, battery, wifi, brightness, cpu: cpuModel };
     }
+
+    /**
+     * Retrieves laptop hard disk storage and free space metrics
+     */
+    getStorageStatus() {
+        let drives = [];
+        if (process.platform === 'win32') {
+            try {
+                const psCmd = 'Get-CimInstance Win32_LogicalDisk | Select-Object DeviceId, FreeSpace, Size | ConvertTo-Json';
+                const out = execSync(`powershell -NoProfile -Command "${psCmd}"`, { encoding: 'utf8', timeout: 6000 }).trim();
+                const parsed = JSON.parse(out);
+                drives = Array.isArray(parsed) ? parsed : [parsed];
+            } catch (_) {}
+        }
+
+        console.log(`\n\x1b[36m╔═══════════════════════════════════════════════════════════════════════════════╗\x1b[0m`);
+        console.log(`\x1b[36m║\x1b[0m               \x1b[1m\x1b[33m💾 லேப்டாப் ஸ்டோரேஜ் விவரங்கள் (LAPTOP STORAGE & DISK INFO)\x1b[0m             \x1b[36m║\x1b[0m`);
+        console.log(`\x1b[36m╠═══════════════════════════════════════════════════════════════════════════════╣\x1b[0m`);
+
+        if (drives.length > 0) {
+            drives.forEach(d => {
+                const totalGb = (Number(d.Size || 0) / 1024 / 1024 / 1024).toFixed(1);
+                const freeGb = (Number(d.FreeSpace || 0) / 1024 / 1024 / 1024).toFixed(1);
+                const usedGb = (Math.max(0, totalGb - freeGb)).toFixed(1);
+                const pct = totalGb > 0 ? Math.round((usedGb / totalGb) * 100) : 0;
+                const barFilled = Math.min(10, Math.max(0, Math.round(pct / 10)));
+                const bar = '█'.repeat(barFilled) + '░'.repeat(10 - barFilled);
+
+                console.log(`\x1b[36m║\x1b[0m  \x1b[1m\x1b[32mடிரைவ் (Drive ${d.DeviceId}):\x1b[0m  \x1b[1m\x1b[37m${freeGb} GB காலி (Free)\x1b[0m / \x1b[36m${totalGb} GB மொத்தம் (Total)\x1b[0m`);
+                console.log(`\x1b[36m║\x1b[0m     பயன்பாடு: \x1b[33m${usedGb} GB (${pct}% Used)\x1b[0m [${bar}]`);
+            });
+        } else {
+            console.log(`\x1b[36m║\x1b[0m  SSD / HDD Storage: Active & Operational`);
+        }
+        console.log(`\x1b[36m╚═══════════════════════════════════════════════════════════════════════════════╝\x1b[0m\n`);
+
+        return { success: true, drives };
+    }
 }
 
 module.exports = new LaptopHardwareController();

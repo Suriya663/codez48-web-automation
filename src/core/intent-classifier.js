@@ -110,8 +110,17 @@ class IntentClassifier {
             };
         }
 
-                // 0.045 Business Services, Best Offerings & Stock Sentinel Query Intent
-        const isBusinessServicesIntent = (
+                // Guard against hardware/system queries misclassifying as business or product
+        const isHardwareOrSystemQuery = /\b(?:battery|charging|power|wifi|wi-fi|volume|sound|brightness|screen|storage|disk|hard\s*disk|free\s*space|drive\s*space|ram|memory|system\s+info|hardware|specs?)\b/i.test(lower) ||
+            (/[\u0B80-\u0BFF]/.test(lower) && (
+                lower.includes('ஸ்டோரேஜ்') || lower.includes('பேட்டரி') || lower.includes('சார்ஜ்') ||
+                lower.includes('வைஃபை') || lower.includes('சவுண்ட்') || lower.includes('வால்யூம்') ||
+                lower.includes('பிரைட்னஸ்') || lower.includes('வெளிச்சம்') || lower.includes('டிஸ்க்') ||
+                lower.includes('டிரைவ்') || lower.includes('இடம்') || lower.includes('ஹார்ட்')
+            ));
+
+        // 0.045 Business Services, Best Offerings & Stock Sentinel Query Intent
+        const isBusinessServicesIntent = !isHardwareOrSystemQuery && (
             lower.includes('business services') || lower.includes('best services') ||
             lower.includes('services offered') || lower.includes('our services') ||
             lower.includes('சர்வீசஸ்') || lower.includes('சேவைகள்') || lower.includes('பெஸ்ட் சர்வீசஸ்') ||
@@ -138,12 +147,13 @@ class IntentClassifier {
         }
 
         // 0.046 Seller Onboarding, Own Product Upload & Storefront Creation (Tamil & English)
-        const isSellerWebsiteCreationIntent = (
+        const isSellerWebsiteCreationIntent = !isHardwareOrSystemQuery && (
             lower.includes('own product') || lower.includes('ஓன் ப்ராடக்ட்') || lower.includes('ஓன் பிராடக்ட்') ||
             lower.includes('என்னோட ப்ராடக்ட்') || lower.includes('என் ப்ராடக்ட்') ||
-            lower.includes('என்னோட ஓன்') || lower.includes('என் தயாரிப்பு') ||
-            ((lower.includes('website') || lower.includes('வெப்சைட்') || lower.includes('store') || lower.includes('கடை') || lower.includes('ஸ்டோர்')) &&
-             (lower.includes('create') || lower.includes('வேணும்') || lower.includes('வேண்டும்') || lower.includes('உருவாக்க') || lower.includes('build') || lower.includes('make') || lower.includes('upload') || lower.includes('அப்லோட்'))) ||
+            lower.includes('என்னோட ஓன்') || lower.includes('என் தயாரிப்பு') || lower.includes('சொந்த தயாரிப்பு') ||
+            lower.includes('business website') || lower.includes('பிசினஸ் வெப்சைட்') ||
+            ((lower.includes('website') || lower.includes('வெப்சைட்') || /\b(?:store|storefront)\b/i.test(lower) || lower.includes('கடை') || (lower.includes('ஸ்டோர்') && !lower.includes('ஸ்டோரேஜ்'))) &&
+             (lower.includes('create') || lower.includes('கிரியேட்') || lower.includes('வேணும்') || lower.includes('வேண்டும்') || lower.includes('உருவாக்க') || lower.includes('build') || lower.includes('make') || lower.includes('upload') || lower.includes('அப்லோட்') || lower.includes('கொண்டு போக'))) ||
             lower.includes('upload my product') || lower.includes('sell my product') || lower.includes('seller registration') ||
             lower.includes('register my business') || lower.includes('register my shop') || lower.includes('create storefront')
         ) && !lower.includes('course') && !lower.includes('full stack') && !lower.includes('webinar');
@@ -166,16 +176,15 @@ class IntentClassifier {
         }
 
         // 0.045 Product Discovery, Search & Autonomous Order Intent (Tamil & English)
-        const isProductDiscoveryOrOrderIntent = (
+        const isProductDiscoveryOrOrderIntent = !isHardwareOrSystemQuery && (
             lower.includes('t-shirt') || lower.includes('tshirt') || lower.includes('t shirt') ||
             lower.includes('டீ-ஷர்ட்') || lower.includes('டீஷர்ட்') || lower.includes('டீ ஷர்ட்') ||
             lower.includes('saree') || lower.includes('சேலை') || lower.includes('பட்டு') || lower.includes('handloom') ||
             lower.includes('ஷூ') || lower.includes('shoe') || lower.includes('shoes') || lower.includes('shirt') ||
-            lower.includes('laptop') || lower.includes('mobile') || lower.includes('போன்') ||
-            lower.includes('வாங்கணும்') || lower.includes('வாங்க வேண்டும்') || lower.includes('வாங்கு') ||
-            lower.includes('வேணும்') || lower.includes('வேண்டும்') || lower.includes('பர்சேஸ்') ||
-            lower.includes('ஆர்டர்') || lower.includes('பொருட்கள்') || lower.includes('தயாரிப்பு') ||
-            lower.includes('விலை என்ன') || lower.includes('இருக்கா') ||
+            /\b(?:buy\s+(?:a\s+)?laptop|order\s+(?:a\s+)?laptop|purchase\s+laptop|laptop\s+price|buy\s+mobile|order\s+mobile)\b/i.test(lower) ||
+            (lower.includes('லேப்டாப்') && (lower.includes('வாங்க') || lower.includes('விலை') || lower.includes('ஆர்டர்') || lower.includes('வாங்கு'))) ||
+            lower.includes('வாங்கணும்') || lower.includes('வாங்க வேண்டும்') ||
+            lower.includes('பர்சேஸ்') || lower.includes('ஆர்டர்') ||
             /\b(?:buy\s+(?:a\s+)?|order\s+(?:a\s+)?|purchase\s+(?:a\s+)?|search\s+for\s+product|find\s+product|products?\s+catalog|show\s+products?|available\s+products?|cash\s+on\s+delivery)\b/i.test(lower)
         ) && !lower.includes('course') && !lower.includes('full stack') && !lower.includes('webinar') && !lower.includes('class') &&
              !lower.includes('credit') && !lower.includes('subscription') && !lower.includes('plan');
@@ -295,17 +304,20 @@ class IntentClassifier {
         // 0.35 Windows Laptop Hardware Control Intent (Battery, Wi-Fi, Volume, Brightness, App Updates)
         const isRemoteContext = /\b(?:remote|bridge|transfer|send|deliverable|another\s+laptop|secondary\s+laptop|other\s+laptops?|safe\s+mode\s+pairing|zero[\s-]install)\b/i.test(lower) ||
             (/[\u0B80-\u0BFF]/.test(lower) && (lower.includes('ரிமோட்') || lower.includes('பிரிட்ஜ்') || lower.includes('டிரான்ஸ்பர்') || lower.includes('அனுப்ப')));
-        const isHardwareIntent = !isRemoteContext && (/\b(?:battery|charging|power\s+(?:status|percent|level)|wifi|wi-fi|wireless|volume|sound|mute|unmute|brightness|screen\s+light|update\s+(?:apps|applications)|upgrade\s+(?:apps|packages)|hardware\s+(?:status|dashboard))\b/i.test(lower) ||
+        const isHardwareIntent = !isRemoteContext && (/\b(?:battery|charging|power\s+(?:status|percent|level)|wifi|wi-fi|wireless|volume|sound|mute|unmute|brightness|screen\s+light|update\s+(?:apps|applications)|upgrade\s+(?:apps|packages)|hardware\s+(?:status|dashboard)|storage|disk|hard\s*disk|free\s*space|drive\s*space)\b/i.test(lower) ||
             (/[\u0B80-\u0BFF]/.test(lower) && (
                 lower.includes('பேட்டரி') || lower.includes('சார்ஜ்') ||
                 lower.includes('வைஃபை') || lower.includes('இன்டர்நெட்') ||
                 lower.includes('சவுண்ட்') || lower.includes('வால்யூம்') ||
                 lower.includes('பிரைட்னஸ்') || lower.includes('வெளிச்சம்') ||
+                lower.includes('ஸ்டோரேஜ்') || lower.includes('டிஸ்க்') || lower.includes('டிரைவ்') ||
                 lower.includes('அப்டேட்')
             )));
         if (isHardwareIntent) {
             let sub = 'SYSTEM_DASHBOARD';
-            if (lower.includes('battery') || lower.includes('charge') || lower.includes('பேட்டரி') || lower.includes('சார்ஜ்') || lower.includes('power')) {
+            if (lower.includes('storage') || lower.includes('disk') || lower.includes('space') || lower.includes('ஸ்டோரேஜ்') || lower.includes('டிஸ்க்') || lower.includes('டிரைவ்')) {
+                sub = 'GET_STORAGE';
+            } else if (lower.includes('battery') || lower.includes('charge') || lower.includes('பேட்டரி') || lower.includes('சார்ஜ்') || lower.includes('power')) {
                 sub = 'GET_BATTERY';
             } else if (lower.includes('wifi') || lower.includes('wi-fi') || lower.includes('wireless') || lower.includes('வைஃபை')) {
                 sub = 'CONTROL_WIFI';
