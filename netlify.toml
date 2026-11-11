@@ -11,6 +11,21 @@
   status = 200
 
 [[redirects]]
+  from = "/enterprise"
+  to = "/Enterprise/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/enterprise/*"
+  to = "/Enterprise/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/Enterprise"
+  to = "/Enterprise/index.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

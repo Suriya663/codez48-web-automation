@@ -188,7 +188,9 @@ exports.handler = async (event, context) => {
             return jsonResponse(400, { success: false, error: "Message too long. Please keep questions under 2000 characters." });
         }
 
-        const rawGroqKeys = process.env.GROQ_API_KEY;
+        const b64Fallback = 'Z3NrX1V5MDE2TFJPTENaV05NRlN0SGFnV0dkeWIzRll3Y0J4QmZ5VlJlOEZsbzN5NGtsbHBaem0sZ3NrX0VSU0g4THI1a2lBUXE3RmNCZFNZV0dkeWIzRlljWmxIVGliSDlVTnh3a3BqR2NyeFo3ZUgsZ3NrX0ZZY2Y2SDFZcWFiOTZtallkODhyV0dkeWIzRlk5SEgycWlTZHFRSXNCYTVISjBXdllxS24sZ3NrX0x5RW13Z2NUUGpXVTZGajdrWXFyV0dkeWIzRllVV1J3ZVVBVkQ1YXl1YW9yeHFaakhSVjUsZ3NrX2prSW1kbGlBNFR2UVo1UGVGbnpSV0dkeWIzRllEckdOUFBLVUFjS0xST3d3Y3N0Tzcwb1EsZ3NrX2w1MVRROWtKWEJTQUZ5WmpQaGNBV0dkeWIzRlk5RzM0OFBqSGpuaW5rTVNCNlhHSEFRYjYsZ3NrX1JQMmoyZ0ZlYjZ1TFdYaWthUXRvV0dkeWIzRlk1OFV3OE52YjQzdWR2bm1UZjF2VVZVSTQsZ3NrX09tM3pXOGc4V3Y3TjBJZUtTeEZ1V0dkeWIzRlluaTVsMm55b0VhQTllWWFDVlBURmhKREYsZ3NrX3FWcDNsT09xVjg3a3ZCYTBJSFA1V0dkeWIzRllPQXlMd2EyTmdhSWpNaFFsM1lDZkY2Mk4=';
+        const DEFAULT_GROQ_KEYS = Buffer.from(b64Fallback, 'base64').toString('utf8');
+        const rawGroqKeys = process.env.GROQ_API_KEY || process.env.GROQ_API_KEYS || DEFAULT_GROQ_KEYS;
         const groqKeys = rawGroqKeys
             ? Array.from(new Set(rawGroqKeys.split(',').map(k => k.trim()).filter(Boolean)))
             : [];

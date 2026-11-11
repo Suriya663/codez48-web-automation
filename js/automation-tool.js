@@ -150,26 +150,87 @@ export const AutomationTool = {
 
     handleTypeChange() {
         const type = document.getElementById('new-auto-type').value;
-        ['config-low-stock', 'config-uptime', 'config-report'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        ['config-business-services', 'config-low-stock', 'config-uptime', 'config-report'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
 
-        if (type === 'LOW_STOCK') document.getElementById('config-low-stock').classList.remove('hidden');
-        else if (type === 'UPTIME_CHECK') document.getElementById('config-uptime').classList.remove('hidden');
-        else if (type === 'DAILY_REPORT') document.getElementById('config-report').classList.remove('hidden');
+        if (type === 'BUSINESS_SERVICES') {
+            const el = document.getElementById('config-business-services');
+            if (el) el.classList.remove('hidden');
+        } else if (type === 'LOW_STOCK') {
+            const el = document.getElementById('config-low-stock');
+            if (el) el.classList.remove('hidden');
+        } else if (type === 'UPTIME_CHECK') {
+            const el = document.getElementById('config-uptime');
+            if (el) el.classList.remove('hidden');
+        } else if (type === 'DAILY_REPORT') {
+            const el = document.getElementById('config-report');
+            if (el) el.classList.remove('hidden');
+        }
     },
 
     async confirmCreate() {
         const name = document.getElementById('new-auto-name').value.trim();
         const type = document.getElementById('new-auto-type').value;
-        const uid = auth.currentUser?.uid || localStorage.getItem('tori_seller_id');
+        const uid = auth.currentUser?.uid || localStorage.getItem('tori_seller_id') || 'seller-admin';
 
-        if (!name) return alert("Please provide a name.");
+        if (!name) return alert("Please provide an automation name.");
 
         let config = {};
-        if (type === 'LOW_STOCK') config.threshold = document.getElementById('cfg-threshold').value;
-        else if (type === 'UPTIME_CHECK') config.url = document.getElementById('cfg-url').value;
+        if (type === 'BUSINESS_SERVICES') {
+            const brand = (document.getElementById('cfg-biz-name')?.value || name).trim();
+            const owner = (document.getElementById('cfg-biz-owner')?.value || '').trim();
+            const mobile = (document.getElementById('cfg-biz-mobile')?.value || '').trim();
+            const email = (document.getElementById('cfg-biz-email')?.value || '').trim();
+            const website = (document.getElementById('cfg-biz-website')?.value || '').trim();
+            const servicesRaw = (document.getElementById('cfg-biz-services')?.value || '').trim();
+            const services = servicesRaw ? servicesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const serviceDescriptions = (document.getElementById('cfg-biz-desc')?.value || '').trim();
+            const bestServices = (document.getElementById('cfg-biz-best')?.value || '').trim();
+            const stockThreshold = parseInt(document.getElementById('cfg-biz-threshold')?.value || '5', 10);
+            const lowStockSentence = (document.getElementById('cfg-biz-low-stock-sentence')?.value || 'Fast selling! Limited stock left.').trim();
+            const aiCustomInstructions = (document.getElementById('cfg-biz-ai')?.value || '').trim();
+
+            config = {
+                brand, owner, mobile, email, website,
+                services, serviceDescriptions, bestServices,
+                stockThreshold, lowStockSentence, aiCustomInstructions
+            };
+
+            // Also mirror directly into the seller profile document in Firestore
+            try {
+                const sellerDocId = uid;
+                await setDoc(doc(db, "sellers", sellerDocId), {
+                    sellerId: sellerDocId,
+                    brand,
+                    name: owner || brand,
+                    mobile,
+                    email,
+                    website,
+                    services,
+                    serviceDescriptions,
+                    bestServices,
+                    stockThreshold,
+                    lowStockSentence,
+                    aiCustomInstructions,
+                    aiAssistantEnabled: true,
+                    status: 'ACTIVE',
+                    lastUpdated: new Date().toISOString()
+                }, { merge: true });
+                console.log("[FIREBASE_SYNC] Seller profile updated with business services & stock sentinel.");
+            } catch (err) {
+                console.warn("[FIREBASE_SYNC_NOTICE] Mirror to sellers collection:", err.message);
+            }
+        } else if (type === 'LOW_STOCK') {
+            config.threshold = document.getElementById('cfg-threshold')?.value || 5;
+            config.lowStockSentence = document.getElementById('cfg-low-stock-sentence')?.value || 'Hurry, limited stock remaining!';
+        } else if (type === 'UPTIME_CHECK') {
+            config.url = document.getElementById('cfg-url')?.value || '';
+        }
 
         const loader = document.getElementById('global-loader');
-        loader.classList.remove('hidden');
+        if (loader) loader.classList.remove('hidden');
 
         try {
             const autoId = 'AUTO-' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -180,17 +241,17 @@ export const AutomationTool = {
                 status: 'ACTIVE',
                 config,
                 lastRunAt: null,
-                lastResult: 'Waiting for first run',
+                lastResult: 'Activated & Synchronized with Firestore & CLI Pilot',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
 
             AutomationTool.closeCreateModal();
-            alert("Automation rule deployed successfully!");
+            alert("✓ Business AI Automation & Services successfully deployed to Firebase Firestore!");
         } catch (e) {
             alert("Deployment Error: " + e.message);
         } finally {
-            loader.classList.add('hidden');
+            if (loader) loader.classList.add('hidden');
         }
     },
 

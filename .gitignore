@@ -83,3 +83,8 @@ pilot-workspace/projects/lablab_text_generation_webui/
 pilot-workspace/projects/cloned_website/
 pilot-workspace/projects/dynamic_express_app/
 pilot-workspace/projects/interactive_demo/
+
+# Prevent archive files with bundled credentials
+*.zip
+*.tar
+*.tar.gz

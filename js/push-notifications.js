@@ -16,12 +16,9 @@ export const PushNotificationSystem = {
             return;
         }
 
-        // Auto-refresh token on every visit if already granted
+        // Auto-register token on visit if already granted
         if (Notification.permission === "granted") {
             this.registerToken();
-
-            // Refresh token when tab regains focus to ensure delivery
-            window.addEventListener('focus', () => this.registerToken());
             return;
         }
 
@@ -107,29 +104,39 @@ export const PushNotificationSystem = {
 
                 console.log("[PUSH] Device Registered Successfully:", stableId);
 
-                // Dispatch "Welcome" test notification to confirm reliability
-                const idToken = await user.getIdToken();
-                const response = await fetch('/.netlify/functions/send-notification', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + idToken
-                    },
-                    body: JSON.stringify({
-                        targetToken: token,
-                        welcomeTitle: 'CODEZ48: System Connected',
-                        welcomeBody: 'Push alerts are now enabled for this device. Laptop & Mobile synchronization active.'
-                    })
-                });
+                // Dispatch "Welcome" test notification ONLY ONCE per session to eliminate network spam
+                const sessionKey = 'cdz48_welcome_push_sent_' + stableId;
+                if (!sessionStorage.getItem(sessionKey)) {
+                    sessionStorage.setItem(sessionKey, 'true');
+                    try {
+                        const idToken = await user.getIdToken();
+                        const response = await fetch('/.netlify/functions/send-notification', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + idToken
+                            },
+                            body: JSON.stringify({
+                                targetToken: token,
+                                welcomeTitle: 'CODEZ48: System Connected',
+                                welcomeBody: 'Push alerts are now enabled for this device. Laptop & Mobile synchronization active.'
+                            })
+                        });
 
-                if (!response.ok) {
-                    const error = await response.json().catch(() => ({}));
-                    // Self-healing for NotRegistered error
-                    if (error.code === 'messaging/registration-token-not-registered' || error.error?.includes('NotRegistered')) {
-                        console.warn("[PUSH] Stale token detected. Clearing and retrying...");
-                        await deleteToken(messaging);
-                        await deleteDoc(doc(db, "main_site_subscribers", stableId));
-                        setTimeout(() => this.registerToken(), 3000);
+                        if (!response.ok) {
+                            const error = await response.json().catch(() => ({}));
+                            if (response.status === 500 || error.error?.includes('FIREBASE_SERVICE_ACCOUNT')) {
+                                console.info("[PUSH] Notice: Server push notification service standing by (Firestore subscriber active).");
+                            } else if (error.code === 'messaging/registration-token-not-registered' || error.error?.includes('NotRegistered')) {
+                                console.warn("[PUSH] Stale token detected. Clearing and retrying...");
+                                await deleteToken(messaging);
+                                await deleteDoc(doc(db, "main_site_subscribers", stableId));
+                            }
+                        } else {
+                            console.log("[PUSH] Welcome notification sent successfully.");
+                        }
+                    } catch (dispatchErr) {
+                        console.info("[PUSH] Welcome notification notice:", dispatchErr.message);
                     }
                 }
             }

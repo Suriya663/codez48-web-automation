@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Line Interface | Codez48 CLI</title>
+    <title>Command Line Interface | Codez48 CLI & Autonomous Pilot</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -89,6 +89,54 @@
             font-weight: 800;
             flex-shrink: 0;
         }
+
+        /* Pilot Capability Tab Styles */
+        .pilot-tab-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+        .pilot-tab-card:hover {
+            border-color: #2563EB;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -6px rgba(37, 99, 235, 0.12);
+        }
+        .pilot-tab-card.active {
+            border-color: #2563EB;
+            background: #eff6ff;
+            box-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.2);
+        }
+        .pilot-tab-card.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 8px;
+            background: #2563EB;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+        }
+
+        .prompt-item-box {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .prompt-item-box:hover {
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.35);
+        }
     </style>
 </head>
 <body>
@@ -103,6 +151,9 @@
             <div class="flex items-center gap-3 md:gap-6">
                 <button onclick="location.href='/index.html'" class="hidden sm:block text-[9px] md:text-[10px] font-black text-slate-500 hover:text-black uppercase tracking-widest transition">Home</button>
                 <button onclick="location.href='/tools/index.html'" class="text-[9px] md:text-[10px] font-black text-slate-500 hover:text-black uppercase tracking-widest transition">Tools</button>
+                <button onclick="location.href='/Enterprise/index.html'" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[8px] md:text-[10px] font-black px-4 md:px-5 py-2 md:py-2.5 rounded-full uppercase tracking-widest shadow-lg flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-cart-shopping"></i> Purchase CLI Code (₹29,000)
+                </button>
                 <button onclick="location.href='../api-keys.html'" class="btn-black text-[8px] md:text-[10px] font-black px-4 md:px-6 py-2 md:py-2.5 rounded-full uppercase tracking-widest shadow-lg">Upgrade</button>
             </div>
         </div>
@@ -110,14 +161,22 @@
 
     <main class="pt-32 pb-20 px-6 max-w-5xl mx-auto">
 
+        <!-- Hero Title -->
         <div class="text-center mb-10 md:mb-16 space-y-4">
             <span class="px-4 py-1.5 bg-blue-50 text-royal text-[10px] font-black rounded-full uppercase tracking-widest border border-blue-100">
-                Official Developer Tool
+                Official Developer Tool & Autonomous Pilot
             </span>
             <h1 class="text-3xl md:text-5xl font-black text-black tracking-tightest uppercase leading-tight">Codez48 Command Line</h1>
             <p class="text-slate-500 text-sm md:text-lg font-medium max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
-                Manage your business and generate websites directly from your terminal. No login required for AI chat.
+                Operate your desktop, generate AI videos, audit website security, dispatch WhatsApp campaigns, build applications, and manage storefronts directly from your terminal.
             </p>
+            <div class="inline-flex flex-wrap items-center justify-center gap-3 p-2 px-4 bg-amber-50 border border-amber-200 rounded-2xl shadow-sm text-xs font-bold text-amber-900 mt-2">
+                <span class="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Enterprise License</span>
+                <span>Want complete master source code repository?</span>
+                <button onclick="location.href='/Enterprise/index.html'" class="bg-black hover:bg-slate-800 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-cart-shopping text-amber-400"></i> Purchase CLI Code (₹29,000)
+                </button>
+            </div>
         </div>
 
         <!-- Terminal Preview -->
@@ -126,50 +185,39 @@
                 <div class="terminal-dot dot-red"></div>
                 <div class="terminal-dot dot-yellow"></div>
                 <div class="terminal-dot dot-green"></div>
-                <span class="text-[10px] font-bold text-slate-500 ml-2 font-mono uppercase tracking-widest">codez48 — 80x24</span>
+                <span class="text-[10px] font-bold text-slate-500 ml-2 font-mono uppercase tracking-widest">codez48 pilot — autonomous agent</span>
             </div>
             <div class="p-6 md:p-8 font-mono text-[10px] md:text-sm space-y-3 overflow-x-auto">
-                <p class="text-emerald-400">$ codez48 login</p>
-                <p class="text-white">Seller ID: SLR-123456</p>
-                <p class="text-white">Password: ********</p>
-                <p class="text-emerald-500">[SUCCESS] Authentication persistent. Session Key stored.</p>
-                <p class="text-white mt-4">$ codez48 ai</p>
-                <p class="text-emerald-500">AI Chat activated. Press Ctrl+C to exit.</p>
-                <p class="text-white">You: Explain JavaScript</p>
-                <p class="text-slate-300">AI: JavaScript is a high-level programming language used to create interactive content...</p>
-                <p class="text-white mt-4">$ codez48 list-products</p>
-                <div class="text-slate-400 space-y-1 whitespace-pre">
-                    <p>┌────────────┬──────────────────────┬─────────┬───────┐</p>
-                    <p>│ ID         │ Name                 │ Price   │ Stock │</p>
-                    <p>├────────────┼──────────────────────┼─────────┼───────┤</p>
-                    <p>│ PROD-A12B  │ Premium AI Model     │ ₹4,000  │ 10    │</p>
-                    <p>│ PROD-C78D  │ Automation Licence   │ ₹2,500  │ 50    │</p>
-                    <p>└────────────┴──────────────────────┴─────────┴───────┘</p>
-                </div>
+                <p class="text-emerald-400">$ codez48 pilot "audit website security https://example.com"</p>
+                <p class="text-slate-400">[WEBSITE-AUDITOR] Initiating defensive security audit on: https://example.com/ ...</p>
+                <p class="text-amber-400">[VULNERABILITIES] 0 Critical, 2 High, 1 Medium found. Missing CSP & HSTS.</p>
+                <p class="text-white">[DASHBOARD] Live cyber defense dashboard active at http://127.0.0.1:4840</p>
+                <p class="text-emerald-500">✔ [COMPLETED] Target security health analyzed & visual report rendered.</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-12 px-4 md:px-0">
 
-            <!-- Sidebar Navigation (Hidden on Mobile) -->
+            <!-- Sidebar Navigation -->
             <aside class="hidden lg:block lg:col-span-1 space-y-8 h-fit sticky top-32">
                 <div>
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">On this page</h4>
                     <nav class="flex flex-col gap-3">
                         <a href="#quick-start" class="text-xs font-bold text-slate-600 hover:text-royal transition">Install Codez48 CLI</a>
-                        <a href="#pilot" class="text-xs font-bold text-royal transition font-black">Codez48 Pilot</a>
+                        <a href="#pilot" class="text-xs font-bold text-royal transition font-black">Codez48 Pilot Overview</a>
+                        <a href="#pilot-explorer" class="text-xs font-bold text-purple-600 hover:text-purple-800 transition font-black flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> Pilot Capabilities & Prompts</a>
+                        <a href="#reference" class="text-xs font-bold text-slate-600 hover:text-royal transition">All CLI Commands Table</a>
                         <a href="#products" class="text-xs font-bold text-slate-600 hover:text-royal transition">Product Management</a>
                         <a href="#ai" class="text-xs font-bold text-slate-600 hover:text-royal transition">AI Chat Interface</a>
-                        <a href="#tools" class="text-xs font-bold text-slate-600 hover:text-royal transition">Business Tools</a>
-                        <a href="#reference" class="text-xs font-bold text-slate-600 hover:text-royal transition">Command Reference</a>
                         <a href="#local-dev" class="text-xs font-bold text-slate-600 hover:text-royal transition pt-4 border-t border-slate-100">Local Development</a>
+                        <a href="/Enterprise/index.html" class="text-xs font-bold text-amber-600 hover:text-black transition flex items-center gap-1.5"><i class="fa-solid fa-code"></i> Buy Full Master Code (₹29K)</a>
                     </nav>
                 </div>
 
                 <div class="p-6 bg-slate-100 rounded-2xl space-y-3">
                     <h5 class="text-[9px] font-black text-slate-900 uppercase tracking-widest">Latest Version</h5>
-                    <p class="text-xs font-bold text-royal">v1.3.0 (Stable)</p>
-                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">Added Universal Text-Driven Computer Automation Agent support.</p>
+                    <p class="text-xs font-bold text-royal">v1.3.5 (Stable)</p>
+                    <p class="text-[10px] text-slate-500 leading-relaxed font-medium">Equipped with AI Video Studio, Defensive Security Audit, Win32 Mouse Motors, and Bilingual Voice/Subtitles.</p>
                 </div>
             </aside>
 
@@ -182,7 +230,7 @@
                         <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Install Codez48 CLI</h2>
                         <div class="md:hidden inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full">
                             <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Latest</span>
-                            <span class="text-[9px] font-black text-royal uppercase">v1.3.0</span>
+                            <span class="text-[9px] font-black text-royal uppercase">v1.3.5</span>
                         </div>
                     </div>
 
@@ -192,7 +240,7 @@
                             <div class="step-number mt-1">1</div>
                             <div class="space-y-4 flex-1 min-w-0">
                                 <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Install Node.js</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Codez48 CLI requires Node.js and npm. Verify your installation by running these commands in your terminal:</p>
+                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Codez48 CLI requires Node.js (v18+) and npm. Verify your installation:</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">node -v</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                                     <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">npm -v</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
@@ -205,7 +253,7 @@
                             <div class="step-number mt-1">2</div>
                             <div class="space-y-4 flex-1 min-w-0">
                                 <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Install CLI Globally</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Run this command to install Codez48 CLI globally:</p>
+                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Run this command in terminal or PowerShell:</p>
                                 <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">npm install -g codez48-cli</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                             </div>
                         </div>
@@ -215,14 +263,14 @@
                             <div class="step-number mt-1">3</div>
                             <div class="space-y-4 flex-1 min-w-0" id="local-dev">
                                 <h3 class="text-base md:text-lg font-black text-black uppercase tracking-widest">Run Codez48 & Local Setup</h3>
-                                <p class="text-slate-500 text-sm font-medium leading-relaxed">After installation, launch the CLI:</p>
+                                <p class="text-slate-500 text-sm font-medium leading-relaxed">Launch the interactive agent:</p>
                                 <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Section: Codez48 Pilot -->
+                <!-- Section: Codez48 Pilot Overview -->
                 <section id="pilot" class="space-y-12">
                     <div class="space-y-4">
                         <span class="px-4 py-1.5 bg-blue-50 text-royal text-[10px] font-black rounded-full uppercase tracking-widest border border-blue-100">
@@ -230,55 +278,173 @@
                         </span>
                         <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Codez48 Pilot</h2>
                         <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                            Codez48 Pilot is the natural-language automation agent inside the Codez48 CLI. Describe what you want to accomplish, and Pilot understands the goal, inspects the required application or website, performs actions, verifies the result, and continues through multi-step workflows.
+                            Codez48 Pilot is an autonomous, natural-language computer agent inside the Codez48 CLI. State what you want in English or Tamil, and Pilot inspects the desktop, moves the mouse, creates files, audits code, compiles videos, and executes end-to-end workflows.
                         </p>
                     </div>
 
-                    <!-- Pilot vs AI Chat Comparison -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm space-y-4">
-                            <div class="flex items-center gap-3">
-                                <span class="w-3 h-3 rounded-full bg-blue-600"></span>
-                                <h3 class="text-base font-black text-black uppercase tracking-tight">AI Chat (<code class="font-mono text-royal">codez48 ai</code>)</h3>
+                    <!-- Enterprise Master Source Code Buyout Card -->
+                    <div class="p-8 bg-black text-white border-2 border-white/20 rounded-[2.5rem] shadow-2xl space-y-6 relative overflow-hidden">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="space-y-2">
+                                <span class="px-3 py-1 bg-white/10 text-amber-400 text-[10px] font-black rounded-full uppercase tracking-widest border border-white/10">
+                                    Full Commercial Buyout
+                                </span>
+                                <h3 class="text-xl md:text-2xl font-black text-white uppercase tracking-tight">Buy Complete Codez48 Pilot CLI Source Code</h3>
+                                <p class="text-slate-400 text-xs md:text-sm max-w-xl leading-relaxed">
+                                    Own the complete, 100% unrestricted master codebase (.ZIP). Includes physical Win32 mouse motors, real screen vision, autonomous video studio, and WhatsApp campaigners. Verified with Razorpay.
+                                </p>
                             </div>
-                            <p class="text-slate-500 text-xs font-medium leading-relaxed">Conversational AI designed for questions, answering queries, code generation, and live brainstorming.</p>
+                            <div class="text-left md:text-right shrink-0">
+                                <div class="text-xs text-slate-500 line-through">₹50,000 INR</div>
+                                <div class="text-3xl font-black text-white tracking-tight">₹29,000 <span class="text-xs font-normal text-slate-400">INR</span></div>
+                                <div class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">Test with ₹1 First</div>
+                            </div>
                         </div>
-                        <div class="p-8 bg-blue-50/50 border-2 border-blue-200 rounded-[2.5rem] shadow-sm space-y-4">
-                            <div class="flex items-center gap-3">
-                                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <h3 class="text-base font-black text-blue-900 uppercase tracking-tight">Pilot (<code class="font-mono text-emerald-700">codez48 pilot</code>)</h3>
-                            </div>
-                            <p class="text-slate-600 text-xs font-medium leading-relaxed">Goal-driven computer automation agent that operates real applications, creates files, builds projects, and executes workflows.</p>
+                        <div class="pt-2 flex flex-wrap gap-4 items-center">
+                            <button onclick="location.href='/Enterprise/index.html'" class="bg-white hover:bg-slate-200 text-black text-xs font-black px-8 py-3.5 rounded-full uppercase tracking-widest shadow-xl transition flex items-center gap-2">
+                                <i class="fa-solid fa-cart-shopping"></i> Purchase CLI Master Code (₹29,000)
+                            </button>
+                            <span class="text-[11px] text-slate-400">Includes SHA-256 verified .ZIP download & perpetual license.</span>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Capabilities Grid -->
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-black text-black uppercase tracking-widest">What Can Pilot Do?</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">🌐 Browser Automation</p><p class="text-[11px] text-slate-500">Live DOM, OCR, and visual element interaction.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">💻 VS Code & IDE</p><p class="text-[11px] text-slate-500">Project creation, code editing, and execution.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">🗂️ File & Folders</p><p class="text-[11px] text-slate-500">TXT, MD, JSON, CSV, and code file management.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📊 Excel Spreadsheets</p><p class="text-[11px] text-slate-500">Data workbooks, tables, and formula calculations.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📝 Word Documents</p><p class="text-[11px] text-slate-500">Professional reports, notes, and documentation.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📽️ PowerPoint Presentations</p><p class="text-[11px] text-slate-500">Structured slides, titles, and bullet points.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">⚙️ Terminal Automation</p><p class="text-[11px] text-slate-500">Command execution, package installation, and logs.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">📱 Android Projects</p><p class="text-[11px] text-slate-500">SDK auto-discovery, Gradle wrapper, and APK builds.</p></div>
-                            <div class="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm"><p class="text-xs font-bold text-black mb-1">🔄 Cross-App Workflows</p><p class="text-[11px] text-slate-500">Seamlessly moves between browser, VS Code, and terminal.</p></div>
-                        </div>
+                <!-- ============================================================== -->
+                <!-- NEW SECTION: INTERACTIVE PILOT CAPABILITY & PROMPT PLAYGROUND -->
+                <!-- ============================================================== -->
+                <section id="pilot-explorer" class="space-y-8">
+                    <div class="space-y-3">
+                        <span class="px-4 py-1.5 bg-purple-50 text-purple-700 text-[10px] font-black rounded-full uppercase tracking-widest border border-purple-200">
+                            Interactive Prompt Hub
+                        </span>
+                        <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">
+                            What Can Pilot Do? (பைலட் என்னென்ன செய்யும்?)
+                        </h2>
+                        <p class="text-slate-500 text-sm md:text-base font-medium leading-relaxed">
+                            Select any tool or domain below to view its full capabilities, architecture, and ready-to-run sample prompts in English and Tamil. Click any prompt to copy it immediately!
+                        </p>
                     </div>
 
-                    <!-- Practical Example Gallery -->
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-black text-black uppercase tracking-widest">Practical Example Gallery</h3>
-                        <div class="space-y-4">
-                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Open YouTube and search for Codez48"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create a Node.js REST API called task-api"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create a Word document explaining cloud computing"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create an Excel sheet for monthly expenses"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create a PowerPoint presentation about AI"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                            <div class="code-block group"><code class="font-mono text-xs text-black">codez48 pilot "Create an Android to-do list application"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
-                        </div>
+                    <!-- Category Selector Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5" id="pilotTabsContainer">
+                        <!-- Rendered dynamically by JavaScript -->
+                    </div>
+
+                    <!-- Dynamic Detail & Prompt Display Card -->
+                    <div id="pilotDetailCard" class="p-6 md:p-8 bg-white border-2 border-slate-200 rounded-[2.5rem] shadow-xl space-y-6 transition-all duration-300">
+                        <!-- Filled by selectPilotCategory() -->
+                    </div>
+                </section>
+
+                <!-- ============================================================== -->
+                <!-- SECTION: COMPLETE ALL CLI COMMANDS REFERENCE                   -->
+                <!-- ============================================================== -->
+                <section id="reference" class="space-y-8">
+                    <div class="space-y-3">
+                        <span class="px-4 py-1.5 bg-slate-100 text-slate-700 text-[10px] font-black rounded-full uppercase tracking-widest">
+                            Comprehensive Manual
+                        </span>
+                        <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Complete CLI Command Reference</h2>
+                        <p class="text-slate-500 text-sm font-medium">All CLI terminal commands supported natively by Codez48 CLI:</p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                            <thead>
+                                <tr class="bg-slate-100/80 border-b border-slate-200 text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                                    <th class="p-4">Command Syntax</th>
+                                    <th class="p-4">Domain / Engine</th>
+                                    <th class="p-4">Description</th>
+                                    <th class="p-4">Example Usage</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-xs font-medium text-slate-700 divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-royal whitespace-nowrap">codez48 pilot "&lt;goal&gt;"</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-blue-50 text-royal text-[9px] font-black rounded uppercase">Autonomous Agent</span></td>
+                                    <td class="p-4">Natural-language goal execution across browser, desktop, video, Office, security, and coding.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 pilot "create 9:16 short video about AI"</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-900 whitespace-nowrap">codez48 ai [prompt]</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded uppercase">Conversational AI</span></td>
+                                    <td class="p-4">Interactive contextual AI chat powered by Gemini 2.0 Flash and Groq LLMs.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 ai "Explain REST APIs in simple Tamil"</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-pink-600 whitespace-nowrap">codez48 video-studio</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-pink-50 text-pink-600 text-[9px] font-black rounded uppercase">Video Studio</span></td>
+                                    <td class="p-4">Launches the standalone Autonomous AI Video Studio GUI on local port 4830 with persistent daemon.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 video-studio</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-purple-600 whitespace-nowrap">codez48 audit &lt;url&gt;</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-black rounded uppercase">Cyber Defense</span></td>
+                                    <td class="p-4">Scans any URL for OWASP security vulnerabilities and opens the live audit dashboard on port 4840.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 audit https://codez48.netlify.app</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-emerald-600 whitespace-nowrap">codez48 scan</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black rounded uppercase">System Inspector</span></td>
+                                    <td class="p-4">Inspects %TEMP% junk and checks running processes for threat anomalies (Read-Only Mode, no deletion).</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 scan</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-red-600 whitespace-nowrap">codez48 clean</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-red-50 text-red-600 text-[9px] font-black rounded uppercase">Disk Cleaner</span></td>
+                                    <td class="p-4">Safely purges temporary files and system clutter to reclaim hard drive storage.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 clean</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-orange-600 whitespace-nowrap">codez48 templates</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-orange-50 text-orange-600 text-[9px] font-black rounded uppercase">Templates Gallery</span></td>
+                                    <td class="p-4">Launches the interactive PowerPoint & automation template gallery on port 4880.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 templates</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-800 whitespace-nowrap">codez48 balance</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded uppercase">Token Vault</span></td>
+                                    <td class="p-4">Displays your active AI credit balance, subscription plan, and usage metrics.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 balance</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-amber-600 whitespace-nowrap">codez48 buy</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black rounded uppercase">Enterprise Buyout</span></td>
+                                    <td class="p-4">Prepares the full 14.05 MB master source code archive (.zip) and opens the ₹29,000 buyout portal.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 buy</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-900 whitespace-nowrap">codez48 login</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded uppercase">Authentication</span></td>
+                                    <td class="p-4">Authenticate and store merchant or developer API keys persistently.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 login</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-900 whitespace-nowrap">codez48 list-products</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded uppercase">Storefront</span></td>
+                                    <td class="p-4">Displays published merchant products and pricing in an aligned ASCII table.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 list-products</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-900 whitespace-nowrap">codez48 add-product</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded uppercase">Storefront</span></td>
+                                    <td class="p-4">Interactive terminal wizard to add a new digital product to your storefront.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 add-product</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-900 whitespace-nowrap">codez48 chat</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded uppercase">Collaboration</span></td>
+                                    <td class="p-4">Connect to a live terminal peer-to-peer room for team development.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 chat</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4 font-mono font-bold text-slate-900 whitespace-nowrap">codez48 --help</td>
+                                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black rounded uppercase">CLI Manual</span></td>
+                                    <td class="p-4">Prints the complete flags, arguments, and quick start instructions.</td>
+                                    <td class="p-4 font-mono text-[11px] text-slate-500">codez48 --help</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </section>
 
@@ -291,41 +457,11 @@
 
                 <!-- Section: AI Chat & Web Builder -->
                 <section id="ai" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">AI Chat & Web Builder</h2>
+                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">AI Chat Interface</h2>
                     <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                        Start an interactive, contextual conversation with Codez48 AI.
+                        Start an interactive, contextual conversation with Codez48 AI powered by Google Gemini and Groq models.
                     </p>
-                </section>
-
-                <!-- Section: Business Tools -->
-                <section id="tools" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Business Tools</h2>
-                    <p class="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">
-                        Automated business intelligence, tracking, and campaign tools.
-                    </p>
-                </section>
-
-                <!-- Section: Command Reference -->
-                <section id="reference" class="space-y-8">
-                    <h2 class="text-2xl md:text-3xl font-black text-black uppercase tracking-tight">Command Reference</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase text-slate-400">
-                                    <th class="p-4">Command</th>
-                                    <th class="p-4">Description</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-xs font-medium text-slate-600">
-                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 pilot "&lt;task&gt;"</td><td class="p-4">Natural-language automation agent for browser, desktop, files, projects, and development environments.</td></tr>
-                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 ai</td><td class="p-4">Interactive contextual AI assistant chat.</td></tr>
-                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 list-products</td><td class="p-4">List all published products in your merchant catalog.</td></tr>
-                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 add-product</td><td class="p-4">Interactive wizard to publish a new product.</td></tr>
-                                <tr class="border-b border-slate-100"><td class="p-4 font-mono font-bold text-black">codez48 login</td><td class="p-4">Authenticate and save merchant session credentials.</td></tr>
-                                <tr><td class="p-4 font-mono font-bold text-black">codez48 chat</td><td class="p-4">Join a real-time collaboration room.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="code-block group"><code class="font-mono text-xs md:text-sm text-black">codez48 ai "Explain quantum computing in Tamil"</code><button onclick="copyCode(this)" class="copy-btn">Copy</button></div>
                 </section>
 
             </div>
@@ -336,13 +472,401 @@
         <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="flex items-center gap-2">
                 <span class="text-lg font-black tracking-tighter uppercase text-white">CODEZ<span class="text-royal">48</span></span>
-                <span class="bg-slate-800 text-slate-400 text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase">CLI v1.3.0</span>
+                <span class="bg-slate-800 text-slate-400 text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase">CLI v1.3.5</span>
             </div>
-            <p class="text-slate-500 text-xs font-medium">© 2026 Codez48 Platform. All rights reserved.</p>
+            <p class="text-slate-500 text-xs font-medium">© 2026 Codez48 Technologies. All rights reserved.</p>
         </div>
     </footer>
 
+    <!-- INTERACTIVE PILOT CAPABILITY & PROMPT DATA LOGIC -->
     <script>
+        const PILOT_CAPABILITIES = [
+            {
+                id: "video-studio",
+                icon: "fa-film",
+                badge: "AI Video Studio",
+                title: "Autonomous AI Video Studio & Shorts Generator",
+                tamilTitle: "தானியங்கி AI வீடியோ ஸ்டுடியோ & ஷார்ட்ஸ் கிரியேட்டர்",
+                desc: "Gemini 2.0 Flash AI generates narrative scripts, Pollinations AI creates scene visuals, synchronized Tamil & Tanglish subtitles are generated, background audio is mixed, and export produces a ready-to-publish MP4 on port 4830.",
+                tamilDesc: "ஜெமினி AI ஸ்கிரிப்ட் எழுதி, போலினேஷன்ஸ் AI படங்களை உருவாக்கி, தமிழ்/தங்கிலீஷ் சப்டைட்டில்களுடன் 9:16 Shorts அல்லது 16:9 வீடியோவாக மாஸ்டர் MP4 ஃபைலாக ஏற்றுமதி செய்யும்.",
+                engine: "Gemini 2.0 Flash • Groq Whisper • Pollinations AI • HTML5 Canvas Video Engine (Port 4830)",
+                colorText: "text-pink-600",
+                bgBadge: "bg-pink-50 border-pink-200 text-pink-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Create 9:16 Viral Shorts Video",
+                        cmd: 'codez48 pilot "create a 9:16 viral short video about future of AI in tamil"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "வீடியோ எடிட்டிங் & தமிழ் சப்டைட்டில்",
+                        cmd: 'codez48 pilot "வீடியோ எடிட் பண்ணு தமிழ் சப்டைட்டில் ஆட் பண்ணு"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Launch Dedicated Video Studio GUI",
+                        cmd: 'codez48 video-studio'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "ஸ்டோரி ஜெனரேட் செய்து வீடியோ உருவாக்கு",
+                        cmd: 'codez48 pilot "generate a 3-scene story about space exploration with audio"'
+                    }
+                ]
+            },
+            {
+                id: "security-audit",
+                icon: "fa-shield-halved",
+                badge: "Cyber Defense",
+                title: "Defensive Cybersecurity & Website Vulnerability Auditor",
+                tamilTitle: "வெப்சைட் பாதுகாப்பு & ஹேக்கிங் பாதிப்பு கண்டறிதல்",
+                desc: "Performs full OWASP Top 10 penetration risk assessment: scans SSL/TLS encryption, Content-Security-Policy (CSP), HSTS SSL-strip defense, X-Frame-Options clickjacking, X-Content-Type sniffing, and CORS loopholes. Opens visual live dashboard on port 4840.",
+                tamilDesc: "எந்த ஒரு வெப்சைட்டையும் ஹேக்கர்கள் எந்த வழியில் ஹேக் செய்ய வாய்ப்பு உள்ளது என ஸ்கேன் செய்து, OWASP A01-A05 பாதிப்புகளை கண்டறிந்து லைவ் செக்யூரிட்டி டேஷ்போர்டில் காட்டும்.",
+                engine: "OWASP Top 10 Scanner • HTTP Header Analyzer • Defense Dashboard (Port 4840)",
+                colorText: "text-purple-600",
+                bgBadge: "bg-purple-50 border-purple-200 text-purple-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Audit Any Website Security",
+                        cmd: 'codez48 pilot "audit website security https://example.com"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "ஹேக்கிங் வாய்ப்புகளைக் கண்டறி",
+                        cmd: 'codez48 pilot "இந்த வெப்சைட்ல ஹேக்கர்ஸ் எப்படி ஹேக் பண்ண வாய்ப்பு இருக்கு: https://mywebsite.com"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Direct Audit CLI Command",
+                        cmd: 'codez48 audit https://example.com'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "பாதுகாப்பு குறைபாடுகளை சரிசெய்யும் வழிகள்",
+                        cmd: 'codez48 pilot "scan website vulnerabilities and suggest remediation https://example.com"'
+                    }
+                ]
+            },
+            {
+                id: "system-cleaner",
+                icon: "fa-broom",
+                badge: "System Maintenance",
+                title: "System Temp Cache & Defensive Threat Inspector",
+                tamilTitle: "சிஸ்டம் டெம்ப் & அச்சுறுத்தல் கிளீனர் (காண்பித்தல் & நீக்குதல்)",
+                desc: "Safely scans %TEMP%, Windows temporary caches, and active processes for anomalous threat signatures. Supports dual modes: Safe Scan Mode (Read-Only) and Safe Clean Mode (Delete junk files).",
+                tamilDesc: "கணினியில் தேங்கியுள்ள டெம்பரரி ஃபைல்கள் மற்றும் வைரஸ் அச்சுறுத்தல்களை எந்த ஃபைலையும் அழிக்காமல் ஸ்கேன் செய்து காட்டவும் அல்லது பாதுகாப்பாக நீக்கவும் முடியும்.",
+                engine: "Win32 Temp Purger • Process Signature Inspector • Safe File Recycler",
+                colorText: "text-emerald-600",
+                bgBadge: "bg-emerald-50 border-emerald-200 text-emerald-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Scan Temp & Threats (Read-Only Mode)",
+                        cmd: 'codez48 pilot "scan temporary junk files and inspect for virus anomalies"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "டெம்பரரி பைல்ஸ் & வைரஸ் காட்டு",
+                        cmd: 'codez48 pilot "டெம்பரரி பைல்ஸ் மற்றும் வைரஸ் காட்டு"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Clean & Delete Junk Files",
+                        cmd: 'codez48 pilot "clean and delete all temporary files to free disk space"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "டெம்ப் ஃபைல்களை கிளீன் பண்ணு",
+                        cmd: 'codez48 pilot "டெம்பரரி பைல்ஸ் கிளீன் பண்ணு"'
+                    }
+                ]
+            },
+            {
+                id: "whatsapp-campaign",
+                icon: "fa-brands fa-whatsapp",
+                badge: "WhatsApp Automation",
+                title: "WhatsApp Web & Desktop Autonomous Campaigner",
+                tamilTitle: "வாட்ஸ்அப் தானியங்கி மார்க்கெட்டிங் கேம்பெய்னர்",
+                desc: "Automates bulk WhatsApp message dispatches, parses Excel/CSV contact directories, attaches marketing flyers or media, and responds to incoming client chats without manual mouse clicks.",
+                tamilDesc: "எக்செல் காண்டாக்ட் லிஸ்ட்டை படித்து வாடிக்கையாளர்களுக்கு தானியங்கியாக வாட்ஸ்அப் மெசேஜ்கள், விளம்பர படங்கள் மற்றும் அறிவிப்புகளை அனுப்பும்.",
+                engine: "Playwright WhatsApp Driver • Excel/CSV Contact Parser • Media Dispatcher",
+                colorText: "text-green-600",
+                bgBadge: "bg-green-50 border-green-200 text-green-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Send Instant WhatsApp Message",
+                        cmd: 'codez48 pilot "open WhatsApp and send festival greeting to 9876543210"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "வாட்ஸ்அப் மெசேஜ் அனுப்பும் பிராம்ப்ட்",
+                        cmd: 'codez48 pilot "வாட்ஸ்அப் ஓபன் பண்ணி 9876543210 என்ற நம்பருக்கு ஹலோ மெசேஜ் அனுப்பு"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Broadcast Excel Contact List",
+                        cmd: 'codez48 pilot "send promotional message to all contacts in leads.xlsx via WhatsApp"'
+                    }
+                ]
+            },
+            {
+                id: "office-suite",
+                icon: "fa-file-powerpoint",
+                badge: "Office Suite AI",
+                title: "PowerPoint, Word & Excel Intelligent Automation",
+                tamilTitle: "பவர்பாயிண்ட், வேர்ட் & எக்செல் ஆட்டோமேஷன்",
+                desc: "Generates multi-slide PowerPoint presentations (.pptx) with structured headings, typography and shapes, produces formatted Word documentation (.docx), and crafts formula-driven Excel spreadsheets (.xlsx).",
+                tamilDesc: "தலைப்புகள், பாயிண்டுகளுடன் பவர்பாயிண்ட் ஸ்லைடுகள், வேர்ட் டாக்குமெண்ட்கள் மற்றும் ஃபார்முலாக்களுடன் எக்செல் தாள்களை நொடிகளில் உருவாக்கும்.",
+                engine: "python-pptx Engine • COM Office Driver • XLSX Formula Generator",
+                colorText: "text-orange-600",
+                bgBadge: "bg-orange-50 border-orange-200 text-orange-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Create Professional Presentation",
+                        cmd: 'codez48 pilot "create a 6-slide PowerPoint presentation on Artificial Intelligence and Cloud"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "AI பவர்பாயிண்ட் ஸ்லைடு உருவாக்கு",
+                        cmd: 'codez48 pilot "செயற்கை நுண்ணறிவு பற்றி 5 ஸ்லைடு பவர்பாயிண்ட் பிரசன்டேஷன் உருவாக்கு"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Generate Budget Excel Sheet",
+                        cmd: 'codez48 pilot "create an excel sheet for startup monthly budget with formulas"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "வேர்ட் ரிப்போர்ட் உருவாக்கு",
+                        cmd: 'codez48 pilot "create a Word document explaining cybersecurity best practices"'
+                    }
+                ]
+            },
+            {
+                id: "desktop-mouse",
+                icon: "fa-mouse-pointer",
+                badge: "Win32 Motor Driver",
+                title: "Physical Motor Mouse Glide & Computer Vision GUI Pilot",
+                tamilTitle: "பிசிகல் மவுஸ் கர்சர் இயக்கம் & கம்ப்யூட்டர் விஷன்",
+                desc: "Drives real Win32 mouse cursor glide with human-like acceleration, sub-pixel target clicking, multi-monitor window targeting, background window focus, and OCR element discovery.",
+                tamilDesc: "கம்ப்யூட்டரின் திரையைப் பார்த்து, உண்மையான மவுஸ் கர்சரை நகர்த்தி, அப்ளிகேஷன்களைத் திறந்து, மனிதன் இயக்குவது போலவே கிளிக்குகளையும் டைப்பிங்கையும் செய்யும்.",
+                engine: "user32.dll Win32 Mouse API • Tesseract / Vision OCR • Sub-pixel Bézier Glide",
+                colorText: "text-blue-600",
+                bgBadge: "bg-blue-50 border-blue-200 text-blue-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Physical Calculator Automation",
+                        cmd: 'codez48 pilot "open calculator and calculate 48 * 29000"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "நோட்பேடில் குறிப்புகள் எழுது",
+                        cmd: 'codez48 pilot "open notepad and write today meeting notes"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Browser Search & Navigation",
+                        cmd: 'codez48 pilot "open Chrome, visit youtube.com and search for codez48"'
+                    }
+                ]
+            },
+            {
+                id: "software-dev",
+                icon: "fa-code",
+                badge: "Software Engineering",
+                title: "Full-Stack Software, REST API & Mobile App Scaffolding",
+                tamilTitle: "ஃபுல்-ஸ்டாக் சாஃப்ட்வேர் & மொபைல் ஆப் உருவாக்கம்",
+                desc: "Creates production-ready Node.js REST APIs with Express & JWT, builds React/Next.js frontends, writes Python automation scripts, and scaffolds Android applications with Gradle builds.",
+                tamilDesc: "Node.js REST API, React இணையதளங்கள், பைதான் ஸ்கிரிப்ட்கள் மற்றும் ஆண்ட்ராய்டு மொபைல் ஆப்ஸ்களை கோப்பகங்களுடன் உடனடியாக பில்ட் செய்யும்.",
+                engine: "Node.js Scaffold • Gradle Android Builder • Express/JWT Boilerplate Generator",
+                colorText: "text-indigo-600",
+                bgBadge: "bg-indigo-50 border-indigo-200 text-indigo-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Scaffold REST API",
+                        cmd: 'codez48 pilot "create a Node.js REST API for customer management with Express and JWT"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "ஆண்ட்ராய்டு ஆப் உருவாக்கு",
+                        cmd: 'codez48 pilot "create an Android to-do list mobile application with Java"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Scaffold Python Web Scraper",
+                        cmd: 'codez48 pilot "write a Python script to scrape live currency rates and save to CSV"'
+                    }
+                ]
+            },
+            {
+                id: "trading-vision",
+                icon: "fa-chart-line",
+                badge: "Financial AI",
+                title: "MetaTrader 5 & Trading Candlestick Vision Guardian",
+                tamilTitle: "டிரேடிங் விஷன் அனலைசர் & ஜீரோ-லாஸ் பாதுகாப்பு",
+                desc: "Vision AI monitors MT5/trading charts for candlestick patterns (Hammer, Engulfing), detects support/resistance levels, and automates Zero-Loss Breakeven trailing stop loss adjustments.",
+                tamilDesc: "கேண்டில்ஸ்டிக் சார்ட்களைப் பகுப்பாய்வு செய்து சப்போர்ட் மற்றும் ரெசிஸ்டன்ஸ் அளவுகளைக் கண்டறிந்து, ஜீரோ-லாஸ் டிரெய்லிங் ஸ்டாப் லாஸ் மூலம் லாபத்தைப் பாதுகாக்கும்.",
+                engine: "OpenCV Candlestick Pattern Matcher • Support/Resistance Analyzer • Breakeven Motor",
+                colorText: "text-amber-600",
+                bgBadge: "bg-amber-50 border-amber-200 text-amber-700",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Analyze Candlestick Chart",
+                        cmd: 'codez48 pilot "analyze gold candlestick chart for support and resistance levels"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "டிரேடிங் ஜீரோ-லாஸ் செக்",
+                        cmd: 'codez48 pilot "track active trade on MetaTrader 5 and shift stop loss to breakeven"'
+                    }
+                ]
+            },
+            {
+                id: "project-buyout",
+                icon: "fa-box-archive",
+                badge: "Source Code Buyout",
+                title: "Complete Enterprise Master Source Code Buyout (₹29,000)",
+                tamilTitle: "முழு மாஸ்டர் சோர்ஸ் கோட் வாங்குதல் (₹29,000)",
+                desc: "Packages the complete, 100% unrestricted Codez48 CLI repository into an authenticated .ZIP archive (14.05 MB), generates an enterprise license key, and launches the ₹1 test / ₹29,000 buyout portal.",
+                tamilDesc: "Codez48 CLI-ன் அனைத்து சோர்ஸ் கோட்களையும் ஜிப் ஃபைலாக பேக் செய்து, ₹1 டெஸ்ட் பேமெண்ட் மற்றும் ₹29,000 விஐபி வாங்கல் தளத்தைத் திறந்து கொடுக்கும்.",
+                engine: "Source Code Packager • SHA-256 Hasher • Razorpay 2-Stage Gated Unlock (Port 4850)",
+                colorText: "text-slate-900",
+                bgBadge: "bg-slate-100 border-slate-300 text-slate-800",
+                prompts: [
+                    {
+                        lang: "English",
+                        label: "Buy Complete Source Code",
+                        cmd: 'codez48 pilot "i want complete code of this project"'
+                    },
+                    {
+                        lang: "Tamil",
+                        label: "கம்ப்ளீட் கோடு வாங்கும் தமிழ் பிராம்ப்ட்",
+                        cmd: 'codez48 pilot "எனக்கு இந்த ப்ராஜெக்ட்டுக்கான கம்ப்ளீட்டான கோடு வேணும்"'
+                    },
+                    {
+                        lang: "English",
+                        label: "Direct Buy Command",
+                        cmd: 'codez48 buy'
+                    }
+                ]
+            }
+        ];
+
+        let activeCategoryId = "video-studio";
+
+        function renderPilotTabs() {
+            const container = document.getElementById('pilotTabsContainer');
+            if (!container) return;
+
+            container.innerHTML = PILOT_CAPABILITIES.map(item => `
+                <button type="button" onclick="selectPilotCategory('${item.id}')" 
+                        class="pilot-tab-card ${item.id === activeCategoryId ? 'active' : ''}" 
+                        id="tab-${item.id}">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid ${item.icon} ${item.colorText} text-sm"></i>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">${item.badge}</span>
+                    </div>
+                    <div class="text-xs font-black text-slate-800 line-clamp-1">${item.title}</div>
+                    <div class="text-[10px] text-slate-500 font-medium line-clamp-1">${item.tamilTitle}</div>
+                </button>
+            `).join('');
+        }
+
+        function selectPilotCategory(id) {
+            activeCategoryId = id;
+            renderPilotTabs();
+
+            const item = PILOT_CAPABILITIES.find(c => c.id === id);
+            if (!item) return;
+
+            const card = document.getElementById('pilotDetailCard');
+            if (!card) return;
+
+            card.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div class="space-y-2">
+                        <span class="px-3 py-1 ${item.bgBadge} text-[9px] font-black rounded-full uppercase tracking-widest border">
+                            ${item.badge}
+                        </span>
+                        <h3 class="text-xl md:text-2xl font-black text-black uppercase tracking-tight flex items-center gap-2">
+                            <i class="fa-solid ${item.icon} ${item.colorText}"></i>
+                            ${item.title}
+                        </h3>
+                        <p class="text-xs md:text-sm font-bold text-royal">${item.tamilTitle}</p>
+                    </div>
+                    <div class="shrink-0">
+                        <span class="text-[9px] font-mono font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-200">
+                            ${item.prompts.length} Ready Prompts
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-100">
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">What It Does (English):</span>
+                        <p>${item.desc}</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-royal block mb-1">இது என்ன செய்யும்? (Tamil):</span>
+                        <p class="text-slate-800 font-medium">${item.tamilDesc}</p>
+                    </div>
+                </div>
+
+                <div class="text-[10px] font-mono text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-microchip"></i> Engine Stack: <span class="text-slate-700 font-bold">${item.engine}</span>
+                </div>
+
+                <!-- Ready Prompts List -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-black uppercase tracking-widest text-black flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-royal"></i> Ready-to-Run Sample Prompts (ரெடிமேட் ப்ராம்ப்ட்கள்):
+                        </h4>
+                        <span class="text-[9px] text-slate-400">Click Copy to execute in your terminal</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        ${item.prompts.map(p => `
+                            <div class="prompt-item-box group flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div class="space-y-1 min-w-0 pr-12">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded ${p.lang === 'Tamil' ? 'bg-emerald-900 text-emerald-300' : 'bg-blue-900 text-blue-300'}">
+                                            ${p.lang}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-sans font-bold">${p.label}</span>
+                                    </div>
+                                    <code class="text-emerald-400 font-mono text-xs block break-all select-all">${p.cmd}</code>
+                                </div>
+                                <button type="button" onclick="copyPromptText(this, '${p.cmd.replace(/'/g, "\\'")}')" 
+                                        class="copy-btn static md:relative right-auto top-auto transform-none shrink-0 self-end md:self-center">
+                                    Copy Prompt
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyPromptText(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerText;
+                btn.innerText = 'Copied!';
+                btn.classList.add('copied-state');
+                setTimeout(() => {
+                    btn.innerText = orig;
+                    btn.classList.remove('copied-state');
+                }, 2000);
+            });
+        }
+
         function copyCode(btn) {
             const codeEl = btn.previousElementSibling;
             const text = codeEl.innerText;
@@ -355,6 +879,15 @@
                 }, 2000);
             });
         }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPilotTabs();
+            selectPilotCategory('video-studio');
+        });
+        // Run immediately if already loaded
+        renderPilotTabs();
+        selectPilotCategory('video-studio');
     </script>
 </body>
 </html>

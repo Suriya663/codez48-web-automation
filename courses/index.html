@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>72-Day Python Full Stack Development Masterclass | Codez48 Academy</title>
+  <meta name="description" content="Comprehensive 72-Day Python Full Stack Web Development Online Masterclass. Master HTML5, CSS3, Bootstrap, Modern JavaScript, Python, Django, MySQL, REST APIs, Git & Live Cloud Projects. Starts November 15, 2026.">
+
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Three.js for 3D Background Visuals -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Razorpay Official Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              accent: '#38bdf8',
+              violet: '#8b5cf6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #050811;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+
+    #three-canvas-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .glass-panel {
+      background: rgba(13, 19, 36, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tilt-card {
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(56, 189, 248, 0.45);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 16px 40px -12px rgba(56, 189, 248, 0.25);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-gold {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .glow-button {
+      background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.45);
+      transition: all 0.3s ease;
+    }
+    .glow-button:hover {
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.7);
+      transform: translateY(-2px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070b14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-sky-500 selection:text-white">
+
+  <!-- Interactive 3D Canvas Background -->
+  <div id="three-canvas-container"></div>
+
+  <!-- TOP PROMOTIONAL BANNER -->
+  <div class="relative z-20 bg-gradient-to-r from-sky-900/90 via-indigo-900/90 to-purple-900/90 border-b border-sky-500/20 py-2.5 px-4 text-center text-xs sm:text-sm font-semibold tracking-wide flex items-center justify-center gap-3 backdrop-blur-md">
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500 text-slate-950 uppercase tracking-wider animate-pulse">
+      November 15 Live Batch
+    </span>
+    <span class="text-slate-200">
+      Enrollment Open • Apply Scholarship Code <span class="bg-black/50 border border-amber-400/40 text-amber-300 font-mono px-2 py-0.5 rounded font-bold">CODZ48FSD</span> for ₹10,001 Instant Waiver!
+    </span>
+  </div>
+
+  <!-- NAVIGATION -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-sky-500/30 group-hover:rotate-6 transition-transform">
+          C
+        </div>
+        <div>
+          <span class="text-lg font-black tracking-tight text-white block">CODEZ48 <span class="text-sky-400">ACADEMY</span></span>
+          <span class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Full Stack Masterclass</span>
+        </div>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+        <a href="#curriculum" class="hover:text-sky-400 transition-colors">72-Day Curriculum</a>
+        <a href="#features" class="hover:text-sky-400 transition-colors">Features</a>
+        <a href="#pricing" class="hover:text-sky-400 transition-colors">Scholarship & Fees</a>
+        <a href="#contact" class="hover:text-sky-400 transition-colors">Contact</a>
+      </nav>
+
+      <div class="flex items-center gap-4">
+        <a href="#enroll" class="glow-button px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-white flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4"></i> Enroll Now
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <main class="relative z-10 flex-1">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 text-center lg:text-left">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-950/80 border border-sky-500/30 text-sky-400 text-xs font-semibold uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+            Official 72-Day Comprehensive Bootcamp
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            Master <span class="gradient-text">Python Full Stack</span> Web Development.
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
+            Go from absolute beginner to industry-ready full stack engineer in 72 days. Build responsive modern frontends, robust Django backends, scalable MySQL databases, clean RESTful APIs, and deploy live capstone projects.
+          </p>
+
+          <!-- Key Highlights Badges -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            <div class="glass-card p-3 rounded-xl text-center border-slate-800">
+              <span class="text-xs text-slate-400 block">Duration</span>
+              <span class="text-base font-bold text-white">72 Days</span>
+            </div>
+            <div class="glass-card p-3 rounded-xl text-center border-slate-800">
+              <span class="text-xs text-slate-400 block">Batch Start</span>
+              <span class="text-base font-bold text-amber-400">Nov 15, 2026</span>
+            </div>
+            <div class="glass-card p-3 rounded-xl text-center border-slate-800">
+              <span class="text-xs text-slate-400 block">Mode</span>
+              <span class="text-base font-bold text-sky-400">100% Online</span>
+            </div>
+            <div class="glass-card p-3 rounded-xl text-center border-slate-800">
+              <span class="text-xs text-slate-400 block">Projects</span>
+              <span class="text-base font-bold text-emerald-400">5+ Real-world</span>
+            </div>
+          </div>
+
+          <!-- CTAs -->
+          <div class="flex flex-col sm:flex-row items-center gap-4 pt-4">
+            <a href="#enroll" class="w-full sm:w-auto glow-button px-8 py-4 rounded-xl font-extrabold text-sm uppercase tracking-wider text-white flex items-center justify-center gap-2">
+              <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i> Register for Batch
+            </a>
+            <a href="https://wa.me/918248482844?text=Hi%20Codez48!%20I%20am%20interested%20in%20the%2072-Day%20Python%20Full%20Stack%20Masterclass." target="_blank"
+               class="w-full sm:w-auto glass-card hover:bg-slate-800/80 px-6 py-4 rounded-xl font-bold text-sm text-slate-200 border-slate-700 flex items-center justify-center gap-2 transition">
+              <i data-lucide="message-circle" class="w-5 h-5 text-emerald-400"></i> WhatsApp Counselor
+            </a>
+          </div>
+        </div>
+
+        <!-- 3D Hero Tuition Card -->
+        <div class="lg:col-span-5">
+          <div class="glass-panel p-8 rounded-3xl border border-sky-500/30 relative overflow-hidden shadow-2xl tilt-card">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-widest text-sky-400 font-bold block">Admissions Portal</span>
+                <h3 class="text-xl font-black text-white">Full Stack Scholarship Pass</h3>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                Limited Seats
+              </span>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="space-y-4 mb-6">
+              <div class="flex items-center justify-between text-sm text-slate-400">
+                <span>Standard Program Fee:</span>
+                <span class="line-through text-slate-500 font-semibold text-base">₹15,000</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <i data-lucide="tag" class="w-4 h-4"></i> Codez48 Scholarship Grant:
+                </span>
+                <span class="font-bold text-emerald-400">-₹10,001</span>
+              </div>
+              <div class="border-t border-slate-800 pt-4 flex items-baseline justify-between">
+                <div>
+                  <span class="text-xs uppercase text-slate-400 font-bold block">Effective Enrolment Fee</span>
+                  <span class="text-3xl sm:text-4xl font-extrabold text-white">₹4,999</span>
+                </div>
+                <span class="text-xs font-mono text-slate-400">All-Inclusive (72 Days)</span>
+              </div>
+            </div>
+
+            <!-- Coupon Box -->
+            <div class="bg-black/50 border border-dashed border-amber-500/40 rounded-2xl p-4 mb-6 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold block">Official Scholarship Coupon</span>
+                <span class="text-lg font-mono font-bold text-amber-300">CODZ48FSD</span>
+              </div>
+              <button onclick="copyCouponCode('CODZ48FSD')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+              </button>
+            </div>
+
+            <a href="#enroll" class="w-full glow-button py-3.5 rounded-xl font-black text-sm uppercase tracking-wider text-white text-center block">
+              Claim Scholarship & Register
+            </a>
+
+            <div class="pt-4 flex items-center justify-center gap-4 text-xs text-slate-400">
+              <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-4 h-4 text-sky-400"></i> Verified Certificate</span>
+              <span class="flex items-center gap-1"><i data-lucide="video" class="w-4 h-4 text-sky-400"></i> Live Classes</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 72-DAY COMPLETE CURRICULUM SECTION -->
+    <section id="curriculum" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-slate-800/80">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-sky-950 border border-sky-500/30 text-sky-400 uppercase tracking-widest">
+          Industry-Standard Blueprint
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Complete 72-Day Full Stack Curriculum
+        </h2>
+        <p class="text-slate-400 text-sm sm:text-base">
+          A meticulously structured daily roadmap taking you systematically from fundamental web foundations to advanced backend microservices, database modeling, and automated cloud deployments.
+        </p>
+      </div>
+
+      <!-- Curriculum Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- MODULE 1: HTML -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-sky-400 bg-sky-950 px-2.5 py-1 rounded-md border border-sky-800/50">DAYS 1 – 10</span>
+              <span class="text-xs text-slate-400 font-semibold">10 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="code" class="w-5 h-5 text-sky-400"></i> HTML5 Foundations
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Master the architectural backbone of web pages, modern semantic tags, accessibility, and SEO.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-sky-400 font-bold">Day 1:</span> Intro, structure, tags, elements, headings</li>
+              <li><span class="text-sky-400 font-bold">Day 2:</span> Text formatting, links, images, lists</li>
+              <li><span class="text-sky-400 font-bold">Day 3:</span> Tables & table structure</li>
+              <li><span class="text-sky-400 font-bold">Day 4:</span> Forms & modern input types</li>
+              <li><span class="text-sky-400 font-bold">Day 5:</span> Audio, video, iframe, embedded media</li>
+              <li><span class="text-sky-400 font-bold">Day 6:</span> Semantic HTML & HTML5 structural elements</li>
+              <li><span class="text-sky-400 font-bold">Day 7:</span> Accessibility standards & SEO foundations</li>
+              <li><span class="text-sky-400 font-bold">Day 8:</span> Page structure, layout & navigation</li>
+              <li><span class="text-sky-400 font-bold">Day 9:</span> Practical webpage development</li>
+              <li><span class="text-emerald-400 font-bold">Day 10:</span> Mini Project: Multi-Section HTML Website</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 2: CSS -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-indigo-400 bg-indigo-950 px-2.5 py-1 rounded-md border border-indigo-800/50">DAYS 11 – 20</span>
+              <span class="text-xs text-slate-400 font-semibold">10 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="palette" class="w-5 h-5 text-indigo-400"></i> CSS3 & Modern Layouts
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Transform raw structures into ultra-smooth, responsive, high-fidelity responsive user interfaces.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-indigo-400 font-bold">Day 11:</span> CSS intro, inline/internal/external</li>
+              <li><span class="text-indigo-400 font-bold">Day 12:</span> Selectors, colors, backgrounds</li>
+              <li><span class="text-indigo-400 font-bold">Day 13:</span> Text, typography & web fonts</li>
+              <li><span class="text-indigo-400 font-bold">Day 14:</span> Box model, margin, padding, border</li>
+              <li><span class="text-indigo-400 font-bold">Day 15:</span> Width, height & display properties</li>
+              <li><span class="text-indigo-400 font-bold">Day 16:</span> Positioning & layout architecture</li>
+              <li><span class="text-indigo-400 font-bold">Day 17:</span> Modern Flexbox deep dive</li>
+              <li><span class="text-indigo-400 font-bold">Day 18:</span> CSS Grid 2D layout mastery</li>
+              <li><span class="text-indigo-400 font-bold">Day 19:</span> Responsive media queries & pseudos</li>
+              <li><span class="text-emerald-400 font-bold">Day 20:</span> Transitions, Animations + Project</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 3: BOOTSTRAP -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-purple-400 bg-purple-950 px-2.5 py-1 rounded-md border border-purple-800/50">DAYS 21 – 26</span>
+              <span class="text-xs text-slate-400 font-semibold">6 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="layout" class="w-5 h-5 text-purple-400"></i> Bootstrap UI Framework
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Rapidly compose polished web applications using responsive components, grids, and utilities.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-purple-400 font-bold">Day 21:</span> Bootstrap setup, CDN & containers</li>
+              <li><span class="text-purple-400 font-bold">Day 22:</span> Grid system, columns & breakpoints</li>
+              <li><span class="text-purple-400 font-bold">Day 23:</span> Typography, colors & spacing</li>
+              <li><span class="text-purple-400 font-bold">Day 24:</span> Buttons, cards, alerts & badges</li>
+              <li><span class="text-purple-400 font-bold">Day 25:</span> Navbars, modals, accordions, carousels</li>
+              <li><span class="text-emerald-400 font-bold">Day 26:</span> Responsive UI + Bootstrap Mini Project</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 4: JAVASCRIPT -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-amber-400 bg-amber-950 px-2.5 py-1 rounded-md border border-amber-800/50">DAYS 27 – 41</span>
+              <span class="text-xs text-slate-400 font-semibold">15 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="terminal" class="w-5 h-5 text-amber-400"></i> JavaScript & DOM Engineering
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              The heart of dynamic frontend engineering: ES6+, DOM manipulation, asynchronous programming & APIs.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-amber-400 font-bold">Day 27–30:</span> Variables, Types, Operators, Loops, Functions</li>
+              <li><span class="text-amber-400 font-bold">Day 31–33:</span> Arrays, Array Methods, Strings, Objects</li>
+              <li><span class="text-amber-400 font-bold">Day 34–36:</span> DOM Selection, Manipulation & Events</li>
+              <li><span class="text-amber-400 font-bold">Day 37–38:</span> Forms, Validation & Modern ES6+ Features</li>
+              <li><span class="text-amber-400 font-bold">Day 39:</span> JSON & Browser Local Storage</li>
+              <li><span class="text-amber-400 font-bold">Day 40:</span> Error Handling, Promises & Async/Await</li>
+              <li><span class="text-emerald-400 font-bold">Day 41:</span> Fetch API, Integration + JS Mini Project</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 5: PYTHON -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-md border border-emerald-800/50">DAYS 42 – 48</span>
+              <span class="text-xs text-slate-400 font-semibold">7 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="cpu" class="w-5 h-5 text-emerald-400"></i> Python Core & OOP Mastery
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Build clean, efficient, and object-oriented backend programming structures with Python.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-emerald-400 font-bold">Day 42:</span> Setup, Syntax, Variables & Data Types</li>
+              <li><span class="text-emerald-400 font-bold">Day 43:</span> Operators, Input/Output, Control Flow</li>
+              <li><span class="text-emerald-400 font-bold">Day 44:</span> Loops, Lists & Tuples</li>
+              <li><span class="text-emerald-400 font-bold">Day 45:</span> Sets, Dictionaries & String Operations</li>
+              <li><span class="text-emerald-400 font-bold">Day 46:</span> Functions, Modules & Package Management</li>
+              <li><span class="text-emerald-400 font-bold">Day 47:</span> Exception Handling & File I/O Basics</li>
+              <li><span class="text-emerald-400 font-bold">Day 48:</span> OOP: Classes, Inheritance, Polymorphism</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 6: DJANGO -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-teal-400 bg-teal-950 px-2.5 py-1 rounded-md border border-teal-800/50">DAYS 49 – 56</span>
+              <span class="text-xs text-slate-400 font-semibold">8 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="server" class="w-5 h-5 text-teal-400"></i> Django Web Framework
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Architect enterprise-grade server backends with Django ORM, MVT pattern, and auth systems.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-teal-400 font-bold">Day 49:</span> Django Setup, Project Structure & Apps</li>
+              <li><span class="text-teal-400 font-bold">Day 50:</span> URLs, Views & Request/Response Flow</li>
+              <li><span class="text-teal-400 font-bold">Day 51–52:</span> Templates, Inheritance & Static Files</li>
+              <li><span class="text-teal-400 font-bold">Day 53:</span> Models, Django ORM & Migrations</li>
+              <li><span class="text-teal-400 font-bold">Day 54:</span> Forms & Robust Form Handling</li>
+              <li><span class="text-teal-400 font-bold">Day 55:</span> Full CRUD Application Build</li>
+              <li><span class="text-emerald-400 font-bold">Day 56:</span> User Auth, Login/Logout + MySQL Integration</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 7: MYSQL -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-cyan-400 bg-cyan-950 px-2.5 py-1 rounded-md border border-cyan-800/50">DAYS 57 – 60</span>
+              <span class="text-xs text-slate-400 font-semibold">4 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="database" class="w-5 h-5 text-cyan-400"></i> MySQL Database Design
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Design relational schemas, write high-performance SQL queries, and execute complex joins.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-cyan-400 font-bold">Day 57:</span> Database concepts, tables, types & keys</li>
+              <li><span class="text-cyan-400 font-bold">Day 58:</span> CRUD queries: SELECT, INSERT, UPDATE, DELETE</li>
+              <li><span class="text-cyan-400 font-bold">Day 59:</span> Relational Keys, GROUP BY & Table JOINs</li>
+              <li><span class="text-emerald-400 font-bold">Day 60:</span> Django + MySQL Integration & CRUD Practice</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 8: REST API -->
+        <div class="glass-card p-6 rounded-2xl border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-blue-400 bg-blue-950 px-2.5 py-1 rounded-md border border-blue-800/50">DAYS 61 – 63</span>
+              <span class="text-xs text-slate-400 font-semibold">3 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="share-2" class="w-5 h-5 text-blue-400"></i> RESTful API Architecture
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Construct decoupled, secure, and production-ready REST APIs consumed by modern frontend apps.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-blue-400 font-bold">Day 61:</span> REST Principles, HTTP Methods & JSON</li>
+              <li><span class="text-blue-400 font-bold">Day 62:</span> GET, POST, PUT, PATCH, DELETE & Status Codes</li>
+              <li><span class="text-emerald-400 font-bold">Day 63:</span> Django REST API, Postman Testing & Integration</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MODULE 9 & 10: GIT, DEPLOYMENT & CAPSTONE -->
+        <div class="glass-card p-6 rounded-2xl border-sky-500/40 bg-gradient-to-br from-slate-900 to-sky-950/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono font-bold text-rose-400 bg-rose-950 px-2.5 py-1 rounded-md border border-rose-800/50">DAYS 64 – 72</span>
+              <span class="text-xs text-slate-400 font-semibold">9 Days</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <i data-lucide="rocket" class="w-5 h-5 text-rose-400"></i> Git & Capstone Project
+            </h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Version control workflows, cloud deployments, and building an end-to-end full stack application.
+            </p>
+            <ul class="space-y-2 text-xs text-slate-300 font-mono">
+              <li><span class="text-rose-400 font-bold">Day 64–65:</span> Git, GitHub Repos, Branching & CI/CD</li>
+              <li><span class="text-rose-400 font-bold">Day 66:</span> Capstone Planning, Schema & Architecture</li>
+              <li><span class="text-rose-400 font-bold">Day 67–68:</span> Backend Django CRUD, Auth & MySQL Setup</li>
+              <li><span class="text-rose-400 font-bold">Day 69–70:</span> Responsive UI & REST API Integration</li>
+              <li><span class="text-rose-400 font-bold">Day 71:</span> Security Audits, Validation & Cloud Push</li>
+              <li><span class="text-emerald-400 font-bold">Day 72:</span> Final Project Showcase & Code Review</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ENROLLMENT & PAYMENT SECTION -->
+    <section id="enroll" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div class="glass-panel p-8 sm:p-12 rounded-3xl border border-sky-500/30 relative shadow-2xl">
+        <div class="text-center max-w-xl mx-auto mb-10 space-y-3">
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-950 border border-emerald-500/30 text-emerald-400 uppercase tracking-wider">
+            Official Registration
+          </span>
+          <h2 class="text-3xl font-extrabold text-white">Secure Your Seat for Nov 15 Batch</h2>
+          <p class="text-xs sm:text-sm text-slate-400">
+            Fill in your contact details below to apply the <span class="text-amber-300 font-mono font-bold">CODZ48FSD</span> scholarship discount and confirm enrollment.
+          </p>
+        </div>
+
+        <form id="enrollment-form" onsubmit="handleRegistrationSubmit(event)" class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Full Name *</label>
+              <input type="text" id="reg-name" required placeholder="e.g. Suriya Prakash"
+                     class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Mobile / WhatsApp Number *</label>
+              <input type="tel" id="reg-phone" required placeholder="e.g. 9876543210"
+                     class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Email Address *</label>
+            <input type="email" id="reg-email" required placeholder="e.g. student@gmail.com"
+                   class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+          </div>
+
+          <!-- Coupon Code Input -->
+          <div class="p-4 rounded-2xl bg-black/40 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex-1 w-full">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Scholarship Coupon Code</label>
+              <input type="text" id="reg-coupon" value="CODZ48FSD" uppercase
+                     class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-4 py-2.5 text-sm font-mono text-amber-300 font-bold focus:outline-none">
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-xs text-slate-400 block">Total Due:</span>
+              <span id="display-fee" class="text-2xl font-black text-white">₹4,999</span>
+              <span class="text-[10px] text-emerald-400 block">₹10,001 Saved!</span>
+            </div>
+          </div>
+
+          <div id="submit-feedback" class="text-center text-xs hidden"></div>
+
+          <!-- Buttons -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <button type="submit" id="btn-pay-razorpay"
+                    class="glow-button py-4 rounded-xl font-extrabold text-sm uppercase tracking-wider text-white flex items-center justify-center gap-2">
+              <i data-lucide="credit-card" class="w-4 h-4"></i> Pay with Razorpay (₹4,999)
+            </button>
+            <button type="button" onclick="registerViaWhatsApp()"
+                    class="glass-card hover:bg-slate-800 py-4 rounded-xl font-bold text-sm text-slate-200 border-slate-700 flex items-center justify-center gap-2 transition">
+              <i data-lucide="message-square" class="w-4 h-4 text-emerald-400"></i> Enroll via WhatsApp (+91 8248482844)
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="contact" class="glass-panel border-t border-slate-800 text-slate-400 text-xs py-10 relative z-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center text-white font-bold text-sm">C</div>
+        <span>© 2026 Codez48 Academy. All Rights Reserved.</span>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <span>Official Support: <strong class="text-white">+91 8248482844</strong></span>
+        <span>Email: <strong class="text-white">rajnaga75556@gmail.com</strong></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Three.js 3D Interactive Canvas Script -->
+  <script>
+    (function initThreeBackground() {
+      const container = document.getElementById('three-canvas-container');
+      if (!container || typeof THREE === 'undefined') return;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 30;
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      // 3D Geometry: Torus Knot & Particle Cloud
+      const torusGeo = new THREE.TorusKnotGeometry(10, 2.5, 120, 16);
+      const torusMat = new THREE.MeshBasicMaterial({
+        color: 0x0284c7,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.18
+      });
+      const torusKnot = new THREE.Mesh(torusGeo, torusMat);
+      scene.add(torusKnot);
+
+      // Starfield / Tech Nodes
+      const particlesCount = 350;
+      const positions = new Float32Array(particlesCount * 3);
+      for (let i = 0; i < particlesCount * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 80;
+      }
+      const particlesGeo = new THREE.BufferGeometry();
+      particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const particlesMat = new THREE.PointsMaterial({
+        color: 0x38bdf8,
+        size: 0.25,
+        transparent: true,
+        opacity: 0.6
+      });
+      const particleSystem = new THREE.Points(particlesGeo, particlesMat);
+      scene.add(particleSystem);
+
+      // Animation Loop
+      let mouseX = 0, mouseY = 0;
+      window.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+        mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        torusKnot.rotation.x += 0.002;
+        torusKnot.rotation.y += 0.003;
+        torusKnot.rotation.x += mouseY * 0.001;
+        torusKnot.rotation.y += mouseX * 0.001;
+        particleSystem.rotation.y -= 0.0008;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    })();
+
+    // Copy Coupon Helper
+    function copyCouponCode(code) {
+      navigator.clipboard.writeText(code);
+      alert(`Scholarship Coupon "${code}" copied to clipboard! ₹10,001 instant fee waiver applied.`);
+    }
+
+    // Razorpay Integration
+    async function handleRegistrationSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const coupon = document.getElementById('reg-coupon').value.trim().toUpperCase();
+
+      if (!name || !phone || !email) {
+        alert("Please provide your name, phone number, and email.");
+        return;
+      }
+
+      const fee = (coupon === 'CODZ48FSD') ? 4999 : 15000;
+
+      // Options for Razorpay
+      const options = {
+        key: 'rzp_live_TaX2zuAv0lLUKf',
+        amount: fee * 100, // In Paise
+        currency: 'INR',
+        name: 'Codez48 Academy',
+        description: '72-Day Python Full Stack Development Masterclass',
+        image: 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/003/810/744/datas/original.jpg',
+        handler: async function (response) {
+          // Send registration record to Netlify function
+          try {
+            await fetch('/.netlify/functions/course-registration', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name, phone, email, coupon,
+                paymentId: response.razorpay_payment_id,
+                amount: fee,
+                status: 'PAID'
+              })
+            });
+          } catch (_) {}
+
+          alert(`Congratulations ${name}! Payment successful (ID: ${response.razorpay_payment_id}). Your enrollment is confirmed for the Nov 15 Batch!`);
+          window.location.href = `https://wa.me/918248482844?text=${encodeURIComponent(`Hi Codez48! I have successfully paid ₹${fee} (Payment ID: ${response.razorpay_payment_id}) for the 72-Day Python Full Stack Masterclass. Name: ${name}, Email: ${email}`)}`;
+        },
+        prefill: {
+          name: name,
+          email: email,
+          contact: phone
+        },
+        theme: {
+          color: '#0284c7'
+        }
+      };
+
+      try {
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } catch (err) {
+        console.warn("Razorpay error, opening fallback WhatsApp enrollment:", err);
+        registerViaWhatsApp();
+      }
+    }
+
+    function registerViaWhatsApp() {
+      const name = document.getElementById('reg-name').value.trim() || 'Student';
+      const phone = document.getElementById('reg-phone').value.trim() || 'N/A';
+      const email = document.getElementById('reg-email').value.trim() || 'N/A';
+      const coupon = document.getElementById('reg-coupon').value.trim().toUpperCase() || 'CODZ48FSD';
+      const fee = (coupon === 'CODZ48FSD') ? 4999 : 15000;
+
+      const text = encodeURIComponent(
+        `Hi Codez48 Academy! I would like to enroll in the 72-Day Python Full Stack Development Masterclass (Batch starts Nov 15, 2026).\n\n` +
+        `• Name: ${name}\n` +
+        `• Phone: ${phone}\n` +
+        `• Email: ${email}\n` +
+        `• Scholarship Coupon: ${coupon}\n` +
+        `• Fee: ₹${fee}\n\n` +
+        `Please confirm my registration and send my orientation pass.`
+      );
+
+      window.open(`https://wa.me/918248482844?text=${text}`, '_blank');
+    }
+
+    // Initialize Lucide Icons
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

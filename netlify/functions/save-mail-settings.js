@@ -7,27 +7,50 @@ const initAdmin = () => {
     if (isInitialized) return true;
     try {
         const saVar = process.env.FIREBASE_SERVICE_ACCOUNT;
-        if (!saVar) {
-            if (admin.apps.length === 0) admin.initializeApp();
+        let serviceAccount = null;
+
+        if (saVar) {
+            try {
+                let rawData = saVar.trim();
+                if ((rawData.startsWith('"') && rawData.endsWith('"')) || (rawData.startsWith("'") && rawData.endsWith("'"))) {
+                    rawData = rawData.substring(1, rawData.length - 1);
+                }
+                serviceAccount = JSON.parse(rawData);
+            } catch (_) {}
+        }
+
+        if (serviceAccount && serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+            if (admin.apps.length === 0) {
+                admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+            }
+            db = admin.firestore();
+            isInitialized = true;
+            return true;
+        } else if (admin.apps.length === 0) {
+            try {
+                admin.initializeApp();
+                db = admin.firestore();
+                isInitialized = true;
+                return true;
+            } catch (_) {
+                return false;
+            }
+        } else {
             db = admin.firestore();
             isInitialized = true;
             return true;
         }
-
-        let serviceAccount = JSON.parse(saVar.trim());
-        if (serviceAccount.private_key) {
-            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-        }
-
-        if (admin.apps.length === 0) {
-            admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-        }
-        db = admin.firestore();
-        isInitialized = true;
-        return true;
     } catch (e) {
-        console.error('Firebase Admin Init Failure in save-mail-settings:', e.message);
-        return false;
+        console.warn('Firebase Admin Init Fallback in save-mail-settings:', e.message);
+        try {
+            if (admin.apps.length === 0) admin.initializeApp();
+            db = admin.firestore();
+            isInitialized = true;
+            return true;
+        } catch (_) {
+            return false;
+        }
     }
 };
 
