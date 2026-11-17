@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Codez48 Pilot</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app" class="app-viewport">
+
+        <!-- TOP BAR (Exact Image 1 & 3) -->
+        <header class="top-nav-bar">
+            <button id="openDrawerBtn" class="top-circle-btn" title="Open Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+            </button>
+
+            <button id="modelSelectorBtn" class="model-pill-btn">
+                <span class="model-name">Instant</span>
+                <span class="model-mode">High</span>
+            </button>
+
+            <button id="soundToggleBtn" class="top-circle-btn" title="Voice Response">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            </button>
+        </header>
+
+        <!-- MAIN HERO & CHAT CONTAINER -->
+        <main class="main-content-scroll" id="mainScroll">
+            <!-- HERO VIEW (Exact Image 1) -->
+            <div id="heroSection" class="hero-center-box">
+                <!-- Blue orb mascot with eyes -->
+                <div class="blue-orb">
+                    <div class="orb-eye left"></div>
+                    <div class="orb-eye right"></div>
+                </div>
+
+                <h2 class="hero-prompt-text">
+                    Hi <span id="heroUserName">Codez48</span>, what would you like to do with Pilot today?
+                </h2>
+            </div>
+
+            <!-- CHAT CONVERSATION MESSAGES (Dynamic) -->
+            <div id="chatMessages" class="chat-messages-stream" style="display:none;"></div>
+        </main>
+
+        <!-- BOTTOM ACTION CHIPS (Exact Image 1) -->
+        <div class="chips-scroll-row" id="chipsRow">
+            <button class="action-chip" onclick="applyPrompt('Create new project')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+                <span>New project</span>
+            </button>
+            <button class="action-chip" onclick="applyPrompt('Create 3D design and model')">
+                <span>3D Make</span>
+            </button>
+            <button class="action-chip" onclick="applyPrompt('Create presentation for Full Stack Web Dev')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <span>Slides</span>
+            </button>
+            <button class="action-chip" onclick="openRemoteModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <span>Remote control</span>
+            </button>
+            <button class="action-chip" onclick="openConnectorsModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                <span>Connectors</span>
+            </button>
+        </div>
+
+        <!-- BOTTOM INPUT DOCK (Exact Image 1 & 3) -->
+        <footer class="bottom-input-dock">
+            <div class="input-pill-container">
+                <button id="openAttachSheetBtn" class="plus-circle-btn" title="Add files or camera">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+
+                <input type="text" id="promptInput" placeholder="Ask anything. Images work..." autocomplete="off">
+
+                <button id="voiceBtn" class="voice-circle-btn" title="Voice Input">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>
+                </button>
+            </div>
+        </footer>
+
+        <!-- LEFT DRAWER MENU (Exact Image 2) -->
+        <aside id="sideDrawer" class="side-drawer">
+            <div class="drawer-header">
+                <div class="user-profile-badge">
+                    <div class="brand-badge-circle">
+                        <span>48</span>
+                    </div>
+                    <span class="user-name-title" id="drawerUserName">Codez48</span>
+                </div>
+                <button id="newChatDrawerBtn" class="drawer-action-circle" title="New Chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="12" y1="8" x2="12" y2="14"></line><line x1="9" y1="11" x2="15" y2="11"></line></svg>
+                </button>
+            </div>
+
+            <div class="drawer-scroll-body">
+                <!-- Navigation Items -->
+                <nav class="drawer-nav-list">
+                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openPlansModal()">
+                        <span class="item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        </span>
+                        <span class="item-text">Upgrade Plan</span>
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openTasksModal()">
+                        <span class="item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><polyline points="12 9 12 13 15 15"></polyline><line x1="5" y1="3" x2="2" y2="6"></line><line x1="19" y1="3" x2="22" y2="6"></line></svg>
+                        </span>
+                        <span class="item-text">Scheduled tasks</span>
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openRemoteModal()">
+                        <span class="item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        </span>
+                        <span class="item-text">Remote control</span>
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openConnectorsModal()">
+                        <span class="item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        </span>
+                        <span class="item-text">Connectors</span>
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openPlansModal()">
+                        <span class="item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </span>
+                        <span class="item-text">Invite to Earn</span>
+                        <span class="tag-badge">K3.1 Pro Benefits</span>
+                    </a>
+                    <a href="/" class="drawer-nav-item" style="border-top: 1px solid #f3f4f6; margin-top: 6px; padding-top: 10px;">
+                        <span class="item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        </span>
+                        <span class="item-text" style="color:#2563eb; font-weight:600;">Codez48 Main Website</span>
+                    </a>
+                </nav>
+
+                <!-- Project Section -->
+                <div class="drawer-section">
+                    <div class="section-heading-toggle">
+                        <span>Project</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <a href="javascript:void(0)" class="drawer-sub-item" onclick="applyPrompt('Create new project')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+                        <span>New project</span>
+                    </a>
+                </div>
+
+                <!-- Chat History Section -->
+                <div class="drawer-section">
+                    <div class="section-heading">Chat history</div>
+                    <div class="history-list">
+                        <div class="history-item" onclick="applyPrompt('Hi')">Hi</div>
+                        <div class="history-item" onclick="applyPrompt('Codez48 Pilot Integration')">MCP Kimi Integration</div>
+                        <div class="history-item" onclick="applyPrompt('Student Mark Analysis Excel')">Student Mark Analysis Excel</div>
+                        <div class="history-item" onclick="applyPrompt('72 day full stack course registration')">72 Day Full Stack Course</div>
+                        <div class="history-item" onclick="applyPrompt('Check laptop disk space and memory')">Laptop Storage Check</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drawer Bottom Toolbar -->
+            <div class="drawer-bottom-bar">
+                <div class="drawer-search-pill">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" placeholder="Search">
+                </div>
+                <button class="drawer-icon-btn" title="QR Scan">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></line><line x1="7" y1="12" x2="17" y2="12"></line></svg>
+                </button>
+                <button class="drawer-icon-btn notification" title="Notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span class="blue-notification-dot"></span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- BACKDROP OVERLAY FOR DRAWER -->
+        <div id="drawerBackdrop" class="drawer-backdrop"></div>
+
+        <!-- BOTTOM ACTION SHEET (Exact Image 3) -->
+        <div id="attachSheet" class="bottom-action-sheet">
+            <div class="sheet-handle"></div>
+
+            <!-- 3 Top Cards (Camera, Photos, Local file) -->
+            <div class="sheet-top-cards-grid">
+                <button class="sheet-card-btn" onclick="startCameraScan()">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </div>
+                    <span>Camera</span>
+                </button>
+
+                <button class="sheet-card-btn" onclick="document.getElementById('photoInput').click()">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                    <span>Photos</span>
+                </button>
+
+                <button class="sheet-card-btn" onclick="document.getElementById('fileInput').click()">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><polyline points="12 11 12 17 9 14 15 14"></polyline></svg>
+                    </div>
+                    <span>Local file</span>
+                </button>
+            </div>
+
+            <!-- List Menu Below -->
+            <div class="sheet-list-menu">
+                <a href="javascript:void(0)" class="sheet-list-item" onclick="applyPrompt('Show installed plugins')">
+                    <div class="item-leading-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </div>
+                    <div class="item-content-text">
+                        <strong>Plugins</strong>
+                        <p>Connect apps and databases to automate actions for you</p>
+                    </div>
+                    <div class="item-arrow">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
+
+                <a href="javascript:void(0)" class="sheet-list-item" onclick="applyPrompt('List all active skills')">
+                    <div class="item-leading-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div class="item-content-text">
+                        <strong>Skills</strong>
+                        <p>Reuse specialized skills to handle specific tasks reliably</p>
+                    </div>
+                    <div class="item-arrow">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
+
+                <a href="javascript:void(0)" class="sheet-list-item" onclick="toggleWebSearch()">
+                    <div class="item-leading-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    </div>
+                    <div class="item-content-text">
+                        <strong>Web search</strong>
+                    </div>
+                    <div class="item-meta">
+                        <span class="meta-tag">Auto</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </a>
+            </div>
+
+            <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="handleFileSelected(event)">
+            <input type="file" id="fileInput" accept="*/*" style="display:none;" onchange="handleFileSelected(event)">
+        </div>
+
+        <!-- BACKDROP OVERLAY FOR BOTTOM SHEET -->
+        <div id="sheetBackdrop" class="sheet-backdrop"></div>
+
+        <!-- MODAL: REMOTE CONTROL (AIR-MOUSE & TOUCHPAD) -->
+        <div id="remoteModal" class="full-modal">
+            <div class="modal-inner-card">
+                <div class="modal-top-bar">
+                    <h3>Remote Control</h3>
+                    <button class="close-modal-btn" onclick="closeRemoteModal()">&times;</button>
+                </div>
+                <div class="remote-options-card">
+                    <div style="margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.05em;">Laptop Wi-Fi IP</span>
+                            <span id="bridgeStatusTag" style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; background:#fef3c7; color:#b45309;">CHECKING...</span>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" id="laptopIpInput" placeholder="e.g. 10.30.23.18" style="flex:1; border:1px solid #cbd5e1; border-radius:8px; padding:6px 10px; font-size:13px; font-family:monospace; outline:none;">
+                            <button onclick="saveLaptopIp()" style="background:#2563eb; color:#fff; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer;">CONNECT</button>
+                        </div>
+                    </div>
+                    <div class="switch-row">
+                        <div>
+                            <strong>Air-Mouse (Gyroscope)</strong>
+                            <p>Tilt your phone to steer cursor</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="gyroToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-row" style="margin-top:10px;">
+                        <div>
+                            <strong>Background Mode</strong>
+                            <p>Keeps tracking when app is minimized</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="bgToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="touchpadSurface" class="touchpad-surface">
+                    <span>Touchpad Area</span>
+                    <small>1 Finger: Move Cursor • Tap: Left Click • 2 Fingers: Scroll</small>
+                </div>
+
+                <div class="mouse-actions-row">
+                    <button id="leftClickBtn" class="mouse-action-btn">Left Click</button>
+                    <button id="rightClickBtn" class="mouse-action-btn">Right Click</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CONNECTORS (WHATSAPP AUTOMATION) -->
+        <div id="connectorsModal" class="full-modal">
+            <div class="modal-inner-card">
+                <div class="modal-top-bar">
+                    <h3>Connectors</h3>
+                    <button class="close-modal-btn" onclick="closeConnectorsModal()">&times;</button>
+                </div>
+
+                <div class="connector-box">
+                    <div class="connector-title-row">
+                        <span class="icon">💬</span>
+                        <div>
+                            <h4>WhatsApp Automation</h4>
+                            <span class="status-pill active">Verified</span>
+                        </div>
+                    </div>
+                    <p class="connector-desc">Follow the steps to link your client session and notify the admin at +91 8248482844.</p>
+
+                    <div class="stepper-list">
+                        <div class="stepper-step active" id="step1">
+                            <span class="num">1</span>
+                            <span>Start Codez48 Pilot on laptop</span>
+                        </div>
+                        <div class="stepper-step" id="step2">
+                            <span class="num">2</span>
+                            <span>Verify WhatsApp client session</span>
+                        </div>
+                        <div class="stepper-step" id="step3">
+                            <span class="num">3</span>
+                            <span>Send confirmation to +91 8248482844</span>
+                        </div>
+                    </div>
+
+                    <div class="connector-btns-row">
+                        <button class="next-step-btn" onclick="nextConnectorStep()">Next Step</button>
+                        <button class="connect-action-btn" onclick="sendWhatsAppConnect()">Connect & Notify Admin</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: OTP AUTHENTICATION -->
+        <div id="authModal" class="full-modal">
+            <div class="modal-inner-card" style="text-align:center;">
+                <div class="brand-badge-circle" style="margin: 0 auto 12px auto;">
+                    <span>48</span>
+                </div>
+                <h3>Codez48 Access Verification</h3>
+                <p style="color:#6b7280; font-size:13px; margin: 4px 0 16px 0;">Enter your email to receive a 6-digit OTP</p>
+
+                <div id="emailStep">
+                    <input type="email" id="authEmail" class="clean-input" placeholder="name@company.com">
+                    <button class="primary-pill-btn" onclick="requestOtp()">Send 6-Digit Code</button>
+                </div>
+
+                <div id="otpStep" style="display:none;">
+                    <div class="otp-inputs-row">
+                        <input type="number" maxlength="1" class="otp-box">
+                        <input type="number" maxlength="1" class="otp-box">
+                        <input type="number" maxlength="1" class="otp-box">
+                        <input type="number" maxlength="1" class="otp-box">
+                        <input type="number" maxlength="1" class="otp-box">
+                        <input type="number" maxlength="1" class="otp-box">
+                    </div>
+                    <button class="primary-pill-btn" onclick="verifyOtp()" style="margin-top:16px;">Verify & Unlock</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
