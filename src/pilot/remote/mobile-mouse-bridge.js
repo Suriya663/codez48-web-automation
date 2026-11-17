@@ -52,6 +52,23 @@ class MobileMouseBridge {
 
             const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
+            // DIRECT APK DOWNLOAD TO MOBILE (One-tap over Wi-Fi)
+            if (url.pathname === '/download' || url.pathname === '/Codez48Pilot.apk' || url.pathname === '/apk') {
+                const fs = require('fs');
+                const path = require('path');
+                const apkPath = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Codez48Pilot.apk');
+                if (fs.existsSync(apkPath)) {
+                    const stat = fs.statSync(apkPath);
+                    res.writeHead(200, {
+                        'Content-Type': 'application/vnd.android.package-archive',
+                        'Content-Length': stat.size,
+                        'Content-Disposition': 'attachment; filename="Codez48Pilot.apk"'
+                    });
+                    fs.createReadStream(apkPath).pipe(res);
+                    return;
+                }
+            }
+
             // STATUS
             if (url.pathname === '/api/status') {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
