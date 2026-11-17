@@ -731,6 +731,11 @@ const handlePilot = async () => {
 
     await validateEnvironment();
 
+    try {
+        const mobileMouseBridge = require('./src/pilot/remote/mobile-mouse-bridge');
+        mobileMouseBridge.start(agentController);
+    } catch (_) {}
+
     // Check if goal argument was passed directly e.g. codez48 pilot "Open https://codez48.netlify.app/ ..."
     const directGoal = process.argv.slice(3).join(' ').trim();
     if (directGoal) {
