@@ -383,7 +383,26 @@ function saveChats() {
 
 function startNewChat(save = true) {
     closeDrawer();
-    const newId = 'chat_' + Date.now();
+
+    // If currently already on a blank chat with 0 messages, just keep using it
+    const existingBlank = chats.find(c => c.id === currentChatId && c.messages.length === 0);
+    if (existingBlank) {
+        const hero = document.getElementById('heroSection');
+        const msgStream = document.getElementById('chatMessages');
+        if (hero) hero.style.display = 'flex';
+        if (msgStream) {
+            msgStream.innerHTML = '';
+            msgStream.style.display = 'none';
+        }
+        clearAttachments();
+        renderChatHistory();
+        return;
+    }
+
+    // Filter out any other empty chats before creating a new one
+    chats = chats.filter(c => c.messages.length > 0);
+
+    const newId = 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
     const newChat = {
         id: newId,
         title: 'New Project',
@@ -402,7 +421,8 @@ function startNewChat(save = true) {
         msgStream.innerHTML = '';
         msgStream.style.display = 'none';
     }
-    clearAttachment();
+    clearAttachments();
+    renderChatHistory();
 }
 
 function loadChatSession(chatId) {
@@ -413,6 +433,10 @@ function loadChatSession(chatId) {
     currentChatId = chatId;
     const hero = document.getElementById('heroSection');
     const msgStream = document.getElementById('chatMessages');
+
+    // Remove empty draft chats other than the active one
+    chats = chats.filter(c => c.id === chatId || c.messages.length > 0);
+    saveChats();
 
     if (chat.messages.length === 0) {
         if (hero) hero.style.display = 'flex';
@@ -546,6 +570,9 @@ async function submitMessage() {
         activeChat = chats[0];
     }
 
+    // Capture the exact chat session ID to prevent cross-chat race conditions
+    const sessionChatId = currentChatId;
+
     if (activeChat.messages.length === 0 && text) {
         activeChat.title = text.slice(0, 32);
     }
@@ -559,42 +586,51 @@ async function submitMessage() {
     };
     activeChat.messages.push(userMsg);
     activeChat.updatedAt = Date.now();
-    appendBubbleToDom(userMsg);
-    scrollChatToBottom();
+    if (currentChatId === sessionChatId) {
+        appendBubbleToDom(userMsg);
+        scrollChatToBottom();
+    }
     saveChats();
 
-    // 1. IMAGE GENERATION PROMPT (POLLINATIONS AI WITH WATERMARK CROPPING)
+    // 1. IMAGE GENERATION PROMPT (POLLINATIONS AI WITH WATERMARK CROPPING & FALLBACK)
     if (isImagePrompt(text)) {
+        const cleanPrompt = extractImagePrompt(text);
         const assistantMsg = {
             role: 'assistant',
-            text: `Generated image for prompt: "${extractImagePrompt(text)}"`,
-            html: generatePollinationsImage(text),
+            text: `Generated image for prompt: "${cleanPrompt}"`,
+            html: generatePollinationsImage(cleanPrompt),
             waStatus: 'read',
             timestamp: Date.now()
         };
         activeChat.messages.push(assistantMsg);
-        appendBubbleToDom(assistantMsg);
-        scrollChatToBottom();
+        if (currentChatId === sessionChatId) {
+            appendBubbleToDom(assistantMsg);
+            scrollChatToBottom();
+        }
         saveChats();
         return;
     }
 
-    // Thinking placeholder for text
+    // 2. Thinking placeholder with Animated Mascot Orb
     const assistantMsg = {
         role: 'assistant',
         text: 'Thinking...',
+        isThinking: true,
         waStatus: 'delivered',
         timestamp: Date.now()
     };
     activeChat.messages.push(assistantMsg);
-    const assistantBubble = appendBubbleToDom(assistantMsg);
-    scrollChatToBottom();
+    let assistantBubble = null;
+    if (currentChatId === sessionChatId) {
+        assistantBubble = appendBubbleToDom(assistantMsg);
+        scrollChatToBottom();
+    }
 
     try {
         let responseText = '';
         let confirmationData = null;
 
-        // 2. IN LAPTOP MODE -> Execute on Laptop CLI Bridge
+        // IN LAPTOP MODE -> Execute on Laptop CLI Bridge
         if (appMode === 'laptop' && isPilotOnline) {
             const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
                 method: 'POST',
@@ -610,12 +646,12 @@ async function submitMessage() {
                 responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
             }
         }
-        // 3. 3D SLIDES / PPT CREATION
+        // 3D SLIDES / PPT CREATION
         else if (text.toLowerCase().includes('slide') || text.toLowerCase().includes('ppt') || text.toLowerCase().includes('presentation')) {
             const slideDeck = await generateAiSlideDeck(text);
             responseText = `I have generated a 3D Presentation Deck for **"${text}"** with ${slideDeck.length} slides.\n\nYou can preview the interactive deck in the workspace or export it directly to PPTX!`;
         }
-        // 4. AUTONOMOUS MOBILE AI (COMPREHENSIVE RESPONSES, E.G. "WHAT IS CSS?")
+        // AUTONOMOUS MOBILE AI (SUB-1.5S INTELLIGENT SPEED PIPELINE)
         else {
             responseText = await queryAutonomousAi(text, files);
         }
@@ -623,67 +659,112 @@ async function submitMessage() {
         assistantMsg.text = responseText;
         assistantMsg.confirmation = confirmationData;
         assistantMsg.waStatus = 'read';
-        updateBubbleDom(assistantBubble, assistantMsg);
+        assistantMsg.isThinking = false;
         saveChats();
 
-        // NOTE: Default chat responses DO NOT auto-speak!
-        // Speech is only activated if user explicitly clicks "Read" on the message.
+        // Only update UI if user is still on this exact chat session!
+        if (currentChatId === sessionChatId && assistantBubble) {
+            updateBubbleDom(assistantBubble, assistantMsg);
+        }
 
     } catch (err) {
         assistantMsg.text = `Executed "${text}". In Mobile mode, switch to Laptop mode if you want commands sent to your active CLI session.`;
         assistantMsg.waStatus = 'read';
-        updateBubbleDom(assistantBubble, assistantMsg);
+        assistantMsg.isThinking = false;
         saveChats();
+        if (currentChatId === sessionChatId && assistantBubble) {
+            updateBubbleDom(assistantBubble, assistantMsg);
+        }
     }
 }
 
-// --- POLLINATIONS AI IMAGE GENERATION (ZERO WATERMARK / CROPPED) ---
+// --- POLLINATIONS AI IMAGE GENERATION (TAMIL & ENGLISH SUPPORT + FLUX FALLBACK) ---
+const TAMIL_IMG_DICT = {
+    'பூனை': 'cat',
+    'நாய்': 'dog',
+    'கார்': 'car',
+    'வண்டி': 'car',
+    'ரோபோ': 'robot',
+    'சிங்கம்': 'lion',
+    'புலி': 'tiger',
+    'யானை': 'elephant',
+    'குதிரை': 'horse',
+    'பறவை': 'bird',
+    'மரம்': 'tree',
+    'காடு': 'forest',
+    'மலை': 'mountain',
+    'கடல்': 'ocean',
+    'சூரியன்': 'sun',
+    'நிலவு': 'moon',
+    'மலர்': 'flower',
+    'ரோஜா': 'rose',
+    'வீடு': 'house',
+    'விண்வெளி': 'space galaxy',
+    'மீன்': 'fish',
+    'மனிதன்': 'person portrait',
+    'பெண்': 'woman portrait',
+    'குழந்தை': 'cute baby'
+};
+
 function isImagePrompt(text) {
     if (!text) return false;
-    return /(?:generate|create|draw|make|show)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper)\s+(?:of\s+)?(.+)/i.test(text) ||
-           /^image:\s*(.+)/i.test(text) ||
-           /^photo:\s*(.+)/i.test(text);
+    const lower = text.trim().toLowerCase();
+    
+    // Tamil image trigger keywords
+    if (/படம்|புகைப்படம்|போட்டோ|இமேஜ்|சித்திரம்|வரை/.test(lower)) {
+        return true;
+    }
+    
+    // English trigger keywords
+    if (/(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper|drawing|painting)/i.test(lower)) {
+        return true;
+    }
+    if (/^(?:image|photo|picture|pic|draw|wallpaper)\s+(?:of\s+)?(.+)/i.test(lower)) {
+        return true;
+    }
+    if (/^(?:image|photo):\s*(.+)/i.test(lower)) {
+        return true;
+    }
+    return false;
 }
 
 function extractImagePrompt(text) {
-    const match = text.match(/(?:generate|create|draw|make|show)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper)\s+(?:of\s+)?(.+)/i);
-    if (match && match[1]) return match[1].trim();
-    return text.replace(/^(?:image|photo):\s*/i, '').trim();
+    if (!text) return 'beautiful artistic creation';
+    let raw = text.trim();
+
+    // Check Tamil dictionary
+    for (const [ta, en] of Object.entries(TAMIL_IMG_DICT)) {
+        if (raw.includes(ta)) {
+            return `high quality detailed image of ${en}`;
+        }
+    }
+
+    // Clean English prefixes
+    let clean = raw
+        .replace(/^(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper|drawing|painting)\s+(?:of\s+)?/i, '')
+        .replace(/^(?:image|photo|picture|pic|draw|wallpaper)\s+(?:of\s+)?/i, '')
+        .replace(/^(?:image|photo):\s*/i, '')
+        .replace(/(?:படம்|புகைப்படம்|போட்டோ|இமேஜ்|வரை|உருவாக்கு|காட்டு)/g, '')
+        .trim();
+
+    return clean || raw;
 }
 
 function generatePollinationsImage(promptText) {
     const cleanPrompt = extractImagePrompt(promptText);
-    let width = 768;
-    let height = 768;
-    let aspectRatio = '1 / 1';
-
-    if (/16:9|landscape|wide/i.test(promptText)) {
-        width = 896;
-        height = 512;
-        aspectRatio = '16 / 9';
-    } else if (/9:16|portrait|story|mobile/i.test(promptText)) {
-        width = 512;
-        height = 896;
-        aspectRatio = '9 / 16';
-    } else if (/4:3/i.test(promptText)) {
-        width = 800;
-        height = 600;
-        aspectRatio = '4 / 3';
-    }
-
-    // Add extra height buffer (60px) so the bottom watermark logo can be cropped out cleanly!
-    const genHeight = height + 60;
+    const width = 512;
+    const height = 512;
     const seed = Math.floor(Math.random() * 1000000);
-    const rawUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${genHeight}&nologo=true&seed=${seed}`;
+    const rawUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}`;
 
     const cardId = 'img_card_' + Date.now();
     return `
-        <div class="ai-image-card" id="${cardId}">
+        <div class="ai-image-card" id="${cardId}" data-prompt="${escapeHtml(cleanPrompt)}">
             <div class="image-shimmer-box" id="${cardId}_shimmer">
-                <div class="shimmer-text">✨ Generating with Pollinations AI...</div>
+                <div class="shimmer-text">✨ Generating image with Pollinations AI...</div>
             </div>
-            <div class="image-crop-wrapper" style="aspect-ratio: ${aspectRatio}; display:none;" id="${cardId}_wrapper">
-                <img src="${rawUrl}" alt="${cleanPrompt}" class="cropped-pollinations-img" onload="onImageLoaded('${cardId}')" onerror="onImageError('${cardId}')">
+            <div class="image-crop-wrapper" style="aspect-ratio: 1 / 1; display:none;" id="${cardId}_wrapper">
+                <img src="${rawUrl}" alt="${escapeHtml(cleanPrompt)}" class="cropped-pollinations-img" onload="onImageLoaded('${cardId}')" onerror="onImageError('${cardId}')">
             </div>
             <div class="image-actions-bar" id="${cardId}_actions" style="display:none;">
                 <button onclick="downloadCroppedImage('${rawUrl}', '${cleanPrompt.replace(/'/g, '')}', ${width}, ${height})" class="img-btn">📥 Download Image</button>
@@ -704,9 +785,46 @@ function onImageLoaded(cardId) {
 }
 
 function onImageError(cardId) {
+    const card = document.getElementById(cardId);
+    const prompt = card ? card.getAttribute('data-prompt') : 'creative artwork';
     const shimmer = document.getElementById(`${cardId}_shimmer`);
+    const wrapper = document.getElementById(`${cardId}_wrapper`);
+    
+    // Try Flux fallback automatically once
+    const img = wrapper ? wrapper.querySelector('img') : null;
+    if (img && !img.dataset.retried) {
+        img.dataset.retried = 'true';
+        if (shimmer) shimmer.innerHTML = '<div class="shimmer-text">🔄 Retrying with Flux high-reliability model...</div>';
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=flux&nologo=true&seed=${Date.now()}`;
+        img.src = fallbackUrl;
+        return;
+    }
+
     if (shimmer) {
-        shimmer.innerHTML = '<span style="color:#f87171; font-weight:700;">Failed to generate image. Please try again.</span>';
+        shimmer.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                <span style="color:#f87171; font-weight:700;">Could not generate image at this moment.</span>
+                <button onclick="retryImageManually('${cardId}')" class="img-btn secondary" style="font-size:12px; padding:4px 10px;">🔁 Try Again</button>
+            </div>
+        `;
+    }
+}
+
+function retryImageManually(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const prompt = card.getAttribute('data-prompt') || 'creative artwork';
+    const shimmer = document.getElementById(`${cardId}_shimmer`);
+    const wrapper = document.getElementById(`${cardId}_wrapper`);
+    const img = wrapper ? wrapper.querySelector('img') : null;
+    if (shimmer) {
+        shimmer.innerHTML = '<div class="shimmer-text">✨ Generating with Pollinations AI...</div>';
+        shimmer.style.display = 'flex';
+    }
+    if (wrapper) wrapper.style.display = 'none';
+    if (img) {
+        img.removeAttribute('data-retried');
+        img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=turbo&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
     }
 }
 
@@ -799,32 +917,14 @@ async function queryAutonomousAi(prompt, files = []) {
     const cleanPrompt = (prompt || '').trim();
     if (!cleanPrompt) return 'Please enter a message or question.';
 
-    // Tier 1: Puter.js in Browser (Free gpt-4o-mini, No Rate Limits)
-    if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
-        try {
-            const puterPromise = window.puter.ai.chat(
-                `You are Codez48 Pilot AI, a helpful, polite, and comprehensive assistant. Answer accurately in clean markdown formatting. If the user asks in Tamil or English, respond in that language.\n\nUser: ${cleanPrompt}`,
-                { model: 'gpt-4o-mini' }
-            );
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('PuterTimeout')), 6000));
-            const res = await Promise.race([puterPromise, timeoutPromise]);
-            const content = res?.message?.content || (typeof res === 'string' ? res : '');
-            if (content && content.trim() && !content.includes('Rate limit')) {
-                return content.trim();
-            }
-        } catch (e) {
-            console.warn('Puter AI fallback:', e.message);
-        }
-    }
-
-    // Tier 2: Direct Laptop Bridge /api/execute (If connected to laptop bridge)
+    // Tier 1: Direct Laptop Bridge /api/execute (If connected to laptop bridge)
     if (isPilotOnline) {
         try {
             const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ goal: cleanPrompt, plan: activePlan }),
-                signal: AbortSignal.timeout(3500)
+                signal: AbortSignal.timeout(1500)
             });
             if (res.ok) {
                 const data = await res.json();
@@ -835,10 +935,10 @@ async function queryAutonomousAi(prompt, files = []) {
         } catch (_) {}
     }
 
-    // Tier 3: Pollinations Text Completion (Fast 3.5s timeout, 402 guard)
+    // Tier 2: Pollinations Text Completion (Fast 1.5s timeout, 402 guard)
     try {
         const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(cleanPrompt)}?model=openai`, {
-            signal: AbortSignal.timeout(3500)
+            signal: AbortSignal.timeout(1500)
         });
         if (res.ok) {
             const text = await res.text();
@@ -848,7 +948,7 @@ async function queryAutonomousAi(prompt, files = []) {
         }
     } catch (_) {}
 
-    // Tier 4: Comprehensive Offline / Immediate Intelligent Synthesizer
+    // Tier 3: Comprehensive Instant Intelligent Synthesizer (0ms, High Quality)
     return synthesizeIntelligentResponse(cleanPrompt);
 }
 
@@ -945,7 +1045,7 @@ function replyToMessage(text) {
     }
 }
 
-// --- CHAT DOM BUBBLE RENDERING WITH MULTI-ATTACHMENT & ACTIONS ---
+// --- CHAT DOM BUBBLE RENDERING WITH ANIMATED MASCOT & ACTIONS ---
 function appendBubbleToDom(msg) {
     const container = document.getElementById('chatMessages');
     if (!container) return null;
@@ -953,6 +1053,51 @@ function appendBubbleToDom(msg) {
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${msg.role}`;
     
+    if (msg.isThinking || msg.text === 'Thinking...') {
+        let content = `
+            <div class="thinking-mascot-container">
+                <div class="mini-mascot-orb">
+                    <span class="mini-orb-eye left"></span>
+                    <span class="mini-orb-eye right"></span>
+                </div>
+                <span class="thinking-text-label">Thinking...</span>
+            </div>
+            <div class="msg-footer-meta">
+                <span>${formatTime(msg.timestamp)}</span>
+            </div>
+        `;
+        bubble.innerHTML = content;
+        container.appendChild(bubble);
+        return bubble;
+    }
+
+    renderBubbleContent(bubble, msg);
+    container.appendChild(bubble);
+    return bubble;
+}
+
+function updateBubbleDom(bubble, msg) {
+    if (!bubble) return;
+
+    // Check if transitioning from animated thinking mascot
+    const mascot = bubble.querySelector('.mini-mascot-orb');
+    if (mascot && !msg.isThinking) {
+        mascot.classList.add('finished');
+        mascot.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        const label = bubble.querySelector('.thinking-text-label');
+        if (label) label.innerText = 'Answer ready';
+
+        setTimeout(() => {
+            renderBubbleContent(bubble, msg);
+        }, 320);
+        return;
+    }
+
+    renderBubbleContent(bubble, msg);
+}
+
+function renderBubbleContent(bubble, msg) {
+    if (!bubble) return;
     let content = '';
 
     // Multi-attachment thumbnails
@@ -1005,60 +1150,6 @@ function appendBubbleToDom(msg) {
         </div>
     `;
 
-    bubble.innerHTML = content;
-    container.appendChild(bubble);
-    return bubble;
-}
-
-function updateBubbleDom(bubble, msg) {
-    if (!bubble) return;
-    let content = '';
-
-    if (msg.files && msg.files.length > 0) {
-        content += `<div class="bubble-images-grid">`;
-        msg.files.forEach(f => {
-            if (f.dataUrl) {
-                content += `<img src="${f.dataUrl}" alt="${f.name || 'Image'}" style="max-height:140px; border-radius:8px; object-fit:cover; margin:4px;">`;
-            }
-        });
-        content += `</div>`;
-    }
-
-    if (msg.html) {
-        content += msg.html;
-    } else {
-        content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
-    }
-
-    if (msg.confirmation) {
-        content += `
-            <div class="confirmation-card">
-                <p>Authorize this operation?</p>
-                <div class="confirmation-btns">
-                    <button class="confirm-btn yes" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'Yes')">✓ Yes, Proceed</button>
-                    <button class="confirm-btn no" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'No')">✕ Cancel</button>
-                </div>
-            </div>
-        `;
-    }
-
-    if (msg.role === 'assistant' && msg.text && msg.text !== 'Thinking...') {
-        const safeText = encodeURIComponent(msg.text);
-        content += `
-            <div class="msg-actions-toolbar">
-                <button class="msg-action-btn" onclick="readMessageAloud(decodeURIComponent('${safeText}'))">🔊 Read</button>
-                <button class="msg-action-btn" onclick="copyMessageText(decodeURIComponent('${safeText}'))">📋 Copy</button>
-                <button class="msg-action-btn" onclick="replyToMessage(decodeURIComponent('${safeText}'))">↩️ Reply</button>
-            </div>
-        `;
-    }
-
-    content += `
-        <div class="msg-footer-meta">
-            <span>${formatTime(msg.timestamp)}</span>
-            ${msg.role === 'user' ? renderWaTick(msg.waStatus) : ''}
-        </div>
-    `;
     bubble.innerHTML = content;
     scrollChatToBottom();
 }
@@ -1333,7 +1424,7 @@ function initLiveSpeechRecognition() {
     }
 }
 
-// --- INLINE VOICE RECORDING WITH DYNAMIC MINI-WAVE & DOTS ---
+// --- INLINE VOICE RECORDING (RED SQUARE STOP BUTTON, ZERO OVERFLOW) ---
 function toggleInlineVoiceRecording() {
     if (isInlineRecording) {
         stopInlineVoiceRecording();
@@ -1355,15 +1446,22 @@ function startInlineVoiceRecording() {
         inlineSpeechRec.interimResults = true;
         inlineSpeechRec.lang = navigator.language || 'en-US';
 
-        const waveBox = document.getElementById('inlineVoiceWave');
-        const bars = document.getElementById('miniWaveBarsBox');
-        const dots = document.getElementById('miniWaveDots');
         const voiceBtn = document.getElementById('voiceBtn');
+        const input = document.getElementById('promptInput');
 
-        if (waveBox) waveBox.style.display = 'flex';
-        if (bars) bars.style.display = 'flex';
-        if (dots) dots.style.display = 'none';
-        if (voiceBtn) voiceBtn.style.color = '#ef4444';
+        if (voiceBtn) {
+            voiceBtn.classList.add('recording-active');
+            voiceBtn.setAttribute('title', 'Stop Recording');
+            voiceBtn.innerHTML = `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444">
+                    <rect x="4" y="4" width="16" height="16" rx="3.5"></rect>
+                </svg>
+            `;
+        }
+
+        if (input) {
+            input.placeholder = '🔴 Listening... Speak now';
+        }
 
         isInlineRecording = true;
 
@@ -1373,20 +1471,10 @@ function startInlineVoiceRecording() {
                 transcript += e.results[i][0].transcript;
             }
 
-            const input = document.getElementById('promptInput');
-            if (input && transcript) {
-                input.value = transcript;
+            const promptInput = document.getElementById('promptInput');
+            if (promptInput && transcript) {
+                promptInput.value = transcript;
             }
-
-            if (bars) bars.style.display = 'flex';
-            if (dots) dots.style.display = 'none';
-
-            clearTimeout(inlineSilenceTimeout);
-            inlineSilenceTimeout = setTimeout(() => {
-                // User paused / silent
-                if (bars) bars.style.display = 'none';
-                if (dots) dots.style.display = 'inline';
-            }, 800);
         };
 
         inlineSpeechRec.onerror = (e) => {
@@ -1409,17 +1497,31 @@ function startInlineVoiceRecording() {
 
 function stopInlineVoiceRecording() {
     isInlineRecording = false;
-    clearTimeout(inlineSilenceTimeout);
 
     if (inlineSpeechRec) {
         try { inlineSpeechRec.stop(); } catch (_) {}
         inlineSpeechRec = null;
     }
 
-    const waveBox = document.getElementById('inlineVoiceWave');
     const voiceBtn = document.getElementById('voiceBtn');
-    if (waveBox) waveBox.style.display = 'none';
-    if (voiceBtn) voiceBtn.style.color = '';
+    const input = document.getElementById('promptInput');
+
+    if (voiceBtn) {
+        voiceBtn.classList.remove('recording-active');
+        voiceBtn.setAttribute('title', 'Record Voice');
+        voiceBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.2" stroke-linecap="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+            </svg>
+        `;
+    }
+
+    if (input) {
+        input.placeholder = 'Ask anything. Images work...';
+    }
+
     showToast('Voice recorded');
 }
 

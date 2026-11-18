@@ -8,8 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Free High-Speed Client AI Provider (No 45-Second Rate Limit) -->
-    <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
     <div id="app" class="app-viewport">
@@ -130,19 +128,7 @@
 
                         <input type="text" id="promptInput" placeholder="Ask anything. Images work..." autocomplete="off">
 
-                        <!-- Inline Mini Voice Wave Indicator (Shown when recording voice to prompt) -->
-                        <div id="inlineVoiceWave" class="inline-voice-wave" style="display:none;">
-                            <div class="mini-wave-bars-box" id="miniWaveBarsBox">
-                                <span class="m-wave-bar"></span>
-                                <span class="m-wave-bar"></span>
-                                <span class="m-wave-bar"></span>
-                                <span class="m-wave-bar"></span>
-                                <span class="m-wave-bar"></span>
-                            </div>
-                            <span class="mini-wave-dots" id="miniWaveDots" style="display:none;">• • •</span>
-                        </div>
-
-                        <!-- Functional Voice Microphone: Inline Speech-To-Text -->
+                        <!-- Functional Voice Microphone: Inline Speech-To-Text (Red Square Stop When Active) -->
                         <button id="voiceBtn" class="voice-circle-btn" title="Record Voice" onclick="toggleInlineVoiceRecording()">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>
                         </button>
@@ -303,11 +289,10 @@
                 <button onclick="sendLiveVoiceText()">Send</button>
             </div>
 
-            <!-- Ambient Glowing Aurora Wave at Bottom -->
-            <div class="aurora-ambient-wave" id="auroraAmbientWave">
-                <div class="aurora-glow-blob cyan"></div>
-                <div class="aurora-glow-blob blue"></div>
-                <div class="aurora-glow-blob purple"></div>
+            <!-- Ambient Ascending Luminous Shimmer on Fine Grid Background -->
+            <div class="live-grid-ambient-stage" id="liveGridAmbientStage">
+                <div class="luminous-egg-beam"></div>
+                <div class="luminous-grid-shimmer"></div>
             </div>
 
             <!-- Bottom Circular Action Controls (Hold & End Made Smaller, 3-Dots Underneath) -->

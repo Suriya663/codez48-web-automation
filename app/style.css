@@ -706,6 +706,7 @@ body {
     border: none;
     color: var(--text-primary);
     flex: 1;
+    min-width: 0;
     font-family: var(--font-sans);
     font-size: 14px;
     outline: none;
@@ -723,6 +724,87 @@ body {
     justify-content: center;
     width: 36px;
     transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.voice-circle-btn.recording-active {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    animation: voiceRecordPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes voiceRecordPulse {
+    0% { transform: scale(0.96); box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
+    100% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.35); }
+}
+
+/* AI Thinking Mascot: Mini Blue Orb with Blinking Scanning Eyes */
+.thinking-mascot-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px;
+}
+
+.mini-mascot-orb {
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle at 35% 35%, #60a5fa, #2563eb 70%, #1e40af);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mini-orb-eye {
+    position: absolute;
+    top: 7.5px;
+    width: 3.5px;
+    height: 4.5px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 2px rgba(255, 255, 255, 0.9);
+    animation: eyeScanLook 1.8s ease-in-out infinite, eyeBlink 3.4s infinite;
+}
+
+.mini-orb-eye.left {
+    left: 5.5px;
+}
+
+.mini-orb-eye.right {
+    right: 5.5px;
+}
+
+@keyframes eyeScanLook {
+    0%, 100% { transform: translateX(0); }
+    30% { transform: translateX(-2.5px); }
+    70% { transform: translateX(2.5px); }
+}
+
+@keyframes eyeBlink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+}
+
+.mini-mascot-orb.finished {
+    transform: rotate(360deg) scale(1.08);
+    background: radial-gradient(circle at 35% 35%, #34d399, #059669 70%, #047857);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.mini-mascot-orb.finished .mini-orb-eye {
+    display: none;
+}
+
+.thinking-text-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: -0.01em;
 }
 
 .send-circle-btn {
@@ -2154,7 +2236,12 @@ input:checked + .toggle-slider:before {
 .full-screen-live-modal {
     position: fixed;
     inset: 0;
-    background: #000000;
+    background-color: #050507;
+    /* Clean subtle square grid boxes on pure black background */
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
     z-index: 200;
     display: flex;
     flex-direction: column;
@@ -2235,56 +2322,64 @@ input:checked + .toggle-slider:before {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
 }
 
-/* Ambient Glowing Aurora Wave (Bottom 30%) */
-.aurora-ambient-wave {
+/* Ambient Ascending Light-White Shimmer on Grid (Bottom to Top) */
+.live-grid-ambient-stage {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 38%;
+    inset: 0;
     pointer-events: none;
     overflow: hidden;
     z-index: 5;
 }
 
-.aurora-glow-blob {
+/* Ascending egg-shaped soft white beam illuminating the boxes upwards */
+.luminous-egg-beam {
     position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.65;
-    animation: auroraFloat 5s infinite alternate ease-in-out;
+    bottom: -110px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 440px;
+    height: 600px;
+    border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%;
+    background: radial-gradient(ellipse at 50% 90%, 
+        rgba(255, 255, 255, 0.16) 0%, 
+        rgba(255, 255, 255, 0.08) 35%, 
+        rgba(255, 255, 255, 0.02) 65%, 
+        transparent 80%);
+    filter: blur(32px);
+    animation: eggAscendPulse 3.8s ease-in-out infinite alternate;
 }
 
-.aurora-glow-blob.cyan {
-    width: 280px;
-    height: 200px;
-    background: #06b6d4;
-    left: 10%;
-    bottom: -40px;
+/* Subtle ascending white grid matrix highlight */
+.luminous-grid-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, 
+        rgba(255, 255, 255, 0.09) 0%, 
+        rgba(255, 255, 255, 0.03) 40%, 
+        transparent 70%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 100%, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 100%, black 30%, transparent 80%);
+    animation: gridShimmerAscend 3.8s ease-in-out infinite alternate;
 }
 
-.aurora-glow-blob.blue {
-    width: 320px;
-    height: 220px;
-    background: #3b82f6;
-    left: 35%;
-    bottom: -50px;
-    animation-delay: 1.5s;
+@keyframes eggAscendPulse {
+    0% {
+        transform: translateX(-50%) translateY(35px) scale(0.92);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translateX(-50%) translateY(-25px) scale(1.06);
+        opacity: 0.95;
+    }
+    100% {
+        transform: translateX(-50%) translateY(-65px) scale(1.15);
+        opacity: 0.7;
+    }
 }
 
-.aurora-glow-blob.purple {
-    width: 280px;
-    height: 200px;
-    background: #8b5cf6;
-    right: 10%;
-    bottom: -40px;
-    animation-delay: 3s;
-}
-
-@keyframes auroraFloat {
-    0% { transform: translateY(0) scale(0.95); opacity: 0.5; }
-    50% { transform: translateY(-16px) scale(1.08); opacity: 0.8; }
-    100% { transform: translateY(4px) scale(1); opacity: 0.6; }
+@keyframes gridShimmerAscend {
+    0% { opacity: 0.35; }
+    100% { opacity: 0.85; }
 }
 
 /* Bottom Action Controls: Hold & End + 3-Dots Underneath */
