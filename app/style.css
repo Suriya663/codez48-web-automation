@@ -2543,45 +2543,145 @@ input:checked + .toggle-slider:before {
 /* ============================================================== */
 /* POLLINATIONS AI IMAGE GENERATION (SKELETON SHIMMER & CROPPING) */
 /* ============================================================== */
+/* AI Image Card & Shining Shimmer Box */
 .ai-image-card {
     margin-top: 10px;
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
-    background: #0f172a;
-    border: 1px solid #334155;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    background: #090d16;
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.1);
+    position: relative;
+    max-width: 100%;
+}
+
+.image-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-prompt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #38bdf8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #38bdf8;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #38bdf8;
+    animation: dotPulse 1.2s infinite alternate;
+}
+
+@keyframes dotPulse {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(1.3); opacity: 1; }
+}
+
+.card-prompt-snippet {
+    font-size: 11px;
+    color: #94a3b8;
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 55%;
 }
 
 .image-shimmer-box {
     position: relative;
     width: 100%;
+    aspect-ratio: 1 / 1;
     min-height: 240px;
-    background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%);
-    background-size: 200% 100%;
-    animation: shimmerSlide 1.5s infinite;
+    background: #090e1a;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    overflow: hidden;
 }
 
-@keyframes shimmerSlide {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+/* Shining light wave effect moving across */
+.shimmer-scanner-beam {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, 
+        transparent 0%, 
+        rgba(56, 189, 248, 0.03) 30%, 
+        rgba(56, 189, 248, 0.25) 50%, 
+        rgba(56, 189, 248, 0.03) 70%, 
+        transparent 100%);
+    background-size: 200% 100%;
+    animation: shiningBeamSweep 2s ease-in-out infinite;
+}
+
+@keyframes shiningBeamSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.shimmer-content-box {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.shimmer-mascot-orb {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #38bdf8, #2563eb 70%, #1e3a8a);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.shimmer-orb-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px dashed rgba(56, 189, 248, 0.6);
+    animation: ringSpin 3s linear infinite;
+}
+
+@keyframes ringSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .shimmer-text {
     color: #f8fafc;
     font-size: 13px;
     font-weight: 700;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 8px 16px;
-    border-radius: 20px;
+    letter-spacing: -0.01em;
+}
+
+.shimmer-sub {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 500;
 }
 
 .image-crop-wrapper {
     width: 100%;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
     position: relative;
     background: #020617;
@@ -2589,12 +2689,15 @@ input:checked + .toggle-slider:before {
 
 .cropped-pollinations-img {
     width: 100%;
-    height: calc(100% + 55px);
+    height: 100%;
     object-fit: cover;
-    object-position: top center;
-    margin-bottom: -55px;
     display: block;
-    transition: opacity 0.3s ease;
+    animation: fadeInImage 0.35s ease-out;
+}
+
+@keyframes fadeInImage {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .image-actions-bar {
@@ -2603,6 +2706,7 @@ input:checked + .toggle-slider:before {
     gap: 8px;
     padding: 10px 12px;
     background: #0f172a;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .img-btn {

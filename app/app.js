@@ -630,28 +630,37 @@ async function submitMessage() {
         let responseText = '';
         let confirmationData = null;
 
-        // IN LAPTOP MODE -> Execute on Laptop CLI Bridge
-        if (appMode === 'laptop' && isPilotOnline) {
-            const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ goal: text, plan: activePlan })
-            });
-            const data = await res.json();
-            
-            if (data.requiresConfirmation) {
-                confirmationData = data;
-                responseText = data.question || 'Action requires authorization:';
+        // 2. IN LAPTOP MODE -> Execute on Laptop CLI Bridge
+        if (appMode === 'laptop') {
+            if (isPilotOnline) {
+                try {
+                    const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ goal: text, plan: activePlan }),
+                        signal: AbortSignal.timeout(60000)
+                    });
+                    const data = await res.json();
+                    
+                    if (data.requiresConfirmation) {
+                        confirmationData = data;
+                        responseText = data.question || 'Action requires authorization:';
+                    } else {
+                        responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
+                    }
+                } catch (bridgeErr) {
+                    responseText = `⚠️ Execution failed on Laptop Bridge: ${bridgeErr.message}. Ensure "node cli.js pilot" is running on your laptop (${LAPTOP_BRIDGE_URL}).`;
+                }
             } else {
-                responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
+                responseText = `⚠️ Laptop is currently Standby / Offline. Please verify that your laptop is connected to Wi-Fi and running the Pilot bridge (${LAPTOP_BRIDGE_URL}).`;
             }
         }
-        // 3D SLIDES / PPT CREATION
+        // 3. 3D SLIDES / PPT CREATION (Mobile Mode Fallback)
         else if (text.toLowerCase().includes('slide') || text.toLowerCase().includes('ppt') || text.toLowerCase().includes('presentation')) {
             const slideDeck = await generateAiSlideDeck(text);
             responseText = `I have generated a 3D Presentation Deck for **"${text}"** with ${slideDeck.length} slides.\n\nYou can preview the interactive deck in the workspace or export it directly to PPTX!`;
         }
-        // AUTONOMOUS MOBILE AI (SUB-1.5S INTELLIGENT SPEED PIPELINE)
+        // 4. AUTONOMOUS MOBILE AI
         else {
             responseText = await queryAutonomousAi(text, files);
         }
@@ -678,73 +687,78 @@ async function submitMessage() {
     }
 }
 
-// --- POLLINATIONS AI IMAGE GENERATION (TAMIL & ENGLISH SUPPORT + FLUX FALLBACK) ---
+// --- POLLINATIONS AI IMAGE GENERATION (TAMIL & ENGLISH SUPPORT + SHINING SHIMMER) ---
 const TAMIL_IMG_DICT = {
     'பூனை': 'cat',
     'நாய்': 'dog',
-    'கார்': 'car',
+    'கார்': 'sports car',
     'வண்டி': 'car',
-    'ரோபோ': 'robot',
-    'சிங்கம்': 'lion',
-    'புலி': 'tiger',
+    'ரோபோ': 'futuristic robot',
+    'சிங்கம்': 'majestic lion',
+    'புலி': 'wild tiger',
     'யானை': 'elephant',
-    'குதிரை': 'horse',
-    'பறவை': 'bird',
-    'மரம்': 'tree',
-    'காடு': 'forest',
-    'மலை': 'mountain',
-    'கடல்': 'ocean',
-    'சூரியன்': 'sun',
-    'நிலவு': 'moon',
-    'மலர்': 'flower',
-    'ரோஜா': 'rose',
-    'வீடு': 'house',
-    'விண்வெளி': 'space galaxy',
-    'மீன்': 'fish',
+    'குதிரை': 'running horse',
+    'பறவை': 'exotic bird',
+    'மரம்': 'banyan tree nature',
+    'காடு': 'dense magical forest',
+    'மலை': 'snow mountain sunset',
+    'கடல்': 'deep blue ocean waves',
+    'சூரியன்': 'golden sun rising',
+    'நிலவு': 'glowing full moon night',
+    'மலர்': 'vibrant blooming flower',
+    'ரோஜா': 'red rose',
+    'வீடு': 'modern luxury villa house',
+    'விண்வெளி': 'cosmic space galaxy nebula',
+    'மீன்': 'colorful tropical fish',
     'மனிதன்': 'person portrait',
-    'பெண்': 'woman portrait',
-    'குழந்தை': 'cute baby'
+    'பெண்': 'woman portrait aesthetic',
+    'குழந்தை': 'smiling cute baby',
+    'விமானம்': 'modern jet airplane'
 };
 
 function isImagePrompt(text) {
     if (!text) return false;
     const lower = text.trim().toLowerCase();
-    
-    // Tamil image trigger keywords
-    if (/படம்|புகைப்படம்|போட்டோ|இமேஜ்|சித்திரம்|வரை/.test(lower)) {
+
+    // Guard: Presentation / PowerPoint / Code / PPT creation requests are NOT image prompts!
+    if (/\b(?:ppt|powerpoint|presentation|slide|deck|code|app|file|folder)\b/i.test(lower)) {
+        return false;
+    }
+
+    // 1. Tamil image trigger keywords
+    if (/படம்|புகைப்படம்|போட்டோ|இமேஜ்|சித்திரம்|வரை|வரைக|ஓவியம்/.test(lower)) {
         return true;
     }
-    
-    // English trigger keywords
-    if (/(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper|drawing|painting)/i.test(lower)) {
+
+    // 2. English image verbs and nouns
+    if (/\b(?:image|photo|picture|pic|artwork|wallpaper|drawing|painting|portrait|illustration)\b/i.test(lower)) {
         return true;
     }
-    if (/^(?:image|photo|picture|pic|draw|wallpaper)\s+(?:of\s+)?(.+)/i.test(lower)) {
+
+    if (/^(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(.+)/i.test(lower)) {
         return true;
     }
-    if (/^(?:image|photo):\s*(.+)/i.test(lower)) {
-        return true;
-    }
+
     return false;
 }
 
 function extractImagePrompt(text) {
-    if (!text) return 'beautiful artistic creation';
+    if (!text) return 'beautiful aesthetic artwork';
     let raw = text.trim();
 
-    // Check Tamil dictionary
+    // Check Tamil dictionary for immediate high-quality English expansion
     for (const [ta, en] of Object.entries(TAMIL_IMG_DICT)) {
         if (raw.includes(ta)) {
-            return `high quality detailed image of ${en}`;
+            return `high quality detailed 4k masterpiece of ${en}`;
         }
     }
 
     // Clean English prefixes
     let clean = raw
-        .replace(/^(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper|drawing|painting)\s+(?:of\s+)?/i, '')
-        .replace(/^(?:image|photo|picture|pic|draw|wallpaper)\s+(?:of\s+)?/i, '')
+        .replace(/^(?:please\s+)?(?:can\s+you\s+)?(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper|drawing|painting)?(?:\s+of)?/i, '')
+        .replace(/^(?:image|photo|picture|pic|draw|wallpaper)(?:\s+of)?/i, '')
         .replace(/^(?:image|photo):\s*/i, '')
-        .replace(/(?:படம்|புகைப்படம்|போட்டோ|இமேஜ்|வரை|உருவாக்கு|காட்டு)/g, '')
+        .replace(/(?:படம்|புகைப்படம்|போட்டோ|இமேஜ்|வரை|வரைக|உருவாக்கு|காட்டு|ஓவியம்)/g, '')
         .trim();
 
     return clean || raw;
@@ -760,15 +774,44 @@ function generatePollinationsImage(promptText) {
     const cardId = 'img_card_' + Date.now();
     return `
         <div class="ai-image-card" id="${cardId}" data-prompt="${escapeHtml(cleanPrompt)}">
-            <div class="image-shimmer-box" id="${cardId}_shimmer">
-                <div class="shimmer-text">✨ Generating image with Pollinations AI...</div>
+            <div class="image-card-header">
+                <div class="card-prompt-badge">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-title">AI Image Studio</span>
+                </div>
+                <span class="card-prompt-snippet">"${escapeHtml(cleanPrompt.slice(0, 32))}${cleanPrompt.length > 32 ? '...' : ''}"</span>
             </div>
-            <div class="image-crop-wrapper" style="aspect-ratio: 1 / 1; display:none;" id="${cardId}_wrapper">
+
+            <!-- Glowing Shining Shimmer Loading Box -->
+            <div class="image-shimmer-box" id="${cardId}_shimmer">
+                <div class="shimmer-scanner-beam"></div>
+                <div class="shimmer-content-box">
+                    <div class="shimmer-mascot-orb">
+                        <span class="shimmer-orb-ring"></span>
+                    </div>
+                    <div class="shimmer-text">✨ Creating artwork with Pollinations AI...</div>
+                    <div class="shimmer-sub">Rendering 512×512 HD preview</div>
+                </div>
+            </div>
+
+            <!-- Crisp Clean Aspect Ratio Image Display -->
+            <div class="image-crop-wrapper" id="${cardId}_wrapper" style="display:none;">
                 <img src="${rawUrl}" alt="${escapeHtml(cleanPrompt)}" class="cropped-pollinations-img" onload="onImageLoaded('${cardId}')" onerror="onImageError('${cardId}')">
             </div>
+
+            <!-- Action Controls: Download & Full View -->
             <div class="image-actions-bar" id="${cardId}_actions" style="display:none;">
-                <button onclick="downloadCroppedImage('${rawUrl}', '${cleanPrompt.replace(/'/g, '')}', ${width}, ${height})" class="img-btn">📥 Download Image</button>
-                <a href="${rawUrl}" target="_blank" class="img-btn secondary">🔍 Full View</a>
+                <button onclick="downloadCroppedImage('${rawUrl}', '${cleanPrompt.replace(/'/g, '')}', 512, 512)" class="img-btn primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download Image
+                </button>
+                <a href="${rawUrl}" target="_blank" class="img-btn secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Full View
+                </a>
+                <button onclick="retryImageManually('${cardId}')" class="img-btn secondary" title="Regenerate">
+                    🔄
+                </button>
             </div>
         </div>
     `;
@@ -790,11 +833,13 @@ function onImageError(cardId) {
     const shimmer = document.getElementById(`${cardId}_shimmer`);
     const wrapper = document.getElementById(`${cardId}_wrapper`);
     
-    // Try Flux fallback automatically once
+    // Auto-retry with Flux model
     const img = wrapper ? wrapper.querySelector('img') : null;
     if (img && !img.dataset.retried) {
         img.dataset.retried = 'true';
-        if (shimmer) shimmer.innerHTML = '<div class="shimmer-text">🔄 Retrying with Flux high-reliability model...</div>';
+        if (shimmer) {
+            shimmer.querySelector('.shimmer-text').innerText = '🔄 Retrying with Flux high-reliability model...';
+        }
         const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=flux&nologo=true&seed=${Date.now()}`;
         img.src = fallbackUrl;
         return;
@@ -818,7 +863,14 @@ function retryImageManually(cardId) {
     const wrapper = document.getElementById(`${cardId}_wrapper`);
     const img = wrapper ? wrapper.querySelector('img') : null;
     if (shimmer) {
-        shimmer.innerHTML = '<div class="shimmer-text">✨ Generating with Pollinations AI...</div>';
+        shimmer.innerHTML = `
+            <div class="shimmer-scanner-beam"></div>
+            <div class="shimmer-content-box">
+                <div class="shimmer-mascot-orb"><span class="shimmer-orb-ring"></span></div>
+                <div class="shimmer-text">✨ Creating artwork with Pollinations AI...</div>
+                <div class="shimmer-sub">Rendering 512×512 HD preview</div>
+            </div>
+        `;
         shimmer.style.display = 'flex';
     }
     if (wrapper) wrapper.style.display = 'none';
@@ -935,10 +987,11 @@ async function queryAutonomousAi(prompt, files = []) {
         } catch (_) {}
     }
 
-    // Tier 2: Pollinations Text Completion (Fast 1.5s timeout, 402 guard)
+    // Tier 2: Pollinations Text Completion (Generous 6.5s timeout for Tamil / English synthesis)
     try {
-        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(cleanPrompt)}?model=openai`, {
-            signal: AbortSignal.timeout(1500)
+        const promptForAi = `You are Codez48 Pilot AI. Give a helpful, natural, and concise answer to the user in their language (Tamil if user asked in Tamil, English if asked in English). Do not echo their question. User: ${cleanPrompt}`;
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptForAi)}?model=openai`, {
+            signal: AbortSignal.timeout(6500)
         });
         if (res.ok) {
             const text = await res.text();
@@ -971,12 +1024,12 @@ function synthesizeIntelligentResponse(prompt) {
             return `### CSS என்றால் என்ன?\n\n**CSS (Cascading Style Sheets)** என்பது ஒரு வலைப்பக்கத்தை (HTML) வண்ணமயமாகவும் அழகாகவும் வடிவமைக்கப் பயன்படும் ஸ்டைலிங் மொழியாகும்.\n\n#### முக்கிய அம்சங்கள்:\n1. **வடிவமைப்பு**: வண்ணங்கள், எழுத்துருக்கள் (Fonts), பின்னணிகள்.\n2. **அமைப்பு (Layout)**: Flexbox மற்றும் CSS Grid மூலம் திரைக்கு ஏற்றவாறு அமைத்தல்.\n3. **ரெஸ்பான்சிவ்**: மொபைல் மற்றும் கணினி இரண்டிலும் சரியாக தெரிய Media Queries பயன்படுத்துதல்.\n\n\`\`\`css\n/* உதாரணம் */\n.button {\n    background-color: #2563eb;\n    color: #ffffff;\n    padding: 10px 20px;\n    border-radius: 8px;\n}\n\`\`\``;
         }
         if (/python|பைதான்/i.test(prompt)) {
-            return `### Python (பைதான்) என்றால் என்ன?\n\n**Python** என்பது எளிதில் வாசிக்கக்கூடிய, உலகளவில் மிகவும் புகழ்பெற்ற ஒரு உயர்மட்ட நிரலாக்க மொழி (High-level programming language).\n\n#### பயன்கள்:\n- இணைய பயன்பாடுகள் (Web Development - Django, Flask)\n- செயற்கை நுண்ணறிவு மற்றும் மெஷின் லேர்னிங் (AI & ML)\n- ஆட்டோமேஷன் மற்றும் ஸ்கிரிப்டிங் (Automation Scripts)\n\n\`\`\`python\n# உதாரணம்\ndef greet(name):\n    return f"வணக்கம், {name}!"\n\nprint(greet("Codez48"))\n\`\`\``;
+            return `### Python (பைதான்) என்றால் என்ன?\n\n**Python** என்பது எளிதில் வாசிக்கக்கூடிய, உலகளவில் மிகவும் புகழ்பெற்ற ஒரு உயர்மட்ட நிரலாக்க மொழி (High-level programming language).\n\n#### பயன்கள்:\n- இணைய பயன்பாடுகள் (Web Development - Django, Flask)\n- செயற்கை நுண்ணறிவு மற்றும் மெஷின் லேர்னிங் (AI & ML)\n- ஆட்டோமேஷன் மற்றும் ஸ்கப்டிங் (Automation Scripts)\n\n\`\`\`python\n# உதாரணம்\ndef greet(name):\n    return f"வணக்கம், {name}!"\n\nprint(greet("Codez48"))\n\`\`\``;
         }
         if (/வெப்சைட்|வலைத்தளம்|website/i.test(prompt)) {
             return `### வலைத்தளம் (Website) உருவாக்குவது எப்படி?\n\nஒரு சிறந்த வலைத்தளத்தை உருவாக்க 3 அடிப்படை தேவைகள் உண்டு:\n\n1. **HTML**: பக்கத்தின் கட்டமைப்பு மற்றும் உள்ளடக்கம்.\n2. **CSS**: பக்கத்திற்கான அழகான நிறங்கள் மற்றும் வடிவமைப்பு.\n3. **JavaScript**: பட்டன் கிளிக்குகள் மற்றும் பயனர் செயல்களுக்கான இயக்கம்.\n\nCodez48 Pilot மூலம் உங்கள் வணிகத்திற்கான வலைத்தளத்தை மிக எளிதாக நீங்கள் உருவாக்கலாம்!`;
         }
-        return `### Codez48 Pilot AI விளக்கம்\n\n**தங்கள் கேள்வி:** "${prompt}"\n\nதங்களின் கேள்விக்குரிய பணிகள் மற்றும் வழிகாட்டுதல்களை வழங்க Codez48 Pilot AI தயாராக உள்ளது. நீங்கள் மேலும் விபரங்களைக் கேட்கலாம் அல்லது மேலதிக கட்டளைகளை உள்ளிடலாம்.`;
+        return `### Codez48 Pilot AI வழிகாட்டல்\n\nநீங்கள் கூறியுள்ள பணிக்கான தீர்வுகளை விரைவாகச் செயல்படுத்த தயாராக உள்ளேன். நீங்கள் லேப்டாப் மூலம் கட்டளைகளை இயக்க விரும்பினால் மேலே உள்ள சுவிட்சில் **Laptop** பயன்முறையை தேர்வு செய்யலாம், அல்லது தொடர்ந்து என்னிடம் விவரங்களை கேட்கலாம்.`;
     }
 
     // ENGLISH SYNTHESIS
@@ -1012,9 +1065,8 @@ function synthesizeIntelligentResponse(prompt) {
         return `### Hello! 👋\n\nWelcome to **Codez48 Pilot**. I am your personal AI assistant for software development, business automations, and device orchestration.\n\n#### Quick Actions:\n- 💻 **Laptop CLI Mode**: Toggle to Laptop mode above to send commands to your active laptop session.\n- 📱 **Mobile Native Mode**: Chat, write code, formulate plans, or create presentations.\n- 🎨 **Image Generation**: Say *"Generate image of..."* to create zero-watermark artwork with Pollinations AI.\n- 🖱️ **Remote Touchpad**: Click the "Remote Mouse" chip to control your laptop cursor.\n\nHow can I help you today?`;
     }
 
-    // Contextual Structured Answer for General Prompts
-    const capitalized = cleanPrompt.charAt(0).toUpperCase() + cleanPrompt.slice(1);
-    return `### ${capitalized}\n\nHere is a comprehensive breakdown regarding **"${cleanPrompt}"**:\n\n#### Key Overview:\n- **Concept**: Strategic analysis and operational guidelines tailored for your query.\n- **Implementation**: You can execute related workflows directly through Codez48 Pilot or use the top toggle to route commands to your laptop CLI bridge.\n- **Next Steps**: Let me know if you would like me to generate code, draft a 3D slide presentation deck, or create accompanying visuals!`;
+    // Contextual Direct Answer for General Prompts
+    return `### Action Plan & Insights\n\nI have analyzed your request. You can perform full system operations by switching to **Laptop Mode** at the top if you have the CLI session active, or ask me directly to build code, create 3D presentation decks, or generate visuals!`;
 }
 
 // --- MESSAGE ACTIONS: READ ALOUD, COPY, REPLY ---
@@ -1383,6 +1435,8 @@ function sendLiveVoiceText() {
     });
 }
 
+let isAiSpeaking = false;
+
 function initLiveSpeechRecognition() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRec) {
@@ -1392,20 +1446,22 @@ function initLiveSpeechRecognition() {
         liveSpeechRecognizer.lang = navigator.language || 'en-US';
 
         liveSpeechRecognizer.onresult = (e) => {
-            if (isLiveHold) return;
+            if (isLiveHold || isAiSpeaking) return;
             let transcript = '';
             for (let i = e.resultIndex; i < e.results.length; ++i) {
                 transcript += e.results[i][0].transcript;
             }
 
-            // VOICE BARGE-IN: If AI is speaking and user speaks, cancel speech immediately!
+            // VOICE BARGE-IN: If user speaks while AI is talking, cancel AI speech immediately
             if (window.speechSynthesis && window.speechSynthesis.speaking) {
                 window.speechSynthesis.cancel();
+                isAiSpeaking = false;
             }
 
             // If final result
             if (e.results[e.results.length - 1].isFinal && transcript.trim()) {
-                queryAutonomousAi(transcript.trim()).then(ans => {
+                const queryText = transcript.trim();
+                queryAutonomousAi(queryText).then(ans => {
                     if (isLiveVoiceActive && !isLiveHold) {
                         speakText(ans);
                     }
@@ -1414,8 +1470,8 @@ function initLiveSpeechRecognition() {
         };
 
         liveSpeechRecognizer.onend = () => {
-            // Auto restart so it keeps listening continuously without re-prompting!
-            if (isLiveVoiceActive && !isLiveHold) {
+            // Auto restart so it keeps listening continuously unless on hold or AI speaking
+            if (isLiveVoiceActive && !isLiveHold && !isAiSpeaking) {
                 try { liveSpeechRecognizer.start(); } catch (_) {}
             }
         };
@@ -1588,12 +1644,45 @@ function clearAttachments() {
     if (fInput) fInput.value = '';
 }
 
+function cleanForSpeech(text) {
+    if (!text) return '';
+    return text
+        .replace(/```[\s\S]*?```/g, '')          // strip code blocks
+        .replace(/`[^`]*`/g, '')                  // strip inline code
+        .replace(/[#*_~>\-•]/g, '')               // strip markdown syntax
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // links to plain text
+        .replace(/\n+/g, '. ')
+        .trim();
+}
+
 function speakText(text) {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const clean = text.replace(/[*#`_]/g, '');
+
+    const clean = cleanForSpeech(text);
+    if (!clean) return;
+
+    // Temporarily pause recognition while speaking so mic never records the device speaker!
+    isAiSpeaking = true;
+    if (liveSpeechRecognizer) {
+        try { liveSpeechRecognizer.abort(); } catch (_) {}
+    }
+
     const utter = new SpeechSynthesisUtterance(clean);
-    utter.rate = 1.05;
+    utter.rate = 1.02;
+
+    const resumeRec = () => {
+        isAiSpeaking = false;
+        setTimeout(() => {
+            if (isLiveVoiceActive && !isLiveHold && liveSpeechRecognizer) {
+                try { liveSpeechRecognizer.start(); } catch (_) {}
+            }
+        }, 500); // 500ms safety buffer
+    };
+
+    utter.onend = resumeRec;
+    utter.onerror = resumeRec;
+
     window.speechSynthesis.speak(utter);
 }
 
