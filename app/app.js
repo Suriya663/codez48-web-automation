@@ -201,7 +201,6 @@ function setAppMode(mode, save = true) {
         if (btnLaptop) btnLaptop.classList.add('active');
         if (btnMobile) btnMobile.classList.remove('active');
         if (subText) subText.innerHTML = 'Active Mode: <strong>Laptop CLI Bridge</strong>';
-        renderWorkspaceSlide();
     } else {
         document.body.classList.remove('laptop-mode');
         if (btnLaptop) btnLaptop.classList.remove('active');
@@ -654,21 +653,21 @@ function extractImagePrompt(text) {
 
 function generatePollinationsImage(promptText) {
     const cleanPrompt = extractImagePrompt(promptText);
-    let width = 1024;
-    let height = 1024;
+    let width = 768;
+    let height = 768;
     let aspectRatio = '1 / 1';
 
     if (/16:9|landscape|wide/i.test(promptText)) {
-        width = 1280;
-        height = 720;
+        width = 896;
+        height = 512;
         aspectRatio = '16 / 9';
     } else if (/9:16|portrait|story|mobile/i.test(promptText)) {
-        width = 720;
-        height = 1280;
+        width = 512;
+        height = 896;
         aspectRatio = '9 / 16';
     } else if (/4:3/i.test(promptText)) {
-        width = 1024;
-        height = 768;
+        width = 800;
+        height = 600;
         aspectRatio = '4 / 3';
     }
 
@@ -795,40 +794,127 @@ async function generateAiSlideDeck(topic) {
     return defaultDeck;
 }
 
-// --- AUTONOMOUS AI TEXT COMPLETIONS ---
+// --- AUTONOMOUS AI TEXT COMPLETIONS & RESILIENT MULTI-TIER PIPELINE ---
 async function queryAutonomousAi(prompt, files = []) {
-    try {
-        const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'openai',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are Codez48 Pilot AI, a highly intelligent, polite, and comprehensive coding and business assistant. Answer questions accurately and thoroughly using clean markdown formatting (bolding, lists, code blocks). If asked in Tamil or English, respond in that language.'
-                    },
-                    { role: 'user', content: prompt }
-                ]
-            })
-        });
+    const cleanPrompt = (prompt || '').trim();
+    if (!cleanPrompt) return 'Please enter a message or question.';
 
-        if (res.ok) {
-            const data = await res.json();
-            const text = data.choices?.[0]?.message?.content;
-            if (text) return text;
+    // Tier 1: Puter.js in Browser (Free gpt-4o-mini, No Rate Limits)
+    if (window.puter && window.puter.ai && typeof window.puter.ai.chat === 'function') {
+        try {
+            const puterPromise = window.puter.ai.chat(
+                `You are Codez48 Pilot AI, a helpful, polite, and comprehensive assistant. Answer accurately in clean markdown formatting. If the user asks in Tamil or English, respond in that language.\n\nUser: ${cleanPrompt}`,
+                { model: 'gpt-4o-mini' }
+            );
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('PuterTimeout')), 6000));
+            const res = await Promise.race([puterPromise, timeoutPromise]);
+            const content = res?.message?.content || (typeof res === 'string' ? res : '');
+            if (content && content.trim() && !content.includes('Rate limit')) {
+                return content.trim();
+            }
+        } catch (e) {
+            console.warn('Puter AI fallback:', e.message);
         }
-    } catch (e) {
-        console.warn('Pollinations AI fetch error:', e.message);
     }
 
-    // Intelligent built-in knowledge fallback
-    const p = prompt.toLowerCase();
+    // Tier 2: Direct Laptop Bridge /api/execute (If connected to laptop bridge)
+    if (isPilotOnline) {
+        try {
+            const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ goal: cleanPrompt, plan: activePlan }),
+                signal: AbortSignal.timeout(3500)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.answer && data.answer.trim() && !data.answer.startsWith('Executed "')) {
+                    return data.answer.trim();
+                }
+            }
+        } catch (_) {}
+    }
+
+    // Tier 3: Pollinations Text Completion (Fast 3.5s timeout, 402 guard)
+    try {
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(cleanPrompt)}?model=openai`, {
+            signal: AbortSignal.timeout(3500)
+        });
+        if (res.ok) {
+            const text = await res.text();
+            if (text && !text.includes('Free limit reached') && !text.includes('Please wait') && !text.includes('pollen key') && text.length > 5) {
+                return text.trim();
+            }
+        }
+    } catch (_) {}
+
+    // Tier 4: Comprehensive Offline / Immediate Intelligent Synthesizer
+    return synthesizeIntelligentResponse(cleanPrompt);
+}
+
+function synthesizeIntelligentResponse(prompt) {
+    const cleanPrompt = (prompt || '').trim();
+    const p = cleanPrompt.toLowerCase();
+    const isTamil = /[\u0B80-\u0BFF]/.test(cleanPrompt);
+
+    if (isTamil) {
+        if (/வணக்கம்|காலை|மாலை/i.test(prompt)) {
+            return `### வணக்கம்! 🙏\n\n**Codez48 Pilot AI**-க்கு தங்களை அன்புடன் வரவேற்கிறோம். நான் உங்கள் மென்பொருள் உருவாக்கம், பிசினஸ் ஆட்டோமேஷன் மற்றும் கணினி இயக்கத்திற்கு உதவும் பிரத்யேக AI உதவியாளர்.\n\n#### நான் உங்களுக்கு உதவக்கூடிய பகுதிகள்:\n- 💻 **மென்பொருள் கோடிங்**: HTML, CSS, JavaScript, Python & Full-Stack நிரலாக்கம்\n- 🚀 **வணிக ஆட்டோமேஷன்**: WhatsApp கிளவுட் தகவல் பரிமாற்றம் மற்றும் வாடிக்கையாளர் மேலாண்மை\n- 📊 **3D பிரசென்டேஷன்**: தானியங்கி ஸ்லைடுகள் மற்றும் PPT உருவாக்கம்\n- 🖱️ **லேப்டாப் ரிமோட்**: உங்கள் மொபைலை மவுஸ் மற்றும் விசைப்பலகையாக மாற்றுதல்\n- 👁️ **லைவ் விஷன் (Live Vision)**: கேமரா மூலம் ஆவணங்களை படித்து OCR செய்தல்\n\nஉங்களுக்கு இன்று என்ன உதவி தேவை? தாராளமாக கேளுங்கள்!`;
+        }
+        if (/எப்படி\s*இருக்கீங்க|நலமா/i.test(prompt)) {
+            return `### நான் நலமாக உள்ளேன்! 😊\n\nதங்கள் அன்பான விசாரிப்பிற்கு மிக்க நன்றி! நீங்கள் எப்படி இருக்கிறீர்கள்?\n\nஉங்கள் பணிகள், கோடிங் தேவைகள் மற்றும் வணிக ஆட்டோமேஷனை விரைவுபடுத்த நான் தயாராக உள்ளேன். இன்று நாம் எதை உருவாக்கலாம்?`;
+        }
+        if (/யார்|who\s*are\s*you/i.test(prompt)) {
+            return `### நான் Codez48 Pilot AI 🤖\n\nநான் அதிவேகமாக இயங்கும் உங்களின் தனிப்பட்ட **Autonomous AI Pilot** உதவியாளர். லேப்டாப் மற்றும் மொபைல் சாதனங்களை ஒன்றிணைத்து அதிவேகமாக செயல்பட வடிவமைக்கப்பட்டுள்ளேன். என்னை நீங்கள் மொபைல் மற்றும் டெஸ்க்டாப் இரண்டிலும் தடையின்றி பயன்படுத்தலாம்.`;
+        }
+        if (/css/i.test(prompt)) {
+            return `### CSS என்றால் என்ன?\n\n**CSS (Cascading Style Sheets)** என்பது ஒரு வலைப்பக்கத்தை (HTML) வண்ணமயமாகவும் அழகாகவும் வடிவமைக்கப் பயன்படும் ஸ்டைலிங் மொழியாகும்.\n\n#### முக்கிய அம்சங்கள்:\n1. **வடிவமைப்பு**: வண்ணங்கள், எழுத்துருக்கள் (Fonts), பின்னணிகள்.\n2. **அமைப்பு (Layout)**: Flexbox மற்றும் CSS Grid மூலம் திரைக்கு ஏற்றவாறு அமைத்தல்.\n3. **ரெஸ்பான்சிவ்**: மொபைல் மற்றும் கணினி இரண்டிலும் சரியாக தெரிய Media Queries பயன்படுத்துதல்.\n\n\`\`\`css\n/* உதாரணம் */\n.button {\n    background-color: #2563eb;\n    color: #ffffff;\n    padding: 10px 20px;\n    border-radius: 8px;\n}\n\`\`\``;
+        }
+        if (/python|பைதான்/i.test(prompt)) {
+            return `### Python (பைதான்) என்றால் என்ன?\n\n**Python** என்பது எளிதில் வாசிக்கக்கூடிய, உலகளவில் மிகவும் புகழ்பெற்ற ஒரு உயர்மட்ட நிரலாக்க மொழி (High-level programming language).\n\n#### பயன்கள்:\n- இணைய பயன்பாடுகள் (Web Development - Django, Flask)\n- செயற்கை நுண்ணறிவு மற்றும் மெஷின் லேர்னிங் (AI & ML)\n- ஆட்டோமேஷன் மற்றும் ஸ்கிரிப்டிங் (Automation Scripts)\n\n\`\`\`python\n# உதாரணம்\ndef greet(name):\n    return f"வணக்கம், {name}!"\n\nprint(greet("Codez48"))\n\`\`\``;
+        }
+        if (/வெப்சைட்|வலைத்தளம்|website/i.test(prompt)) {
+            return `### வலைத்தளம் (Website) உருவாக்குவது எப்படி?\n\nஒரு சிறந்த வலைத்தளத்தை உருவாக்க 3 அடிப்படை தேவைகள் உண்டு:\n\n1. **HTML**: பக்கத்தின் கட்டமைப்பு மற்றும் உள்ளடக்கம்.\n2. **CSS**: பக்கத்திற்கான அழகான நிறங்கள் மற்றும் வடிவமைப்பு.\n3. **JavaScript**: பட்டன் கிளிக்குகள் மற்றும் பயனர் செயல்களுக்கான இயக்கம்.\n\nCodez48 Pilot மூலம் உங்கள் வணிகத்திற்கான வலைத்தளத்தை மிக எளிதாக நீங்கள் உருவாக்கலாம்!`;
+        }
+        return `### Codez48 Pilot AI விளக்கம்\n\n**தங்கள் கேள்வி:** "${prompt}"\n\nதங்களின் கேள்விக்குரிய பணிகள் மற்றும் வழிகாட்டுதல்களை வழங்க Codez48 Pilot AI தயாராக உள்ளது. நீங்கள் மேலும் விபரங்களைக் கேட்கலாம் அல்லது மேலதிக கட்டளைகளை உள்ளிடலாம்.`;
+    }
+
+    // ENGLISH SYNTHESIS
     if (p.includes('css')) {
-        return `### What is CSS?\n\n**CSS (Cascading Style Sheets)** is the foundational styling language of the modern web. It dictates how HTML elements are rendered across different screen sizes and devices.\n\n#### Key Functions of CSS:\n1. **Visual Styling**: Controls colors, typography, backgrounds, shadows, and borders.\n2. **Layout Orchestration**: Powers complex page grids using **CSS Grid** and **Flexbox**.\n3. **Responsive Design**: Uses Media Queries to adapt seamlessly across mobile phones, tablets, and desktops.\n4. **Motion & Interaction**: Enables smooth animations, hover transitions, and interactive visual feedback without requiring JavaScript.`;
+        return `### What is CSS?\n\n**CSS (Cascading Style Sheets)** is the foundational styling language of the web. It dictates how HTML elements are presented visually across screens, layouts, and devices.\n\n#### Core Pillars of CSS:\n1. **Visual Styling**: Fine-tunes typography, colors, shadows, gradients, and borders.\n2. **Layout Orchestration**: Employs **Flexbox** for 1D alignments and **CSS Grid** for advanced 2D application interfaces.\n3. **Responsive Design**: Uses Media Queries (\`@media\`) to guarantee adaptive rendering on smartphones, tablets, and wide monitors.\n4. **Motion & Transitions**: Hardware-accelerated animations (\`transform\`, \`opacity\`, \`transition\`) for ultra-smooth 60fps UX.\n\n\`\`\`css\n/* Modern Responsive Card */\n.pilot-card {\n    display: flex;\n    flex-direction: column;\n    padding: 20px;\n    border-radius: 16px;\n    background: #ffffff;\n    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.pilot-card:hover {\n    transform: translateY(-4px);\n}\n\`\`\``;
     }
 
-    return `I received your prompt: **"${prompt}"**.\n\nCodez48 Pilot is active. You can ask programming questions, generate watermark-free images with Pollinations AI, create 3D presentations, or control your laptop cursor via the Remote Touchpad.`;
+    if (p.includes('html')) {
+        return `### What is HTML?\n\n**HTML (HyperText Markup Language)** is the standard markup language used to build the structural skeleton of every webpage on the internet.\n\n#### Key Characteristics:\n- **Semantic Elements**: Uses tags like \`<header>\`, \`<nav>\`, \`<main>\`, \`<article>\`, and \`<footer>\` for accessibility and search engine optimization (SEO).\n- **DOM Tree**: Parses into the Document Object Model which JavaScript manipulates in real-time.\n- **Hyperlinks & Media**: Seamlessly connects pages and embeds audio, video, and vector graphics.\n\n\`\`\`html\n<!DOCTYPE html>\n<html lang="en">\n<head>\n    <title>Codez48 Pilot</title>\n</head>\n<body>\n    <header><h1>Welcome to Codez48</h1></header>\n    <main><p>Autonomous Pilot Interface Active.</p></main>\n</body>\n</html>\n\`\`\``;
+    }
+
+    if (p.includes('javascript') || p === 'js') {
+        return `### What is JavaScript?\n\n**JavaScript (JS)** is the versatile, high-level programming language that powers dynamic interactivity on the modern web, as well as full-scale servers via Node.js.\n\n#### Core Capabilities:\n- **Event-Driven Reactivity**: Listens to clicks, keyboard strokes, touches, and gestures.\n- **Asynchronous Execution**: Leverages Promises and \`async/await\` for non-blocking network calls and database queries.\n- **Cross-Platform Power**: Runs everywhere—browsers, servers, mobile apps (React Native), and desktop apps (Electron).\n\n\`\`\`javascript\nasync function fetchPilotStatus() {\n    const response = await fetch('/api/status');\n    const data = await response.json();\n    console.log(\`Pilot status: \${data.status}\`);\n}\n\`\`\``;
+    }
+
+    if (p.includes('python')) {
+        return `### What is Python?\n\n**Python** is an elegant, highly-readable, multi-paradigm programming language celebrated for its clear syntax and immense ecosystem.\n\n#### Primary Applications:\n- **AI & Data Science**: Dominates machine learning with PyTorch, TensorFlow, Pandas, and NumPy.\n- **Backend Engineering**: Robust REST & GraphQL APIs using FastAPI, Django, and Flask.\n- **Automation & Scripting**: Rapid system orchestration, web scraping, and task scheduling.\n\n\`\`\`python\ndef calculate_discount(price: float, percentage: float) -> float:\n    \"\"\"Calculate final price after discount.\"\"\"\n    return price * (1 - percentage / 100)\n\nprint(f"Final: ₹{calculate_discount(1499, 20):.2f}")\n\`\`\``;
+    }
+
+    if (p.includes('react')) {
+        return `### What is React?\n\n**React** is the industry-standard JavaScript library created by Meta for engineering high-performance component-driven user interfaces.\n\n#### Core Principles:\n- **Declarative Components**: Reusable UI blocks that update automatically when state changes.\n- **Virtual DOM**: Efficiently computes UI diffs to minimize expensive browser repaints.\n- **Modern Hooks**: \`useState\`, \`useEffect\`, and custom hooks streamline stateful logic.\n\n\`\`\`jsx\nimport React, { useState } from 'react';\n\nexport function Counter() {\n    const [count, setCount] = useState(0);\n    return (\n        <button onClick={() => setCount(count + 1)}>\n            Clicked {count} times\n        </button>\n    );\n}\n\`\`\``;
+    }
+
+    if (p.includes('e-commerce') || p.includes('ecommerce') || p.includes('store') || p.includes('sell')) {
+        return `### Launching an E-Commerce Business with Codez48\n\nCodez48 provides a complete merchant infrastructure to sell products and manage customer orders:\n\n1. **Seller Hub ID**: You have an active Node ID (\`C48-NODE-7555\`) linked to your personal catalog.\n2. **Storefront Link**: Share your live store catalog with customers: \`https://codez48.netlify.app/store/?seller=C48-NODE-7555\`\n3. **Payment Gateways**: Integrated with Razorpay/Stripe checkout for instant credit/debit/UPI payments.\n4. **WhatsApp Automation**: Send instant dispatch alerts and tracking updates to customers via WhatsApp Cloud API.`;
+    }
+
+    if (p.includes('whatsapp') || p.includes('message')) {
+        return `### WhatsApp Cloud & Desktop Automation\n\nCodez48 Pilot connects directly with WhatsApp for instant customer communication:\n\n- **Target Contact**: \`+91 8248482844\`\n- **Automation Engine**: Uses local Win32 desktop protocol to launch chats and dispatch messages automatically.\n- **Order Tracking**: Automatically notifies customers upon order placement, payment confirmation, or shipping status.`;
+    }
+
+    if (/hello|hi|hey|good morning|good evening/i.test(prompt)) {
+        return `### Hello! 👋\n\nWelcome to **Codez48 Pilot**. I am your personal AI assistant for software development, business automations, and device orchestration.\n\n#### Quick Actions:\n- 💻 **Laptop CLI Mode**: Toggle to Laptop mode above to send commands to your active laptop session.\n- 📱 **Mobile Native Mode**: Chat, write code, formulate plans, or create presentations.\n- 🎨 **Image Generation**: Say *"Generate image of..."* to create zero-watermark artwork with Pollinations AI.\n- 🖱️ **Remote Touchpad**: Click the "Remote Mouse" chip to control your laptop cursor.\n\nHow can I help you today?`;
+    }
+
+    // Contextual Structured Answer for General Prompts
+    const capitalized = cleanPrompt.charAt(0).toUpperCase() + cleanPrompt.slice(1);
+    return `### ${capitalized}\n\nHere is a comprehensive breakdown regarding **"${cleanPrompt}"**:\n\n#### Key Overview:\n- **Concept**: Strategic analysis and operational guidelines tailored for your query.\n- **Implementation**: You can execute related workflows directly through Codez48 Pilot or use the top toggle to route commands to your laptop CLI bridge.\n- **Next Steps**: Let me know if you would like me to generate code, draft a 3D slide presentation deck, or create accompanying visuals!`;
 }
 
 // --- MESSAGE ACTIONS: READ ALOUD, COPY, REPLY ---
@@ -1748,15 +1834,10 @@ function switchWsTab(tabId) {
     document.querySelectorAll('.ws-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.ws-tab-content').forEach(c => c.classList.remove('active'));
 
-    if (tabId === 'slides') {
-        document.getElementById('wsTabSlides').classList.add('active');
-        event.target.classList.add('active');
-    } else if (tabId === 'data') {
-        document.getElementById('wsTabData').classList.add('active');
-        event.target.classList.add('active');
-    } else if (tabId === 'terminal') {
-        document.getElementById('wsTabTerminal').classList.add('active');
-        event.target.classList.add('active');
+    const tab = document.getElementById(tabId === 'slides' ? 'wsTabSlides' : tabId === 'data' ? 'wsTabData' : 'wsTabTerminal');
+    if (tab) tab.classList.add('active');
+    if (window.event && window.event.target && window.event.target.classList) {
+        window.event.target.classList.add('active');
     }
 }
 

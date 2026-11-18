@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Free High-Speed Client AI Provider (No 45-Second Rate Limit) -->
+    <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
     <div id="app" class="app-viewport">
@@ -52,10 +54,21 @@
                 </div>
             </div>
 
-            <!-- Compact Mode Switcher: Laptop (CLI) vs Mobile Mode -->
+            <!-- Compact Mode Switcher: Laptop (CLI) vs Mobile Mode (Black Line Outline SVGs, No Emojis) -->
             <div class="mode-segmented-toggle" id="modeSegmentedToggle">
-                <button class="seg-btn active" id="segBtnLaptop" onclick="setAppMode('laptop')" title="Laptop Mode">💻</button>
-                <button class="seg-btn" id="segBtnMobile" onclick="setAppMode('mobile')" title="Mobile Mode">📱</button>
+                <button class="seg-btn active" id="segBtnLaptop" onclick="setAppMode('laptop')" title="Laptop Mode">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                </button>
+                <button class="seg-btn" id="segBtnMobile" onclick="setAppMode('mobile')" title="Mobile Mode">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -152,128 +165,6 @@
                     </div>
                 </footer>
             </div>
-
-            <!-- LAPTOP WORKSPACE PANE (Visible in Laptop Mode) -->
-            <aside class="desktop-workspace-pane" id="desktopWorkspacePane">
-                <div class="workspace-header">
-                    <div class="workspace-tabs">
-                        <button class="ws-tab active" onclick="switchWsTab('slides')">📊 3D Presentation Deck</button>
-                        <button class="ws-tab" onclick="switchWsTab('data')">📈 Data & Excel Analytics</button>
-                        <button class="ws-tab" onclick="switchWsTab('terminal')">⚡ Pilot Terminal</button>
-                    </div>
-                    <div class="ws-actions">
-                        <button class="ws-btn" onclick="openSlidesModal()">Full Screen</button>
-                        <button class="ws-btn primary" onclick="exportPresentationPpt()">Download PPTX</button>
-                    </div>
-                </div>
-
-                <!-- Tab 1: 3D Presentation Deck Preview -->
-                <div id="wsTabSlides" class="ws-tab-content active">
-                    <div class="slides-stage-3d" id="workspaceSlideStage">
-                        <div class="slide-card-3d current">
-                            <span class="slide-badge">Codez48 Pilot • Slide 1/4</span>
-                            <h1 id="wsSlideTitle">Autonomous AI Pilot & Automation Suite</h1>
-                            <p id="wsSlideSub">Next-Generation 3D Mapped Presentations & Laptop Remote Orchestration</p>
-                            <div class="slide-bullet-grid" id="wsSlideBullets">
-                                <div class="bullet-card">
-                                    <span class="bullet-icon">🚀</span>
-                                    <div>
-                                        <strong>Full-Screen Remote Control</strong>
-                                        <p>Turn mobile phone into an ultra-responsive touchpad & gaming gyro air-mouse.</p>
-                                    </div>
-                                </div>
-                                <div class="bullet-card">
-                                    <span class="bullet-icon">📱</span>
-                                    <div>
-                                        <strong>WhatsApp Cloud Automation</strong>
-                                        <p>Trigger laptop WhatsApp desktop dispatch automatically to +91 8248482844.</p>
-                                    </div>
-                                </div>
-                                <div class="bullet-card">
-                                    <span class="bullet-icon">👁️</span>
-                                    <div>
-                                        <strong>Live Vision & Screen OCR</strong>
-                                        <p>Real-time screen inspection, card detection, and voice barge-in conversation.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="slide-nav-controls">
-                        <button onclick="prevSlide()">&larr; Previous</button>
-                        <span id="slideCounter">Slide 1 of 4</span>
-                        <button onclick="nextSlide()">Next &rarr;</button>
-                    </div>
-
-                    <!-- Email PPT Dispatch Row -->
-                    <div class="email-ppt-bar">
-                        <input type="email" id="pptEmailInput" placeholder="Enter your email to receive this PPT...">
-                        <button onclick="emailPresentationToUser()" class="btn-primary">Email PPT</button>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Data & Excel Analytics -->
-                <div id="wsTabData" class="ws-tab-content">
-                    <div class="data-analytics-card">
-                        <div class="data-header-row">
-                            <h3>Business Execution & Task Analytics</h3>
-                            <button class="ws-btn" onclick="downloadExcelReport()">📥 Export to Excel (.xlsx)</button>
-                        </div>
-                        <div class="data-table-wrapper" id="analyticsTableWrapper">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Module</th>
-                                        <th>Target Platform</th>
-                                        <th>Status</th>
-                                        <th>Sync Engine</th>
-                                        <th>Latency</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>Remote Mouse Bridge</strong></td>
-                                        <td>Windows 11 Laptop</td>
-                                        <td><span class="status-pill green">ONLINE</span></td>
-                                        <td>Sub-ms Fast Worker</td>
-                                        <td>0.2 ms</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Gaming Gyroscope</strong></td>
-                                        <td>Raw Win32 Relative</td>
-                                        <td><span class="status-pill green">ACTIVE</span></td>
-                                        <td>Direct Input Move</td>
-                                        <td>0.1 ms</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>WhatsApp Desktop</strong></td>
-                                        <td>+91 8248482844</td>
-                                        <td><span class="status-pill blue">READY</span></td>
-                                        <td>Win32 Protocol</td>
-                                        <td>12 ms</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>3D Mapped Slides</strong></td>
-                                        <td>HTML5 Canvas & PPTX</td>
-                                        <td><span class="status-pill green">ACTIVE</span></td>
-                                        <td>Local Render</td>
-                                        <td>8 ms</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab 3: Pilot Terminal Log -->
-                <div id="wsTabTerminal" class="ws-tab-content">
-                    <div class="terminal-log-view" id="terminalLogView">
-                        <div class="term-line info">[SYSTEM] Codez48 Pilot Workspace active.</div>
-                        <div class="term-line success">[BRIDGE] Sub-millisecond Win32 input worker active on port 4849.</div>
-                        <div class="term-line status">[PAIRING] Device ID: PILOT-10302318 (Connected).</div>
-                    </div>
-                </div>
-            </aside>
         </div>
 
         <!-- LEFT DRAWER MENU (Cleaned Up, No Unnecessary Icons) -->
@@ -379,7 +270,7 @@
         <!-- DEDICATED LIVE VOICE & VISION SCREEN (MATCHING USER SCREENSHOT)-->
         <!-- ============================================================== -->
         <div id="liveVoiceVisionModal" class="full-screen-live-modal" style="display:none;">
-            <!-- Top Controls: Centered Live Pill & Subtle Menu -->
+            <!-- Top Header: Clean Centered Live Pill Only (No Clutter) -->
             <div class="live-top-header">
                 <div class="gemini-live-pill" id="geminiLivePill">
                     <span class="live-pill-wave">
@@ -388,23 +279,6 @@
                         <span class="lp-bar"></span>
                     </span>
                     <span class="live-pill-text">Live</span>
-                </div>
-
-                <div class="live-top-more-wrapper">
-                    <button id="liveMoreBtn" class="live-more-dots-btn" onclick="toggleLiveMoreMenu()" title="More options">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
-                    </button>
-                    <div id="liveMoreMenu" class="live-more-menu" style="display:none;">
-                        <button onclick="startCameraScan(); toggleLiveMoreMenu();" class="more-menu-item">
-                            <span>📷 Camera Scan (OCR)</span>
-                        </button>
-                        <button onclick="triggerScreenShareOrUpload(); toggleLiveMoreMenu();" class="more-menu-item">
-                            <span>🖥️ Share Screen / Photo</span>
-                        </button>
-                        <button onclick="toggleLiveVoiceInput(); toggleLiveMoreMenu();" class="more-menu-item">
-                            <span>⌨️ Type Prompt</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -436,31 +310,55 @@
                 <div class="aurora-glow-blob purple"></div>
             </div>
 
-            <!-- Bottom Circular Action Controls (Hold on Left, End on Right) -->
-            <div class="live-gemini-controls-row">
-                <!-- Hold Button (Navy circle with || pause) -->
-                <div class="gemini-btn-col">
-                    <button id="btnLiveHold" class="gemini-round-btn hold" onclick="toggleLiveHold()" title="Hold / Pause Session">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff" id="holdIconPause">
-                            <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
-                            <rect x="14" y="4" width="4" height="16" rx="1.5"></rect>
-                        </svg>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff" id="holdIconResume" style="display:none;">
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                    </button>
-                    <span class="btn-caption" id="liveHoldCaption">Hold</span>
+            <!-- Bottom Circular Action Controls (Hold & End Made Smaller, 3-Dots Underneath) -->
+            <div class="live-gemini-controls-cluster">
+                <div class="live-gemini-controls-row">
+                    <!-- Hold Button (Compact 48px circle with || pause) -->
+                    <div class="gemini-btn-col">
+                        <button id="btnLiveHold" class="gemini-round-btn hold" onclick="toggleLiveHold()" title="Hold / Pause Session">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffffff" id="holdIconPause">
+                                <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
+                                <rect x="14" y="4" width="4" height="16" rx="1.5"></rect>
+                            </svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffffff" id="holdIconResume" style="display:none;">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        </button>
+                        <span class="btn-caption" id="liveHoldCaption">Hold</span>
+                    </div>
+
+                    <!-- End Button (Compact 48px circle with X) -->
+                    <div class="gemini-btn-col">
+                        <button id="btnLiveEnd" class="gemini-round-btn end" onclick="closeLiveVoicePage()" title="End Live Call">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                        <span class="btn-caption">End</span>
+                    </div>
                 </div>
 
-                <!-- End Button (Red circle with X) -->
-                <div class="gemini-btn-col">
-                    <button id="btnLiveEnd" class="gemini-round-btn end" onclick="closeLiveVoicePage()" title="End Live Call">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                <!-- 3-Dots Options Menu Button Directly Beneath Hold & End -->
+                <div class="live-bottom-more-wrapper">
+                    <button id="liveMoreBtn" class="live-more-dots-btn" onclick="toggleLiveMoreMenu()" title="More options">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="1.5"></circle>
+                            <circle cx="19" cy="12" r="1.5"></circle>
+                            <circle cx="5" cy="12" r="1.5"></circle>
                         </svg>
                     </button>
-                    <span class="btn-caption">End</span>
+                    <div id="liveMoreMenu" class="live-more-menu" style="display:none;">
+                        <button onclick="startCameraScan(); toggleLiveMoreMenu();" class="more-menu-item">
+                            <span>📷 Camera Scan (OCR)</span>
+                        </button>
+                        <button onclick="triggerScreenShareOrUpload(); toggleLiveMoreMenu();" class="more-menu-item">
+                            <span>🖥️ Share Screen / Photo</span>
+                        </button>
+                        <button onclick="toggleLiveVoiceInput(); toggleLiveMoreMenu();" class="more-menu-item">
+                            <span>⌨️ Type Prompt</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
