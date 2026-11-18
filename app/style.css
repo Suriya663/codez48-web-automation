@@ -2735,30 +2735,48 @@ input:checked + .toggle-slider:before {
 .msg-actions-toolbar {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     margin-top: 8px;
     padding-top: 6px;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.msg-action-btn {
+.msg-action-btn.black-drawn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #ffffff;
+    border: 1.8px solid #000000;
+    border-radius: 8px;
+    padding: 0;
     cursor: pointer;
-    transition: background 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
 }
 
-.msg-action-btn:hover {
-    background: rgba(0, 0, 0, 0.08);
-    color: #0f172a;
+.msg-action-btn.black-drawn svg {
+    stroke: #000000;
+    transition: all 0.15s ease-in-out;
+}
+
+.msg-action-btn.black-drawn:hover,
+.msg-action-btn.black-drawn:active {
+    background: #000000;
+    border-color: #000000;
+    transform: scale(1.05);
+}
+
+.msg-action-btn.black-drawn:hover svg,
+.msg-action-btn.black-drawn:active svg {
+    stroke: #ffffff;
+}
+
+.msg-action-btn.black-drawn:hover svg polygon,
+.msg-action-btn.black-drawn:active svg polygon {
+    fill: #ffffff;
 }
 
 /* ============================================================== */

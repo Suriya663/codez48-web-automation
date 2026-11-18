@@ -1183,14 +1183,33 @@ function renderBubbleContent(bubble, msg) {
         `;
     }
 
-    // Message Actions Toolbar for Assistant Responses
+    // Message Actions Toolbar for Assistant Responses: Manually drawn vector lines with black border, NO text, NO emojis
     if (msg.role === 'assistant' && msg.text && msg.text !== 'Thinking...') {
         const safeText = encodeURIComponent(msg.text);
         content += `
             <div class="msg-actions-toolbar">
-                <button class="msg-action-btn" onclick="readMessageAloud(decodeURIComponent('${safeText}'))">🔊 Read</button>
-                <button class="msg-action-btn" onclick="copyMessageText(decodeURIComponent('${safeText}'))">📋 Copy</button>
-                <button class="msg-action-btn" onclick="replyToMessage(decodeURIComponent('${safeText}'))">↩️ Reply</button>
+                <!-- 1. Read / Speaker Vector (Hand-drawn SVG lines, pure black, black border) -->
+                <button class="msg-action-btn black-drawn" title="Read Aloud" onclick="readMessageAloud(decodeURIComponent('${safeText}'))" aria-label="Read">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#000000"></polygon>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    </svg>
+                </button>
+                <!-- 2. Copy / Dual Document Vector (Hand-drawn SVG lines, pure black, black border) -->
+                <button class="msg-action-btn black-drawn" title="Copy Text" onclick="copyMessageText(decodeURIComponent('${safeText}'))" aria-label="Copy">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2.5" ry="2.5"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+                <!-- 3. Reply / Return Arrow Vector (Hand-drawn SVG lines, pure black, black border) -->
+                <button class="msg-action-btn black-drawn" title="Reply" onclick="replyToMessage(decodeURIComponent('${safeText}'))" aria-label="Reply">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 14 4 9 9 4"></polyline>
+                        <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+                    </svg>
+                </button>
             </div>
         `;
     }
