@@ -1,6 +1,6 @@
 {
   "name": "codez48-cli",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "Official Codez48 CLI for Product and Business Tool Management",
   "main": "cli.js",
   "bin": {
