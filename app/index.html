@@ -12,32 +12,26 @@
 <body>
     <div id="app" class="app-viewport">
 
-        <!-- TOP BAR (Exact Image 1 & 3 with Mode Switcher & Gemini Live Call) -->
+        <!-- TOP BAR: CLEAN TOGGLE (LAPTOP / MOBILE) & MINIMAL PROFILE/PLAN -->
         <header class="top-nav-bar">
             <button id="openDrawerBtn" class="top-circle-btn" title="Open Menu">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
             </button>
 
-            <!-- Device Mode Switcher (Mobile <-> Desktop) -->
-            <button id="deviceModeToggleBtn" class="mode-toggle-btn" title="Toggle Desktop / Mobile Layout">
-                <span id="modeIcon">📱</span>
-                <span id="modeLabel">Mobile</span>
-            </button>
+            <!-- Minimalist Mode Switcher: Laptop (CLI) vs Mobile Mode -->
+            <div class="mode-segmented-toggle" id="modeSegmentedToggle">
+                <button class="seg-btn active" id="segBtnLaptop" onclick="setAppMode('laptop')">Laptop</button>
+                <button class="seg-btn" id="segBtnMobile" onclick="setAppMode('mobile')">Mobile</button>
+            </div>
 
-            <!-- Plan / Instant Pill -->
-            <button id="modelSelectorBtn" class="model-pill-btn" onclick="openPlansModal()" title="View or Switch Subscription Plan">
-                <span class="model-name">Instant</span>
-                <span class="model-mode" id="activePlanBadge">High</span>
-            </button>
-
-            <!-- Gemini-Style Live Video Call Button -->
-            <button id="startLiveCallBtn" class="top-circle-btn live-call-btn" title="Start Gemini Live Video Call">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                <span class="live-dot-pulse"></span>
+            <!-- Plan Pill (No Plan Selected by default) -->
+            <button id="modelSelectorBtn" class="model-pill-btn" onclick="openPlansModal()" title="Subscription Plan">
+                <span class="model-name">Plan</span>
+                <span class="model-mode" id="activePlanBadge">Choose Plan</span>
             </button>
         </header>
 
-        <!-- APP BODY WRAPPER (Dual-pane in Desktop Mode, Single-pane in Mobile) -->
+        <!-- APP BODY WRAPPER (Dual-pane in Laptop Mode, Single-pane in Mobile) -->
         <div class="app-body-layout" id="appBodyLayout">
             
             <!-- PRIMARY CHAT COLUMN -->
@@ -45,55 +39,48 @@
                 
                 <!-- MAIN HERO & CHAT CONTAINER -->
                 <main class="main-content-scroll" id="mainScroll">
-                    <!-- HERO VIEW (Exact Image 1 with Monochrome -> Color Entrance Animation) -->
+                    <!-- HERO VIEW (Monochrome to Vibrant Blue Entrance Animation) -->
                     <div id="heroSection" class="hero-center-box">
-                        <!-- Blue orb mascot with eyes (initially monochrome, transitions to vibrant glowing blue) -->
                         <div class="blue-orb" id="mascotOrb">
                             <div class="orb-eye left"></div>
                             <div class="orb-eye right"></div>
                         </div>
 
                         <h2 class="hero-prompt-text">
-                            Hi <span id="heroUserName">Codez48</span>, what would you like to do with Pilot today?
+                            Hi <span id="heroUserName">Codez48</span>, what would you like to automate today?
                         </h2>
+                        <span class="mode-indicator-sub" id="modeIndicatorSub">Active Mode: <strong>Laptop CLI Bridge</strong></span>
                     </div>
 
-                    <!-- CHAT CONVERSATION MESSAGES (Dynamic & Scrollable) -->
+                    <!-- CHAT CONVERSATION MESSAGES (Dynamic, Scrollable, Interactive Confirmation Cards) -->
                     <div id="chatMessages" class="chat-messages-stream" style="display:none;"></div>
                 </main>
 
-                <!-- BOTTOM ACTION CHIPS (Exact Image 1) -->
+                <!-- CLEAN ACTION CHIPS (No Clutter, Connectors Replaced with Profile Hub) -->
                 <div class="chips-scroll-row" id="chipsRow">
                     <button class="action-chip" onclick="startNewChat()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-                        <span>New project</span>
+                        <span>+ New project</span>
                     </button>
                     <button class="action-chip" onclick="openSlidesModal()">
-                        <span>3D Make</span>
-                    </button>
-                    <button class="action-chip" onclick="openSlidesModal()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                        <span>Slides</span>
+                        <span>3D Slides</span>
                     </button>
                     <button class="action-chip" onclick="openRemoteModal()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                        <span>Remote control</span>
+                        <span>Remote Mouse</span>
                     </button>
-                    <button class="action-chip" onclick="openConnectorsModal()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                        <span>Connectors</span>
+                    <button class="action-chip" onclick="openProfileModal()">
+                        <span>Seller Hub</span>
                     </button>
                 </div>
 
-                <!-- BOTTOM INPUT DOCK (Exact Image 1 & 3 with Photo Preview & Send Button) -->
+                <!-- BOTTOM INPUT DOCK WITH PHOTO PREVIEW -->
                 <footer class="bottom-input-dock">
                     
-                    <!-- ATTACHMENT PREVIEW TRAY (Visible when photo is taken or file selected) -->
+                    <!-- ATTACHMENT PREVIEW TRAY -->
                     <div id="attachmentPreviewTray" class="attachment-preview-tray" style="display:none;">
                         <div class="attachment-preview-card">
                             <img id="attachmentPreviewImg" src="" alt="Photo preview">
                             <div class="attachment-preview-info">
-                                <span id="attachmentPreviewName">photo.jpg</span>
+                                <span id="attachmentPreviewName">screenshot.jpg</span>
                                 <button type="button" class="remove-attachment-btn" onclick="clearAttachment()" title="Remove photo">&times;</button>
                             </div>
                         </div>
@@ -106,8 +93,8 @@
 
                         <input type="text" id="promptInput" placeholder="Ask anything. Images work..." autocomplete="off">
 
-                        <!-- Functional Voice Microphone -->
-                        <button id="voiceBtn" class="voice-circle-btn" title="Voice Input" onclick="toggleSpeechRecognition()">
+                        <!-- Functional Voice Microphone: Opens Dedicated Voice/Vision Page -->
+                        <button id="voiceBtn" class="voice-circle-btn" title="Open Voice & Screen Assistant" onclick="openLiveVoicePage()">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>
                         </button>
 
@@ -119,7 +106,7 @@
                 </footer>
             </div>
 
-            <!-- DESKTOP WORKSPACE PANE (Visible in Desktop Mode) -->
+            <!-- LAPTOP WORKSPACE PANE (Visible in Laptop Mode) -->
             <aside class="desktop-workspace-pane" id="desktopWorkspacePane">
                 <div class="workspace-header">
                     <div class="workspace-tabs">
@@ -145,21 +132,21 @@
                                     <span class="bullet-icon">🚀</span>
                                     <div>
                                         <strong>Full-Screen Remote Control</strong>
-                                        <p>Turn mobile phone into an ultra-responsive touchpad & gyro air-mouse.</p>
+                                        <p>Turn mobile phone into an ultra-responsive touchpad & gaming gyro air-mouse.</p>
                                     </div>
                                 </div>
                                 <div class="bullet-card">
                                     <span class="bullet-icon">📱</span>
                                     <div>
                                         <strong>WhatsApp Cloud Automation</strong>
-                                        <p>Trigger laptop WhatsApp desktop dispatch automatically via Firebase triggers.</p>
+                                        <p>Trigger laptop WhatsApp desktop dispatch automatically to +91 8248482844.</p>
                                     </div>
                                 </div>
                                 <div class="bullet-card">
                                     <span class="bullet-icon">👁️</span>
                                     <div>
-                                        <strong>Gemini Live Video OCR</strong>
-                                        <p>Real-time camera speech interaction, document reading, and voice barge-in.</p>
+                                        <strong>Live Vision & Screen OCR</strong>
+                                        <p>Real-time screen inspection, card detection, and voice barge-in conversation.</p>
                                     </div>
                                 </div>
                             </div>
@@ -169,6 +156,12 @@
                         <button onclick="prevSlide()">&larr; Previous</button>
                         <span id="slideCounter">Slide 1 of 4</span>
                         <button onclick="nextSlide()">Next &rarr;</button>
+                    </div>
+
+                    <!-- Email PPT Dispatch Row -->
+                    <div class="email-ppt-bar">
+                        <input type="email" id="pptEmailInput" placeholder="Enter your email to receive this PPT...">
+                        <button onclick="emailPresentationToUser()" class="btn-primary">Email PPT</button>
                     </div>
                 </div>
 
@@ -195,14 +188,21 @@
                                         <td><strong>Remote Mouse Bridge</strong></td>
                                         <td>Windows 11 Laptop</td>
                                         <td><span class="status-pill green">ONLINE</span></td>
-                                        <td>WebSocket :4849</td>
-                                        <td>2.4 ms</td>
+                                        <td>Sub-ms Fast Worker</td>
+                                        <td>0.2 ms</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>WhatsApp Automation</strong></td>
+                                        <td><strong>Gaming Gyroscope</strong></td>
+                                        <td>Raw Win32 Relative</td>
+                                        <td><span class="status-pill green">ACTIVE</span></td>
+                                        <td>Direct Input Move</td>
+                                        <td>0.1 ms</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>WhatsApp Desktop</strong></td>
                                         <td>+91 8248482844</td>
                                         <td><span class="status-pill blue">READY</span></td>
-                                        <td>Desktop Protocol</td>
+                                        <td>Win32 Protocol</td>
                                         <td>12 ms</td>
                                     </tr>
                                     <tr>
@@ -211,13 +211,6 @@
                                         <td><span class="status-pill green">ACTIVE</span></td>
                                         <td>Local Render</td>
                                         <td>8 ms</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Live OCR Scanner</strong></td>
-                                        <td>Mobile Back Camera</td>
-                                        <td><span class="status-pill purple">STREAMING</span></td>
-                                        <td>Vision API / TTS</td>
-                                        <td>150 ms</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -228,15 +221,15 @@
                 <!-- Tab 3: Pilot Terminal Log -->
                 <div id="wsTabTerminal" class="ws-tab-content">
                     <div class="terminal-log-view" id="terminalLogView">
-                        <div class="term-line info">[SYSTEM] Codez48 Pilot Workspace initialised.</div>
-                        <div class="term-line success">[BRIDGE] WebSocket connected to laptop on port 4849.</div>
-                        <div class="term-line status">[AI] Gemini conversational engine ready with barge-in voice.</div>
+                        <div class="term-line info">[SYSTEM] Codez48 Pilot Workspace active.</div>
+                        <div class="term-line success">[BRIDGE] Sub-millisecond Win32 input worker active on port 4849.</div>
+                        <div class="term-line status">[PAIRING] Device ID: PILOT-10302318 (Connected).</div>
                     </div>
                 </div>
             </aside>
         </div>
 
-        <!-- LEFT DRAWER MENU (Exact Image 2 Cleaned Up) -->
+        <!-- LEFT DRAWER MENU (Cleaned Up, No Unnecessary Icons) -->
         <aside id="sideDrawer" class="side-drawer">
             <div class="drawer-header">
                 <div class="user-profile-badge">
@@ -250,40 +243,19 @@
             <div class="drawer-scroll-body">
                 <!-- Navigation Items -->
                 <nav class="drawer-nav-list">
+                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openProfileModal()">
+                        <span class="item-text">Seller Hub & Profile</span>
+                    </a>
                     <a href="javascript:void(0)" class="drawer-nav-item" onclick="openPlansModal()">
-                        <span class="item-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-                        </span>
                         <span class="item-text">Upgrade Plan</span>
                     </a>
                     <a href="javascript:void(0)" class="drawer-nav-item" onclick="openTasksModal()">
-                        <span class="item-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><polyline points="12 9 12 13 15 15"></polyline><line x1="5" y1="3" x2="2" y2="6"></line><line x1="19" y1="3" x2="22" y2="6"></line></svg>
-                        </span>
                         <span class="item-text">Scheduled tasks</span>
                     </a>
                     <a href="javascript:void(0)" class="drawer-nav-item" onclick="openRemoteModal()">
-                        <span class="item-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                        </span>
                         <span class="item-text">Remote control</span>
                     </a>
-                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openConnectorsModal()">
-                        <span class="item-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-                        </span>
-                        <span class="item-text">Connectors</span>
-                    </a>
-                    <a href="javascript:void(0)" class="drawer-nav-item" onclick="openPlansModal()">
-                        <span class="item-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </span>
-                        <span class="item-text">Purchase Automation Score</span>
-                    </a>
                     <a href="/" class="drawer-nav-item" style="border-top: 1px solid #f3f4f6; margin-top: 6px; padding-top: 10px;">
-                        <span class="item-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                        </span>
                         <span class="item-text" style="color:#2563eb; font-weight:600;">Codez48 Main Website</span>
                     </a>
                 </nav>
@@ -295,32 +267,25 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                     <a href="javascript:void(0)" class="drawer-sub-item" onclick="startNewChat()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-                        <span>New project</span>
+                        <span>+ New project</span>
                     </a>
                 </div>
 
                 <!-- Chat History Section (Real User Data, Pin & Delete Options) -->
                 <div class="drawer-section">
                     <div class="section-heading">Chat history</div>
-                    <div class="history-list" id="chatHistoryContainer">
-                        <!-- Populated dynamically by app.js -->
-                    </div>
+                    <div class="history-list" id="chatHistoryContainer"></div>
                 </div>
             </div>
 
-            <!-- Drawer Bottom Toolbar -->
+            <!-- Drawer Bottom Search Bar -->
             <div class="drawer-bottom-bar">
                 <div class="drawer-search-pill">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input type="text" id="historySearchInput" placeholder="Search chats..." oninput="filterHistory(this.value)">
                 </div>
-                <button class="drawer-icon-btn" title="QR Scan" onclick="startCameraScan()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></line><line x1="7" y1="12" x2="17" y2="12"></line></svg>
-                </button>
-                <button class="drawer-icon-btn notification" title="Notifications" onclick="openTasksModal()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    <span class="blue-notification-dot"></span>
+                <button class="drawer-icon-btn" title="Profile" onclick="openProfileModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><circle cx="12" cy="7" r="4"></circle><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg>
                 </button>
             </div>
         </aside>
@@ -328,11 +293,10 @@
         <!-- BACKDROP OVERLAY FOR DRAWER -->
         <div id="drawerBackdrop" class="drawer-backdrop"></div>
 
-        <!-- BOTTOM ACTION SHEET (Exact Image 3) -->
+        <!-- BOTTOM ACTION SHEET -->
         <div id="attachSheet" class="bottom-action-sheet">
             <div class="sheet-handle"></div>
 
-            <!-- 3 Top Cards (Camera, Photos, Local file) -->
             <div class="sheet-top-cards-grid">
                 <button class="sheet-card-btn" onclick="startCameraScan()">
                     <div class="card-icon">
@@ -356,153 +320,98 @@
                 </button>
             </div>
 
-            <!-- List Menu Below -->
-            <div class="sheet-list-menu">
-                <a href="javascript:void(0)" class="sheet-list-item" onclick="applyPrompt('Show installed automation plugins')">
-                    <div class="item-leading-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M12 2v6m0 8v6M2 12h6m8 0h6"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    </div>
-                    <div class="item-content-text">
-                        <strong>Plugins</strong>
-                        <p>Connect apps and databases to automate actions for you</p>
-                    </div>
-                    <div class="item-arrow">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </div>
-                </a>
-
-                <a href="javascript:void(0)" class="sheet-list-item" onclick="applyPrompt('List all active skills and capabilities')">
-                    <div class="item-leading-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    </div>
-                    <div class="item-content-text">
-                        <strong>Skills</strong>
-                        <p>Reuse specialized skills to handle specific tasks reliably</p>
-                    </div>
-                    <div class="item-arrow">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </div>
-                </a>
-
-                <a href="javascript:void(0)" class="sheet-list-item" onclick="toggleWebSearch()">
-                    <div class="item-leading-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                    </div>
-                    <div class="item-content-text">
-                        <strong>Web search</strong>
-                        <p>Real-time internet analysis & data synthesis</p>
-                    </div>
-                    <div class="item-meta">
-                        <span class="meta-tag" id="webSearchTag">Auto</span>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </div>
-                </a>
-            </div>
-
             <!-- Hidden Inputs for Files & Native Mobile Camera -->
             <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFileSelected(event)">
             <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="handleFileSelected(event)">
             <input type="file" id="fileInput" accept="*/*" style="display:none;" onchange="handleFileSelected(event)">
         </div>
 
-        <!-- BACKDROP OVERLAY FOR BOTTOM SHEET -->
         <div id="sheetBackdrop" class="sheet-backdrop"></div>
 
-        <!-- ============================================== -->
-        <!-- MODAL: GEMINI-STYLE LIVE VIDEO CALL & OCR     -->
-        <!-- ============================================== -->
-        <div id="liveCallModal" class="full-screen-live-modal" style="display:none;">
-            <!-- Live Camera Video Viewfinder -->
-            <video id="liveVideoFeed" class="live-video-feed" autoplay playsinline muted></video>
-            
-            <!-- Hidden Canvas for Frame Capture / OCR -->
-            <canvas id="liveOcrCanvas" style="display:none;"></canvas>
-
-            <!-- Top Live Header -->
+        <!-- ============================================================== -->
+        <!-- DEDICATED LIVE VOICE & SCREEN ASSISTANT PAGE (MICROPHONE TAP)   -->
+        <!-- ============================================================== -->
+        <div id="liveVoiceVisionModal" class="full-screen-live-modal" style="display:none;">
+            <!-- Top Controls Bar -->
             <div class="live-top-header">
                 <div class="live-indicator-pill">
                     <span class="live-red-beacon"></span>
-                    <span id="liveCallDuration">00:00</span>
-                    <span class="live-mode-text">• Gemini Live</span>
+                    <span id="liveVoiceStatus">Listening...</span>
+                    <span class="live-mode-text">• Live Assistant</span>
                 </div>
                 <div class="live-top-actions">
-                    <button class="live-action-circle" onclick="flipLiveCamera()" title="Switch Camera">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <button class="live-action-circle" onclick="triggerScreenShareOrUpload()" title="Screen Share or Upload Screenshot">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                     </button>
-                    <button class="live-action-circle end-call" onclick="endLiveCall()" title="End Live Call">
+                    <button class="live-action-circle end-call" onclick="closeLiveVoicePage()" title="Close Session">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- OCR Document Targeting Reticle (Center) -->
-            <div class="ocr-document-reticle" id="ocrReticle">
-                <div class="reticle-corner top-left"></div>
-                <div class="reticle-corner top-right"></div>
-                <div class="reticle-corner bottom-left"></div>
-                <div class="reticle-corner bottom-right"></div>
-                <div class="reticle-laser-line" id="reticleLaser"></div>
-                <span class="reticle-label">Hold document or paper here to read aloud</span>
-            </div>
+            <!-- Central Content Display (Screen Share / Screenshot Viewer & Detection Box) -->
+            <div class="live-center-vision-stage">
+                <!-- Video element for screen share -->
+                <video id="liveScreenShareVideo" autoplay playsinline muted style="display:none;"></video>
+                
+                <!-- Image element for uploaded screenshot -->
+                <img id="liveScreenShotImg" src="" alt="Screen capture" style="display:none;">
 
-            <!-- Real-time Speech Waveform & Live Subtitles Overlay -->
-            <div class="live-center-speech-box">
-                <div class="live-soundwave-bars" id="liveSoundwave">
-                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <!-- Detection HUD Overlay -->
+                <div class="screen-detection-hud" id="screenDetectionHud" style="display:none;">
+                    <div class="hud-target-box">
+                        <span class="hud-badge" id="hudDetectedName">Card Element</span>
+                    </div>
                 </div>
-                <div class="live-transcript-bubble" id="liveTranscriptBubble">
-                    <span id="liveSpeakerTag">Codez48 Pilot</span>
-                    <p id="liveTranscriptText">"I'm listening. Speak or show any document to the camera."</p>
+
+                <!-- Animated Dynamic Music Wave / Audio Visualizer -->
+                <div class="music-wave-container" id="musicWaveContainer">
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
                 </div>
-            </div>
 
-            <!-- Floating Text Input Box (Collapsible) -->
-            <div id="liveCallTextInputRow" class="live-call-text-input-row" style="display:none;">
-                <input type="text" id="liveCallPrompt" placeholder="Type to ask while in call..." onkeydown="if(event.key==='Enter') sendLiveCallText()">
-                <button onclick="sendLiveCallText()">Send</button>
-            </div>
-
-            <!-- Bottom Scrollable Option Carousel (Exact Requirement) -->
-            <div class="live-bottom-carousel-dock">
-                <div class="live-carousel-strip">
-                    <button class="live-carousel-btn active" id="btnLiveOcr" onclick="triggerLiveOcr()">
-                        <div class="c-icon">📖</div>
-                        <span>Live OCR</span>
-                    </button>
-                    <button class="live-carousel-btn" id="btnLiveType" onclick="toggleLiveTextInput()">
-                        <div class="c-icon">⌨️</div>
-                        <span>Input Box</span>
-                    </button>
-                    <button class="live-carousel-btn" onclick="captureLiveSnapshot()">
-                        <div class="c-icon">📸</div>
-                        <span>Share Photo</span>
-                    </button>
-                    <button class="live-carousel-btn" id="btnLiveMute" onclick="toggleLiveMute()">
-                        <div class="c-icon" id="liveMuteIcon">🎙️</div>
-                        <span id="liveMuteText">Mute</span>
-                    </button>
-                    <button class="live-carousel-btn" onclick="flipLiveCamera()">
-                        <div class="c-icon">🔄</div>
-                        <span>Flip Camera</span>
-                    </button>
-                    <button class="live-carousel-btn hangup" onclick="endLiveCall()">
-                        <div class="c-icon">🔴</div>
-                        <span>End Call</span>
-                    </button>
+                <!-- Subtitle / Speech Bubble -->
+                <div class="live-speech-subtitle" id="liveSpeechSubtitle">
+                    <span id="liveSpeakerName">AI Assistant</span>
+                    <p id="liveSpeakerText">"I am listening. Speak freely, or share your screen/screenshot to analyze any card."</p>
                 </div>
             </div>
+
+            <!-- Text Prompt Input Row (Optional) -->
+            <div id="liveVoiceTextRow" class="live-voice-text-row" style="display:none;">
+                <input type="text" id="liveVoiceTextInput" placeholder="Type prompt here..." onkeydown="if(event.key==='Enter') sendLiveVoiceText()">
+                <button onclick="sendLiveVoiceText()">Send</button>
+            </div>
+
+            <!-- Clean, Clutter-Free Bottom Tools Bar -->
+            <div class="live-voice-bottom-bar">
+                <button class="voice-tool-btn" id="btnShareScreen" onclick="triggerScreenShareOrUpload()" title="Screen Share / Upload Screenshot">
+                    <span>🖥️ Share Screen</span>
+                </button>
+                <button class="voice-tool-btn active" id="btnLiveMicToggle" onclick="toggleLiveMic()" title="Mute / Unmute">
+                    <span id="liveMicLabel">🎙️ Mute</span>
+                </button>
+                <button class="voice-tool-btn" onclick="toggleLiveVoiceInput()" title="Type Text">
+                    <span>⌨️ Type</span>
+                </button>
+                <button class="voice-tool-btn hangup" onclick="closeLiveVoicePage()" title="End Session">
+                    <span>✕ End</span>
+                </button>
+            </div>
+
+            <input type="file" id="screenShotUploadInput" accept="image/*" style="display:none;" onchange="handleScreenShotUploaded(event)">
         </div>
 
-        <!-- ============================================== -->
-        <!-- MODAL: FULL-SCREEN REMOTE TOUCHPAD & GYRO      -->
-        <!-- ============================================== -->
+        <!-- ============================================================== -->
+        <!-- MODAL: FULL-SCREEN REMOTE TOUCHPAD (WITH GAMING GYRO & KEYBOARD)-->
+        <!-- ============================================================== -->
         <div id="remoteModal" class="full-screen-remote-modal" style="display:none;">
-            <!-- Top Controls Bar -->
             <div class="remote-top-header">
                 <div class="remote-host-info">
                     <span class="remote-title">Laptop Mouse Control</span>
                     <div class="host-ip-badge">
-                        <span id="bridgeStatusTag" class="tag checking">CHECKING...</span>
+                        <span id="bridgeStatusTag" class="tag online">Connected</span>
                         <input type="text" id="laptopIpInput" placeholder="10.30.23.18" title="Laptop IP Address">
                     </div>
                 </div>
@@ -512,22 +421,29 @@
                 </div>
             </div>
 
-            <!-- Toggles Card -->
+            <!-- Toggles & Quick Keyboard Bar -->
             <div class="remote-toggles-bar">
                 <div class="toggle-pill">
-                    <span>Air-Mouse (Gyro)</span>
+                    <span>Gaming Gyro</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="gyroToggle">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
                 <div class="toggle-pill">
-                    <span>Background Mode</span>
+                    <span>Background</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="bgToggle">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+                <button class="keyboard-toggle-btn" onclick="toggleRemoteKeyboard()" title="Type on Laptop">⌨️ Key</button>
+            </div>
+
+            <!-- Virtual Keyboard Input Strip (Simultaneous with Gyro) -->
+            <div id="remoteKeyboardStrip" class="remote-keyboard-strip" style="display:none;">
+                <input type="text" id="remoteKeyInput" placeholder="Type text to send to laptop..." oninput="sendKeystrokesToLaptop(this.value)">
+                <button onclick="clearRemoteKeyInput()">Clear</button>
             </div>
 
             <!-- MASSIVE FULL-SCREEN TOUCHPAD SURFACE -->
@@ -535,10 +451,9 @@
                 <div class="touchpad-grid-pattern"></div>
                 <div class="touchpad-center-guide">
                     <div class="touch-ring"></div>
-                    <span>Slide finger to steer cursor</span>
+                    <span>Slide finger to steer cursor • Raw 3D Gaming Active</span>
                     <small>Tap = Left Click • 2-Finger Tap = Right Click</small>
                 </div>
-                <!-- Edge Scroll Strip -->
                 <div class="touchpad-scroll-strip" id="touchScrollStrip" title="Slide vertically to scroll page">
                     <span>▲ SCROLL ▼</span>
                 </div>
@@ -558,16 +473,77 @@
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- MODAL: SUBSCRIPTION UPGRADE & PLAN SELECTOR    -->
-        <!-- ============================================== -->
+        <!-- ============================================================== -->
+        <!-- MODAL: E-COMMERCE SELLER HUB & USER PROFILE (REPLACES CONNECTORS)-->
+        <!-- ============================================================== -->
+        <div id="profileModal" class="full-modal" style="display:none;">
+            <div class="modal-inner-card">
+                <div class="modal-top-bar">
+                    <h3>Seller Hub & Profile</h3>
+                    <button class="close-modal-btn" onclick="closeProfileModal()">&times;</button>
+                </div>
+                <p class="modal-sub-desc">Manage your business profile, product storefront, and official Codez48 site link.</p>
+
+                <div class="profile-card-content">
+                    <div class="profile-header-banner">
+                        <div class="avatar-circle" id="profileAvatar">48</div>
+                        <div class="profile-title-box">
+                            <h4 id="profileBrandName">Your Brand</h4>
+                            <span class="node-id-badge" id="profileNodeId">ID: C48-NODE-PENDING</span>
+                        </div>
+                    </div>
+
+                    <!-- Storefront URL & Get Website Action -->
+                    <div class="profile-store-box" id="profileStoreBox">
+                        <span class="store-box-label">Your Official Website Page:</span>
+                        <div class="store-url-row">
+                            <a id="profileWebsiteUrl" href="https://codez48.netlify.app/store/" target="_blank">https://codez48.netlify.app/store/</a>
+                        </div>
+                        <div id="noBrandPrompt" style="display:none; margin-top:10px;">
+                            <button onclick="requestBrandWebsite()" class="btn-primary" style="width:100%;">🌐 Get your website / product page</button>
+                        </div>
+                    </div>
+
+                    <!-- User Plan Details & Upgrade -->
+                    <div class="profile-section-card">
+                        <div class="sec-header">
+                            <strong>My Plan</strong>
+                            <button class="link-btn" onclick="openPlansModal()">Upgrade Plan &rarr;</button>
+                        </div>
+                        <p id="profilePlanText" style="font-size:13px; color:#475569; margin:4px 0;">Current Tier: <strong>No Plan Selected</strong></p>
+                    </div>
+
+                    <!-- My Products Section -->
+                    <div class="profile-section-card">
+                        <div class="sec-header">
+                            <strong>My Products</strong>
+                            <a href="https://codez48.netlify.app/tools/index.html" target="_blank" class="link-btn">+ Add Product</a>
+                        </div>
+                        <div class="profile-products-list" id="profileProductsList">
+                            <div class="product-mini-card">
+                                <strong>Codez48 Handloom Silk Saree</strong>
+                                <span>&#8377;3,499 &bull; Traditional &bull; Active</span>
+                            </div>
+                            <div class="product-mini-card">
+                                <strong>Full Stack 72-Day Course Kit</strong>
+                                <span>&#8377;12,000 &bull; Education &bull; Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- MODAL: SUBSCRIPTION UPGRADE & PAYMENT GATEWAY INTEGRATION      -->
+        <!-- ============================================================== -->
         <div id="plansModal" class="full-modal" style="display:none;">
             <div class="modal-inner-card">
                 <div class="modal-top-bar">
                     <h3>Codez48 Pilot Subscription Plans</h3>
                     <button class="close-modal-btn" onclick="closePlansModal()">&times;</button>
                 </div>
-                <p class="modal-sub-desc">Choose or upgrade your plan. The top badge updates to reflect your tier.</p>
+                <p class="modal-sub-desc">No plan is selected by default. Choose a plan or upgrade via our secure payment gateway.</p>
                 
                 <div class="plans-tier-grid">
                     <!-- Plan 1: Basic -->
@@ -575,7 +551,7 @@
                         <div class="plan-header">
                             <span class="plan-tag starter">Plan 1</span>
                             <h4>Basic</h4>
-                            <div class="plan-price">Free <span>/ Starter</span></div>
+                            <div class="plan-price">&#8377;0 <span>/ Free Starter</span></div>
                         </div>
                         <ul class="plan-features">
                             <li>✓ Standard speed AI responses</li>
@@ -586,52 +562,47 @@
                     </div>
 
                     <!-- Plan 2: Medium -->
-                    <div class="plan-card" id="planCardMedium" onclick="selectPlan('Medium')">
+                    <div class="plan-card" id="planCardMedium">
                         <div class="plan-header">
                             <span class="plan-tag popular">Plan 2</span>
                             <h4>Medium</h4>
                             <div class="plan-price">&#8377;499 <span>/ month</span></div>
                         </div>
                         <ul class="plan-features">
-                            <li>✓ Accelerated vision & prompt engine</li>
+                            <li>✓ Accelerated prompt engine</li>
                             <li>✓ Full-Screen Laptop Remote Touchpad</li>
-                            <li>✓ WhatsApp Automated Dispatch</li>
-                            <li>✓ Gyroscope Air-Mouse support</li>
+                            <li>✓ Gaming Gyroscope Crosshair Move</li>
                         </ul>
-                        <button class="plan-select-btn primary" onclick="selectPlan('Medium')">Upgrade to Medium</button>
+                        <button class="plan-select-btn primary" onclick="redirectToPaymentGateway('MEDIUM')">Purchase / Upgrade (&#8377;499)</button>
                     </div>
 
                     <!-- Plan 3: High -->
-                    <div class="plan-card featured" id="planCardHigh" onclick="selectPlan('High')">
+                    <div class="plan-card featured" id="planCardHigh">
                         <div class="plan-header">
                             <span class="plan-tag enterprise">Plan 3 • Enterprise</span>
                             <h4>High</h4>
                             <div class="plan-price">&#8377;1,499 <span>/ month</span></div>
                         </div>
                         <ul class="plan-features">
-                            <li>✓ Gemini Live Interactive Video Call</li>
-                            <li>✓ Real-Time Camera OCR Document Reader</li>
-                            <li>✓ 3D Mapped Presentations & PPTX Export</li>
-                            <li>✓ Multi-Connectors (WhatsApp, Gmail, Firebase)</li>
-                            <li>✓ Priority Laptop Pilot Execution</li>
+                            <li>✓ Dedicated Live Voice & Screen OCR</li>
+                            <li>✓ 3D Mapped Presentations & Email PPTX</li>
+                            <li>✓ Full-Screen Gaming Gyro & Remote Keyboard</li>
                         </ul>
-                        <button class="plan-select-btn enterprise" onclick="selectPlan('High')">Activate High Plan</button>
+                        <button class="plan-select-btn enterprise" onclick="redirectToPaymentGateway('HIGH')">Purchase / Upgrade (&#8377;1,499)</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- MODAL: SCHEDULED TASKS                         -->
-        <!-- ============================================== -->
+        <!-- ============================================================== -->
+        <!-- MODAL: SCHEDULED TASKS                                         -->
+        <!-- ============================================================== -->
         <div id="tasksModal" class="full-modal" style="display:none;">
             <div class="modal-inner-card">
                 <div class="modal-top-bar">
                     <h3>Scheduled Automation Tasks</h3>
                     <button class="close-modal-btn" onclick="closeTasksModal()">&times;</button>
                 </div>
-                <p class="modal-sub-desc">Active automations executing automatically on schedule via laptop pilot.</p>
-                
                 <div class="tasks-list" id="scheduledTasksList">
                     <div class="task-item-card">
                         <div class="task-info">
@@ -643,103 +614,13 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-
-                    <div class="task-item-card">
-                        <div class="task-info">
-                            <strong>Nightly Database & Workspace Sync</strong>
-                            <p>Every night at 11:30 PM &bull; Firebase Firestore Sync</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked onchange="toggleTask(2, this.checked)">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="task-item-card">
-                        <div class="task-info">
-                            <strong>Live Competitor Pricing Scrape</strong>
-                            <p>Every 6 hours &bull; Netlify Functions Web Scraper</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" onchange="toggleTask(3, this.checked)">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="add-task-box">
-                    <h4>Add New Scheduled Automation</h4>
-                    <div class="add-task-form">
-                        <input type="text" id="newTaskName" placeholder="Task description (e.g. Weekly Excel export)">
-                        <input type="time" id="newTaskTime" value="10:00">
-                        <button onclick="addNewScheduledTask()" class="btn-primary">Schedule Task</button>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- MODAL: CONNECTORS SUITE (WHATSAPP & OTHERS)   -->
-        <!-- ============================================== -->
-        <div id="connectorsModal" class="full-modal" style="display:none;">
-            <div class="modal-inner-card">
-                <div class="modal-top-bar">
-                    <h3>Enterprise Connectors Suite</h3>
-                    <button class="close-modal-btn" onclick="closeConnectorsModal()">&times;</button>
-                </div>
-                <p class="modal-sub-desc">Integrate mobile prompts with desktop and cloud messaging endpoints.</p>
-
-                <div class="connectors-grid">
-                    <!-- WhatsApp Connector -->
-                    <div class="connector-card active">
-                        <div class="c-head">
-                            <span class="c-icon-badge whatsapp">WA</span>
-                            <div>
-                                <strong>WhatsApp Desktop Automation</strong>
-                                <p>Target: <strong>+91 8248482844</strong></p>
-                            </div>
-                            <span class="c-status-badge">CONNECTED</span>
-                        </div>
-                        <p class="c-desc">Dispatches "I am connected this automation tool" directly opening WhatsApp on the laptop.</p>
-                        <div class="c-trigger-row">
-                            <input type="text" id="waCustomMsg" value="I am connected this automation tool">
-                            <button onclick="triggerWhatsAppAutomation()" class="c-action-btn">Trigger from Phone</button>
-                        </div>
-                        <div class="c-status-feedback" id="waFeedback">Status: Ready to trigger</div>
-                    </div>
-
-                    <!-- Gmail / Email Connector -->
-                    <div class="connector-card">
-                        <div class="c-head">
-                            <span class="c-icon-badge gmail">M</span>
-                            <div>
-                                <strong>Gmail & SMTP Mailer</strong>
-                                <p>Automated OTP & status notifications</p>
-                            </div>
-                            <span class="c-status-badge">ACTIVE</span>
-                        </div>
-                        <p class="c-desc">Automated email reports dispatched directly through Netlify serverless functions.</p>
-                    </div>
-
-                    <!-- Firebase Firestore Connector -->
-                    <div class="connector-card">
-                        <div class="c-head">
-                            <span class="c-icon-badge firebase">FB</span>
-                            <div>
-                                <strong>Firebase Firestore Cloud</strong>
-                                <p>Real-time triggers & state sync</p>
-                            </div>
-                            <span class="c-status-badge">SYNCED</span>
-                        </div>
-                        <p class="c-desc">Maintains real-time database listener on the laptop for remote cloud execution triggers.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================== -->
-        <!-- MODAL: 3D-MAPPED SLIDES GENERATION             -->
-        <!-- ============================================== -->
+        <!-- ============================================================== -->
+        <!-- MODAL: 3D-MAPPED SLIDES GENERATION                             -->
+        <!-- ============================================================== -->
         <div id="slidesModal" class="full-modal" style="display:none;">
             <div class="modal-inner-card slides-generator-modal">
                 <div class="modal-top-bar">
@@ -752,11 +633,8 @@
                     <button onclick="generateCustomSlideDeck()" class="btn-primary">Generate 3D Presentation</button>
                 </div>
 
-                <!-- 3D Slide Canvas Container -->
                 <div class="modal-slide-viewport">
-                    <div class="modal-slide-deck" id="modalSlideDeck">
-                        <!-- Injected by JavaScript -->
-                    </div>
+                    <div class="modal-slide-deck" id="modalSlideDeck"></div>
                     <div class="modal-slide-nav">
                         <button onclick="prevModalSlide()">◀ Prev Slide</button>
                         <span id="modalSlideCounter">Slide 1 of 4</span>
@@ -765,15 +643,13 @@
                 </div>
 
                 <div class="slides-footer-actions">
-                    <button onclick="exportPresentationPpt()" class="btn-secondary">Download PPT Slides (.html / .pptx)</button>
+                    <button onclick="exportPresentationPpt()" class="btn-secondary">Download PPT (.html)</button>
                     <button onclick="closeSlidesModal()" class="btn-primary">Done</button>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- CHAT HISTORY CONTEXT MENU (PIN / DELETE)       -->
-        <!-- ============================================== -->
+        <!-- CHAT HISTORY CONTEXT MENU -->
         <div id="historyContextMenu" class="history-context-menu" style="display:none;">
             <button onclick="togglePinCurrentChat()">📌 <span id="pinActionText">Pin Chat</span></button>
             <button onclick="deleteCurrentChat()" class="delete-btn">🗑️ Delete Chat</button>

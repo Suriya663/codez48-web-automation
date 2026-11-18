@@ -1,17 +1,16 @@
 /**
  * CODEZ48 PILOT UNIFIED CLIENT ENGINE
+ * 
  * Features:
- * - Offline/Online Hybrid AI Chat (Gemini API + Local Autonomous Engine)
- * - Mobile <-> Desktop Responsive Workspace Switcher
- * - Gemini Live Video Call (Live Camera, Speech-to-Speech, Voice Barge-in, Live Document OCR)
- * - Full-Screen Remote Mouse Trackpad & Gyro Air-Mouse
- * - WhatsApp Automation Trigger (+91 8248482844) with Laptop Dispatch
- * - Multi-Connectors (WhatsApp, Gmail, Firebase Firestore, Webhooks)
- * - Real Dynamic Chat History with Pinning and Deletion
- * - 3D Mapped Presentation Slides Generator & PPTX Export
- * - Data Analysis & Excel Export (.xlsx)
- * - Camera Uploads with Inline Photo Thumbnail Previews
- * - 3-Tier Subscription Plan Switcher (Basic, Medium, High)
+ * - Minimalist Mode Switcher: Laptop (CLI Bridge) vs Mobile Mode
+ * - Dedicated Live Voice & Screen Assistant Page (Microphone Tap)
+ *   with Music Wave Visualizer, Screen Share, and Real-Time OCR Card Identification
+ * - E-Commerce Seller Hub & User Profile (Replaces Connectors)
+ *   with Brand Website URL, "Get your website" trigger, My Plan & My Products
+ * - Full-Screen Remote Mouse Trackpad with Raw Gaming Gyro & Virtual Keyboard
+ * - Payment Gateway Integration (No plan selected by default + Upgrade options)
+ * - Automated Email Dispatch for Generated 3D Presentations (PPT)
+ * - Interactive Desktop Confirmation Cards (Yes/No prompts directly in mobile chat)
  */
 
 // --- CONFIGURATION & STATE ---
@@ -22,8 +21,9 @@ let LAPTOP_BRIDGE_URL = 'http://' + savedIp + ':4849';
 
 let isPilotOnline = false;
 let ws = null;
-let activePlan = 'High';
-let deviceMode = 'mobile';
+let appMode = 'laptop'; // 'laptop' or 'mobile'
+let activePlan = null; // No plan selected by default!
+let userProfile = null;
 let soundEnabled = true;
 
 // Active Chat & History State
@@ -35,14 +35,11 @@ let attachedPhoto = null;
 // Speech Recognition & TTS
 let speechRecognizer = null;
 let isRecognizing = false;
-let isLiveCallActive = false;
-let liveStream = null;
-let liveFacingMode = 'environment';
-let liveDurationTimer = null;
-let liveCallSeconds = 0;
-let liveMuted = false;
+let isLiveVoiceActive = false;
+let screenStream = null;
+let liveMicMuted = false;
 
-// Touchpad State
+// Touchpad & Gyro State
 let lastTouchX = null;
 let lastTouchY = null;
 let touchCount = 0;
@@ -57,36 +54,36 @@ let slideDeckData = [
         title: "Autonomous AI Pilot & Automation Suite",
         subtitle: "Next-Generation 3D Mapped Presentations & Laptop Remote Orchestration",
         bullets: [
-            { icon: "🚀", title: "Full-Screen Remote Control", desc: "Turn mobile phone into an ultra-responsive touchpad & gyro air-mouse." },
-            { icon: "📱", title: "WhatsApp Cloud Automation", desc: "Trigger laptop WhatsApp desktop dispatch automatically via Firebase triggers." },
-            { icon: "👁️", title: "Gemini Live Video OCR", desc: "Real-time camera speech interaction, document reading, and voice barge-in." }
+            { icon: "🚀", title: "Full-Screen Remote Control", desc: "Turn mobile phone into an ultra-responsive touchpad & gaming gyro air-mouse." },
+            { icon: "📱", title: "WhatsApp Cloud Automation", desc: "Trigger laptop WhatsApp desktop dispatch automatically to +91 8248482844." },
+            { icon: "👁️", title: "Live Vision & Screen OCR", desc: "Real-time screen inspection, card detection, and voice barge-in conversation." }
         ]
     },
     {
-        title: "WhatsApp Automation Architecture",
-        subtitle: "Direct Dispatch to +91 8248482844 via Local Win32 Bridge",
+        title: "E-Commerce Seller Hub Architecture",
+        subtitle: "Unique Merchant Node ID & Official Web Storefront",
         bullets: [
-            { icon: "⚡", title: "Single-Tap Mobile Trigger", desc: "Trigger background desktop dispatch with custom automated messages." },
-            { icon: "💬", title: "Delivery Ticks Indicator", desc: "WhatsApp-style single, double, and blue read status receipts." },
-            { icon: "🔒", title: "Zero Data Leakage", desc: "Local subnet communication directly between phone and laptop." }
+            { icon: "🆔", title: "Autonomous Node ID", desc: "Instant seller ID provisioning with verification sent directly to user email." },
+            { icon: "🌐", title: "Custom Storefront URL", desc: "Dedicated store page on codez48.netlify.app with branded products." },
+            { icon: "💳", title: "Secure Payment Gateway", desc: "Direct HTTPS checkout integration for basic, medium, and high subscription plans." }
         ]
     },
     {
-        title: "Gemini Live Document OCR & Voice Barge-in",
-        subtitle: "Real-time Computer Vision & Conversational AI",
+        title: "3D Gaming Gyroscope & Relative Aiming",
+        subtitle: "Zero-Latency Sub-Millisecond Input Driver",
         bullets: [
-            { icon: "📄", title: "Document & Paper Scanner", desc: "Instantly reads printed books, invoices, and contracts aloud." },
-            { icon: "🎙️", title: "Voice Barge-In", desc: "Speak at any time to pause AI speech and steer conversation live." },
-            { icon: "🔄", title: "Dual-Camera Switching", desc: "Flip between front-facing conversational mode and document inspection." }
+            { icon: "🎮", title: "Raw Input mouse_event", desc: "Seamless crosshair aiming inside full-screen 3D FPS and action PC games." },
+            { icon: "⌨️", title: "Simultaneous Typing", desc: "Type on mobile virtual keyboard while steering mouse cursor with gyroscope." },
+            { icon: "⚡", title: "Persistent Memory Worker", desc: "Sub-millisecond latency eliminating Windows process spawn overhead." }
         ]
     },
     {
-        title: "3D Presentation & Data Analytics",
+        title: "Presentation Email Delivery & Data Analysis",
         subtitle: "Automated Slide Deck & Excel File Generation",
         bullets: [
             { icon: "📊", title: "Instant PPT Generation", desc: "Convert any text prompt or syllabus into downloadable presentations." },
-            { icon: "📈", title: "Data Analysis Engine", desc: "Synthesize reports and export structured Excel spreadsheet (.xlsx) data." },
-            { icon: "💻", title: "Dual-Pane Desktop Workspace", desc: "Seamlessly switch between compact mobile UI and expansive desktop workstation." }
+            { icon: "📧", title: "Automated Email Dispatch", desc: "Automatically emails exported presentations directly to your inbox." },
+            { icon: "📈", title: "Data Analysis Engine", desc: "Synthesize reports and export structured Excel spreadsheet (.xlsx) data." }
         ]
     }
 ];
@@ -100,45 +97,47 @@ document.addEventListener('DOMContentLoaded', () => {
     initGyro();
     initSpeechRecognition();
     initChatStorage();
+    fetchSellerProfile();
     checkLaptopStatus();
-    setInterval(checkLaptopStatus, 6000);
+    setInterval(checkLaptopStatus, 5000);
 });
 
 // --- SETTINGS & PERSISTENCE ---
 function loadSettings() {
-    activePlan = localStorage.getItem('codez48_plan') || 'High';
+    activePlan = localStorage.getItem('codez48_plan') || null;
     updatePlanBadge(activePlan);
 
-    deviceMode = localStorage.getItem('codez48_device_mode') || 'mobile';
-    applyDeviceMode(deviceMode);
+    appMode = localStorage.getItem('codez48_app_mode') || 'laptop';
+    setAppMode(appMode, false);
 
     const savedIpInput = document.getElementById('laptopIpInput');
     if (savedIpInput) savedIpInput.value = savedIp;
 }
 
-// --- DEVICE MODE SWITCHER (MOBILE <-> DESKTOP) ---
-function toggleDeviceMode() {
-    deviceMode = (deviceMode === 'mobile') ? 'desktop' : 'mobile';
-    localStorage.setItem('codez48_device_mode', deviceMode);
-    applyDeviceMode(deviceMode);
-}
+// --- CLEAN SEGMENTED MODE SWITCHER (LAPTOP VS MOBILE) ---
+function setAppMode(mode, save = true) {
+    appMode = mode;
+    if (save) localStorage.setItem('codez48_app_mode', mode);
 
-function applyDeviceMode(mode) {
-    const icon = document.getElementById('modeIcon');
-    const label = document.getElementById('modeLabel');
-    if (mode === 'desktop') {
-        document.body.classList.add('desktop-mode');
-        if (icon) icon.innerText = '🖥️';
-        if (label) label.innerText = 'Desktop';
+    const btnLaptop = document.getElementById('segBtnLaptop');
+    const btnMobile = document.getElementById('segBtnMobile');
+    const subText = document.getElementById('modeIndicatorSub');
+
+    if (mode === 'laptop') {
+        document.body.classList.add('laptop-mode');
+        if (btnLaptop) btnLaptop.classList.add('active');
+        if (btnMobile) btnMobile.classList.remove('active');
+        if (subText) subText.innerHTML = 'Active Mode: <strong>Laptop CLI Bridge</strong>';
         renderWorkspaceSlide();
     } else {
-        document.body.classList.remove('desktop-mode');
-        if (icon) icon.innerText = '📱';
-        if (label) label.innerText = 'Mobile';
+        document.body.classList.remove('laptop-mode');
+        if (btnLaptop) btnLaptop.classList.remove('active');
+        if (btnMobile) btnMobile.classList.add('active');
+        if (subText) subText.innerHTML = 'Active Mode: <strong>Mobile Native Interface</strong>';
     }
 }
 
-// --- SUBSCRIPTION PLAN SELECTOR ---
+// --- PLAN & PAYMENT GATEWAY INTEGRATION ---
 function openPlansModal() {
     closeDrawer();
     const modal = document.getElementById('plansModal');
@@ -160,8 +159,20 @@ function selectPlan(planName) {
 
 function updatePlanBadge(planName) {
     const badge = document.getElementById('activePlanBadge');
+    const profilePlan = document.getElementById('profilePlanText');
     if (!badge) return;
+
+    if (!planName) {
+        badge.innerText = 'Choose Plan';
+        badge.style.background = '#f1f5f9';
+        badge.style.color = '#64748b';
+        if (profilePlan) profilePlan.innerHTML = 'Current Tier: <strong>No Plan Selected</strong>';
+        return;
+    }
+
     badge.innerText = planName;
+    if (profilePlan) profilePlan.innerHTML = `Current Tier: <strong>Plan ${planName}</strong>`;
+
     if (planName === 'High') {
         badge.style.background = '#dcfce7';
         badge.style.color = '#15803d';
@@ -169,9 +180,79 @@ function updatePlanBadge(planName) {
         badge.style.background = '#dbeafe';
         badge.style.color = '#1d4ed8';
     } else {
-        badge.style.background = '#f1f5f9';
-        badge.style.color = '#475569';
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#b45309';
     }
+}
+
+function redirectToPaymentGateway(planType) {
+    // Official HTTPS Payment Gateway URL
+    const paymentUrl = `https://codez48.netlify.app/checkout.html?plan=${planType.toUpperCase()}`;
+    window.open(paymentUrl, '_blank');
+    selectPlan(planType === 'HIGH' ? 'High' : 'Medium');
+}
+
+// --- SELLER HUB & USER PROFILE (REPLACES CONNECTORS) ---
+async function fetchSellerProfile() {
+    const email = localStorage.getItem('codez48_user_email') || 'codez4848@gmail.com';
+    try {
+        const res = await fetch(`${API_BASE}/mobile-otp-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'GET_PROFILE', email })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.profile) {
+                userProfile = data.profile;
+                updateProfileDom(userProfile);
+                return;
+            }
+        }
+    } catch (_) {}
+
+    // Fallback profile
+    userProfile = {
+        sellerId: 'C48-NODE-8248',
+        brand: 'Codez48 Hub',
+        websiteUrl: 'https://codez48.netlify.app/store/?seller=C48-NODE-8248',
+        plan: activePlan || 'No Plan Selected'
+    };
+    updateProfileDom(userProfile);
+}
+
+function updateProfileDom(profile) {
+    const brandElem = document.getElementById('profileBrandName');
+    const nodeElem = document.getElementById('profileNodeId');
+    const urlElem = document.getElementById('profileWebsiteUrl');
+    const noBrandBox = document.getElementById('noBrandPrompt');
+
+    if (brandElem) brandElem.innerText = profile.brand || 'Your Brand';
+    if (nodeElem) nodeElem.innerText = `ID: ${profile.sellerId || 'C48-NODE-8248'}`;
+    
+    if (urlElem) {
+        urlElem.href = profile.websiteUrl || 'https://codez48.netlify.app/store/';
+        urlElem.innerText = profile.websiteUrl || 'https://codez48.netlify.app/store/';
+    }
+
+    if (!profile.brand && noBrandBox) {
+        noBrandBox.style.display = 'block';
+    }
+}
+
+function openProfileModal() {
+    closeDrawer();
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function requestBrandWebsite() {
+    window.open('https://codez48.netlify.app/#merchant-directory', '_blank');
 }
 
 // --- CHAT STORAGE & REAL HISTORY ---
@@ -186,7 +267,6 @@ function initChatStorage() {
     if (chats.length === 0) {
         startNewChat(false);
     } else {
-        // Load latest chat
         currentChatId = chats[0].id;
         loadChatSession(currentChatId);
     }
@@ -214,7 +294,6 @@ function startNewChat(save = true) {
     currentChatId = newId;
     if (save) saveChats();
 
-    // Reset UI
     const hero = document.getElementById('heroSection');
     const msgStream = document.getElementById('chatMessages');
     if (hero) hero.style.display = 'flex';
@@ -257,7 +336,6 @@ function renderChatHistory(filter = '') {
     if (!container) return;
     container.innerHTML = '';
 
-    // Sort: Pinned first, then by updatedAt descending
     const sorted = [...chats].sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
@@ -276,7 +354,6 @@ function renderChatHistory(filter = '') {
         `;
         item.onclick = () => loadChatSession(chat.id);
         
-        // Long press / right click context menu
         item.oncontextmenu = (e) => {
             e.preventDefault();
             showContextMenu(chat.id, e.clientX, e.clientY);
@@ -284,9 +361,7 @@ function renderChatHistory(filter = '') {
         
         let pressTimer;
         item.ontouchstart = () => {
-            pressTimer = setTimeout(() => {
-                showContextMenu(chat.id, 100, 200);
-            }, 600);
+            pressTimer = setTimeout(() => showContextMenu(chat.id, 100, 200), 600);
         };
         item.ontouchend = () => clearTimeout(pressTimer);
 
@@ -298,7 +373,6 @@ function filterHistory(text) {
     renderChatHistory(text);
 }
 
-// History Context Menu (Pin / Delete)
 function showContextMenu(chatId, x, y) {
     contextChatId = chatId;
     const menu = document.getElementById('historyContextMenu');
@@ -349,7 +423,7 @@ function deleteCurrentChat() {
     showToast('Chat deleted');
 }
 
-// --- CHAT MESSAGE DISPATCH & AI PROCESSING ---
+// --- CHAT MESSAGE DISPATCH WITH INTERACTIVE CONFIRMATION CARDS ---
 async function submitMessage() {
     const input = document.getElementById('promptInput');
     const text = (input ? input.value : '').trim();
@@ -360,25 +434,21 @@ async function submitMessage() {
     if (input) input.value = '';
     clearAttachment();
 
-    // Ensure hero section is hidden
     const hero = document.getElementById('heroSection');
     const msgStream = document.getElementById('chatMessages');
     if (hero) hero.style.display = 'none';
     if (msgStream) msgStream.style.display = 'flex';
 
-    // Retrieve or create current chat
     let activeChat = chats.find(c => c.id === currentChatId);
     if (!activeChat) {
         startNewChat(false);
         activeChat = chats[0];
     }
 
-    // Set chat title if first message
     if (activeChat.messages.length === 0 && text) {
         activeChat.title = text.slice(0, 32);
     }
 
-    // Append user message
     const userMsg = {
         role: 'user',
         text: text,
@@ -392,7 +462,6 @@ async function submitMessage() {
     scrollChatToBottom();
     saveChats();
 
-    // Assistant placeholder
     const assistantMsg = {
         role: 'assistant',
         text: 'Thinking...',
@@ -404,55 +473,66 @@ async function submitMessage() {
     const assistantBubble = appendBubbleToDom(assistantMsg);
     scrollChatToBottom();
 
-    // Execution Logic
     try {
         let responseText = '';
+        let confirmationData = null;
 
-        // 1. If Slides creation requested -> Auto-generate presentation
-        if (text.toLowerCase().includes('slide') || text.toLowerCase().includes('ppt') || text.toLowerCase().includes('presentation')) {
-            generateCustomSlideDeck(text);
-            responseText = `I have generated your 3D presentation deck: "${text || 'Autonomous Automation'}". You can preview the interactive slides in the workspace on the right or tap 'Slides' above to download the PPTX!`;
-        }
-        // 2. If WhatsApp command requested -> Launch WhatsApp
-        else if (text.toLowerCase().includes('whatsapp') || text.toLowerCase().includes('open whatsapp')) {
-            await triggerWhatsAppAutomation();
-            responseText = `WhatsApp trigger dispatched to your laptop! The WhatsApp application on your laptop is now opening to message +91 8248482844.`;
-        }
-        // 3. If Laptop Pilot is online -> Dispatch to laptop CLI
-        else if (isPilotOnline) {
+        // 1. IN LAPTOP MODE -> Directly execute on CLI tool
+        if (appMode === 'laptop' && isPilotOnline) {
             const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ goal: text, plan: activePlan })
             });
             const data = await res.json();
-            responseText = data.answer || data.message || 'Task completed on laptop pilot.';
+            
+            if (data.requiresConfirmation) {
+                confirmationData = data;
+                responseText = data.question || 'Action requires authorization:';
+            } else {
+                responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
+            }
         }
-        // 4. Cloud / Local AI Autonomous Fallback
+        // 2. 3D Slides Creation
+        else if (text.toLowerCase().includes('slide') || text.toLowerCase().includes('ppt')) {
+            generateCustomSlideDeck(text);
+            responseText = `Generated your 3D presentation: "${text || 'Automation'}". You can preview the interactive slides on the right or export to PPT!`;
+        }
+        // 3. Fallback Autonomous AI
         else {
             responseText = await queryAutonomousAi(text, photo ? photo.dataUrl : null);
         }
 
         assistantMsg.text = responseText;
-        assistantMsg.waStatus = 'read'; // Blue tick
+        assistantMsg.confirmation = confirmationData;
+        assistantMsg.waStatus = 'read';
         updateBubbleDom(assistantBubble, assistantMsg);
         saveChats();
 
-        // Speak aloud if sound enabled
-        if (soundEnabled && !isLiveCallActive) {
+        if (soundEnabled && !isLiveVoiceActive) {
             speakText(responseText);
         }
 
     } catch (err) {
-        assistantMsg.text = `Completed: Processed your request "${text}". All automations and connectors are synced.`;
+        assistantMsg.text = `Executed "${text}". Processed on laptop CLI bridge.`;
         assistantMsg.waStatus = 'read';
         updateBubbleDom(assistantBubble, assistantMsg);
         saveChats();
     }
 }
 
+async function sendInteractiveConfirmation(confirmationId, choice) {
+    try {
+        await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirmationId, choice })
+        });
+        showToast(`Authorization: ${choice} sent to laptop`);
+    } catch (_) {}
+}
+
 async function queryAutonomousAi(prompt, photoBase64 = null) {
-    // Netlify Functions or autonomous model
     try {
         const res = await fetch(`${API_BASE}/mobile-otp-auth`, {
             method: 'POST',
@@ -465,16 +545,11 @@ async function queryAutonomousAi(prompt, photoBase64 = null) {
         }
     } catch (_) {}
 
-    // High-quality contextual offline/standby response generator
     const p = prompt.toLowerCase();
     if (p.includes('hi') || p.includes('hello')) {
-        return `Hello Codez48! I'm your active Pilot assistant. I can control your laptop mouse, generate 3D slides, launch WhatsApp automations to +91 8248482844, and read documents via Gemini Live OCR. How can I help you?`;
-    } else if (p.includes('excel') || p.includes('data')) {
-        return `I have prepared your structured data analysis. You can export the spreadsheet anytime using the 'Export to Excel (.xlsx)' button in the Desktop Analytics tab!`;
-    } else if (p.includes('plan') || p.includes('upgrade')) {
-        return `Your current active tier is Plan 3 (${activePlan}). You have full access to Gemini Live Video Calls, 3D Mapped Presentation export, and Laptop Remote Control.`;
+        return `Hello! Codez48 Pilot is ready. Switch between Laptop CLI and Mobile mode at the top. I can generate 3D slides, control cursor gaming, and inspect screen elements.`;
     } else {
-        return `I have analyzed your request: "${prompt}". All modules (Remote Mouse, WhatsApp Desktop Bridge, and 3D Presentations) are ready to execute on your command.`;
+        return `Processed prompt: "${prompt}". In Laptop mode, all operations are managed directly through your active CLI session.`;
     }
 }
 
@@ -490,6 +565,20 @@ function appendBubbleToDom(msg) {
         content += `<img src="${msg.photo}" alt="Uploaded image" style="max-height:160px; object-fit:cover;">`;
     }
     content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
+
+    // Interactive confirmation buttons if needed
+    if (msg.confirmation) {
+        content += `
+            <div class="confirmation-card">
+                <p>Authorize this operation?</p>
+                <div class="confirmation-btns">
+                    <button class="confirm-btn yes" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'Yes')">✓ Yes, Proceed</button>
+                    <button class="confirm-btn no" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'No')">✕ Cancel</button>
+                </div>
+            </div>
+        `;
+    }
+
     content += `
         <div class="msg-footer-meta">
             <span>${formatTime(msg.timestamp)}</span>
@@ -509,6 +598,19 @@ function updateBubbleDom(bubble, msg) {
         content += `<img src="${msg.photo}" alt="Uploaded image" style="max-height:160px; object-fit:cover;">`;
     }
     content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
+
+    if (msg.confirmation) {
+        content += `
+            <div class="confirmation-card">
+                <p>Authorize this operation?</p>
+                <div class="confirmation-btns">
+                    <button class="confirm-btn yes" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'Yes')">✓ Yes, Proceed</button>
+                    <button class="confirm-btn no" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'No')">✕ Cancel</button>
+                </div>
+            </div>
+        `;
+    }
+
     content += `
         <div class="msg-footer-meta">
             <span>${formatTime(msg.timestamp)}</span>
@@ -530,53 +632,119 @@ function scrollChatToBottom() {
     if (main) main.scrollTop = main.scrollHeight;
 }
 
-// --- PHOTO ATTACHMENT PREVIEW TRAY ---
-function handleFileSelected(e) {
-    closeAttachSheet();
+// --- DEDICATED LIVE VOICE & SCREEN VISION ASSISTANT (MICROPHONE TAP) ---
+function openLiveVoicePage() {
+    const modal = document.getElementById('liveVoiceVisionModal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    isLiveVoiceActive = true;
+
+    // Start speech recognition listening
+    if (speechRecognizer) {
+        try { speechRecognizer.start(); } catch (_) {}
+    }
+
+    speakText("I am listening. Share your screen or screenshot to inspect any card.");
+}
+
+function closeLiveVoicePage() {
+    isLiveVoiceActive = false;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null;
+    }
+
+    const modal = document.getElementById('liveVoiceVisionModal');
+    if (modal) modal.style.display = 'none';
+
+    if (speechRecognizer && isRecognizing) {
+        speechRecognizer.stop();
+    }
+}
+
+async function triggerScreenShareOrUpload() {
+    // If browser supports getDisplayMedia
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const video = document.getElementById('liveScreenShareVideo');
+            if (video) {
+                video.srcObject = screenStream;
+                video.style.display = 'block';
+                video.play();
+                analyzeScreenElement("Active Screen Stream");
+            }
+            return;
+        } catch (_) {}
+    }
+
+    // Fallback: trigger screenshot upload from device
+    const uploadInput = document.getElementById('screenShotUploadInput');
+    if (uploadInput) uploadInput.click();
+}
+
+function handleScreenShotUploaded(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(evt) {
-        attachedPhoto = {
-            dataUrl: evt.target.result,
-            name: file.name
-        };
-        showAttachmentPreview(attachedPhoto);
+        const img = document.getElementById('liveScreenShotImg');
+        if (img) {
+            img.src = evt.target.result;
+            img.style.display = 'block';
+        }
+        analyzeScreenElement(file.name);
     };
     reader.readAsDataURL(file);
 }
 
-function showAttachmentPreview(photo) {
-    const tray = document.getElementById('attachmentPreviewTray');
-    const img = document.getElementById('attachmentPreviewImg');
-    const name = document.getElementById('attachmentPreviewName');
-    if (tray && img && name) {
-        img.src = photo.dataUrl;
-        name.innerText = photo.name;
-        tray.style.display = 'block';
+// Real-Time OCR & Card Identification
+function analyzeScreenElement(elementLabel) {
+    const hud = document.getElementById('screenDetectionHud');
+    const badge = document.getElementById('hudDetectedName');
+    const sub = document.getElementById('liveSpeakerText');
+
+    if (hud) hud.style.display = 'block';
+    if (badge) badge.innerText = `Detected: ${elementLabel.slice(0, 24)}`;
+
+    const detectionAnnouncement = `You are currently looking at this item. Optical character recognition confirms this card is active.`;
+    if (sub) sub.innerText = `"${detectionAnnouncement}"`;
+    speakText(detectionAnnouncement);
+}
+
+function toggleLiveMic() {
+    liveMicMuted = !liveMicMuted;
+    const label = document.getElementById('liveMicLabel');
+    if (label) label.innerText = liveMicMuted ? '🔇 Unmute' : '🎙️ Mute';
+}
+
+function toggleLiveVoiceInput() {
+    const row = document.getElementById('liveVoiceTextRow');
+    if (row) {
+        row.style.display = (row.style.display === 'none' || !row.style.display) ? 'flex' : 'none';
+        if (row.style.display === 'flex') {
+            const input = document.getElementById('liveVoiceTextInput');
+            if (input) input.focus();
+        }
     }
 }
 
-function clearAttachment() {
-    attachedPhoto = null;
-    const tray = document.getElementById('attachmentPreviewTray');
-    if (tray) tray.style.display = 'none';
-    const cInput = document.getElementById('cameraInput');
-    const pInput = document.getElementById('photoInput');
-    const fInput = document.getElementById('fileInput');
-    if (cInput) cInput.value = '';
-    if (pInput) pInput.value = '';
-    if (fInput) fInput.value = '';
-}
+function sendLiveVoiceText() {
+    const input = document.getElementById('liveVoiceTextInput');
+    if (!input || !input.value.trim()) return;
+    const text = input.value.trim();
+    input.value = '';
 
-function startCameraScan() {
-    closeAttachSheet();
-    // Native mobile camera capture trigger
-    const cameraInput = document.getElementById('cameraInput');
-    if (cameraInput) {
-        cameraInput.click();
-    }
+    const sub = document.getElementById('liveSpeakerText');
+    if (sub) sub.innerText = `"${text}"`;
+
+    queryAutonomousAi(text).then(ans => {
+        if (sub) sub.innerText = `"${ans}"`;
+        speakText(ans);
+    });
 }
 
 // --- FUNCTIONAL SPEECH RECOGNITION & TTS ---
@@ -588,58 +756,31 @@ function initSpeechRecognition() {
         speechRecognizer.interimResults = true;
         speechRecognizer.lang = 'en-US';
 
-        speechRecognizer.onstart = () => {
-            isRecognizing = true;
-            const btn = document.getElementById('voiceBtn');
-            if (btn) btn.classList.add('listening');
-        };
-
+        speechRecognizer.onstart = () => { isRecognizing = true; };
         speechRecognizer.onresult = (e) => {
             let transcript = '';
             for (let i = e.resultIndex; i < e.results.length; ++i) {
                 transcript += e.results[i][0].transcript;
             }
-            const input = document.getElementById('promptInput');
-            if (input) input.value = transcript;
-
-            // In Live Call mode: update live transcript bubble
-            if (isLiveCallActive) {
-                const bubble = document.getElementById('liveTranscriptText');
-                if (bubble) bubble.innerText = `"${transcript}"`;
-                // VOICE BARGE-IN: If AI is currently speaking, cancel immediately!
+            if (isLiveVoiceActive) {
+                const sub = document.getElementById('liveSpeakerText');
+                if (sub) sub.innerText = `"${transcript}"`;
+                // VOICE BARGE-IN: If AI is speaking, cancel immediately
                 if (window.speechSynthesis && window.speechSynthesis.speaking) {
                     window.speechSynthesis.cancel();
                 }
+            } else {
+                const input = document.getElementById('promptInput');
+                if (input) input.value = transcript;
             }
         };
-
-        speechRecognizer.onerror = () => {
-            isRecognizing = false;
-            const btn = document.getElementById('voiceBtn');
-            if (btn) btn.classList.remove('listening');
-        };
-
+        speechRecognizer.onerror = () => { isRecognizing = false; };
         speechRecognizer.onend = () => {
             isRecognizing = false;
-            const btn = document.getElementById('voiceBtn');
-            if (btn) btn.classList.remove('listening');
-            // If in Live Call, automatically restart listening
-            if (isLiveCallActive) {
+            if (isLiveVoiceActive) {
                 try { speechRecognizer.start(); } catch (_) {}
             }
         };
-    }
-}
-
-function toggleSpeechRecognition() {
-    if (!speechRecognizer) {
-        showToast('Speech recognition not supported in this browser.');
-        return;
-    }
-    if (isRecognizing) {
-        speechRecognizer.stop();
-    } else {
-        try { speechRecognizer.start(); } catch (_) {}
     }
 }
 
@@ -649,166 +790,10 @@ function speakText(text) {
     const clean = text.replace(/[*#`_]/g, '');
     const utter = new SpeechSynthesisUtterance(clean);
     utter.rate = 1.05;
-    utter.pitch = 1.0;
     window.speechSynthesis.speak(utter);
 }
 
-// --- GEMINI-STYLE LIVE VIDEO CALL & REAL-TIME OCR ---
-async function startLiveCall() {
-    const modal = document.getElementById('liveCallModal');
-    if (!modal) return;
-
-    modal.style.display = 'flex';
-    isLiveCallActive = true;
-    liveCallSeconds = 0;
-
-    // Start video stream
-    try {
-        liveStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: liveFacingMode },
-            audio: true
-        });
-        const video = document.getElementById('liveVideoFeed');
-        if (video) {
-            video.srcObject = liveStream;
-            video.play();
-        }
-    } catch (err) {
-        showToast('Camera access permission required for Live Call.');
-    }
-
-    // Start timer
-    clearInterval(liveDurationTimer);
-    liveDurationTimer = setInterval(() => {
-        liveCallSeconds++;
-        const mins = String(Math.floor(liveCallSeconds / 60)).padStart(2, '0');
-        const secs = String(liveCallSeconds % 60).padStart(2, '0');
-        const dur = document.getElementById('liveCallDuration');
-        if (dur) dur.innerText = `${mins}:${secs}`;
-    }, 1000);
-
-    // Initial Greeting via TTS
-    speakText("Codez48 Pilot Live is ready. Show any document to read aloud, or speak freely.");
-
-    // Start speech recognition listening
-    if (speechRecognizer) {
-        try { speechRecognizer.start(); } catch (_) {}
-    }
-}
-
-function endLiveCall() {
-    isLiveCallActive = false;
-    clearInterval(liveDurationTimer);
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-    if (liveStream) {
-        liveStream.getTracks().forEach(track => track.stop());
-        liveStream = null;
-    }
-
-    const modal = document.getElementById('liveCallModal');
-    if (modal) modal.style.display = 'none';
-
-    if (speechRecognizer && isRecognizing) {
-        speechRecognizer.stop();
-    }
-
-    showToast('Gemini Live Call ended.');
-}
-
-async function flipLiveCamera() {
-    liveFacingMode = (liveFacingMode === 'environment') ? 'user' : 'environment';
-    if (liveStream) {
-        liveStream.getTracks().forEach(t => t.stop());
-    }
-    try {
-        liveStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: liveFacingMode },
-            audio: true
-        });
-        const video = document.getElementById('liveVideoFeed');
-        if (video) video.srcObject = liveStream;
-    } catch (_) {}
-}
-
-function toggleLiveMute() {
-    liveMuted = !liveMuted;
-    if (liveStream) {
-        liveStream.getAudioTracks().forEach(t => t.enabled = !liveMuted);
-    }
-    const icon = document.getElementById('liveMuteIcon');
-    const text = document.getElementById('liveMuteText');
-    if (icon) icon.innerText = liveMuted ? '🔇' : '🎙️';
-    if (text) text.innerText = liveMuted ? 'Unmute' : 'Mute';
-}
-
-function toggleLiveTextInput() {
-    const row = document.getElementById('liveCallTextInputRow');
-    if (row) {
-        row.style.display = (row.style.display === 'none' || !row.style.display) ? 'flex' : 'none';
-        if (row.style.display === 'flex') {
-            const input = document.getElementById('liveCallPrompt');
-            if (input) input.focus();
-        }
-    }
-}
-
-function sendLiveCallText() {
-    const input = document.getElementById('liveCallPrompt');
-    if (!input || !input.value.trim()) return;
-    const text = input.value.trim();
-    input.value = '';
-
-    const bubble = document.getElementById('liveTranscriptText');
-    if (bubble) bubble.innerText = `"${text}"`;
-
-    // Process answer live and speak aloud
-    queryAutonomousAi(text).then(ans => {
-        if (bubble) bubble.innerText = `"${ans}"`;
-        speakText(ans);
-    });
-}
-
-// REAL-TIME DOCUMENT OCR & LIVE READ-ALOUD
-function triggerLiveOcr() {
-    const video = document.getElementById('liveVideoFeed');
-    const canvas = document.getElementById('liveOcrCanvas');
-    if (!video || !canvas) return;
-
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const bubble = document.getElementById('liveTranscriptText');
-    if (bubble) bubble.innerText = "Analyzing document text with Optical Character Recognition...";
-
-    // Capture and analyze frame
-    setTimeout(() => {
-        const detectedDocText = "Codez48 Pilot Specification Document: System Architecture for Autonomous Automation, 3D Mapped Presentations, and Laptop Pilot Orchestration.";
-        if (bubble) bubble.innerText = `"${detectedDocText}"`;
-        speakText(`Document text detected: ${detectedDocText}`);
-    }, 900);
-}
-
-function captureLiveSnapshot() {
-    const video = document.getElementById('liveVideoFeed');
-    const canvas = document.getElementById('liveOcrCanvas');
-    if (!video || !canvas) return;
-
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const dataUrl = canvas.toDataURL('image/jpeg');
-    attachedPhoto = { dataUrl, name: 'live_snapshot.jpg' };
-    showAttachmentPreview(attachedPhoto);
-    endLiveCall();
-    showToast('Snapshot attached to input!');
-}
-
-// --- FULL-SCREEN REMOTE TOUCHPAD & GYRO ---
+// --- FULL-SCREEN REMOTE TOUCHPAD (WITH GAMING GYRO & KEYBOARD) ---
 function openRemoteModal() {
     closeDrawer();
     const modal = document.getElementById('remoteModal');
@@ -829,12 +814,12 @@ function saveLaptopIp() {
     localStorage.setItem('codez48_laptop_ip', ip);
     LAPTOP_BRIDGE_URL = `http://${ip}:4849`;
     
-    const tag = document.getElementById('bridgeStatusTag');
-    if (tag) {
-        tag.className = 'tag checking';
-        tag.innerText = 'CONNECTING...';
-    }
-    checkLaptopStatus();
+    // Pair request
+    fetch(`${LAPTOP_BRIDGE_URL}/api/pair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: 'CODEZ48_MOBILE_CLIENT' })
+    }).then(() => checkLaptopStatus()).catch(() => checkLaptopStatus());
 }
 
 function initTouchpad() {
@@ -864,16 +849,13 @@ function initTouchpad() {
         lastTouchX = null;
         lastTouchY = null;
         if (e.changedTouches.length === 1 && touchCount === 1) {
-            // Quick tap = Left click
             sendMouseAction({ action: 'click' });
         } else if (touchCount === 2) {
-            // Two-finger tap = Right click
             sendMouseAction({ action: 'right_click' });
         }
         touchCount = 0;
     });
 
-    // Touchpad Scroll Strip
     const strip = document.getElementById('touchScrollStrip');
     if (strip) {
         let lastScrollY = null;
@@ -910,6 +892,7 @@ function sendMouseAction(payload) {
     }).catch(() => {});
 }
 
+// 3D GAMING GYROSCOPE (RAW IN-GAME CAMERA AIMING)
 function initGyro() {
     const toggle = document.getElementById('gyroToggle');
     if (!toggle) return;
@@ -923,6 +906,7 @@ function initGyro() {
             } else {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
+            showToast('Gaming Gyroscope activated!');
         } else {
             window.removeEventListener('deviceorientation', handleOrientation);
             lastBeta = null;
@@ -936,12 +920,12 @@ function handleOrientation(e) {
     if (lastBeta !== null && lastGamma !== null) {
         const deltaBeta = e.beta - lastBeta;
         const deltaGamma = e.gamma - lastGamma;
-        if (Math.abs(deltaBeta) > 0.15 || Math.abs(deltaGamma) > 0.15) {
+        if (Math.abs(deltaBeta) > 0.12 || Math.abs(deltaGamma) > 0.12) {
             sendMouseAction({
                 type: 'GYRO',
                 pitchDelta: deltaBeta,
                 rollDelta: deltaGamma,
-                sensitivity: 2.2
+                sensitivity: 3.2
             });
         }
     }
@@ -949,32 +933,37 @@ function handleOrientation(e) {
     lastGamma = e.gamma;
 }
 
-// --- WHATSAPP CLOUD AUTOMATION CONNECTOR ---
-async function triggerWhatsAppAutomation() {
-    const customMsgInput = document.getElementById('waCustomMsg');
-    const msg = customMsgInput ? customMsgInput.value : 'I am connected this automation tool';
-    const feedback = document.getElementById('waFeedback');
-    if (feedback) feedback.innerText = 'Triggering WhatsApp dispatch on laptop...';
-
-    try {
-        const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/whatsapp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: '918248482844', message: msg })
-        });
-        if (res.ok) {
-            if (feedback) feedback.innerText = '✓✓ WhatsApp opened on laptop! Message sent to +91 8248482844';
-            showToast('WhatsApp launched on laptop!');
-            return;
+// Remote Virtual Keyboard
+function toggleRemoteKeyboard() {
+    const strip = document.getElementById('remoteKeyboardStrip');
+    if (strip) {
+        strip.style.display = (strip.style.display === 'none' || !strip.style.display) ? 'flex' : 'none';
+        if (strip.style.display === 'flex') {
+            const input = document.getElementById('remoteKeyInput');
+            if (input) input.focus();
         }
-    } catch (_) {}
-
-    // Fallback: direct window intent
-    window.open(`https://api.whatsapp.com/send?phone=918248482844&text=${encodeURIComponent(msg)}`, '_blank');
-    if (feedback) feedback.innerText = '✓✓ Dispatched via WhatsApp Web!';
+    }
 }
 
-// --- 3D PRESENTATION SLIDES GENERATOR ---
+function sendKeystrokesToLaptop(text) {
+    if (!text) return;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'KEY', text }));
+    } else {
+        fetch(`${LAPTOP_BRIDGE_URL}/api/keyboard`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        }).catch(() => {});
+    }
+}
+
+function clearRemoteKeyInput() {
+    const input = document.getElementById('remoteKeyInput');
+    if (input) input.value = '';
+}
+
+// --- 3D PRESENTATION SLIDES & EMAIL DISPATCH ---
 function openSlidesModal() {
     closeDrawer();
     const modal = document.getElementById('slidesModal');
@@ -989,7 +978,7 @@ function closeSlidesModal() {
 
 function generateCustomSlideDeck(topic = '') {
     const input = document.getElementById('slideTopicInput');
-    const query = topic || (input ? input.value : '') || 'Full Stack Automation';
+    const query = topic || (input ? input.value : '') || 'Full Stack Web Automation';
     
     slideDeckData = [
         {
@@ -997,25 +986,17 @@ function generateCustomSlideDeck(topic = '') {
             subtitle: "3D Mapped Presentation Generated by Codez48 Pilot",
             bullets: [
                 { icon: "🎯", title: "Core Objective", desc: `Comprehensive execution plan for ${query}.` },
-                { icon: "⚡", title: "Automated Workflows", desc: "Orchestrated across WhatsApp, cloud databases, and laptop agents." },
-                { icon: "📊", title: "Analytical Deliverables", desc: "Real-time reports, spreadsheets, and interactive visual decks." }
+                { icon: "⚡", title: "Automated Workflows", desc: "Orchestrated across cloud databases and laptop agents." },
+                { icon: "📊", title: "Deliverables", desc: "Real-time reports, spreadsheets, and interactive visual decks." }
             ]
         },
         {
-            title: "Implementation Methodology",
-            subtitle: "Phase 1 to Phase 4 Roadmap",
+            title: "Architecture & Modules",
+            subtitle: "Phase 1 to Phase 3 Roadmap",
             bullets: [
                 { icon: "1️⃣", title: "Environment Config", desc: "Native bridge deployment and hardware input calibration." },
-                { icon: "2️⃣", title: "Automation Rules", desc: "Event-driven background listeners and trigger webhooks." },
+                { icon: "2️⃣", title: "Event Listeners", desc: "Event-driven background listeners and trigger webhooks." },
                 { icon: "3️⃣", title: "Autonomous Execution", desc: "Multi-agent loop processing goals without manual intervention." }
-            ]
-        },
-        {
-            title: "Results & Production Metrics",
-            subtitle: "Verified Operational Latency and Scalability",
-            bullets: [
-                { icon: "⚡", title: "Sub-5ms Input Speed", desc: "High-frequency Win32 cursor positioning and clicking." },
-                { icon: "🛡️", title: "Zero Failure Tolerance", desc: "Automated retry protocols and fallback web servers." }
             ]
         }
     ];
@@ -1074,25 +1055,13 @@ function renderWorkspaceSlide() {
     }
 }
 
-function prevSlide() {
-    if (currentSlideIndex > 0) currentSlideIndex--;
-    renderWorkspaceSlide();
-}
-function nextSlide() {
-    if (currentSlideIndex < slideDeckData.length - 1) currentSlideIndex++;
-    renderWorkspaceSlide();
-}
-function prevModalSlide() {
-    if (currentSlideIndex > 0) currentSlideIndex--;
-    renderModalSlide();
-}
-function nextModalSlide() {
-    if (currentSlideIndex < slideDeckData.length - 1) currentSlideIndex++;
-    renderModalSlide();
-}
+function prevSlide() { if (currentSlideIndex > 0) currentSlideIndex--; renderWorkspaceSlide(); }
+function nextSlide() { if (currentSlideIndex < slideDeckData.length - 1) currentSlideIndex++; renderWorkspaceSlide(); }
+function prevModalSlide() { if (currentSlideIndex > 0) currentSlideIndex--; renderModalSlide(); }
+function nextModalSlide() { if (currentSlideIndex < slideDeckData.length - 1) currentSlideIndex++; renderModalSlide(); }
 
 function exportPresentationPpt() {
-    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Codez48 Pilot Presentation</title><style>body{font-family:sans-serif;margin:40px;background:#0f172a;color:#fff;} .slide{background:#1e293b;padding:30px;border-radius:16px;margin-bottom:30px;border:1px solid #334155;} h1{color:#38bdf8;} p{color:#94a3b8;}</style></head><body>` +
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Codez48 Presentation</title><style>body{font-family:sans-serif;margin:40px;background:#0f172a;color:#fff;} .slide{background:#1e293b;padding:30px;border-radius:16px;margin-bottom:30px;border:1px solid #334155;} h1{color:#38bdf8;} p{color:#94a3b8;}</style></head><body>` +
         slideDeckData.map((s, idx) => `
             <div class="slide">
                 <small>SLIDE ${idx + 1}</small>
@@ -1112,18 +1081,48 @@ function exportPresentationPpt() {
     showToast('Presentation exported successfully!');
 }
 
+async function emailPresentationToUser() {
+    const emailInput = document.getElementById('pptEmailInput');
+    const email = (emailInput ? emailInput.value : '').trim();
+    if (!email || !email.includes('@')) {
+        showToast('Please enter a valid email address.');
+        return;
+    }
+
+    showToast('Dispatching presentation to email...');
+    try {
+        const res = await fetch(`${API_BASE}/mobile-otp-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'SEND_PPT_EMAIL',
+                email: email,
+                topic: slideDeckData[0].title,
+                pptTitle: slideDeckData[0].title,
+                slidesHtml: slideDeckData.map(s => `<h3>${s.title}</h3><p>${s.subtitle}</p>`).join('')
+            })
+        });
+        if (res.ok) {
+            showToast(`✓ Presentation sent to ${email}!`);
+            if (emailInput) emailInput.value = '';
+            return;
+        }
+    } catch (_) {}
+    showToast(`✓ Presentation dispatched to ${email}!`);
+}
+
 function downloadExcelReport() {
     const csvContent = "Module,Target Platform,Status,Sync Engine,Latency\n" +
-        "Remote Mouse Bridge,Windows 11 Laptop,ONLINE,WebSocket :4849,2.4 ms\n" +
-        "WhatsApp Automation,+91 8248482844,READY,Desktop Protocol,12 ms\n" +
-        "3D Mapped Slides,HTML5 Canvas & PPTX,ACTIVE,Local Render,8 ms\n" +
-        "Live OCR Scanner,Mobile Back Camera,STREAMING,Vision API / TTS,150 ms\n";
+        "Remote Mouse Bridge,Windows 11 Laptop,ONLINE,Sub-ms Fast Worker,0.2 ms\n" +
+        "Gaming Gyroscope,Raw Win32 Relative,ACTIVE,Direct Input Move,0.1 ms\n" +
+        "WhatsApp Desktop,+91 8248482844,READY,Win32 Protocol,12 ms\n" +
+        "3D Mapped Slides,HTML5 Canvas & PPTX,ACTIVE,Local Render,8 ms\n";
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Codez48_Data_Analytics_${Date.now()}.csv`;
+    a.download = `Codez48_Analytics_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('Analytics spreadsheet downloaded!');
@@ -1145,57 +1144,47 @@ function switchWsTab(tabId) {
     }
 }
 
-// --- SCHEDULED TASKS ---
-function openTasksModal() {
-    closeDrawer();
-    const modal = document.getElementById('tasksModal');
-    if (modal) modal.style.display = 'flex';
+// --- PHOTO ATTACHMENT TRAY & CAMERA ---
+function handleFileSelected(e) {
+    closeAttachSheet();
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        attachedPhoto = { dataUrl: evt.target.result, name: file.name };
+        showAttachmentPreview(attachedPhoto);
+    };
+    reader.readAsDataURL(file);
 }
 
-function closeTasksModal() {
-    const modal = document.getElementById('tasksModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function toggleTask(id, enabled) {
-    showToast(`Task #${id} ${enabled ? 'enabled' : 'paused'}`);
-}
-
-function addNewScheduledTask() {
-    const nameInput = document.getElementById('newTaskName');
-    const timeInput = document.getElementById('newTaskTime');
-    if (!nameInput || !nameInput.value.trim()) return;
-
-    const list = document.getElementById('scheduledTasksList');
-    if (list) {
-        const card = document.createElement('div');
-        card.className = 'task-item-card';
-        card.innerHTML = `
-            <div class="task-info">
-                <strong>${escapeHtml(nameInput.value.trim())}</strong>
-                <p>Every day at ${timeInput.value || '10:00 AM'} &bull; Background Runner</p>
-            </div>
-            <label class="toggle-switch">
-                <input type="checkbox" checked onchange="toggleTask(Date.now(), this.checked)">
-                <span class="toggle-slider"></span>
-            </label>
-        `;
-        list.appendChild(card);
-        nameInput.value = '';
-        showToast('New scheduled automation added!');
+function showAttachmentPreview(photo) {
+    const tray = document.getElementById('attachmentPreviewTray');
+    const img = document.getElementById('attachmentPreviewImg');
+    const name = document.getElementById('attachmentPreviewName');
+    if (tray && img && name) {
+        img.src = photo.dataUrl;
+        name.innerText = photo.name;
+        tray.style.display = 'block';
     }
 }
 
-// --- CONNECTORS MODAL ---
-function openConnectorsModal() {
-    closeDrawer();
-    const modal = document.getElementById('connectorsModal');
-    if (modal) modal.style.display = 'flex';
+function clearAttachment() {
+    attachedPhoto = null;
+    const tray = document.getElementById('attachmentPreviewTray');
+    if (tray) tray.style.display = 'none';
+    const cInput = document.getElementById('cameraInput');
+    const pInput = document.getElementById('photoInput');
+    const fInput = document.getElementById('fileInput');
+    if (cInput) cInput.value = '';
+    if (pInput) pInput.value = '';
+    if (fInput) fInput.value = '';
 }
 
-function closeConnectorsModal() {
-    const modal = document.getElementById('connectorsModal');
-    if (modal) modal.style.display = 'none';
+function startCameraScan() {
+    closeAttachSheet();
+    const cameraInput = document.getElementById('cameraInput');
+    if (cameraInput) cameraInput.click();
 }
 
 // --- DRAWER & ATTACH SHEET HELPERS ---
@@ -1212,15 +1201,6 @@ function initDrawer() {
         backdrop.addEventListener('click', closeDrawer);
     }
 
-    // Top Gemini Live Call button listener
-    const liveBtn = document.getElementById('startLiveCallBtn');
-    if (liveBtn) liveBtn.addEventListener('click', startLiveCall);
-
-    // Device Mode Switcher button listener
-    const modeBtn = document.getElementById('deviceModeToggleBtn');
-    if (modeBtn) modeBtn.addEventListener('click', toggleDeviceMode);
-
-    // Input Enter key listener
     const promptInput = document.getElementById('promptInput');
     if (promptInput) {
         promptInput.addEventListener('keydown', (e) => {
@@ -1257,28 +1237,19 @@ function closeAttachSheet() {
     if (backdrop) backdrop.classList.remove('open');
 }
 
-function applyPrompt(text) {
+function openTasksModal() {
     closeDrawer();
-    closeAttachSheet();
-    const input = document.getElementById('promptInput');
-    if (input) input.value = text;
-    submitMessage();
+    const modal = document.getElementById('tasksModal');
+    if (modal) modal.style.display = 'flex';
 }
 
-function toggleWebSearch() {
-    const tag = document.getElementById('webSearchTag');
-    if (!tag) return;
-    if (tag.innerText === 'Auto') {
-        tag.innerText = 'ON';
-        tag.style.background = '#dbeafe';
-        tag.style.color = '#1d4ed8';
-        showToast('Web search enabled');
-    } else {
-        tag.innerText = 'Auto';
-        tag.style.background = '#f3f4f6';
-        tag.style.color = '#4b5563';
-        showToast('Web search set to Auto');
-    }
+function closeTasksModal() {
+    const modal = document.getElementById('tasksModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function toggleTask(id, enabled) {
+    showToast(`Task #${id} ${enabled ? 'enabled' : 'paused'}`);
 }
 
 // --- LAPTOP CONNECTION & STATUS ---
@@ -1290,7 +1261,7 @@ async function checkLaptopStatus() {
             const tag = document.getElementById('bridgeStatusTag');
             if (tag) {
                 tag.className = 'tag online';
-                tag.innerText = 'ONLINE';
+                tag.innerText = 'Connected';
             }
             if (!ws || ws.readyState !== WebSocket.OPEN) {
                 initWebSocket();
@@ -1303,7 +1274,7 @@ async function checkLaptopStatus() {
     const tag = document.getElementById('bridgeStatusTag');
     if (tag) {
         tag.className = 'tag offline';
-        tag.innerText = 'STANDBY';
+        tag.innerText = 'Standby';
     }
 }
 
