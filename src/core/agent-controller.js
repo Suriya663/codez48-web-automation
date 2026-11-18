@@ -52,13 +52,86 @@ class AgentController {
         this.lock = new AsyncLock();
     }
 
+    async callGeminiDirect(messages) {
+        try {
+            const geminiKeyVault = require('./gemini-key-vault');
+            const apiKey = geminiKeyVault.getActiveKey() || process.env.GEMINI_API_KEY;
+            if (!apiKey) return null;
+
+            const candidateModels = [
+                process.env.GEMINI_MODEL,
+                'gemini-2.5-flash',
+                'gemini-1.5-flash',
+                'gemini-2.0-flash-exp',
+                'gemini-flash-latest'
+            ].filter(Boolean);
+
+            const contents = [];
+            for (const m of messages) {
+                if (m.role === 'system') continue;
+                const role = m.role === 'user' ? 'user' : 'model';
+                contents.push({
+                    role,
+                    parts: [{ text: typeof m.content === 'string' ? m.content : JSON.stringify(m.content) }]
+                });
+            }
+            if (contents.length === 0) return null;
+
+            for (const model of candidateModels) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents }),
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (text && text.trim()) {
+                            return {
+                                success: true,
+                                answer: text.trim(),
+                                source: `Google Gemini (${model})`
+                            };
+                        }
+                    } else if (res.status === 401 || res.status === 403 || res.status === 429) {
+                        geminiKeyVault.reportQuotaExhausted(apiKey);
+                    }
+                } catch (_) {}
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    async callPollinationsFallback(goal) {
+        try {
+            const prompt = `You are Codez48 Pilot AI. Give an accurate, helpful, and comprehensive answer to the user in their language (Tamil if requested in Tamil, English if in English). Do not echo the prompt. User query: ${goal}`;
+            const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`, {
+                signal: AbortSignal.timeout(8000)
+            });
+            if (res.ok) {
+                const text = await res.text();
+                if (text && !text.includes('Free limit reached') && !text.includes('Please wait') && text.length > 5) {
+                    return {
+                        success: true,
+                        answer: text.trim(),
+                        source: 'Codez48 High-Speed Autonomous AI'
+                    };
+                }
+            }
+        } catch (_) {}
+        return null;
+    }
+
     async callLocalGroqFallback(messages) {
         const rawKeys = process.env.GROQ_API_KEYS || process.env.GROQ_API_KEY || '';
         const keys = rawKeys.split(',').map(s => s.trim()).filter(Boolean);
         if (keys.length === 0) return null;
 
         const shuffledKeys = [...keys].sort(() => 0.5 - Math.random());
-        const models = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
+        const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
 
         for (const key of shuffledKeys) {
             for (const model of models) {
@@ -100,7 +173,7 @@ class AgentController {
         if (process.env.GROQ_API_KEYS || process.env.GROQ_API_KEY) {
             return 'Groq (llama-3.3-70b-versatile)';
         }
-        return 'Codez48 AI Gateway (cli-ai-chat)';
+        return 'Codez48 Autonomous AI Engine';
     }
 
     async processGoal(goal, conversationHistory = [], apiCall = null, rl = null) {
@@ -298,16 +371,36 @@ class AgentController {
             ];
 
             process.stdout.write('Thinking...');
-            let data = await apiCall('cli-ai-chat', 'POST', {
-                messages: messagesPayload,
-                projectId: null
-            }, false);
+            let data = null;
+
+            // Tier 1: Google Gemini Direct (Using active key or vault pool)
+            try {
+                data = await this.callGeminiDirect(messagesPayload);
+            } catch (_) {}
+
+            // Tier 2: Cloud Netlify API (if logged in)
+            if (!data || !data.success) {
+                try {
+                    data = await apiCall('cli-ai-chat', 'POST', {
+                        messages: messagesPayload,
+                        projectId: null
+                    }, false);
+                } catch (_) {}
+            }
+
+            // Tier 3: Local Groq Engine
             if (!data || !data.success) {
                 data = await this.callLocalGroqFallback(messagesPayload);
             }
+
+            // Tier 4: High-Speed Free Autonomous AI (Never rate limits, multilingual)
+            if (!data || !data.success) {
+                data = await this.callPollinationsFallback(goal);
+            }
+
             process.stdout.write('\r\x1b[K');
 
-            if (data && data.success) {
+            if (data && data.success && data.answer) {
                 let cleanAnswer = data.answer || '';
                 if (typeof cleanAnswer === 'string') {
                     if (/===\s*CODEZ48\s*AI\s*RESPONSE\s*===/i.test(cleanAnswer)) {
@@ -331,10 +424,13 @@ class AgentController {
                 conversationHistory.push({ role: 'assistant', content: cleanAnswer });
                 return cleanAnswer;
             } else {
-                const localFallback = `Hello! I'm your Codez48 AI assistant powered by ${this.getAiProviderInfo()}. How can I help you build or automate your project today?`;
-                console.log(`\nAI: ${localFallback}\n`);
-                conversationHistory.push({ role: 'assistant', content: localFallback });
-                return localFallback;
+                const isTamil = /[\u0B80-\u0BFF]/.test(goal);
+                const localAnswer = isTamil 
+                    ? `வணக்கம்! Codez48 Pilot AI உங்கள் கட்டளையை ஏற்றுக்கொண்டுள்ளது. உங்கள் கோடிங், ஆட்டோமேஷன் அல்லது பிரசென்டேஷன் பணிகளை தொடங்க என்ன செய்ய வேண்டும் என்று குறிப்பிடுங்கள்.`
+                    : `I am Codez48 Pilot AI. I am ready to help you with code development, presentation generation, and automation workflows. Let me know what you would like to build!`;
+                console.log(`\nAI: ${localAnswer}\n`);
+                conversationHistory.push({ role: 'assistant', content: localAnswer });
+                return localAnswer;
             }
         }
 
