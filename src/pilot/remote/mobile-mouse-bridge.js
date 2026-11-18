@@ -101,6 +101,34 @@ class MobileMouseBridge {
                 return;
             }
 
+            // WHATSAPP AUTOMATION TRIGGER (Opens WhatsApp Desktop on Laptop)
+            if (url.pathname === '/api/whatsapp' && req.method === 'POST') {
+                let body = '';
+                req.on('data', chunk => body += chunk);
+                req.on('end', () => {
+                    try {
+                        const data = JSON.parse(body || '{}');
+                        const phone = (data.phone || '918248482844').replace(/\D/g, '');
+                        const message = encodeURIComponent(data.message || 'I am connected this automation tool');
+                        logger.status(`[WHATSAPP AUTOMATION] Opening WhatsApp Desktop on laptop for +${phone}...`);
+                        
+                        const { exec } = require('child_process');
+                        exec(`start whatsapp://send?phone=${phone}^&text=${message}`, (err) => {
+                            if (err) {
+                                exec(`start https://web.whatsapp.com/send?phone=${phone}^&text=${message}`);
+                            }
+                        });
+
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: true, target: phone, message: data.message }));
+                    } catch (e) {
+                        res.writeHead(500, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: false, error: e.message }));
+                    }
+                });
+                return;
+            }
+
             // PILOT GOAL EXECUTION
             if (url.pathname === '/api/execute' && req.method === 'POST') {
                 let body = '';
