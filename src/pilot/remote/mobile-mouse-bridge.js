@@ -338,6 +338,14 @@ while ($line = [Console]::ReadLine()) {
 
         // HIGH-FREQUENCY WEBSOCKET SERVER (For 60fps touchpad & gaming gyro)
         this.wss = new WebSocket.Server({ server: this.server });
+        this.wss.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                // Handled gracefully: port already owned by active bridge daemon
+                return;
+            }
+            logger.error(`[MOBILE BRIDGE WS] Error: ${err.message}`);
+        });
+
         this.wss.on('connection', (ws) => {
             this.connectedDevices.add(ws);
             logger.info(`[MOBILE BRIDGE] Mobile app connected via WebSocket.`);
@@ -368,16 +376,18 @@ while ($line = [Console]::ReadLine()) {
             });
         });
 
+        this.server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                logger.status(`[MOBILE BRIDGE] Port ${this.port} is already active (Daemon running on PID). Reusing connection.`);
+                this.isRunning = true;
+                return;
+            }
+            logger.error(`[MOBILE BRIDGE] Server error: ${err.message}`);
+        });
+
         this.server.listen(this.port, '0.0.0.0', () => {
             this.isRunning = true;
             logger.status(`[MOBILE BRIDGE] Online at http://${this.hostIp}:${this.port} (WebSocket ready)`);
-        });
-
-        this.server.on('error', (err) => {
-            if (err.code === 'EADDRINUSE') {
-                this.port++;
-                this.server.listen(this.port, '0.0.0.0');
-            }
         });
     }
 
