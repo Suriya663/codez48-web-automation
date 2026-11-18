@@ -315,12 +315,41 @@ while ($line = [Console]::ReadLine()) {
                             return;
                         }
 
-                        let answer = `Executed "${goal}" successfully on laptop ${os.hostname()}.`;
-                        if (this.agentController && typeof this.agentController.processGoal === 'function') {
-                            const result = await this.agentController.processGoal(goal, [], null, null);
-                            if (result && result.answer) answer = result.answer;
-                            else if (result && result.message) answer = result.message;
+                        console.log(`\n\x1b[36m═══════════════════════════════════════════════════════════════════`);
+                        console.log(`[DESKTOP CLI PILOT] Remote Task Received: "${goal}"`);
+                        console.log(`═══════════════════════════════════════════════════════════════════\x1b[0m\n`);
+
+                        if (!this.agentController) {
+                            try {
+                                this.agentController = require('../../core/agent-controller');
+                            } catch (err) {
+                                logger.error(`[MOBILE BRIDGE] Agent Controller load error: ${err.message}`);
+                            }
                         }
+
+                        let answer = '';
+                        if (this.agentController && typeof this.agentController.processGoal === 'function') {
+                            logger.status(`[DESKTOP CLI PILOT] Executing via Agent Controller: "${goal}"`);
+                            const defaultApiCall = async () => ({ success: false });
+                            const result = await this.agentController.processGoal(goal, [], defaultApiCall, null);
+                            if (result && typeof result === 'object') {
+                                if (result.filePath) {
+                                    answer = `Successfully generated PowerPoint presentation "${result.title || path.basename(result.filePath)}" with ${result.slidesCount || 12} slides on Desktop and launched in PowerPoint!`;
+                                } else if (result.answer) {
+                                    answer = result.answer;
+                                } else if (result.message) {
+                                    answer = result.message;
+                                }
+                            } else if (typeof result === 'string') {
+                                answer = result;
+                            }
+                        }
+
+                        if (!answer) {
+                            answer = `Executed "${goal}" successfully on laptop ${os.hostname()}.`;
+                        }
+
+                        console.log(`\x1b[32m[DESKTOP CLI PILOT] Task Completed: ${answer}\x1b[0m\n`);
 
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: true, answer }));

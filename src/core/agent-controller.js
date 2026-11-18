@@ -103,8 +103,15 @@ class AgentController {
         return 'Codez48 AI Gateway (cli-ai-chat)';
     }
 
-    async processGoal(goal, conversationHistory, apiCall, rl) {
+    async processGoal(goal, conversationHistory = [], apiCall = null, rl = null) {
         if (!goal || !goal.trim()) return;
+
+        if (typeof apiCall !== 'function') {
+            apiCall = async () => ({ success: false, error: 'Default bridge API caller' });
+        }
+        if (!Array.isArray(conversationHistory)) {
+            conversationHistory = [];
+        }
 
         const lowerGoal = goal.toLowerCase();
 
