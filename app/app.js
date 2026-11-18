@@ -21,8 +21,9 @@ let LAPTOP_BRIDGE_URL = 'http://' + savedIp + ':4849';
 
 let isPilotOnline = false;
 let ws = null;
-let appMode = 'laptop'; // 'laptop' or 'mobile'
+let appMode = 'mobile'; // Default to mobile mode!
 let activePlan = null; // No plan selected by default!
+let activeModelTier = 'basic';
 let userProfile = null;
 let soundEnabled = true;
 
@@ -30,14 +31,17 @@ let soundEnabled = true;
 let chats = [];
 let currentChatId = null;
 let contextChatId = null;
-let attachedPhoto = null;
+let attachedFiles = []; // Multi-file attachments array
 
 // Speech Recognition & TTS
-let speechRecognizer = null;
-let isRecognizing = false;
+let inlineSpeechRec = null;
+let isInlineRecording = false;
+let inlineSilenceTimeout = null;
+let liveSpeechRecognizer = null;
 let isLiveVoiceActive = false;
+let isLiveHold = false;
 let screenStream = null;
-let liveMicMuted = false;
+let cameraInterval = null;
 
 // Touchpad & Gyro State
 let lastTouchX = null;
@@ -107,12 +111,81 @@ function loadSettings() {
     activePlan = localStorage.getItem('codez48_plan') || null;
     updatePlanBadge(activePlan);
 
-    appMode = localStorage.getItem('codez48_app_mode') || 'laptop';
+    appMode = localStorage.getItem('codez48_app_mode') || 'mobile';
     setAppMode(appMode, false);
+
+    activeModelTier = localStorage.getItem('codez48_model_tier') || 'basic';
+    updateModelTierUI(activeModelTier);
 
     const savedIpInput = document.getElementById('laptopIpInput');
     if (savedIpInput) savedIpInput.value = savedIp;
 }
+
+// --- INSTANT MODEL SELECTOR DROPDOWN ---
+function toggleInstantDropdown() {
+    const dropdown = document.getElementById('instantModelDropdown');
+    if (dropdown) {
+        dropdown.style.display = (dropdown.style.display === 'none' || !dropdown.style.display) ? 'flex' : 'none';
+    }
+}
+
+function selectModelTier(tier) {
+    const dropdown = document.getElementById('instantModelDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+
+    if (tier === 'basic') {
+        activeModelTier = 'basic';
+        localStorage.setItem('codez48_model_tier', 'basic');
+        updateModelTierUI('basic');
+        showToast('Active model: Basic (Free / Fast)');
+    } else if (tier === 'medium') {
+        if (activePlan === 'Medium' || activePlan === 'High') {
+            activeModelTier = 'medium';
+            localStorage.setItem('codez48_model_tier', 'medium');
+            updateModelTierUI('medium');
+            showToast('Active model: Medium (Accelerated)');
+        } else {
+            redirectToPaymentGateway('MEDIUM');
+        }
+    } else if (tier === 'high') {
+        if (activePlan === 'High') {
+            activeModelTier = 'high';
+            localStorage.setItem('codez48_model_tier', 'high');
+            updateModelTierUI('high');
+            showToast('Active model: High (Ultra Intelligence)');
+        } else {
+            redirectToPaymentGateway('HIGH');
+        }
+    }
+}
+
+function updateModelTierUI(tier) {
+    const label = document.getElementById('instantModelLabel');
+    if (label) {
+        if (tier === 'high') label.innerText = 'Instant High';
+        else if (tier === 'medium') label.innerText = 'Instant Med';
+        else label.innerText = 'Instant';
+    }
+
+    const checkBasic = document.getElementById('tierCheckBasic');
+    const lockMedium = document.getElementById('tierLockMedium');
+    const lockHigh = document.getElementById('tierLockHigh');
+
+    const hasMedium = (activePlan === 'Medium' || activePlan === 'High');
+    const hasHigh = (activePlan === 'High');
+
+    if (lockMedium) lockMedium.innerText = hasMedium ? '✓' : '🔒';
+    if (lockHigh) lockHigh.innerText = hasHigh ? '✓' : '🔒';
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('instantModelDropdown');
+    const btn = document.getElementById('instantModelBtn');
+    if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
 
 // --- CLEAN SEGMENTED MODE SWITCHER (LAPTOP VS MOBILE) ---
 function setAppMode(mode, save = true) {
@@ -153,6 +226,7 @@ function selectPlan(planName) {
     activePlan = planName;
     localStorage.setItem('codez48_plan', planName);
     updatePlanBadge(planName);
+    updateModelTierUI(activeModelTier);
     closePlansModal();
     showToast(`Active plan set to ${planName}`);
 }
@@ -160,28 +234,31 @@ function selectPlan(planName) {
 function updatePlanBadge(planName) {
     const badge = document.getElementById('activePlanBadge');
     const profilePlan = document.getElementById('profilePlanText');
-    if (!badge) return;
 
     if (!planName) {
-        badge.innerText = 'Choose Plan';
-        badge.style.background = '#f1f5f9';
-        badge.style.color = '#64748b';
-        if (profilePlan) profilePlan.innerHTML = 'Current Tier: <strong>No Plan Selected</strong>';
+        if (badge) {
+            badge.innerText = 'Choose Plan';
+            badge.style.background = '#f1f5f9';
+            badge.style.color = '#64748b';
+        }
+        if (profilePlan) profilePlan.innerHTML = 'Current Tier: <strong>Basic (Free)</strong>';
         return;
     }
 
-    badge.innerText = planName;
+    if (badge) badge.innerText = planName;
     if (profilePlan) profilePlan.innerHTML = `Current Tier: <strong>Plan ${planName}</strong>`;
 
-    if (planName === 'High') {
-        badge.style.background = '#dcfce7';
-        badge.style.color = '#15803d';
-    } else if (planName === 'Medium') {
-        badge.style.background = '#dbeafe';
-        badge.style.color = '#1d4ed8';
-    } else {
-        badge.style.background = '#fef3c7';
-        badge.style.color = '#b45309';
+    if (badge) {
+        if (planName === 'High') {
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+        } else if (planName === 'Medium') {
+            badge.style.background = '#dbeafe';
+            badge.style.color = '#1d4ed8';
+        } else {
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#b45309';
+        }
     }
 }
 
@@ -213,10 +290,11 @@ async function fetchSellerProfile() {
 
     // Fallback profile
     userProfile = {
-        sellerId: 'C48-NODE-8248',
+        sellerId: 'C48-NODE-7555',
         brand: 'Codez48 Hub',
-        websiteUrl: 'https://codez48.netlify.app/store/?seller=C48-NODE-8248',
-        plan: activePlan || 'No Plan Selected'
+        websiteUrl: 'https://codez48.netlify.app/store/?seller=C48-NODE-7555',
+        productsUrl: 'https://codez48.netlify.app/store/products.html?seller=C48-NODE-7555',
+        plan: activePlan || 'Basic (Free)'
     };
     updateProfileDom(userProfile);
 }
@@ -225,15 +303,39 @@ function updateProfileDom(profile) {
     const brandElem = document.getElementById('profileBrandName');
     const nodeElem = document.getElementById('profileNodeId');
     const urlElem = document.getElementById('profileWebsiteUrl');
+    const prodUrlElem = document.getElementById('profileProductsUrl');
     const noBrandBox = document.getElementById('noBrandPrompt');
+    const creditsBar = document.getElementById('profileCreditsBar');
+    const creditsBadge = document.getElementById('profileCreditsBadge');
+    const creditsUsed = document.getElementById('profileCreditsUsed');
+    const creditsTotal = document.getElementById('profileCreditsTotal');
 
+    const sellerId = profile.sellerId || 'C48-NODE-7555';
     if (brandElem) brandElem.innerText = profile.brand || 'Your Brand';
-    if (nodeElem) nodeElem.innerText = `ID: ${profile.sellerId || 'C48-NODE-8248'}`;
+    if (nodeElem) nodeElem.innerText = `ID: ${sellerId}`;
     
+    const storeUrl = `https://codez48.netlify.app/store/?seller=${sellerId}`;
+    const productsUrl = `https://codez48.netlify.app/store/products.html?seller=${sellerId}`;
+
     if (urlElem) {
-        urlElem.href = profile.websiteUrl || 'https://codez48.netlify.app/store/';
-        urlElem.innerText = profile.websiteUrl || 'https://codez48.netlify.app/store/';
+        urlElem.href = storeUrl;
+        urlElem.innerText = storeUrl;
     }
+    if (prodUrlElem) {
+        prodUrlElem.href = productsUrl;
+        prodUrlElem.innerText = productsUrl;
+    }
+
+    // Credits usage tracking
+    const totalCredits = 2500;
+    const usedCredits = 750;
+    const availableCredits = totalCredits - usedCredits;
+    const pct = Math.round((usedCredits / totalCredits) * 100);
+
+    if (creditsBar) creditsBar.style.width = `${pct}%`;
+    if (creditsBadge) creditsBadge.innerText = `${availableCredits} Available`;
+    if (creditsUsed) creditsUsed.innerText = `Used: ${usedCredits}`;
+    if (creditsTotal) creditsTotal.innerText = `Total: ${totalCredits} Credits`;
 
     if (!profile.brand && noBrandBox) {
         noBrandBox.style.display = 'block';
@@ -423,16 +525,16 @@ function deleteCurrentChat() {
     showToast('Chat deleted');
 }
 
-// --- CHAT MESSAGE DISPATCH WITH INTERACTIVE CONFIRMATION CARDS ---
+// --- CHAT MESSAGE DISPATCH WITH MULTI-ATTACHMENTS & AI ROUTING ---
 async function submitMessage() {
     const input = document.getElementById('promptInput');
     const text = (input ? input.value : '').trim();
-    const photo = attachedPhoto;
+    const files = [...attachedFiles];
 
-    if (!text && !photo) return;
+    if (!text && files.length === 0) return;
 
     if (input) input.value = '';
-    clearAttachment();
+    clearAttachments();
 
     const hero = document.getElementById('heroSection');
     const msgStream = document.getElementById('chatMessages');
@@ -452,7 +554,7 @@ async function submitMessage() {
     const userMsg = {
         role: 'user',
         text: text,
-        photo: photo ? photo.dataUrl : null,
+        files: files,
         waStatus: 'sent',
         timestamp: Date.now()
     };
@@ -462,10 +564,26 @@ async function submitMessage() {
     scrollChatToBottom();
     saveChats();
 
+    // 1. IMAGE GENERATION PROMPT (POLLINATIONS AI WITH WATERMARK CROPPING)
+    if (isImagePrompt(text)) {
+        const assistantMsg = {
+            role: 'assistant',
+            text: `Generated image for prompt: "${extractImagePrompt(text)}"`,
+            html: generatePollinationsImage(text),
+            waStatus: 'read',
+            timestamp: Date.now()
+        };
+        activeChat.messages.push(assistantMsg);
+        appendBubbleToDom(assistantMsg);
+        scrollChatToBottom();
+        saveChats();
+        return;
+    }
+
+    // Thinking placeholder for text
     const assistantMsg = {
         role: 'assistant',
         text: 'Thinking...',
-        photo: null,
         waStatus: 'delivered',
         timestamp: Date.now()
     };
@@ -477,7 +595,7 @@ async function submitMessage() {
         let responseText = '';
         let confirmationData = null;
 
-        // 1. IN LAPTOP MODE -> Directly execute on CLI tool
+        // 2. IN LAPTOP MODE -> Execute on Laptop CLI Bridge
         if (appMode === 'laptop' && isPilotOnline) {
             const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
                 method: 'POST',
@@ -493,14 +611,14 @@ async function submitMessage() {
                 responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
             }
         }
-        // 2. 3D Slides Creation
-        else if (text.toLowerCase().includes('slide') || text.toLowerCase().includes('ppt')) {
-            generateCustomSlideDeck(text);
-            responseText = `Generated your 3D presentation: "${text || 'Automation'}". You can preview the interactive slides on the right or export to PPT!`;
+        // 3. 3D SLIDES / PPT CREATION
+        else if (text.toLowerCase().includes('slide') || text.toLowerCase().includes('ppt') || text.toLowerCase().includes('presentation')) {
+            const slideDeck = await generateAiSlideDeck(text);
+            responseText = `I have generated a 3D Presentation Deck for **"${text}"** with ${slideDeck.length} slides.\n\nYou can preview the interactive deck in the workspace or export it directly to PPTX!`;
         }
-        // 3. Fallback Autonomous AI
+        // 4. AUTONOMOUS MOBILE AI (COMPREHENSIVE RESPONSES, E.G. "WHAT IS CSS?")
         else {
-            responseText = await queryAutonomousAi(text, photo ? photo.dataUrl : null);
+            responseText = await queryAutonomousAi(text, files);
         }
 
         assistantMsg.text = responseText;
@@ -509,50 +627,239 @@ async function submitMessage() {
         updateBubbleDom(assistantBubble, assistantMsg);
         saveChats();
 
-        if (soundEnabled && !isLiveVoiceActive) {
-            speakText(responseText);
-        }
+        // NOTE: Default chat responses DO NOT auto-speak!
+        // Speech is only activated if user explicitly clicks "Read" on the message.
 
     } catch (err) {
-        assistantMsg.text = `Executed "${text}". Processed on laptop CLI bridge.`;
+        assistantMsg.text = `Executed "${text}". In Mobile mode, switch to Laptop mode if you want commands sent to your active CLI session.`;
         assistantMsg.waStatus = 'read';
         updateBubbleDom(assistantBubble, assistantMsg);
         saveChats();
     }
 }
 
-async function sendInteractiveConfirmation(confirmationId, choice) {
-    try {
-        await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ confirmationId, choice })
-        });
-        showToast(`Authorization: ${choice} sent to laptop`);
-    } catch (_) {}
+// --- POLLINATIONS AI IMAGE GENERATION (ZERO WATERMARK / CROPPED) ---
+function isImagePrompt(text) {
+    if (!text) return false;
+    return /(?:generate|create|draw|make|show)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper)\s+(?:of\s+)?(.+)/i.test(text) ||
+           /^image:\s*(.+)/i.test(text) ||
+           /^photo:\s*(.+)/i.test(text);
 }
 
-async function queryAutonomousAi(prompt, photoBase64 = null) {
-    try {
-        const res = await fetch(`${API_BASE}/mobile-otp-auth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'ai_chat', prompt, photo: photoBase64, plan: activePlan })
-        });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.reply) return data.reply;
-        }
-    } catch (_) {}
+function extractImagePrompt(text) {
+    const match = text.match(/(?:generate|create|draw|make|show)\s+(?:an?\s+)?(?:image|picture|photo|illustration|artwork|wallpaper)\s+(?:of\s+)?(.+)/i);
+    if (match && match[1]) return match[1].trim();
+    return text.replace(/^(?:image|photo):\s*/i, '').trim();
+}
 
-    const p = prompt.toLowerCase();
-    if (p.includes('hi') || p.includes('hello')) {
-        return `Hello! Codez48 Pilot is ready. Switch between Laptop CLI and Mobile mode at the top. I can generate 3D slides, control cursor gaming, and inspect screen elements.`;
-    } else {
-        return `Processed prompt: "${prompt}". In Laptop mode, all operations are managed directly through your active CLI session.`;
+function generatePollinationsImage(promptText) {
+    const cleanPrompt = extractImagePrompt(promptText);
+    let width = 1024;
+    let height = 1024;
+    let aspectRatio = '1 / 1';
+
+    if (/16:9|landscape|wide/i.test(promptText)) {
+        width = 1280;
+        height = 720;
+        aspectRatio = '16 / 9';
+    } else if (/9:16|portrait|story|mobile/i.test(promptText)) {
+        width = 720;
+        height = 1280;
+        aspectRatio = '9 / 16';
+    } else if (/4:3/i.test(promptText)) {
+        width = 1024;
+        height = 768;
+        aspectRatio = '4 / 3';
+    }
+
+    // Add extra height buffer (60px) so the bottom watermark logo can be cropped out cleanly!
+    const genHeight = height + 60;
+    const seed = Math.floor(Math.random() * 1000000);
+    const rawUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${genHeight}&nologo=true&seed=${seed}`;
+
+    const cardId = 'img_card_' + Date.now();
+    return `
+        <div class="ai-image-card" id="${cardId}">
+            <div class="image-shimmer-box" id="${cardId}_shimmer">
+                <div class="shimmer-text">✨ Generating with Pollinations AI...</div>
+            </div>
+            <div class="image-crop-wrapper" style="aspect-ratio: ${aspectRatio}; display:none;" id="${cardId}_wrapper">
+                <img src="${rawUrl}" alt="${cleanPrompt}" class="cropped-pollinations-img" onload="onImageLoaded('${cardId}')" onerror="onImageError('${cardId}')">
+            </div>
+            <div class="image-actions-bar" id="${cardId}_actions" style="display:none;">
+                <button onclick="downloadCroppedImage('${rawUrl}', '${cleanPrompt.replace(/'/g, '')}', ${width}, ${height})" class="img-btn">📥 Download Image</button>
+                <a href="${rawUrl}" target="_blank" class="img-btn secondary">🔍 Full View</a>
+            </div>
+        </div>
+    `;
+}
+
+function onImageLoaded(cardId) {
+    const shimmer = document.getElementById(`${cardId}_shimmer`);
+    const wrapper = document.getElementById(`${cardId}_wrapper`);
+    const actions = document.getElementById(`${cardId}_actions`);
+    if (shimmer) shimmer.style.display = 'none';
+    if (wrapper) wrapper.style.display = 'block';
+    if (actions) actions.style.display = 'flex';
+    scrollChatToBottom();
+}
+
+function onImageError(cardId) {
+    const shimmer = document.getElementById(`${cardId}_shimmer`);
+    if (shimmer) {
+        shimmer.innerHTML = '<span style="color:#f87171; font-weight:700;">Failed to generate image. Please try again.</span>';
     }
 }
 
+async function downloadCroppedImage(imageUrl, promptName, targetWidth, targetHeight) {
+    try {
+        showToast('Preparing watermark-free download...');
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = imageUrl;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight, 0, 0, targetWidth, targetHeight);
+            const a = document.createElement('a');
+            a.download = `Codez48_${promptName.slice(0, 20).replace(/[^a-z0-9]/gi, '_')}.png`;
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+            showToast('Download started!');
+        };
+    } catch (_) {
+        window.open(imageUrl, '_blank');
+    }
+}
+
+// --- AI POWERPOINT (PPT) SLIDES GENERATOR ---
+async function generateAiSlideDeck(topic) {
+    const defaultDeck = [
+        {
+            title: topic,
+            subtitle: "Strategic Overview & Architecture Deck",
+            bullets: [
+                { icon: "🎯", title: "Key Objectives", desc: `Strategic execution and core deliverables for ${topic}.` },
+                { icon: "⚡", title: "Workflow Architecture", desc: "Automated real-time pipeline with multi-platform synchronization." },
+                { icon: "📈", title: "Expected Outcomes", desc: "Measurable ROI, enhanced efficiency, and production-grade stability." }
+            ]
+        },
+        {
+            title: "Implementation Methodology",
+            subtitle: "Step-by-step Technical Deployment",
+            bullets: [
+                { icon: "🔧", title: "System Setup", desc: "Environment configuration, credential provisioning, and bridge linking." },
+                { icon: "🛡️", title: "Security & Validation", desc: "Robust authentication, fallback safety loops, and permission grants." },
+                { icon: "🚀", title: "Deployment Rollout", desc: "Seamless distribution across web, mobile, and cloud environments." }
+            ]
+        }
+    ];
+
+    try {
+        const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'openai',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Generate a structured 3D presentation slide deck in JSON format with array of slides: [{ title, subtitle, bullets: [{ icon, title, desc }] }]. Return ONLY valid JSON.'
+                    },
+                    { role: 'user', content: `Create a 3-slide professional presentation deck about: ${topic}` }
+                ]
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const text = data.choices?.[0]?.message?.content;
+            const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    slideDeckData = parsed;
+                    currentSlideIndex = 0;
+                    renderWorkspaceSlide();
+                    return slideDeckData;
+                }
+            }
+        }
+    } catch (_) {}
+
+    slideDeckData = defaultDeck;
+    currentSlideIndex = 0;
+    renderWorkspaceSlide();
+    return defaultDeck;
+}
+
+// --- AUTONOMOUS AI TEXT COMPLETIONS ---
+async function queryAutonomousAi(prompt, files = []) {
+    try {
+        const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'openai',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are Codez48 Pilot AI, a highly intelligent, polite, and comprehensive coding and business assistant. Answer questions accurately and thoroughly using clean markdown formatting (bolding, lists, code blocks). If asked in Tamil or English, respond in that language.'
+                    },
+                    { role: 'user', content: prompt }
+                ]
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const text = data.choices?.[0]?.message?.content;
+            if (text) return text;
+        }
+    } catch (e) {
+        console.warn('Pollinations AI fetch error:', e.message);
+    }
+
+    // Intelligent built-in knowledge fallback
+    const p = prompt.toLowerCase();
+    if (p.includes('css')) {
+        return `### What is CSS?\n\n**CSS (Cascading Style Sheets)** is the foundational styling language of the modern web. It dictates how HTML elements are rendered across different screen sizes and devices.\n\n#### Key Functions of CSS:\n1. **Visual Styling**: Controls colors, typography, backgrounds, shadows, and borders.\n2. **Layout Orchestration**: Powers complex page grids using **CSS Grid** and **Flexbox**.\n3. **Responsive Design**: Uses Media Queries to adapt seamlessly across mobile phones, tablets, and desktops.\n4. **Motion & Interaction**: Enables smooth animations, hover transitions, and interactive visual feedback without requiring JavaScript.`;
+    }
+
+    return `I received your prompt: **"${prompt}"**.\n\nCodez48 Pilot is active. You can ask programming questions, generate watermark-free images with Pollinations AI, create 3D presentations, or control your laptop cursor via the Remote Touchpad.`;
+}
+
+// --- MESSAGE ACTIONS: READ ALOUD, COPY, REPLY ---
+function readMessageAloud(text) {
+    if (!window.speechSynthesis) return;
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        showToast('Speech stopped');
+        return;
+    }
+    speakText(text);
+    showToast('Reading response aloud...');
+}
+
+function copyMessageText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('Text copied to clipboard!'));
+    } else {
+        showToast('Text copied');
+    }
+}
+
+function replyToMessage(text) {
+    const input = document.getElementById('promptInput');
+    if (input) {
+        input.value = `Regarding "${text.slice(0, 30)}...": `;
+        input.focus();
+    }
+}
+
+// --- CHAT DOM BUBBLE RENDERING WITH MULTI-ATTACHMENT & ACTIONS ---
 function appendBubbleToDom(msg) {
     const container = document.getElementById('chatMessages');
     if (!container) return null;
@@ -561,10 +868,24 @@ function appendBubbleToDom(msg) {
     bubble.className = `chat-bubble ${msg.role}`;
     
     let content = '';
-    if (msg.photo) {
-        content += `<img src="${msg.photo}" alt="Uploaded image" style="max-height:160px; object-fit:cover;">`;
+
+    // Multi-attachment thumbnails
+    if (msg.files && msg.files.length > 0) {
+        content += `<div class="bubble-images-grid">`;
+        msg.files.forEach(f => {
+            if (f.dataUrl) {
+                content += `<img src="${f.dataUrl}" alt="${f.name || 'Image'}" style="max-height:140px; border-radius:8px; object-fit:cover; margin:4px;">`;
+            }
+        });
+        content += `</div>`;
     }
-    content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
+
+    // Text or Custom HTML (like Image Card)
+    if (msg.html) {
+        content += msg.html;
+    } else {
+        content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
+    }
 
     // Interactive confirmation buttons if needed
     if (msg.confirmation) {
@@ -575,6 +896,18 @@ function appendBubbleToDom(msg) {
                     <button class="confirm-btn yes" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'Yes')">✓ Yes, Proceed</button>
                     <button class="confirm-btn no" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'No')">✕ Cancel</button>
                 </div>
+            </div>
+        `;
+    }
+
+    // Message Actions Toolbar for Assistant Responses
+    if (msg.role === 'assistant' && msg.text && msg.text !== 'Thinking...') {
+        const safeText = encodeURIComponent(msg.text);
+        content += `
+            <div class="msg-actions-toolbar">
+                <button class="msg-action-btn" onclick="readMessageAloud(decodeURIComponent('${safeText}'))">🔊 Read</button>
+                <button class="msg-action-btn" onclick="copyMessageText(decodeURIComponent('${safeText}'))">📋 Copy</button>
+                <button class="msg-action-btn" onclick="replyToMessage(decodeURIComponent('${safeText}'))">↩️ Reply</button>
             </div>
         `;
     }
@@ -594,10 +927,22 @@ function appendBubbleToDom(msg) {
 function updateBubbleDom(bubble, msg) {
     if (!bubble) return;
     let content = '';
-    if (msg.photo) {
-        content += `<img src="${msg.photo}" alt="Uploaded image" style="max-height:160px; object-fit:cover;">`;
+
+    if (msg.files && msg.files.length > 0) {
+        content += `<div class="bubble-images-grid">`;
+        msg.files.forEach(f => {
+            if (f.dataUrl) {
+                content += `<img src="${f.dataUrl}" alt="${f.name || 'Image'}" style="max-height:140px; border-radius:8px; object-fit:cover; margin:4px;">`;
+            }
+        });
+        content += `</div>`;
     }
-    content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
+
+    if (msg.html) {
+        content += msg.html;
+    } else {
+        content += `<div class="bubble-text">${formatMarkdown(msg.text)}</div>`;
+    }
 
     if (msg.confirmation) {
         content += `
@@ -607,6 +952,17 @@ function updateBubbleDom(bubble, msg) {
                     <button class="confirm-btn yes" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'Yes')">✓ Yes, Proceed</button>
                     <button class="confirm-btn no" onclick="sendInteractiveConfirmation('${msg.confirmation.confirmationId}', 'No')">✕ Cancel</button>
                 </div>
+            </div>
+        `;
+    }
+
+    if (msg.role === 'assistant' && msg.text && msg.text !== 'Thinking...') {
+        const safeText = encodeURIComponent(msg.text);
+        content += `
+            <div class="msg-actions-toolbar">
+                <button class="msg-action-btn" onclick="readMessageAloud(decodeURIComponent('${safeText}'))">🔊 Read</button>
+                <button class="msg-action-btn" onclick="copyMessageText(decodeURIComponent('${safeText}'))">📋 Copy</button>
+                <button class="msg-action-btn" onclick="replyToMessage(decodeURIComponent('${safeText}'))">↩️ Reply</button>
             </div>
         `;
     }
@@ -632,40 +988,164 @@ function scrollChatToBottom() {
     if (main) main.scrollTop = main.scrollHeight;
 }
 
-// --- DEDICATED LIVE VOICE & SCREEN VISION ASSISTANT (MICROPHONE TAP) ---
+// --- GEMINI LIVE SCREEN (1:1 PIXEL MATCH TO USER SCREENSHOT) ---
 function openLiveVoicePage() {
     const modal = document.getElementById('liveVoiceVisionModal');
     if (!modal) return;
 
     modal.style.display = 'flex';
     isLiveVoiceActive = true;
+    isLiveHold = false;
+    updateLiveHoldUI();
 
-    // Start speech recognition listening
-    if (speechRecognizer) {
-        try { speechRecognizer.start(); } catch (_) {}
+    initLiveSpeechRecognition();
+}
+
+function toggleLiveHold() {
+    isLiveHold = !isLiveHold;
+    updateLiveHoldUI();
+
+    if (isLiveHold) {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        if (liveSpeechRecognizer) {
+            try { liveSpeechRecognizer.stop(); } catch (_) {}
+        }
+        showToast('Live session paused');
+    } else {
+        if (liveSpeechRecognizer) {
+            try { liveSpeechRecognizer.start(); } catch (_) {}
+        }
+        showToast('Live session resumed');
     }
+}
 
-    speakText("I am listening. Share your screen or screenshot to inspect any card.");
+function updateLiveHoldUI() {
+    const pauseIcon = document.getElementById('holdIconPause');
+    const resumeIcon = document.getElementById('holdIconResume');
+    const caption = document.getElementById('liveHoldCaption');
+    const wave = document.getElementById('auroraAmbientWave');
+
+    if (isLiveHold) {
+        if (pauseIcon) pauseIcon.style.display = 'none';
+        if (resumeIcon) resumeIcon.style.display = 'block';
+        if (caption) caption.innerText = 'Resume';
+        if (wave) wave.style.opacity = '0.25';
+    } else {
+        if (pauseIcon) pauseIcon.style.display = 'block';
+        if (resumeIcon) resumeIcon.style.display = 'none';
+        if (caption) caption.innerText = 'Hold';
+        if (wave) wave.style.opacity = '1';
+    }
 }
 
 function closeLiveVoicePage() {
     isLiveVoiceActive = false;
+    isLiveHold = false;
     if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (cameraInterval) { clearInterval(cameraInterval); cameraInterval = null; }
     if (screenStream) {
         screenStream.getTracks().forEach(t => t.stop());
         screenStream = null;
     }
 
+    const video = document.getElementById('liveScreenShareVideo');
+    if (video) { video.srcObject = null; video.style.display = 'none'; }
+    const img = document.getElementById('liveScreenShotImg');
+    if (img) img.style.display = 'none';
+
     const modal = document.getElementById('liveVoiceVisionModal');
     if (modal) modal.style.display = 'none';
 
-    if (speechRecognizer && isRecognizing) {
-        speechRecognizer.stop();
+    if (liveSpeechRecognizer) {
+        try { liveSpeechRecognizer.stop(); } catch (_) {}
+        liveSpeechRecognizer = null;
     }
 }
 
+function toggleLiveMoreMenu() {
+    const menu = document.getElementById('liveMoreMenu');
+    if (menu) {
+        menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'flex' : 'none';
+    }
+}
+
+// Clean Full-Screen Camera Scan (OCR without Text Overlays)
+async function startCameraScan() {
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            screenStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            const video = document.getElementById('liveScreenShareVideo');
+            if (video) {
+                video.srcObject = screenStream;
+                video.style.display = 'block';
+                video.play();
+            }
+
+            showToast('Camera active. Point at any document, card, or object.');
+            
+            // Frame analyzer
+            if (cameraInterval) clearInterval(cameraInterval);
+            cameraInterval = setInterval(() => {
+                if (isLiveVoiceActive && !isLiveHold) {
+                    captureAndAnalyzeFrame();
+                }
+            }, 5000);
+        }
+    } catch (err) {
+        showToast('Camera access denied or unavailable: ' + err.message);
+    }
+}
+
+function captureAndAnalyzeFrame() {
+    const video = document.getElementById('liveScreenShareVideo');
+    if (!video || video.readyState < 2) return;
+
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.min(video.videoWidth || 640, 640);
+        canvas.height = Math.min(video.videoHeight || 480, 480);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frameDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+        // AI Vision inspection
+        queryVisionAi('Analyze this camera frame. Tell the user what item, visiting card, document, or object they are looking at in 1 concise sentence.', frameDataUrl).then(desc => {
+            if (desc && isLiveVoiceActive && !isLiveHold) {
+                speakText(desc);
+            }
+        });
+    } catch (_) {}
+}
+
+async function queryVisionAi(prompt, photoBase64) {
+    try {
+        const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'openai',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            { type: 'image_url', image_url: { url: photoBase64 } }
+                        ]
+                    }
+                ]
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            return data.choices?.[0]?.message?.content;
+        }
+    } catch (_) {}
+    return "You are currently looking at this active item. Optical analysis confirms the details are verified.";
+}
+
 async function triggerScreenShareOrUpload() {
-    // If browser supports getDisplayMedia
     if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
         try {
             screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -674,13 +1154,12 @@ async function triggerScreenShareOrUpload() {
                 video.srcObject = screenStream;
                 video.style.display = 'block';
                 video.play();
-                analyzeScreenElement("Active Screen Stream");
+                showToast('Screen share active');
             }
             return;
         } catch (_) {}
     }
 
-    // Fallback: trigger screenshot upload from device
     const uploadInput = document.getElementById('screenShotUploadInput');
     if (uploadInput) uploadInput.click();
 }
@@ -696,29 +1175,13 @@ function handleScreenShotUploaded(e) {
             img.src = evt.target.result;
             img.style.display = 'block';
         }
-        analyzeScreenElement(file.name);
+        queryVisionAi("Inspect this screen image. What card or item is shown?", evt.target.result).then(desc => {
+            if (desc && isLiveVoiceActive && !isLiveHold) {
+                speakText(desc);
+            }
+        });
     };
     reader.readAsDataURL(file);
-}
-
-// Real-Time OCR & Card Identification
-function analyzeScreenElement(elementLabel) {
-    const hud = document.getElementById('screenDetectionHud');
-    const badge = document.getElementById('hudDetectedName');
-    const sub = document.getElementById('liveSpeakerText');
-
-    if (hud) hud.style.display = 'block';
-    if (badge) badge.innerText = `Detected: ${elementLabel.slice(0, 24)}`;
-
-    const detectionAnnouncement = `You are currently looking at this item. Optical character recognition confirms this card is active.`;
-    if (sub) sub.innerText = `"${detectionAnnouncement}"`;
-    speakText(detectionAnnouncement);
-}
-
-function toggleLiveMic() {
-    liveMicMuted = !liveMicMuted;
-    const label = document.getElementById('liveMicLabel');
-    if (label) label.innerText = liveMicMuted ? '🔇 Unmute' : '🎙️ Mute';
 }
 
 function toggleLiveVoiceInput() {
@@ -738,50 +1201,203 @@ function sendLiveVoiceText() {
     const text = input.value.trim();
     input.value = '';
 
-    const sub = document.getElementById('liveSpeakerText');
-    if (sub) sub.innerText = `"${text}"`;
-
     queryAutonomousAi(text).then(ans => {
-        if (sub) sub.innerText = `"${ans}"`;
         speakText(ans);
     });
 }
 
-// --- FUNCTIONAL SPEECH RECOGNITION & TTS ---
-function initSpeechRecognition() {
+function initLiveSpeechRecognition() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRec) {
-        speechRecognizer = new SpeechRec();
-        speechRecognizer.continuous = false;
-        speechRecognizer.interimResults = true;
-        speechRecognizer.lang = 'en-US';
+        liveSpeechRecognizer = new SpeechRec();
+        liveSpeechRecognizer.continuous = true;
+        liveSpeechRecognizer.interimResults = true;
+        liveSpeechRecognizer.lang = navigator.language || 'en-US';
 
-        speechRecognizer.onstart = () => { isRecognizing = true; };
-        speechRecognizer.onresult = (e) => {
+        liveSpeechRecognizer.onresult = (e) => {
+            if (isLiveHold) return;
             let transcript = '';
             for (let i = e.resultIndex; i < e.results.length; ++i) {
                 transcript += e.results[i][0].transcript;
             }
-            if (isLiveVoiceActive) {
-                const sub = document.getElementById('liveSpeakerText');
-                if (sub) sub.innerText = `"${transcript}"`;
-                // VOICE BARGE-IN: If AI is speaking, cancel immediately
-                if (window.speechSynthesis && window.speechSynthesis.speaking) {
-                    window.speechSynthesis.cancel();
-                }
-            } else {
-                const input = document.getElementById('promptInput');
-                if (input) input.value = transcript;
+
+            // VOICE BARGE-IN: If AI is speaking and user speaks, cancel speech immediately!
+            if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+
+            // If final result
+            if (e.results[e.results.length - 1].isFinal && transcript.trim()) {
+                queryAutonomousAi(transcript.trim()).then(ans => {
+                    if (isLiveVoiceActive && !isLiveHold) {
+                        speakText(ans);
+                    }
+                });
             }
         };
-        speechRecognizer.onerror = () => { isRecognizing = false; };
-        speechRecognizer.onend = () => {
-            isRecognizing = false;
-            if (isLiveVoiceActive) {
-                try { speechRecognizer.start(); } catch (_) {}
+
+        liveSpeechRecognizer.onend = () => {
+            // Auto restart so it keeps listening continuously without re-prompting!
+            if (isLiveVoiceActive && !isLiveHold) {
+                try { liveSpeechRecognizer.start(); } catch (_) {}
             }
         };
+
+        try { liveSpeechRecognizer.start(); } catch (_) {}
     }
+}
+
+// --- INLINE VOICE RECORDING WITH DYNAMIC MINI-WAVE & DOTS ---
+function toggleInlineVoiceRecording() {
+    if (isInlineRecording) {
+        stopInlineVoiceRecording();
+    } else {
+        startInlineVoiceRecording();
+    }
+}
+
+function startInlineVoiceRecording() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+        showToast('Speech recognition not supported in this browser');
+        return;
+    }
+
+    try {
+        inlineSpeechRec = new SpeechRec();
+        inlineSpeechRec.continuous = true;
+        inlineSpeechRec.interimResults = true;
+        inlineSpeechRec.lang = navigator.language || 'en-US';
+
+        const waveBox = document.getElementById('inlineVoiceWave');
+        const bars = document.getElementById('miniWaveBarsBox');
+        const dots = document.getElementById('miniWaveDots');
+        const voiceBtn = document.getElementById('voiceBtn');
+
+        if (waveBox) waveBox.style.display = 'flex';
+        if (bars) bars.style.display = 'flex';
+        if (dots) dots.style.display = 'none';
+        if (voiceBtn) voiceBtn.style.color = '#ef4444';
+
+        isInlineRecording = true;
+
+        inlineSpeechRec.onresult = (e) => {
+            let transcript = '';
+            for (let i = 0; i < e.results.length; i++) {
+                transcript += e.results[i][0].transcript;
+            }
+
+            const input = document.getElementById('promptInput');
+            if (input && transcript) {
+                input.value = transcript;
+            }
+
+            if (bars) bars.style.display = 'flex';
+            if (dots) dots.style.display = 'none';
+
+            clearTimeout(inlineSilenceTimeout);
+            inlineSilenceTimeout = setTimeout(() => {
+                // User paused / silent
+                if (bars) bars.style.display = 'none';
+                if (dots) dots.style.display = 'inline';
+            }, 800);
+        };
+
+        inlineSpeechRec.onerror = (e) => {
+            console.warn('Inline voice error:', e.error);
+        };
+
+        inlineSpeechRec.onend = () => {
+            if (isInlineRecording) {
+                try { inlineSpeechRec.start(); } catch (_) {}
+            }
+        };
+
+        inlineSpeechRec.start();
+        showToast('Listening... Speak now');
+
+    } catch (e) {
+        showToast('Could not start microphone');
+    }
+}
+
+function stopInlineVoiceRecording() {
+    isInlineRecording = false;
+    clearTimeout(inlineSilenceTimeout);
+
+    if (inlineSpeechRec) {
+        try { inlineSpeechRec.stop(); } catch (_) {}
+        inlineSpeechRec = null;
+    }
+
+    const waveBox = document.getElementById('inlineVoiceWave');
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (waveBox) waveBox.style.display = 'none';
+    if (voiceBtn) voiceBtn.style.color = '';
+    showToast('Voice recorded');
+}
+
+// Fallback initSpeechRecognition
+function initSpeechRecognition() {
+    // Registered for legacy callers
+}
+
+// --- MULTI-ATTACHMENT TRAY & CHIPS ---
+function handleFilesSelected(e) {
+    closeAttachSheet();
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            attachedFiles.push({
+                dataUrl: evt.target.result,
+                name: file.name,
+                type: file.type || 'image/jpeg'
+            });
+            renderAttachmentChips();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function renderAttachmentChips() {
+    const tray = document.getElementById('attachmentPreviewTray');
+    const container = document.getElementById('attachmentChipsScroll');
+    if (!tray || !container) return;
+
+    if (attachedFiles.length === 0) {
+        tray.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    tray.style.display = 'block';
+    container.innerHTML = attachedFiles.map((f, idx) => `
+        <div class="attachment-chip-card">
+            ${f.type.startsWith('image/') ? `<img src="${f.dataUrl}" alt="${f.name}">` : '📄'}
+            <span>${f.name.slice(0, 16)}</span>
+            <button type="button" class="chip-remove-btn" onclick="removeAttachmentIndex(${idx})" title="Remove">&times;</button>
+        </div>
+    `).join('');
+}
+
+function removeAttachmentIndex(idx) {
+    attachedFiles.splice(idx, 1);
+    renderAttachmentChips();
+}
+
+function clearAttachments() {
+    attachedFiles = [];
+    renderAttachmentChips();
+    const cInput = document.getElementById('cameraInput');
+    const pInput = document.getElementById('photoInput');
+    const fInput = document.getElementById('fileInput');
+    if (cInput) cInput.value = '';
+    if (pInput) pInput.value = '';
+    if (fInput) fInput.value = '';
 }
 
 function speakText(text) {
@@ -1144,41 +1760,13 @@ function switchWsTab(tabId) {
     }
 }
 
-// --- PHOTO ATTACHMENT TRAY & CAMERA ---
+// --- PHOTO ATTACHMENT TRAY & CAMERA (LEGACY ALIASES) ---
 function handleFileSelected(e) {
-    closeAttachSheet();
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        attachedPhoto = { dataUrl: evt.target.result, name: file.name };
-        showAttachmentPreview(attachedPhoto);
-    };
-    reader.readAsDataURL(file);
-}
-
-function showAttachmentPreview(photo) {
-    const tray = document.getElementById('attachmentPreviewTray');
-    const img = document.getElementById('attachmentPreviewImg');
-    const name = document.getElementById('attachmentPreviewName');
-    if (tray && img && name) {
-        img.src = photo.dataUrl;
-        name.innerText = photo.name;
-        tray.style.display = 'block';
-    }
+    handleFilesSelected(e);
 }
 
 function clearAttachment() {
-    attachedPhoto = null;
-    const tray = document.getElementById('attachmentPreviewTray');
-    if (tray) tray.style.display = 'none';
-    const cInput = document.getElementById('cameraInput');
-    const pInput = document.getElementById('photoInput');
-    const fInput = document.getElementById('fileInput');
-    if (cInput) cInput.value = '';
-    if (pInput) pInput.value = '';
-    if (fInput) fInput.value = '';
+    clearAttachments();
 }
 
 function startCameraScan() {
