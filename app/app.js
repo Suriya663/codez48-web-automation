@@ -628,6 +628,72 @@ async function submitMessage() {
         return;
     }
 
+    // 1.5. MOBILE APP DOWNLOAD QUERY
+    const lowerText = text.toLowerCase();
+    const isAppRequest = (
+        lowerText.includes('mobile app') ||
+        lowerText.includes('android app') ||
+        lowerText.includes('download app') ||
+        lowerText.includes('download apk') ||
+        lowerText.includes('apk download') ||
+        lowerText.includes('app link') ||
+        lowerText.includes('apk file') ||
+        lowerText.includes('ஆப் வேணும்') ||
+        lowerText.includes('ஆப் லிங்க்') ||
+        lowerText.includes('மொபைல் ஆப்') ||
+        lowerText.includes('apk வேணும்') ||
+        lowerText.includes('apk கொடு')
+    );
+
+    if (isAppRequest) {
+        const downloadUrl = 'https://codez48.netlify.app/download/';
+        const directApk = 'https://codez48.netlify.app/download/Codez48Pilot.apk';
+        const waShare = `https://api.whatsapp.com/send?text=${encodeURIComponent('Download Codez48 Pilot Mobile Android APK: ' + downloadUrl)}`;
+
+        const appHtml = `
+        <div style="background:#ffffff; border:2px solid #0f172a; border-radius:12px; padding:16px; margin-top:8px; box-shadow:3px 3px 0px #0f172a;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <span style="background:#0f172a; color:#fff; font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px;">ANDROID APK</span>
+                <strong style="color:#0f172a; font-size:15px;">Codez48 Pilot Mobile</strong>
+            </div>
+            <p style="font-size:13px; color:#475569; margin-bottom:12px; line-height:1.5;">
+                அதிகாரப்பூர்வ Android APK மற்றும் முழுமையான வழிமுறைகள் பக்கத்திற்கு கீழே உள்ள இணைப்பைப் பயன்படுத்தவும்:
+            </p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                <a href="${downloadUrl}" target="_blank" style="background:#0f172a; color:#fff; padding:8px 14px; border-radius:8px; text-decoration:none; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                    இணைப்பைத் திற &rarr;
+                </a>
+                <a href="${directApk}" download="Codez48Pilot.apk" style="background:#ffffff; color:#0f172a; border:1.5px solid #0f172a; padding:7px 12px; border-radius:8px; text-decoration:none; font-size:12px; font-weight:700;">
+                    நேரடி APK டவுன்லோட்
+                </a>
+                <a href="${waShare}" target="_blank" style="background:#ffffff; color:#0f172a; border:1.5px solid #0f172a; padding:7px 12px; border-radius:8px; text-decoration:none; font-size:12px; font-weight:700;">
+                    Share to Mobile (WhatsApp)
+                </a>
+            </div>
+            <div style="background:#f8fafc; border-left:3px solid #0f172a; padding:8px 10px; font-size:12px; color:#334155;">
+                <strong>வழிமுறைகள்:</strong><br>
+                1. மொபைல் போனில் இந்த லிங்க்கை திறந்து APK-வை பதிவிறக்கவும்.<br>
+                2. Codez48Pilot.apk-ஐ இன்ஸ்டால் செய்து மின்னஞ்சல் OTP மூலம் லாகின் செய்யவும்.<br>
+                3. லேப்டாப் டச்பேடுடன் இணைக்க "Remote Mouse" ஐத் தட்டவும்!
+            </div>
+        </div>`;
+
+        const assistantMsg = {
+            role: 'assistant',
+            text: `Codez48 Pilot Android App Download Link: ${downloadUrl}\nDirect APK: ${directApk}`,
+            html: appHtml,
+            waStatus: 'read',
+            timestamp: Date.now()
+        };
+        activeChat.messages.push(assistantMsg);
+        if (currentChatId === sessionChatId) {
+            appendBubbleToDom(assistantMsg);
+            scrollChatToBottom();
+        }
+        saveChats();
+        return;
+    }
+
     // 2. Thinking placeholder with Animated Mascot Orb
     const assistantMsg = {
         role: 'assistant',
