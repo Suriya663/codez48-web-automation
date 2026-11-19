@@ -189,6 +189,61 @@ class AgentController {
 
         const lowerGoal = goal.toLowerCase();
 
+        // 0. MOBILE APP DOWNLOAD QUERY (Direct Link, Browser Launch & Share Options)
+        const isAppQuery = (
+            lowerGoal.includes('mobile app') ||
+            lowerGoal.includes('android app') ||
+            lowerGoal.includes('cli app') ||
+            lowerGoal.includes('download apk') ||
+            lowerGoal.includes('apk download') ||
+            lowerGoal.includes('apk file') ||
+            lowerGoal.includes('app link') ||
+            lowerGoal.includes('app download') ||
+            lowerGoal.includes('install app') ||
+            lowerGoal.includes('get app') ||
+            lowerGoal.includes('ஆப் வேணும்') ||
+            lowerGoal.includes('ஆப் லிங்க்') ||
+            lowerGoal.includes('மொபைல் ஆப்') ||
+            lowerGoal.includes('apk வேணும்') ||
+            lowerGoal.includes('apk கொடு')
+        );
+
+        if (isAppQuery) {
+            const { exec } = require('child_process');
+            const downloadUrl = 'https://codez48.netlify.app/download/';
+            const directApkUrl = 'https://codez48.netlify.app/download/Codez48Pilot.apk';
+            const waShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('Download Codez48 Pilot Mobile Android APK: ' + downloadUrl)}`;
+
+            // Automatically open download page in default browser
+            try {
+                if (process.platform === 'win32') {
+                    exec(`start "" "${downloadUrl}"`);
+                } else if (process.platform === 'darwin') {
+                    exec(`open "${downloadUrl}"`);
+                } else {
+                    exec(`xdg-open "${downloadUrl}"`);
+                }
+            } catch (_) {}
+
+            const responseText = 
+`\x1b[32m✔ Codez48 Pilot Android App Download Link:\x1b[0m
+  🌐 Website & Setup Guide: \x1b[36m${downloadUrl}\x1b[0m
+  📦 Direct APK Download:   \x1b[36m${directApkUrl}\x1b[0m
+
+\x1b[1m[INSTRUCTIONS / வழிமுறைகள்]\x1b[0m
+1. உங்கள் கணினி உலாவியில் தரவிறக்கப் பக்கம் தானாக திறக்கப்பட்டுள்ளது.
+2. உங்கள் மொபைலில் இந்த லிங்க்கை திறந்து \x1b[1m"Download APK Directly"\x1b[0m கிளிக் செய்யவும்.
+3. பதிவிறக்கம் செய்தவுடன் \x1b[1mCodez48Pilot.apk\x1b[0m-ஐ உங்கள் மொபைலில் இன்ஸ்டால் செய்யவும்.
+4. ஆப்பை திறந்து உங்கள் மின்னஞ்சலை உள்ளிட்டு 6 இலக்க OTP மூலம் உள்நுழையவும்.
+5. டச்பேடில் லேப்டாப்புடன் இணைக்க "Remote Mouse" ஐப் பயன்படுத்தி கர்சரை இயக்கலாம்!
+
+📲 WhatsApp மூலம் மொபைலுக்கு அனுப்ப:
+  ${waShareUrl}`;
+
+            console.log('\n' + responseText + '\n');
+            return responseText;
+        }
+
         // 1. Intent Classification
         const classification = await intentClassifier.classify(goal, apiCall);
         intentClassifier.display(classification);

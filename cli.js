@@ -561,6 +561,35 @@ const handleChat = async () => {
     }
 };
 
+const handleMobileAppDownload = async () => {
+    const downloadUrl = 'https://codez48.netlify.app/download/';
+    const directApkUrl = 'https://codez48.netlify.app/download/Codez48Pilot.apk';
+    const waShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('Download Codez48 Pilot Mobile Android APK: ' + downloadUrl)}`;
+
+    try {
+        if (process.platform === 'win32') {
+            exec(`start "" "${downloadUrl}"`);
+        } else if (process.platform === 'darwin') {
+            exec(`open "${downloadUrl}"`);
+        } else {
+            exec(`xdg-open "${downloadUrl}"`);
+        }
+    } catch (_) {}
+
+    console.log(`\n\x1b[36m╔═══════════════════════════════════════════════════════════════════════════════╗`);
+    console.log(`║                  CODEZ48 PILOT MOBILE ANDROID APP                             ║`);
+    console.log(`╚═══════════════════════════════════════════════════════════════════════════════╝\x1b[0m`);
+    console.log(`\x1b[32m✔ Official Web Download Page opened in your default browser!\x1b[0m\n`);
+    console.log(`  • Website & Setup Guide: \x1b[36m${downloadUrl}\x1b[0m`);
+    console.log(`  • Direct APK Link:       \x1b[36m${directApkUrl}\x1b[0m`);
+    console.log(`  • WhatsApp Share Link:   \x1b[36m${waShareUrl}\x1b[0m\n`);
+    console.log(`\x1b[1m[QUICK STEPS / வழிமுறைகள்]\x1b[0m`);
+    console.log(`  1. உங்கள் மொபைல் போனில் இந்த லிங்க்கை திறந்து APK-வை தரவிறக்கவும்.`);
+    console.log(`  2. Codez48Pilot.apk ஐ இன்ஸ்டால் செய்து உங்கள் மின்னஞ்சல் OTP மூலம் லாகின் செய்யவும்.`);
+    console.log(`  3. Remote Mouse மூலம் மொபைலையே உங்கள் லேப்டாப் டச்பேடாகப் பயன்படுத்தலாம்!\n`);
+    process.exit(0);
+};
+
 const handleShare = async () => {
     console.log('\n--- Codez48 File Share ---');
     console.log('1. Create Room\n2. Join Room\n3. Exit');
@@ -828,6 +857,10 @@ const main = async () => {
 
     switch (cmd) {
         case 'login': await login(); break;
+        case 'app':
+        case 'mobile':
+        case 'apk':
+        case 'download': await handleMobileAppDownload(); break;
         case 'ai': await handleAiChat(); break;
         case 'copilot':
         case 'pilot': await handlePilot(); break;
