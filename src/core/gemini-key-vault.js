@@ -175,7 +175,7 @@ class GeminiKeyVault {
     reportQuotaExhausted(key) {
         if (!key) return null;
         this.exhaustedKeys.add(key);
-        logger.status(`\x1b[33m[KEY VAULT] Quota exhausted for key ${this.maskKey(key)}. Switching to alternate key in pool...\x1b[0m`);
+        logger.debug(`[KEY VAULT] Quota exhausted for key ${this.maskKey(key)}. Switching to alternate key in pool...`);
         const nextKey = this.getActiveKey(key);
         return nextKey !== key ? nextKey : null;
     }

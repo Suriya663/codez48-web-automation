@@ -98,6 +98,7 @@ class AgentController {
                         }
                     } else if (res.status === 401 || res.status === 403 || res.status === 429) {
                         geminiKeyVault.reportQuotaExhausted(apiKey);
+                        break;
                     }
                 } catch (_) {}
             }
@@ -370,7 +371,6 @@ class AgentController {
                 ...conversationHistory
             ];
 
-            process.stdout.write('Thinking...');
             let data = null;
 
             // Tier 1: Google Gemini Direct (Using active key or vault pool)
@@ -397,8 +397,6 @@ class AgentController {
             if (!data || !data.success) {
                 data = await this.callPollinationsFallback(goal);
             }
-
-            process.stdout.write('\r\x1b[K');
 
             if (data && data.success && data.answer) {
                 let cleanAnswer = data.answer || '';

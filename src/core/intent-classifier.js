@@ -1216,8 +1216,6 @@ Goal: "${goal}"`;
             logger.debug(`[INPUT RECEIVED] Intent: ${classification.intent} | Workflow: ${classification.workflow || 'DEFAULT'} | Goal: ${classification.user_goal}`);
             if (classification.sub_intent) logger.debug(`[SUB_INTENT: ${classification.sub_intent}]`);
             if (classification.keywords && classification.keywords.length > 0) logger.debug(`[KEYWORDS: ${classification.keywords.join(', ')}]`);
-        } else {
-            logger.status('Processing your request...');
         }
     }
 }
