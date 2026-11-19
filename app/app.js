@@ -680,7 +680,7 @@ async function submitMessage() {
                         body: JSON.stringify({
                             message: text,
                             goal: text,
-                            pilotId: localStorage.getItem('codez48_pilot_id') || 'USR-CDZ48-AD63-D4DE-4AC9-711E',
+                            pilotId: localStorage.getItem('codez48_pilot_id') || 'USR-CDZ48-DEMO-7555-PILOT-NODE',
                             mode: 'laptop'
                         }),
                         signal: AbortSignal.timeout(12000)
@@ -2439,7 +2439,7 @@ function deductCreditsForQuery() {
     if (creditsUsed) creditsUsed.innerText = `Used: ${used}`;
 
     try {
-        const email = localStorage.getItem('codez48_user_email') || 'rajnaga75556@gmail.com';
+        const email = localStorage.getItem('codez48_user_email') || 'pilot.demo@codez48.com';
         fetch(`${API_BASE}/mobile-otp-auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2450,7 +2450,7 @@ function deductCreditsForQuery() {
 
 // --- SEND PPT TO EMAIL ---
 async function sendPptToEmail() {
-    const email = localStorage.getItem('codez48_user_email') || 'rajnaga75556@gmail.com';
+    const email = localStorage.getItem('codez48_user_email') || 'pilot.demo@codez48.com';
     const topic = document.getElementById('slideTopicInput')?.value || 'Interactive 3D Presentation';
     
     showToast(`Sending presentation to ${email}...`);
@@ -2482,7 +2482,7 @@ async function sendPptToEmail() {
 async function connectPilotByNodeId() {
     const input = document.getElementById('laptopIpInput');
     const tag = document.getElementById('bridgeStatusTag');
-    const pilotId = (input && input.value ? input.value : 'USR-CDZ48-AD63-D4DE-4AC9-711E').trim();
+    const pilotId = (input && input.value ? input.value : 'USR-CDZ48-DEMO-7555-PILOT-NODE').trim();
 
     if (tag) {
         tag.className = 'tag online';
@@ -2578,25 +2578,20 @@ window.onAndroidTtsState = function(state) {
 // === COMPREHENSIVE AUTHENTICATION & SESSION MANAGEMENT ===
 let currentAuthTab = 'pilot';
 let generatedAuthOtp = '';
-let resolvedAuthEmail = 'rajnaga75556@gmail.com';
+let resolvedAuthEmail = 'pilot.demo@codez48.com';
 
 const REGISTERED_PILOTS = {
-    'USR-CDZ48-AD63-D4DE-4AC9-711E': {
-        email: 'rajnaga75556@gmail.com',
-        nodeId: 'C48-NODE-7555',
-        title: 'Master Pilot Sentinel'
+    'USR-CDZ48-DEMO-7555-PILOT-NODE': {
+        email: 'pilot.demo@codez48.com',
+        nodeId: 'C48-NODE-DEMO',
+        title: 'Demo Pilot Sentinel'
     },
-    'C48-NODE-7555': {
-        email: 'rajnaga75556@gmail.com',
-        nodeId: 'C48-NODE-7555',
-        title: 'Workstation Node 7555'
+    'C48-NODE-DEMO': {
+        email: 'pilot.demo@codez48.com',
+        nodeId: 'C48-NODE-DEMO',
+        title: 'Demo Workstation Node'
     }
 };
-
-const REGISTERED_EMAILS = [
-    'rajnaga75556@gmail.com',
-    'codez4848@gmail.com'
-];
 
 function initAuth() {
     checkAuthStatus();
@@ -2624,8 +2619,8 @@ function applyUserSession(user) {
     const profileAuthEmail = document.getElementById('profileAuthEmail');
     const profileAuthPilotId = document.getElementById('profileAuthPilotId');
 
-    const email = user.email || 'rajnaga75556@gmail.com';
-    const pilotId = user.pilotId || 'USR-CDZ48-AD63-D4DE-4AC9-711E';
+    const email = user.email || 'pilot.demo@codez48.com';
+    const pilotId = user.pilotId || 'USR-CDZ48-DEMO-7555-PILOT-NODE';
 
     localStorage.setItem('codez48_user_email', email);
     localStorage.setItem('codez48_pilot_id', pilotId);
@@ -2674,7 +2669,7 @@ function switchAuthTab(tab) {
         if (tabEmail) tabEmail.classList.remove('active');
         if (label) label.innerText = 'Pilot User ID';
         if (input) {
-            input.placeholder = 'e.g. USR-CDZ48-AD63-D4DE-4AC9-711E';
+            input.placeholder = 'e.g. USR-CDZ48-DEMO-7555-PILOT-NODE';
             input.value = '';
             input.focus();
         }
@@ -2683,7 +2678,7 @@ function switchAuthTab(tab) {
         if (tabEmail) tabEmail.classList.add('active');
         if (label) label.innerText = 'Email Address';
         if (input) {
-            input.placeholder = 'e.g. rajnaga75556@gmail.com';
+            input.placeholder = 'e.g. pilot.demo@codez48.com';
             input.value = '';
             input.focus();
         }
@@ -2708,7 +2703,7 @@ function handleAuthIdentifierChange(val) {
 
     if (currentAuthTab === 'pilot') {
         const upper = trimmed.toUpperCase();
-        // Check exact match in registered pilots
+        // Check exact match in registered demo pilots
         if (REGISTERED_PILOTS[upper]) {
             resolvedAuthEmail = REGISTERED_PILOTS[upper].email;
             if (resEmailElem) resEmailElem.innerText = resolvedAuthEmail;
@@ -2718,53 +2713,59 @@ function handleAuthIdentifierChange(val) {
                 liveMsg.className = 'auth-live-msg auth-msg-success';
                 liveMsg.innerHTML = `&#10003; <strong>சரிபார்க்கப்பட்ட பைலட் ஐடி (Verified Pilot ID)</strong><br><span style="font-size:11px; color:#15803d;">இணைக்கப்பட்ட கணக்கு: ${resolvedAuthEmail}</span>`;
             }
-        } else {
-            if (previewBox) previewBox.style.display = 'none';
-            // Detailed character-by-character checks
-            if (upper.startsWith('USR-CDZ48-')) {
-                if (upper.length < 31) {
-                    if (liveMsg) {
-                        liveMsg.style.display = 'block';
-                        liveMsg.className = 'auth-live-msg auth-msg-error';
-                        liveMsg.innerHTML = `&#10007; <strong>முழுமையற்ற பைலட் ஐடி (Incomplete Pilot ID)</strong>: சரியாக 31 எழுத்துக்கள் தேவை (தற்போது: ${upper.length}/31). ஒரு எண் அல்லது எழுத்து விடுபட்டாலும் ஏற்கப்படாது.`;
-                    }
-                } else if (upper.length === 31) {
-                    if (liveMsg) {
-                        liveMsg.style.display = 'block';
-                        liveMsg.className = 'auth-live-msg auth-msg-error';
-                        liveMsg.innerHTML = `&#10007; <strong>பதிவு செய்யப்படாத பைலட் ஐடி (Unregistered Pilot ID)</strong>: எழுத்துக்கள் மற்றும் எண்களைச் சரிபார்க்கவும்.`;
-                    }
-                } else {
-                    if (liveMsg) {
-                        liveMsg.style.display = 'block';
-                        liveMsg.className = 'auth-live-msg auth-msg-error';
-                        liveMsg.innerHTML = `&#10007; <strong>தவறான நீளம்</strong>: பைலட் ஐடி சரியாக 31 எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்.`;
-                    }
-                }
-            } else if (upper.startsWith('C48-NODE-')) {
-                if (upper.length < 13) {
-                    if (liveMsg) {
-                        liveMsg.style.display = 'block';
-                        liveMsg.className = 'auth-live-msg auth-msg-error';
-                        liveMsg.innerHTML = `&#10007; <strong>முழுமையற்ற நோட் ஐடி (Incomplete Node ID)</strong>: 13 எழுத்துக்கள் தேவை (எ.கா: C48-NODE-7555).`;
-                    }
-                } else {
-                    if (liveMsg) {
-                        liveMsg.style.display = 'block';
-                        liveMsg.className = 'auth-live-msg auth-msg-error';
-                        liveMsg.innerHTML = `&#10007; <strong>பதிவு செய்யப்படாத நோட் ஐடி (Unregistered Node ID)</strong>: சரியான எண்ணை உள்ளிடவும்.`;
-                    }
-                }
-            } else {
+        } else if (upper.startsWith('USR-CDZ48-')) {
+            if (upper.length < 31) {
+                if (previewBox) previewBox.style.display = 'none';
                 if (liveMsg) {
                     liveMsg.style.display = 'block';
                     liveMsg.className = 'auth-live-msg auth-msg-error';
-                    liveMsg.innerHTML = `&#10007; <strong>தவறான வடிவம்</strong>: பைலட் ஐடி USR-CDZ48-XXXX-XXXX-XXXX-XXXX அல்லது C48-NODE-XXXX என்ற வடிவில் துல்லியமாக இருக்க வேண்டும்.`;
+                    liveMsg.innerHTML = `&#10007; <strong>முழுமையற்ற பைலட் ஐடி (Incomplete Pilot ID)</strong>: சரியாக 31 எழுத்துக்கள் தேவை (தற்போது: ${upper.length}/31). ஒரு எண் அல்லது எழுத்து விடுபட்டாலும் ஏற்கப்படாது.`;
                 }
+            } else if (upper.length === 31) {
+                resolvedAuthEmail = localStorage.getItem('codez48_user_email') || 'pilot.demo@codez48.com';
+                if (resEmailElem) resEmailElem.innerText = resolvedAuthEmail;
+                if (previewBox) previewBox.style.display = 'flex';
+                if (liveMsg) {
+                    liveMsg.style.display = 'block';
+                    liveMsg.className = 'auth-live-msg auth-msg-success';
+                    liveMsg.innerHTML = `&#10003; <strong>செல்லுபடியாகும் பைலட் ஐடி (Valid Pilot ID)</strong><br><span style="font-size:11px; color:#15803d;">இணைக்கப்பட்ட கணக்கு: ${resolvedAuthEmail}</span>`;
+                }
+            } else {
+                if (previewBox) previewBox.style.display = 'none';
+                if (liveMsg) {
+                    liveMsg.style.display = 'block';
+                    liveMsg.className = 'auth-live-msg auth-msg-error';
+                    liveMsg.innerHTML = `&#10007; <strong>தவறான நீளம்</strong>: பைலட் ஐடி சரியாக 31 எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்.`;
+                }
+            }
+        } else if (upper.startsWith('C48-NODE-')) {
+            if (upper.length < 13) {
+                if (previewBox) previewBox.style.display = 'none';
+                if (liveMsg) {
+                    liveMsg.style.display = 'block';
+                    liveMsg.className = 'auth-live-msg auth-msg-error';
+                    liveMsg.innerHTML = `&#10007; <strong>முழுமையற்ற நோட் ஐடி (Incomplete Node ID)</strong>: 13 எழுத்துக்கள் தேவை (எ.கா: C48-NODE-DEMO).`;
+                }
+            } else {
+                resolvedAuthEmail = localStorage.getItem('codez48_user_email') || 'pilot.demo@codez48.com';
+                if (resEmailElem) resEmailElem.innerText = resolvedAuthEmail;
+                if (previewBox) previewBox.style.display = 'flex';
+                if (liveMsg) {
+                    liveMsg.style.display = 'block';
+                    liveMsg.className = 'auth-live-msg auth-msg-success';
+                    liveMsg.innerHTML = `&#10003; <strong>சரிபார்க்கப்பட்ட நோட் ஐடி (Verified Node ID)</strong><br><span style="font-size:11px; color:#15803d;">இணைக்கப்பட்ட கணக்கு: ${resolvedAuthEmail}</span>`;
+                }
+            }
+        } else {
+            if (previewBox) previewBox.style.display = 'none';
+            if (liveMsg) {
+                liveMsg.style.display = 'block';
+                liveMsg.className = 'auth-live-msg auth-msg-error';
+                liveMsg.innerHTML = `&#10007; <strong>தவறான வடிவம்</strong>: பைலட் ஐடி USR-CDZ48-XXXX-XXXX-XXXX-XXXX அல்லது C48-NODE-XXXX என்ற வடிவில் துல்லியமாக இருக்க வேண்டும்.`;
             }
         }
     } else {
-        // Email validation
+        // Email validation: Support any valid RFC5322 email syntax
         if (previewBox) previewBox.style.display = 'none';
         const lower = trimmed.toLowerCase();
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
@@ -2776,19 +2777,11 @@ function handleAuthIdentifierChange(val) {
                 liveMsg.innerHTML = `சரியான மின்னஞ்சல் வடிவத்தை உள்ளிடவும் (எ.கா: name@example.com).`;
             }
         } else {
-            if (REGISTERED_EMAILS.includes(lower)) {
-                resolvedAuthEmail = lower;
-                if (liveMsg) {
-                    liveMsg.style.display = 'block';
-                    liveMsg.className = 'auth-live-msg auth-msg-success';
-                    liveMsg.innerHTML = `&#10003; <strong>சரிபார்க்கப்பட்ட பதிவு செய்யப்பட்ட கணக்கு (Registered Account)</strong>`;
-                }
-            } else {
-                if (liveMsg) {
-                    liveMsg.style.display = 'block';
-                    liveMsg.className = 'auth-live-msg auth-msg-error';
-                    liveMsg.innerHTML = `&#10007; <strong>மின்னஞ்சல் பதிவு செய்யப்படவில்லை (Email Not Registered)</strong>: ஒரு எண் அல்லது எழுத்து தவறாக இருந்தாலும் ஏற்கப்படாது. பதிவு செய்யப்பட்ட சரியான மின்னஞ்சலை உள்ளிடவும்.`;
-                }
+            resolvedAuthEmail = lower;
+            if (liveMsg) {
+                liveMsg.style.display = 'block';
+                liveMsg.className = 'auth-live-msg auth-msg-success';
+                liveMsg.innerHTML = `&#10003; <strong>சரிபார்க்கப்பட்ட மின்னஞ்சல் முகவரி (Valid Email)</strong><br><span style="font-size:11px; color:#15803d;">OTP அனுப்பப்படும் முகவரி: ${lower}</span>`;
             }
         }
     }
@@ -2816,6 +2809,10 @@ function requestAuthOtp() {
         const upper = val.toUpperCase();
         if (REGISTERED_PILOTS[upper]) {
             targetEmail = REGISTERED_PILOTS[upper].email;
+        } else if (upper.startsWith('USR-CDZ48-') && upper.length === 31) {
+            targetEmail = localStorage.getItem('codez48_user_email') || 'pilot.demo@codez48.com';
+        } else if (upper.startsWith('C48-NODE-') && upper.length >= 13) {
+            targetEmail = localStorage.getItem('codez48_user_email') || 'pilot.demo@codez48.com';
         } else {
             if (notFoundBox) notFoundBox.style.display = 'block';
             if (liveMsg) {
@@ -2838,18 +2835,7 @@ function requestAuthOtp() {
             showToast('சரியான மின்னஞ்சல் வடிவத்தை உள்ளிடவும்');
             return;
         }
-        if (REGISTERED_EMAILS.includes(lower)) {
-            targetEmail = lower;
-        } else {
-            if (notFoundBox) notFoundBox.style.display = 'block';
-            if (liveMsg) {
-                liveMsg.style.display = 'block';
-                liveMsg.className = 'auth-live-msg auth-msg-error';
-                liveMsg.innerHTML = '&#10007; <strong>பதிவு செய்யப்படாத மின்னஞ்சல்</strong>: ஒரு எழுத்து அல்லது எண் விடுபட்டாலும் ஏற்கப்படாது. பதிவு செய்யப்பட்ட சரியான மின்னஞ்சலை உள்ளிடவும்.';
-            }
-            showToast('மின்னஞ்சல் பதிவு செய்யப்படவில்லை! ஒரு எழுத்து மாறினாலும் ஏற்கப்படாது.');
-            return;
-        }
+        targetEmail = lower;
     }
 
     if (notFoundBox) notFoundBox.style.display = 'none';
@@ -2857,6 +2843,10 @@ function requestAuthOtp() {
 
     // Generate secure 6-digit cryptographic OTP (STORED INTERNALLY ONLY - NEVER DISPLAYED ON SCREEN)
     generatedAuthOtp = String(Math.floor(100000 + Math.random() * 900000));
+    try {
+        sessionStorage.setItem('codez48_pending_otp', generatedAuthOtp);
+        sessionStorage.setItem('codez48_pending_email', resolvedAuthEmail);
+    } catch (_) {}
 
     // Show Step 2
     const step1 = document.getElementById('authStepIdentifier');
@@ -2882,6 +2872,10 @@ function requestAuthOtp() {
             body: JSON.stringify({ action: 'SEND_OTP', email: resolvedAuthEmail, otp: generatedAuthOtp })
         }).then(r => r.json()).then(data => {
             if (data && data.success) {
+                if (data.otp) {
+                    generatedAuthOtp = String(data.otp);
+                    try { sessionStorage.setItem('codez48_pending_otp', generatedAuthOtp); } catch (_) {}
+                }
                 console.log('[AUTH] Real OTP successfully sent to:', resolvedAuthEmail);
             }
         }).catch(() => {});
@@ -2897,7 +2891,7 @@ function backToIdentifierStep() {
     if (step2) step2.style.display = 'none';
 }
 
-function verifyAuthOtp() {
+async function verifyAuthOtp() {
     const otpInput = document.getElementById('authOtpInput');
     const otpError = document.getElementById('authOtpErrorMsg');
     const entered = (otpInput && otpInput.value ? otpInput.value : '').trim();
@@ -2911,8 +2905,36 @@ function verifyAuthOtp() {
         return;
     }
 
-    // Strict validation against generatedAuthOtp (no demo codes!)
-    if (entered !== generatedAuthOtp) {
+    let cachedOtp = generatedAuthOtp;
+    if (!cachedOtp) {
+        try { cachedOtp = sessionStorage.getItem('codez48_pending_otp') || ''; } catch (_) {}
+    }
+
+    let isValid = false;
+
+    // Fast-path: Check against in-memory or session OTP
+    if (cachedOtp && entered === cachedOtp) {
+        isValid = true;
+    }
+
+    // Call Cloud Backend to verify against server/Firestore
+    try {
+        const res = await fetch(`${API_BASE}/mobile-otp-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'VERIFY_OTP', email: resolvedAuthEmail, otp: entered })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+                isValid = true;
+            }
+        }
+    } catch (e) {
+        console.warn('[AUTH] Cloud verify error, relying on local check:', e);
+    }
+
+    if (!isValid) {
         if (otpError) {
             otpError.style.display = 'block';
             otpError.innerHTML = `&#10007; <strong>தவறான OTP குறியீடு</strong>! உங்கள் மின்னஞ்சலுக்கு (${resolvedAuthEmail}) அனுப்பப்பட்ட 6 இலக்கக் குறியீட்டைச் சரியாக உள்ளிடவும்.`;
@@ -2923,19 +2945,10 @@ function verifyAuthOtp() {
 
     if (otpError) otpError.style.display = 'none';
 
-    // Call Cloud Backend to mark as verified
-    try {
-        fetch(`${API_BASE}/mobile-otp-auth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'VERIFY_OTP', email: resolvedAuthEmail, otp: entered })
-        }).catch(() => {});
-    } catch (_) {}
-
     const idInput = document.getElementById('authIdentifierInput');
     const finalPilotId = (currentAuthTab === 'pilot' && idInput && idInput.value.trim()) 
         ? idInput.value.trim().toUpperCase() 
-        : 'USR-CDZ48-AD63-D4DE-4AC9-711E';
+        : 'USR-CDZ48-DEMO-7555-PILOT-NODE';
 
     const sessionUser = {
         email: resolvedAuthEmail,
