@@ -177,7 +177,7 @@
                         <span class="item-text" style="color:#2563eb; font-weight:600;">Codez48 Main Website</span>
                     </a>
                     <a href="javascript:void(0)" class="drawer-nav-item drawer-logout-item" onclick="confirmLogout()" style="border-top: 1px dashed #fee2e2; margin-top: 8px; padding-top: 10px;">
-                        <span class="item-text" style="color:#ef4444; font-weight:600;">🚪 Log Out</span>
+                        <span class="item-text" style="color:#ef4444; font-weight:600;">Log Out</span>
                     </a>
                 </nav>
 
@@ -487,7 +487,7 @@
                     <div class="profile-section-card" style="border-color: #fee2e2; background: #fff5f5;">
                         <div class="sec-header">
                             <strong style="color: #991b1b;">Account & Session</strong>
-                            <button class="link-btn" onclick="confirmLogout()" style="color: #ef4444; font-weight: 700;">Log Out &rarr;</button>
+                            <button class="link-btn" onclick="confirmLogout()" style="color: #ef4444; font-weight: 700;">Log Out</button>
                         </div>
                         <p style="font-size:12px; color:#7f1d1d; margin:4px 0;">Signed in: <strong id="profileAuthEmail">rajnaga75556@gmail.com</strong></p>
                         <p style="font-size:11px; color:#991b1b; margin:2px 0;">Pilot ID: <span id="profileAuthPilotId">USR-CDZ48-AD63-D4DE-4AC9-711E</span></p>
@@ -663,11 +663,7 @@
                         <div class="auth-input-wrapper">
                             <input type="text" id="authIdentifierInput" placeholder="e.g. USR-CDZ48-AD63-D4DE-4AC9-711E" autocomplete="off" oninput="handleAuthIdentifierChange(this.value)">
                         </div>
-                        <div class="auth-quick-pills">
-                            <span class="auth-pill-tip">Quick fill:</span>
-                            <button type="button" class="auth-quick-pill" onclick="quickFillIdentifier('USR-CDZ48-AD63-D4DE-4AC9-711E')">Pilot ID</button>
-                            <button type="button" class="auth-quick-pill" onclick="quickFillIdentifier('rajnaga75556@gmail.com')">Email ID</button>
-                        </div>
+                        <div id="authLiveValidationMsg" class="auth-live-msg" style="display:none;"></div>
                     </div>
 
                     <!-- Auto-detected email preview when Pilot ID is entered -->
@@ -681,7 +677,7 @@
                     <!-- Account Not Found Notice & CLI Setup Instructions -->
                     <div id="authAccountNotFoundBox" class="auth-not-found-box" style="display:none;">
                         <div class="not-found-header">Account Not Found</div>
-                        <p class="not-found-sub">No registered Pilot account found for this email. Please register using the Codez48 CLI in your Command Prompt / Terminal.</p>
+                        <p class="not-found-sub">No registered Pilot account found for this email or ID. Please register using the Codez48 CLI in your Command Prompt / Terminal.</p>
                         <div class="cli-command-card">
                             <code>npm install -g codez48-cli<br>codez48 login<br>codez48 pilot</code>
                             <button type="button" class="cli-copy-btn" onclick="copyCliSetupCommand()">Copy Commands</button>
@@ -710,11 +706,7 @@
                         <div class="auth-otp-input-wrapper">
                             <input type="text" id="authOtpInput" maxlength="6" inputmode="numeric" placeholder="• • • • • •" autocomplete="one-time-code" onkeyup="if(event.key==='Enter') verifyAuthOtp()">
                         </div>
-                        <div class="auth-demo-otp-bar">
-                            <span class="demo-otp-tag">Demonstration Code:</span>
-                            <code id="authGeneratedDemoOtp" class="demo-otp-val">487556</code>
-                            <button type="button" class="auth-quick-pill" onclick="autoFillDemoOtp()">Auto Fill</button>
-                        </div>
+                        <div id="authOtpErrorMsg" class="auth-live-msg auth-msg-error" style="display:none;"></div>
                     </div>
 
                     <div class="auth-action-row">
