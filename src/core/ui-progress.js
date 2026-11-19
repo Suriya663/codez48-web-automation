@@ -7,7 +7,7 @@
 
 class UiProgress {
     constructor() {
-        this.spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        this.spinnerFrames = ['◐', '◓', '◑', '◒'];
         this.activeTimer = null;
         this.frameIndex = 0;
         this.currentText = '';
@@ -37,9 +37,9 @@ class UiProgress {
                     process.stdout.cursorTo(0);
                     process.stdout.write(`\x1b[36m${frame}\x1b[0m \x1b[1m${this.currentText}\x1b[0m`);
                 } catch (_) {}
-            }, 80);
+            }, 90);
         } else {
-            console.log(`\x1b[36m⏳ ${text}\x1b[0m`);
+            // In non-TTY environments, suppress noisy logs
         }
     }
 

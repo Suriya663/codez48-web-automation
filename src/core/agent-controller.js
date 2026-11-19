@@ -371,6 +371,8 @@ class AgentController {
                 ...conversationHistory
             ];
 
+            const uiProgress = require('./ui-progress');
+            uiProgress.startSpinner('Thinking...');
             let data = null;
 
             // Tier 1: Google Gemini Direct (Using active key or vault pool)
@@ -397,6 +399,8 @@ class AgentController {
             if (!data || !data.success) {
                 data = await this.callPollinationsFallback(goal);
             }
+
+            uiProgress.stop();
 
             if (data && data.success && data.answer) {
                 let cleanAnswer = data.answer || '';
