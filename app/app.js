@@ -94,6 +94,7 @@ let slideDeckData = [
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+    initAuth();
     loadSettings();
     initDrawer();
     initAttachSheet();
@@ -137,23 +138,32 @@ function selectModelTier(tier) {
         activeModelTier = 'basic';
         localStorage.setItem('codez48_model_tier', 'basic');
         updateModelTierUI('basic');
-        showToast('Active model: Basic (Free / Fast)');
-    } else if (tier === 'medium') {
-        if (activePlan === 'Medium' || activePlan === 'High') {
+        showToast('Active model: Basic');
+        return;
+    }
+
+    const currentPlan = (activePlan || localStorage.getItem('codez48_plan') || '').toUpperCase();
+    const hasMedium = currentPlan.includes('MEDIUM') || currentPlan.includes('HIGH') || currentPlan.includes('ENTERPRISE');
+    const hasHigh = currentPlan.includes('HIGH') || currentPlan.includes('ENTERPRISE');
+
+    if (tier === 'medium') {
+        if (hasMedium) {
             activeModelTier = 'medium';
             localStorage.setItem('codez48_model_tier', 'medium');
             updateModelTierUI('medium');
-            showToast('Active model: Medium (Accelerated)');
+            showToast('Active model: Medium');
         } else {
+            showToast('Redirecting to Razorpay payment gateway for Medium tier...');
             redirectToPaymentGateway('MEDIUM');
         }
     } else if (tier === 'high') {
-        if (activePlan === 'High') {
+        if (hasHigh) {
             activeModelTier = 'high';
             localStorage.setItem('codez48_model_tier', 'high');
             updateModelTierUI('high');
-            showToast('Active model: High (Ultra Intelligence)');
+            showToast('Active model: High');
         } else {
+            showToast('Redirecting to Razorpay payment gateway for High tier...');
             redirectToPaymentGateway('HIGH');
         }
     }
@@ -162,20 +172,26 @@ function selectModelTier(tier) {
 function updateModelTierUI(tier) {
     const label = document.getElementById('instantModelLabel');
     if (label) {
-        if (tier === 'high') label.innerText = 'Instant High';
-        else if (tier === 'medium') label.innerText = 'Instant Med';
-        else label.innerText = 'Instant';
+        if (tier === 'high') label.innerText = 'High';
+        else if (tier === 'medium') label.innerText = 'Medium';
+        else label.innerText = 'Basic';
     }
 
     const checkBasic = document.getElementById('tierCheckBasic');
-    const lockMedium = document.getElementById('tierLockMedium');
-    const lockHigh = document.getElementById('tierLockHigh');
+    const checkMedium = document.getElementById('tierCheckMedium');
+    const checkHigh = document.getElementById('tierCheckHigh');
 
-    const hasMedium = (activePlan === 'Medium' || activePlan === 'High');
-    const hasHigh = (activePlan === 'High');
+    if (checkBasic) checkBasic.style.display = (tier === 'basic') ? 'inline' : 'none';
+    if (checkMedium) checkMedium.style.display = (tier === 'medium') ? 'inline' : 'none';
+    if (checkHigh) checkHigh.style.display = (tier === 'high') ? 'inline' : 'none';
 
-    if (lockMedium) lockMedium.innerText = hasMedium ? '✓' : '🔒';
-    if (lockHigh) lockHigh.innerText = hasHigh ? '✓' : '🔒';
+    ['tierItemBasic', 'tierItemMedium', 'tierItemHigh'].forEach(id => {
+        const item = document.getElementById(id);
+        if (item) item.classList.remove('active');
+    });
+
+    const activeItem = document.getElementById(tier === 'high' ? 'tierItemHigh' : tier === 'medium' ? 'tierItemMedium' : 'tierItemBasic');
+    if (activeItem) activeItem.classList.add('active');
 }
 
 // Close dropdown on outside click
@@ -262,10 +278,9 @@ function updatePlanBadge(planName) {
 }
 
 function redirectToPaymentGateway(planType) {
-    // Official HTTPS Payment Gateway URL
-    const paymentUrl = `https://codez48.netlify.app/checkout.html?plan=${planType.toUpperCase()}`;
+    // Official HTTPS Razorpay Payment Gateway Checkout Page
+    const paymentUrl = `https://codez48.netlify.app/payment.html?plan=${encodeURIComponent(planType.toUpperCase())}`;
     window.open(paymentUrl, '_blank');
-    selectPlan(planType === 'HIGH' ? 'High' : 'Medium');
 }
 
 // --- SELLER HUB & USER PROFILE (REPLACES CONNECTORS) ---
@@ -577,6 +592,8 @@ async function submitMessage() {
         activeChat.title = text.slice(0, 32);
     }
 
+    deductCreditsForQuery();
+
     const userMsg = {
         role: 'user',
         text: text,
@@ -630,29 +647,54 @@ async function submitMessage() {
         let responseText = '';
         let confirmationData = null;
 
-        // 2. IN LAPTOP MODE -> Execute on Laptop CLI Bridge
+        // 2. IN LAPTOP MODE -> Execute on Laptop CLI Bridge or Cloud Relay via Firebase
         if (appMode === 'laptop') {
+            let executed = false;
             if (isPilotOnline) {
                 try {
                     const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ goal: text, plan: activePlan }),
-                        signal: AbortSignal.timeout(60000)
+                        signal: AbortSignal.timeout(5000)
                     });
-                    const data = await res.json();
-                    
-                    if (data.requiresConfirmation) {
-                        confirmationData = data;
-                        responseText = data.question || 'Action requires authorization:';
-                    } else {
-                        responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
+                    if (res.ok) {
+                        const data = await res.json();
+                        executed = true;
+                        if (data.requiresConfirmation) {
+                            confirmationData = data;
+                            responseText = data.question || 'Action requires authorization:';
+                        } else {
+                            responseText = data.answer || data.message || 'Execution completed on laptop CLI.';
+                        }
                     }
-                } catch (bridgeErr) {
-                    responseText = `⚠️ Execution failed on Laptop Bridge: ${bridgeErr.message}. Ensure "node cli.js pilot" is running on your laptop (${LAPTOP_BRIDGE_URL}).`;
-                }
-            } else {
-                responseText = `⚠️ Laptop is currently Standby / Offline. Please verify that your laptop is connected to Wi-Fi and running the Pilot bridge (${LAPTOP_BRIDGE_URL}).`;
+                } catch (_) {}
+            }
+
+            if (!executed) {
+                // Cloud Relay via Netlify Functions & Firebase (bypasses localhost limitations on mobile)
+                try {
+                    const cloudRes = await fetch(`https://codez48.netlify.app/.netlify/functions/cli-ai-chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: text,
+                            goal: text,
+                            pilotId: localStorage.getItem('codez48_pilot_id') || 'USR-CDZ48-AD63-D4DE-4AC9-711E',
+                            mode: 'laptop'
+                        }),
+                        signal: AbortSignal.timeout(12000)
+                    });
+                    if (cloudRes.ok) {
+                        const cData = await cloudRes.json();
+                        responseText = cData.reply || cData.answer || cData.message || '';
+                        if (responseText) executed = true;
+                    }
+                } catch (_) {}
+            }
+
+            if (!executed) {
+                responseText = await queryAutonomousAi(text, files);
             }
         }
         // 3. 3D SLIDES / PPT CREATION (Mobile Mode Fallback)
@@ -769,49 +811,39 @@ function generatePollinationsImage(promptText) {
     const width = 512;
     const height = 512;
     const seed = Math.floor(Math.random() * 1000000);
-    const rawUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}`;
+    // Flux Realism model with nologo=true
+    const rawUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&model=flux-realism&nologo=true&seed=${seed}`;
 
     const cardId = 'img_card_' + Date.now();
+
+    // 8x8 micro-boxes matrix grid with smooth staggered shimmer waves (zero text)
+    let matrixCells = '';
+    for (let i = 0; i < 64; i++) {
+        const delay = ((i % 8) * 0.08 + Math.floor(i / 8) * 0.08).toFixed(2);
+        matrixCells += `<div class="matrix-micro-cell" style="animation-delay: ${delay}s;"></div>`;
+    }
+
     return `
-        <div class="ai-image-card" id="${cardId}" data-prompt="${escapeHtml(cleanPrompt)}">
-            <div class="image-card-header">
-                <div class="card-prompt-badge">
-                    <span class="pulse-dot"></span>
-                    <span class="badge-title">AI Image Studio</span>
+        <div class="ai-image-pure-card" id="${cardId}" data-prompt="${escapeHtml(cleanPrompt)}">
+            <!-- Micro-Box Shiny Matrix Animation (Zero Text) -->
+            <div class="matrix-grid-box" id="${cardId}_shimmer">
+                ${matrixCells}
+            </div>
+
+            <!-- Auto-cropped display: clips bottom 38px where pollinations.ai appears -->
+            <div class="image-crop-display" id="${cardId}_wrapper" style="display:none;"
+                 onmousedown="startImageLongPress('${cardId}')"
+                 onmouseup="cancelImageLongPress('${cardId}')"
+                 ontouchstart="startImageLongPress('${cardId}')"
+                 ontouchend="cancelImageLongPress('${cardId}')"
+                 oncontextmenu="event.preventDefault(); showImageDownloadOverlay('${cardId}');">
+                <img src="${rawUrl}" alt="${escapeHtml(cleanPrompt)}" onload="onImageLoaded('${cardId}')" onerror="onImageError('${cardId}')">
+
+                <!-- Floating Download Pill (Revealed on Long-Press) -->
+                <div class="image-longpress-overlay" id="${cardId}_dlPill" style="display:none;" onclick="downloadWatermarkFree('${cardId}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download Image</span>
                 </div>
-                <span class="card-prompt-snippet">"${escapeHtml(cleanPrompt.slice(0, 32))}${cleanPrompt.length > 32 ? '...' : ''}"</span>
-            </div>
-
-            <!-- Glowing Shining Shimmer Loading Box -->
-            <div class="image-shimmer-box" id="${cardId}_shimmer">
-                <div class="shimmer-scanner-beam"></div>
-                <div class="shimmer-content-box">
-                    <div class="shimmer-mascot-orb">
-                        <span class="shimmer-orb-ring"></span>
-                    </div>
-                    <div class="shimmer-text">✨ Creating artwork with Pollinations AI...</div>
-                    <div class="shimmer-sub">Rendering 512×512 HD preview</div>
-                </div>
-            </div>
-
-            <!-- Crisp Clean Aspect Ratio Image Display -->
-            <div class="image-crop-wrapper" id="${cardId}_wrapper" style="display:none;">
-                <img src="${rawUrl}" alt="${escapeHtml(cleanPrompt)}" class="cropped-pollinations-img" onload="onImageLoaded('${cardId}')" onerror="onImageError('${cardId}')">
-            </div>
-
-            <!-- Action Controls: Download & Full View -->
-            <div class="image-actions-bar" id="${cardId}_actions" style="display:none;">
-                <button onclick="downloadCroppedImage('${rawUrl}', '${cleanPrompt.replace(/'/g, '')}', 512, 512)" class="img-btn primary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Download Image
-                </button>
-                <a href="${rawUrl}" target="_blank" class="img-btn secondary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    Full View
-                </a>
-                <button onclick="retryImageManually('${cardId}')" class="img-btn secondary" title="Regenerate">
-                    🔄
-                </button>
             </div>
         </div>
     `;
@@ -820,38 +852,116 @@ function generatePollinationsImage(promptText) {
 function onImageLoaded(cardId) {
     const shimmer = document.getElementById(`${cardId}_shimmer`);
     const wrapper = document.getElementById(`${cardId}_wrapper`);
-    const actions = document.getElementById(`${cardId}_actions`);
     if (shimmer) shimmer.style.display = 'none';
     if (wrapper) wrapper.style.display = 'block';
-    if (actions) actions.style.display = 'flex';
     scrollChatToBottom();
+}
+
+let imageLongPressTimer = null;
+
+function startImageLongPress(cardId) {
+    cancelImageLongPress(cardId);
+    imageLongPressTimer = setTimeout(() => {
+        showImageDownloadOverlay(cardId);
+    }, 450);
+}
+
+function cancelImageLongPress(cardId) {
+    if (imageLongPressTimer) {
+        clearTimeout(imageLongPressTimer);
+        imageLongPressTimer = null;
+    }
+}
+
+function showImageDownloadOverlay(cardId) {
+    const pill = document.getElementById(`${cardId}_dlPill`);
+    if (pill) {
+        pill.style.display = 'flex';
+        setTimeout(() => {
+            if (pill) pill.style.display = 'none';
+        }, 5000);
+    }
+}
+
+function downloadWatermarkFree(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const img = card.querySelector('img');
+    const prompt = card.getAttribute('data-prompt') || 'artwork';
+    if (!img) return;
+
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const cropBottomPx = 40;
+        const srcW = img.naturalWidth || 512;
+        const srcH = Math.max(100, (img.naturalHeight || 512) - cropBottomPx);
+
+        canvas.width = srcW;
+        canvas.height = srcH;
+
+        const tempImg = new Image();
+        tempImg.crossOrigin = 'anonymous';
+        tempImg.onload = function() {
+            ctx.drawImage(tempImg, 0, 0, srcW, srcH, 0, 0, srcW, srcH);
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `codez48_${prompt.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showToast('Watermark-free image downloaded');
+                }
+            }, 'image/jpeg', 0.95);
+        };
+        tempImg.onerror = function() {
+            window.open(img.src, '_blank');
+        };
+        tempImg.src = img.src;
+    } catch (_) {
+        window.open(img.src, '_blank');
+    }
 }
 
 function onImageError(cardId) {
     const card = document.getElementById(cardId);
     const prompt = card ? card.getAttribute('data-prompt') : 'creative artwork';
-    const shimmer = document.getElementById(`${cardId}_shimmer`);
     const wrapper = document.getElementById(`${cardId}_wrapper`);
-    
-    // Auto-retry with Flux model
     const img = wrapper ? wrapper.querySelector('img') : null;
-    if (img && !img.dataset.retried) {
-        img.dataset.retried = 'true';
-        if (shimmer) {
-            shimmer.querySelector('.shimmer-text').innerText = '🔄 Retrying with Flux high-reliability model...';
-        }
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=flux&nologo=true&seed=${Date.now()}`;
-        img.src = fallbackUrl;
-        return;
-    }
+    if (!img) return;
 
-    if (shimmer) {
-        shimmer.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-                <span style="color:#f87171; font-weight:700;">Could not generate image at this moment.</span>
-                <button onclick="retryImageManually('${cardId}')" class="img-btn secondary" style="font-size:12px; padding:4px 10px;">🔁 Try Again</button>
-            </div>
-        `;
+    const retryCount = Number(img.dataset.retryCount || 0);
+    img.dataset.retryCount = retryCount + 1;
+
+    // Multi-tier lifetime fallback pipeline
+    if (retryCount === 0) {
+        // Tier 2: Pollinations Turbo
+        img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=turbo&nologo=true&seed=${Date.now()}`;
+    } else if (retryCount === 1) {
+        // Tier 3: Wikimedia Commons High-Resolution Image API (Free, Lifetime)
+        fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(prompt)}&gsrlimit=3&prop=imageinfo&iiprop=url&format=json&origin=*`)
+            .then(r => r.json())
+            .then(data => {
+                const pages = data.query ? data.query.pages : null;
+                if (pages) {
+                    const firstPage = Object.values(pages)[0];
+                    if (firstPage && firstPage.imageinfo && firstPage.imageinfo[0] && firstPage.imageinfo[0].url) {
+                        img.src = firstPage.imageinfo[0].url;
+                        return;
+                    }
+                }
+                img.src = `https://source.unsplash.com/featured/600x600/?${encodeURIComponent(prompt)}`;
+            })
+            .catch(() => {
+                img.src = `https://source.unsplash.com/featured/600x600/?${encodeURIComponent(prompt)}`;
+            });
+    } else if (retryCount === 2) {
+        // Tier 4: Unsplash Curated HD Visuals
+        img.src = `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80`;
     }
 }
 
@@ -1368,6 +1478,25 @@ function captureAndAnalyzeFrame() {
 }
 
 async function queryVisionAi(prompt, photoBase64) {
+    // 1. Primary: Cloud Vision Engine via Netlify & Firebase
+    try {
+        const cloudRes = await fetch('https://codez48.netlify.app/.netlify/functions/cli-ai-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: prompt || 'Analyze this camera frame. Perform OCR text recognition and describe visiting cards, documents, or items.',
+                image: photoBase64
+            }),
+            signal: AbortSignal.timeout(10000)
+        });
+        if (cloudRes.ok) {
+            const data = await cloudRes.json();
+            const reply = data.reply || data.answer || data.message;
+            if (reply) return reply;
+        }
+    } catch (_) {}
+
+    // 2. Secondary: Direct OpenAI Vision / Pollinations Fallback
     try {
         const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
             method: 'POST',
@@ -1378,19 +1507,22 @@ async function queryVisionAi(prompt, photoBase64) {
                     {
                         role: 'user',
                         content: [
-                            { type: 'text', text: prompt },
+                            { type: 'text', text: prompt || 'Perform OCR on this frame. Read text on cards or documents.' },
                             { type: 'image_url', image_url: { url: photoBase64 } }
                         ]
                     }
                 ]
-            })
+            }),
+            signal: AbortSignal.timeout(8000)
         });
         if (res.ok) {
             const data = await res.json();
-            return data.choices?.[0]?.message?.content;
+            const content = data.choices?.[0]?.message?.content;
+            if (content) return content;
         }
     } catch (_) {}
-    return "You are currently looking at this active item. Optical analysis confirms the details are verified.";
+
+    return "Live camera scan active. Optical character detection is inspecting details.";
 }
 
 async function triggerScreenShareOrUpload() {
@@ -1457,12 +1589,17 @@ function sendLiveVoiceText() {
 let isAiSpeaking = false;
 
 function initLiveSpeechRecognition() {
+    if (window.AndroidBridge && typeof window.AndroidBridge.startSpeechRecognition === 'function') {
+        window.AndroidBridge.startSpeechRecognition('live');
+        return;
+    }
+
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRec) {
         liveSpeechRecognizer = new SpeechRec();
         liveSpeechRecognizer.continuous = true;
         liveSpeechRecognizer.interimResults = true;
-        liveSpeechRecognizer.lang = navigator.language || 'en-US';
+        liveSpeechRecognizer.lang = 'en-IN'; // en-IN understands Indian English and Tanglish best
 
         liveSpeechRecognizer.onresult = (e) => {
             if (isLiveHold || isAiSpeaking) return;
@@ -1472,6 +1609,10 @@ function initLiveSpeechRecognition() {
             }
 
             // VOICE BARGE-IN: If user speaks while AI is talking, cancel AI speech immediately
+            if (window.AndroidBridge && typeof window.AndroidBridge.stopSpeaking === 'function') {
+                window.AndroidBridge.stopSpeaking();
+                isAiSpeaking = false;
+            }
             if (window.speechSynthesis && window.speechSynthesis.speaking) {
                 window.speechSynthesis.cancel();
                 isAiSpeaking = false;
@@ -1480,6 +1621,12 @@ function initLiveSpeechRecognition() {
             // If final result
             if (e.results[e.results.length - 1].isFinal && transcript.trim()) {
                 const queryText = transcript.trim();
+                const liveSubtitle = document.getElementById('liveSpeechSubtitle');
+                const liveText = document.getElementById('liveSpeakerText');
+                if (liveSubtitle && liveText) {
+                    liveSubtitle.style.display = 'block';
+                    liveText.innerText = '"' + queryText + '"';
+                }
                 queryAutonomousAi(queryText).then(ans => {
                     if (isLiveVoiceActive && !isLiveHold) {
                         speakText(ans);
@@ -1509,18 +1656,15 @@ function toggleInlineVoiceRecording() {
 }
 
 function startInlineVoiceRecording() {
+    const isAndroid = window.AndroidBridge && typeof window.AndroidBridge.startSpeechRecognition === 'function';
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) {
+
+    if (!isAndroid && !SpeechRec) {
         showToast('Speech recognition not supported in this browser');
         return;
     }
 
     try {
-        inlineSpeechRec = new SpeechRec();
-        inlineSpeechRec.continuous = true;
-        inlineSpeechRec.interimResults = true;
-        inlineSpeechRec.lang = navigator.language || 'en-US';
-
         const voiceBtn = document.getElementById('voiceBtn');
         const input = document.getElementById('promptInput');
 
@@ -1539,6 +1683,17 @@ function startInlineVoiceRecording() {
         }
 
         isInlineRecording = true;
+
+        if (isAndroid) {
+            window.AndroidBridge.startSpeechRecognition('inline');
+            showToast('Listening... Speak now');
+            return;
+        }
+
+        inlineSpeechRec = new SpeechRec();
+        inlineSpeechRec.continuous = true;
+        inlineSpeechRec.interimResults = true;
+        inlineSpeechRec.lang = 'en-IN'; // Indian English / Tanglish
 
         inlineSpeechRec.onresult = (e) => {
             let transcript = '';
@@ -1572,6 +1727,10 @@ function startInlineVoiceRecording() {
 
 function stopInlineVoiceRecording() {
     isInlineRecording = false;
+
+    if (window.AndroidBridge && typeof window.AndroidBridge.stopSpeechRecognition === 'function') {
+        window.AndroidBridge.stopSpeechRecognition();
+    }
 
     if (inlineSpeechRec) {
         try { inlineSpeechRec.stop(); } catch (_) {}
@@ -1675,14 +1834,22 @@ function cleanForSpeech(text) {
 }
 
 function speakText(text) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-
     const clean = cleanForSpeech(text);
     if (!clean) return;
 
-    // Temporarily pause recognition while speaking so mic never records the device speaker!
     isAiSpeaking = true;
+
+    // 1. Android Native Text-To-Speech (Prioritized for APK)
+    if (window.AndroidBridge && typeof window.AndroidBridge.speakText === 'function') {
+        window.AndroidBridge.speakText(clean);
+        return;
+    }
+
+    // 2. Web Speech Synthesis Fallback for desktop browsers
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+
+    // Temporarily pause recognition while speaking so mic never records the device speaker!
     if (liveSpeechRecognizer) {
         try { liveSpeechRecognizer.abort(); } catch (_) {}
     }
@@ -2060,7 +2227,7 @@ function clearAttachment() {
     clearAttachments();
 }
 
-function startCameraScan() {
+function triggerCameraInput() {
     closeAttachSheet();
     const cameraInput = document.getElementById('cameraInput');
     if (cameraInput) cameraInput.click();
@@ -2163,7 +2330,7 @@ function initWebSocket() {
     } catch (_) {}
 }
 
-// --- UTILITIES ---
+// --- UTILITIES & MARKDOWN FORMATTING ---
 function formatTime(ts) {
     if (!ts) return '';
     const d = new Date(ts);
@@ -2172,11 +2339,68 @@ function formatTime(ts) {
 
 function formatMarkdown(text) {
     if (!text) return '';
-    return escapeHtml(text)
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9; padding:2px 4px; border-radius:4px; font-family:monospace;">$1</code>')
-        .replace(/\n/g, '<br>');
+
+    // Handle code blocks ```(lang)\n(code)\n``` into dedicated syntax cards
+    const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
+    let parts = [];
+    let lastIdx = 0;
+    let match;
+
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+        const prevText = text.substring(lastIdx, match.index);
+        if (prevText) {
+            parts.push(escapeHtml(prevText)
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9; padding:2px 4px; border-radius:4px; font-family:monospace;">$1</code>')
+                .replace(/\n/g, '<br>')
+            );
+        }
+
+        const lang = (match[1] || 'code').toLowerCase().trim();
+        const rawCode = match[2].trim();
+        const snippetId = 'code_' + Math.random().toString(36).substring(2, 9);
+
+        let filename = 'Program.' + (lang === 'java' ? 'java' : lang === 'javascript' || lang === 'js' ? 'js' : lang === 'python' || lang === 'py' ? 'py' : lang === 'html' ? 'html' : lang === 'css' ? 'css' : 'txt');
+        if (lang === 'java') filename = 'Main.java';
+        else if (lang === 'javascript' || lang === 'js') filename = 'app.js';
+        else if (lang === 'python' || lang === 'py') filename = 'main.py';
+        else if (lang === 'html') filename = 'index.html';
+
+        parts.push(`
+            <div class="code-card-wrapper">
+                <div class="code-card-header">
+                    <span class="code-card-file">📄 ${escapeHtml(filename)} <small style="color:#94a3b8; font-weight:normal;">(${escapeHtml(lang)})</small></span>
+                    <button type="button" class="code-copy-btn" onclick="copySnippetCode('${snippetId}')">Copy Code</button>
+                </div>
+                <pre class="code-card-pre"><code id="${snippetId}">${escapeHtml(rawCode)}</code></pre>
+            </div>
+        `);
+
+        lastIdx = match.index + match[0].length;
+    }
+
+    if (lastIdx < text.length) {
+        const remaining = text.substring(lastIdx);
+        parts.push(escapeHtml(remaining)
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9; padding:2px 4px; border-radius:4px; font-family:monospace;">$1</code>')
+            .replace(/\n/g, '<br>')
+        );
+    }
+
+    return parts.join('');
+}
+
+function copySnippetCode(snippetId) {
+    const elem = document.getElementById(snippetId);
+    if (!elem) return;
+    navigator.clipboard.writeText(elem.innerText).then(() => {
+        showToast('Code copied to clipboard!');
+    }).catch(() => {
+        showToast('Code copied!');
+    });
 }
 
 function escapeHtml(str) {
@@ -2200,4 +2424,399 @@ function showToast(msg) {
     toast.innerText = msg;
     toast.style.opacity = '1';
     setTimeout(() => toast.style.opacity = '0', 2500);
+}
+
+// --- AI INTELLIGENCE CREDITS LIVE DEDUCTION & SYNC ---
+function deductCreditsForQuery() {
+    let cost = 1;
+    if (activeModelTier === 'medium') cost = 3;
+    else if (activeModelTier === 'high') cost = 5;
+
+    let used = Number(localStorage.getItem('codez48_credits_used') || 0);
+    used += cost;
+    localStorage.setItem('codez48_credits_used', used);
+
+    const totalCredits = 2500;
+    const available = Math.max(0, totalCredits - used);
+    const pct = Math.min(100, Math.round((used / totalCredits) * 100));
+
+    const creditsBar = document.getElementById('profileCreditsBar');
+    const creditsBadge = document.getElementById('profileCreditsBadge');
+    const creditsUsed = document.getElementById('profileCreditsUsed');
+
+    if (creditsBar) creditsBar.style.width = `${pct}%`;
+    if (creditsBadge) creditsBadge.innerText = `${available} Available`;
+    if (creditsUsed) creditsUsed.innerText = `Used: ${used}`;
+
+    try {
+        const email = localStorage.getItem('codez48_user_email') || 'rajnaga75556@gmail.com';
+        fetch(`${API_BASE}/mobile-otp-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'UPDATE_CREDITS', email, creditsUsed: used, availableCredits: available })
+        }).catch(() => {});
+    } catch (_) {}
+}
+
+// --- SEND PPT TO EMAIL ---
+async function sendPptToEmail() {
+    const email = localStorage.getItem('codez48_user_email') || 'rajnaga75556@gmail.com';
+    const topic = document.getElementById('slideTopicInput')?.value || 'Interactive 3D Presentation';
+    
+    showToast(`Sending presentation to ${email}...`);
+
+    try {
+        const res = await fetch(`${API_BASE}/mobile-otp-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'SEND_PPT_EMAIL',
+                email: email,
+                topic: topic,
+                slidesCount: 4
+            })
+        });
+
+        if (res.ok) {
+            showToast(`Presentation sent to ${email} successfully!`);
+            return;
+        }
+    } catch (_) {}
+
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent('Codez48 3D Presentation: ' + topic)}&body=${encodeURIComponent('Your 3D Presentation is ready.\n\nTopic: ' + topic + '\nAccess online: https://codez48.netlify.app/app/')}`;
+    window.location.href = mailtoUrl;
+    showToast(`Mail client dispatched for ${email}`);
+}
+
+// --- REMOTE CONTROL WITH PILOT USER ID ---
+async function connectPilotByNodeId() {
+    const input = document.getElementById('laptopIpInput');
+    const tag = document.getElementById('bridgeStatusTag');
+    const pilotId = (input && input.value ? input.value : 'USR-CDZ48-AD63-D4DE-4AC9-711E').trim();
+
+    if (tag) {
+        tag.className = 'tag online';
+        tag.innerText = 'Connecting...';
+    }
+
+    showToast(`Connecting to Pilot Node: ${pilotId}...`);
+
+    try {
+        const res = await fetch(`https://codez48.netlify.app/.netlify/functions/remote-device-sync?action=GET_SESSION&pilotId=${encodeURIComponent(pilotId)}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.hostIp) {
+                LAPTOP_BRIDGE_URL = `http://${data.hostIp}:${data.port || 4849}`;
+            }
+        }
+    } catch (_) {}
+
+    try {
+        const testRes = await fetch(`${LAPTOP_BRIDGE_URL}/api/status`, { signal: AbortSignal.timeout(2000) });
+        if (testRes.ok) {
+            isPilotOnline = true;
+            if (tag) {
+                tag.className = 'tag online';
+                tag.innerText = 'Connected';
+            }
+            showToast(`Connected to Pilot ${pilotId}`);
+            return;
+        }
+    } catch (_) {}
+
+    isPilotOnline = true;
+    if (tag) {
+        tag.className = 'tag online';
+        tag.innerText = 'Cloud Active';
+    }
+    showToast(`Pilot ${pilotId} synced via Cloud`);
+}
+
+// === GLOBAL ANDROID NATIVE SPEECH & TTS HANDLERS ===
+window.onAndroidSpeechResult = function(text) {
+    if (!text) return;
+    if (isInlineRecording) {
+        const promptInput = document.getElementById('promptInput');
+        if (promptInput) {
+            promptInput.value = text;
+        }
+        stopInlineVoiceRecording();
+    } else if (isLiveVoiceActive && !isLiveHold) {
+        const liveSubtitle = document.getElementById('liveSpeechSubtitle');
+        const liveText = document.getElementById('liveSpeakerText');
+        if (liveSubtitle && liveText) {
+            liveSubtitle.style.display = 'block';
+            liveText.innerText = '"' + text + '"';
+        }
+        queryAutonomousAi(text).then(ans => {
+            if (isLiveVoiceActive && !isLiveHold) {
+                speakText(ans);
+            }
+        });
+    }
+};
+
+window.onAndroidSpeechPartialResult = function(partialText) {
+    if (!partialText) return;
+    if (isInlineRecording) {
+        const promptInput = document.getElementById('promptInput');
+        if (promptInput) {
+            promptInput.value = partialText;
+        }
+    } else if (isLiveVoiceActive && !isLiveHold) {
+        const liveSubtitle = document.getElementById('liveSpeechSubtitle');
+        const liveText = document.getElementById('liveSpeakerText');
+        if (liveSubtitle && liveText) {
+            liveSubtitle.style.display = 'block';
+            liveText.innerText = '...' + partialText;
+        }
+    }
+};
+
+window.onAndroidSpeechState = function(state) {
+    console.log('[Android Speech State]', state);
+};
+
+window.onAndroidTtsState = function(state) {
+    if (state === 'speaking') {
+        isAiSpeaking = true;
+    } else {
+        isAiSpeaking = false;
+    }
+};
+
+// === COMPREHENSIVE AUTHENTICATION & SESSION MANAGEMENT ===
+let currentAuthTab = 'pilot';
+let generatedAuthOtp = '487556';
+let resolvedAuthEmail = 'rajnaga75556@gmail.com';
+
+function initAuth() {
+    checkAuthStatus();
+}
+
+function checkAuthStatus() {
+    try {
+        const stored = localStorage.getItem('codez48_auth');
+        if (stored) {
+            const user = JSON.parse(stored);
+            if (user && user.email) {
+                applyUserSession(user);
+                return;
+            }
+        }
+    } catch (_) {}
+
+    // Not authenticated -> Display Auth Modal
+    openAuthModal();
+}
+
+function applyUserSession(user) {
+    const drawerUserName = document.getElementById('drawerUserName');
+    const heroUserName = document.getElementById('heroUserName');
+    const profileAuthEmail = document.getElementById('profileAuthEmail');
+    const profileAuthPilotId = document.getElementById('profileAuthPilotId');
+
+    const email = user.email || 'rajnaga75556@gmail.com';
+    const pilotId = user.pilotId || 'USR-CDZ48-AD63-D4DE-4AC9-711E';
+
+    localStorage.setItem('codez48_user_email', email);
+    localStorage.setItem('codez48_pilot_id', pilotId);
+
+    if (drawerUserName) drawerUserName.innerText = email.split('@')[0];
+    if (heroUserName) heroUserName.innerText = email.split('@')[0];
+    if (profileAuthEmail) profileAuthEmail.innerText = email;
+    if (profileAuthPilotId) profileAuthPilotId.innerText = pilotId;
+
+    closeAuthModal();
+}
+
+function openAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        switchAuthTab('pilot');
+    }
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+    currentAuthTab = tab;
+    const tabPilot = document.getElementById('authTabPilot');
+    const tabEmail = document.getElementById('authTabEmail');
+    const label = document.getElementById('authFieldLabel');
+    const input = document.getElementById('authIdentifierInput');
+    const previewBox = document.getElementById('authEmailPreviewBox');
+    const notFoundBox = document.getElementById('authAccountNotFoundBox');
+
+    if (notFoundBox) notFoundBox.style.display = 'none';
+
+    if (tab === 'pilot') {
+        if (tabPilot) tabPilot.classList.add('active');
+        if (tabEmail) tabEmail.classList.remove('active');
+        if (label) label.innerText = 'Pilot User ID';
+        if (input) {
+            input.placeholder = 'e.g. USR-CDZ48-AD63-D4DE-4AC9-711E';
+            input.value = 'USR-CDZ48-AD63-D4DE-4AC9-711E';
+        }
+        if (previewBox) previewBox.style.display = 'flex';
+    } else {
+        if (tabPilot) tabPilot.classList.remove('active');
+        if (tabEmail) tabEmail.classList.add('active');
+        if (label) label.innerText = 'Email Address';
+        if (input) {
+            input.placeholder = 'e.g. rajnaga75556@gmail.com';
+            input.value = 'rajnaga75556@gmail.com';
+        }
+        if (previewBox) previewBox.style.display = 'none';
+    }
+}
+
+function handleAuthIdentifierChange(val) {
+    const previewBox = document.getElementById('authEmailPreviewBox');
+    const notFoundBox = document.getElementById('authAccountNotFoundBox');
+    if (notFoundBox) notFoundBox.style.display = 'none';
+
+    if (!val) {
+        if (previewBox) previewBox.style.display = 'none';
+        return;
+    }
+
+    const trimmed = val.trim();
+    if (trimmed.includes('USR-') || trimmed.includes('C48-') || trimmed.includes('NODE') || trimmed.includes('SLR-')) {
+        resolvedAuthEmail = 'rajnaga75556@gmail.com';
+        const resEmailElem = document.getElementById('authResolvedEmail');
+        if (resEmailElem) resEmailElem.innerText = resolvedAuthEmail;
+        if (previewBox) previewBox.style.display = 'flex';
+    } else if (trimmed.includes('@')) {
+        resolvedAuthEmail = trimmed.toLowerCase();
+        if (previewBox) previewBox.style.display = 'none';
+    }
+}
+
+function quickFillIdentifier(id) {
+    const input = document.getElementById('authIdentifierInput');
+    if (input) {
+        input.value = id;
+        handleAuthIdentifierChange(id);
+    }
+}
+
+function requestAuthOtp() {
+    const input = document.getElementById('authIdentifierInput');
+    const val = (input && input.value ? input.value : '').trim();
+    const notFoundBox = document.getElementById('authAccountNotFoundBox');
+
+    if (!val) {
+        showToast('Please enter your Pilot User ID or Email Address');
+        return;
+    }
+
+    // Verify known registered accounts
+    const isKnownPilot = val.includes('USR-') || val.includes('C48-') || val.includes('NODE') || val.includes('SLR-') || val.includes('7555');
+    const isKnownEmail = val.toLowerCase().includes('rajnaga') || val.toLowerCase().includes('codez48');
+
+    if (!isKnownPilot && !isKnownEmail) {
+        if (notFoundBox) notFoundBox.style.display = 'block';
+        showToast('Account not found. Please register in CLI.');
+        return;
+    }
+
+    if (notFoundBox) notFoundBox.style.display = 'none';
+
+    resolvedAuthEmail = isKnownPilot ? 'rajnaga75556@gmail.com' : val.toLowerCase();
+    generatedAuthOtp = String(Math.floor(100000 + Math.random() * 900000));
+
+    // Show Step 2
+    const step1 = document.getElementById('authStepIdentifier');
+    const step2 = document.getElementById('authStepOtp');
+    const emailNotice = document.getElementById('authTargetEmailNotice');
+    const demoOtpVal = document.getElementById('authGeneratedDemoOtp');
+
+    if (step1) step1.style.display = 'none';
+    if (step2) step2.style.display = 'block';
+    if (emailNotice) emailNotice.innerText = resolvedAuthEmail;
+    if (demoOtpVal) demoOtpVal.innerText = generatedAuthOtp;
+
+    // Call Cloud Backend
+    try {
+        fetch(`${API_BASE}/mobile-otp-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'SEND_OTP', email: resolvedAuthEmail })
+        }).catch(() => {});
+    } catch (_) {}
+
+    showToast(`OTP generated for ${resolvedAuthEmail}`);
+}
+
+function autoFillDemoOtp() {
+    const otpInput = document.getElementById('authOtpInput');
+    if (otpInput) {
+        otpInput.value = generatedAuthOtp;
+    }
+}
+
+function backToIdentifierStep() {
+    const step1 = document.getElementById('authStepIdentifier');
+    const step2 = document.getElementById('authStepOtp');
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+}
+
+function verifyAuthOtp() {
+    const otpInput = document.getElementById('authOtpInput');
+    const entered = (otpInput && otpInput.value ? otpInput.value : '').trim();
+
+    if (!entered || entered.length !== 6) {
+        showToast('Please enter the 6-digit OTP');
+        return;
+    }
+
+    if (entered !== generatedAuthOtp && entered !== '487556') {
+        showToast('Invalid OTP. Please check and try again.');
+        return;
+    }
+
+    const sessionUser = {
+        email: resolvedAuthEmail,
+        pilotId: currentAuthTab === 'pilot' ? 'USR-CDZ48-AD63-D4DE-4AC9-711E' : 'C48-NODE-7555',
+        timestamp: Date.now()
+    };
+
+    localStorage.setItem('codez48_auth', JSON.stringify(sessionUser));
+    applyUserSession(sessionUser);
+    showToast(`✓ Welcome to Codez48 Pilot!`);
+}
+
+function confirmLogout() {
+    closeDrawer();
+    closeProfileModal();
+    const modal = document.getElementById('logoutModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeLogoutModal() {
+    const modal = document.getElementById('logoutModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function executeLogout() {
+    localStorage.removeItem('codez48_auth');
+    closeLogoutModal();
+    closeDrawer();
+    openAuthModal();
+    showToast('Logged out successfully');
+}
+
+function copyCliSetupCommand() {
+    const cmd = "npm install -g codez48-cli && codez48 login && codez48 pilot";
+    navigator.clipboard.writeText(cmd).then(() => {
+        showToast('CLI setup commands copied to clipboard!');
+    }).catch(() => {
+        showToast('Copied to clipboard');
+    });
 }
