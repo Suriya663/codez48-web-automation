@@ -104,7 +104,6 @@ while ($line = [Console]::ReadLine()) {
             this.psWorker.stdout.on('data', (d) => {
                 if (d.toString().includes('PS_WORKER_READY')) {
                     this.isWorkerReady = true;
-                    logger.status('[FAST INPUT] Sub-millisecond Win32 mouse and gaming gyro worker active.');
                 }
             });
 
@@ -114,7 +113,7 @@ while ($line = [Console]::ReadLine()) {
                 setTimeout(() => this.initFastInputWorker(), 1000);
             });
         } catch (e) {
-            logger.warn(`Failed to initialize fast input worker: ${e.message}`);
+            logger.debug(`Fast input worker notice: ${e.message}`);
         }
     }
 
@@ -372,12 +371,11 @@ while ($line = [Console]::ReadLine()) {
                 // Handled gracefully: port already owned by active bridge daemon
                 return;
             }
-            logger.error(`[MOBILE BRIDGE WS] Error: ${err.message}`);
+            logger.debug(`[MOBILE BRIDGE WS] Notice: ${err.message}`);
         });
 
         this.wss.on('connection', (ws) => {
             this.connectedDevices.add(ws);
-            logger.info(`[MOBILE BRIDGE] Mobile app connected via WebSocket.`);
             ws.send(JSON.stringify({
                 type: 'CONNECTED',
                 host: os.hostname(),
@@ -407,16 +405,14 @@ while ($line = [Console]::ReadLine()) {
 
         this.server.on('error', (err) => {
             if (err.code === 'EADDRINUSE') {
-                logger.status(`[MOBILE BRIDGE] Port ${this.port} is already active (Daemon running on PID). Reusing connection.`);
                 this.isRunning = true;
                 return;
             }
-            logger.error(`[MOBILE BRIDGE] Server error: ${err.message}`);
+            logger.debug(`[MOBILE BRIDGE] Server notice: ${err.message}`);
         });
 
         this.server.listen(this.port, '0.0.0.0', () => {
             this.isRunning = true;
-            logger.status(`[MOBILE BRIDGE] Online at http://${this.hostIp}:${this.port} (WebSocket ready)`);
         });
     }
 
