@@ -57,7 +57,7 @@ Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 public class FastWinInput {
-    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, int extra);
+    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, int data, int extra);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT pt);
     public struct POINT { public int X; public int Y; }
@@ -66,37 +66,43 @@ public class FastWinInput {
 Write-Output "PS_WORKER_READY"
 while ($line = [Console]::ReadLine()) {
     if (-not $line) { continue }
-    $p = $line.Split(' ')
-    $cmd = $p[0]
-    if ($cmd -eq "m") {
-        # Relative mouse movement (Critical for 3D FPS/Action Games)
-        [FastWinInput]::mouse_event(0x0001, [int]$p[1], [int]$p[2], 0, 0)
-    } elseif ($cmd -eq "a") {
-        # Absolute cursor position
-        [FastWinInput]::SetCursorPos([int]$p[1], [int]$p[2])
-    } elseif ($cmd -eq "c") {
-        # Left click
-        [FastWinInput]::mouse_event(0x0002, 0, 0, 0, 0)
-        [FastWinInput]::mouse_event(0x0004, 0, 0, 0, 0)
-    } elseif ($cmd -eq "r") {
-        # Right click
-        [FastWinInput]::mouse_event(0x0008, 0, 0, 0, 0)
-        [FastWinInput]::mouse_event(0x0010, 0, 0, 0, 0)
-    } elseif ($cmd -eq "d") {
-        # Double click
-        [FastWinInput]::mouse_event(0x0002, 0, 0, 0, 0)
-        [FastWinInput]::mouse_event(0x0004, 0, 0, 0, 0)
-        Start-Sleep -Milliseconds 50
-        [FastWinInput]::mouse_event(0x0002, 0, 0, 0, 0)
-        [FastWinInput]::mouse_event(0x0004, 0, 0, 0, 0)
-    } elseif ($cmd -eq "s") {
-        # Scroll
-        [FastWinInput]::mouse_event(0x0800, 0, 0, [int]$p[1], 0)
-    } elseif ($cmd -eq "k") {
-        # Keystroke typing
-        $text = $line.Substring(2)
-        [System.Windows.Forms.SendKeys]::SendWait($text)
-    }
+    try {
+        $p = $line.Split(' ')
+        $cmd = $p[0]
+        if ($cmd -eq "m") {
+            # Relative mouse movement from touchpad
+            [FastWinInput]::mouse_event(0x0001, [int]$p[1], [int]$p[2], 0, 0)
+        } elseif ($cmd -eq "a") {
+            # Absolute cursor position
+            [FastWinInput]::SetCursorPos([int]$p[1], [int]$p[2])
+        } elseif ($cmd -eq "c") {
+            # Left click (Down + 25ms delay + Up ensures Windows registers WM_LBUTTONDOWN)
+            [FastWinInput]::mouse_event(0x0002, 0, 0, 0, 0)
+            Start-Sleep -Milliseconds 25
+            [FastWinInput]::mouse_event(0x0004, 0, 0, 0, 0)
+        } elseif ($cmd -eq "r") {
+            # Right click (Down + 25ms delay + Up ensures Windows registers WM_RBUTTONDOWN)
+            [FastWinInput]::mouse_event(0x0008, 0, 0, 0, 0)
+            Start-Sleep -Milliseconds 25
+            [FastWinInput]::mouse_event(0x0010, 0, 0, 0, 0)
+        } elseif ($cmd -eq "d") {
+            # Double click
+            [FastWinInput]::mouse_event(0x0002, 0, 0, 0, 0)
+            Start-Sleep -Milliseconds 20
+            [FastWinInput]::mouse_event(0x0004, 0, 0, 0, 0)
+            Start-Sleep -Milliseconds 60
+            [FastWinInput]::mouse_event(0x0002, 0, 0, 0, 0)
+            Start-Sleep -Milliseconds 20
+            [FastWinInput]::mouse_event(0x0004, 0, 0, 0, 0)
+        } elseif ($cmd -eq "s") {
+            # Wheel Scroll (Signed integer delta: negative is down, positive is up)
+            [FastWinInput]::mouse_event(0x0800, 0, 0, [int]$p[1], 0)
+        } elseif ($cmd -eq "k") {
+            # Keystroke typing
+            $text = $line.Substring(2)
+            [System.Windows.Forms.SendKeys]::SendWait($text)
+        }
+    } catch {}
 }
 `;
             this.psWorker.stdin.write(workerBootstrap + "\n");
@@ -386,7 +392,7 @@ while ($line = [Console]::ReadLine()) {
             ws.on('message', (msg) => {
                 try {
                     const data = JSON.parse(msg);
-                    if (data.type === 'MOUSE') {
+                    if (data.type === 'MOUSE' || data.action) {
                         this.handleMouseAction(data);
                     } else if (data.type === 'GYRO') {
                         this.handleGyroAction(data);
@@ -417,13 +423,16 @@ while ($line = [Console]::ReadLine()) {
     }
 
     handleMouseAction(data) {
-        const { action = 'move', dx = 0, dy = 0, speed = 1.6 } = data;
+        const action = data.action || (data.dx || data.dy ? 'move' : 'click');
+        const { dx = 0, dy = 0, speed = 1.6 } = data;
 
         if (action === 'move') {
             const rx = Math.round(dx * speed);
             const ry = Math.round(dy * speed);
-            // Instant relative movement via persistent worker
-            this.sendWorkerCmd(`m ${rx} ${ry}`);
+            if (rx !== 0 || ry !== 0) {
+                // Instant relative movement via persistent worker
+                this.sendWorkerCmd(`m ${rx} ${ry}`);
+            }
         } else if (action === 'click' || action === 'left_click') {
             this.sendWorkerCmd('c');
         } else if (action === 'right_click') {
@@ -431,20 +440,16 @@ while ($line = [Console]::ReadLine()) {
         } else if (action === 'double_click') {
             this.sendWorkerCmd('d');
         } else if (action === 'scroll') {
-            const delta = Math.round((dy || data.deltaY || 0) * 12);
-            this.sendWorkerCmd(`s ${delta}`);
+            const rawDelta = (typeof data.deltaY !== 'undefined') ? data.deltaY : (data.dy || 0);
+            const delta = Math.round(rawDelta * -10);
+            if (delta !== 0) {
+                this.sendWorkerCmd(`s ${delta}`);
+            }
         }
     }
 
     handleGyroAction(data) {
-        // Gyroscope delta: pitch (beta), roll (gamma)
-        // Works in 3D gaming (FPS camera crosshairs) via relative raw mouse_event
-        const { pitchDelta = 0, rollDelta = 0, sensitivity = 3.2 } = data;
-        if (Math.abs(pitchDelta) < 0.1 && Math.abs(rollDelta) < 0.1) return;
-
-        const rx = Math.round(rollDelta * sensitivity);
-        const ry = Math.round(pitchDelta * sensitivity);
-        this.sendWorkerCmd(`m ${rx} ${ry}`);
+        // Gyro is reserved for screen orientation / rotation, does not move mouse cursor
     }
 }
 
