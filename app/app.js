@@ -1218,10 +1218,7 @@ function appendBubbleToDom(msg) {
     if (msg.isThinking || msg.text === 'Thinking...') {
         let content = `
             <div class="thinking-mascot-container">
-                <div class="mini-mascot-orb">
-                    <span class="mini-orb-eye left"></span>
-                    <span class="mini-orb-eye right"></span>
-                </div>
+                <div class="thinking-circle-spinner"></div>
                 <span class="thinking-text-label">Thinking...</span>
             </div>
             <div class="msg-footer-meta">
@@ -1241,17 +1238,10 @@ function appendBubbleToDom(msg) {
 function updateBubbleDom(bubble, msg) {
     if (!bubble) return;
 
-    // Check if transitioning from animated thinking mascot
-    const mascot = bubble.querySelector('.mini-mascot-orb');
-    if (mascot && !msg.isThinking) {
-        mascot.classList.add('finished');
-        mascot.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-        const label = bubble.querySelector('.thinking-text-label');
-        if (label) label.innerText = 'Answer ready';
-
-        setTimeout(() => {
-            renderBubbleContent(bubble, msg);
-        }, 320);
+    // Check if transitioning from animated thinking circle spinner
+    const spinner = bubble.querySelector('.thinking-circle-spinner');
+    if (spinner && !msg.isThinking) {
+        renderBubbleContent(bubble, msg);
         return;
     }
 
