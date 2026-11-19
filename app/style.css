@@ -1301,6 +1301,35 @@ body {
     letter-spacing: 0.05em;
 }
 
+/* Landscape Gaming Layout (Auto-Rotate Mode) */
+.full-screen-remote-modal.landscape-gaming-active {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+.full-screen-remote-modal.landscape-gaming-active .remote-top-header {
+    width: 100%;
+    margin-bottom: 4px;
+}
+.full-screen-remote-modal.landscape-gaming-active .remote-toggles-bar {
+    width: 100%;
+    margin: 4px 0;
+}
+.full-screen-remote-modal.landscape-gaming-active .touchpad-surface-fullscreen {
+    flex: 3;
+    height: auto;
+    min-height: 180px;
+}
+.full-screen-remote-modal.landscape-gaming-active .remote-bottom-pads {
+    flex: 1;
+    flex-direction: column;
+    height: auto;
+    margin-left: 10px;
+}
+.full-screen-remote-modal.landscape-gaming-active .mouse-pad-btn {
+    flex: 1;
+}
+
 /* ============================================================== */
 /* MODALS: PROFILE, PLANS, TASKS, SLIDES                          */
 /* ============================================================== */

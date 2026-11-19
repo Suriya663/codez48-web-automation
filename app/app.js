@@ -1872,7 +1872,14 @@ function openRemoteModal() {
 
 function closeRemoteModal() {
     const modal = document.getElementById('remoteModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('landscape-gaming-active');
+    }
+    // Return screen orientation to portrait
+    if (window.AndroidBridge && window.AndroidBridge.setScreenOrientation) {
+        window.AndroidBridge.setScreenOrientation('portrait');
+    }
 }
 
 function saveLaptopIp() {
@@ -1895,111 +1902,200 @@ function initTouchpad() {
     const surface = document.getElementById('touchpadSurface');
     if (!surface) return;
 
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let totalMoved = 0;
+    let isMoving = false;
+    let lastTouchX = null;
+    let lastTouchY = null;
+    let lastTwoTouchY = null;
+    let currentTouchCount = 0;
+
     surface.addEventListener('touchstart', (e) => {
-        touchCount = e.touches.length;
+        currentTouchCount = e.touches.length;
         if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
             lastTouchX = e.touches[0].clientX;
             lastTouchY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+            totalMoved = 0;
+            isMoving = false;
+        } else if (e.touches.length === 2) {
+            lastTwoTouchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
         }
     }, { passive: false });
 
     surface.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if (e.touches.length === 1 && lastTouchX !== null) {
-            const dx = e.touches[0].clientX - lastTouchX;
-            const dy = e.touches[0].clientY - lastTouchY;
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-            sendMouseAction({ action: 'move', dx: dx * 1.6, dy: dy * 1.6 });
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const dx = currentX - lastTouchX;
+            const dy = currentY - lastTouchY;
+            lastTouchX = currentX;
+            lastTouchY = currentY;
+
+            totalMoved += Math.hypot(dx, dy);
+            // Once moved beyond deadzone, steer cursor
+            if (totalMoved > 3) {
+                isMoving = true;
+                sendMouseAction({ type: 'MOUSE', action: 'move', dx: dx * 1.8, dy: dy * 1.8 });
+            }
+        } else if (e.touches.length === 2 && lastTwoTouchY !== null) {
+            const currentTwoY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            const dy = currentTwoY - lastTwoTouchY;
+            lastTwoTouchY = currentTwoY;
+            if (Math.abs(dy) > 1) {
+                // 2-finger vertical scroll
+                sendMouseAction({ type: 'MOUSE', action: 'scroll', deltaY: dy * 3 });
+            }
         }
     }, { passive: false });
 
     surface.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+
+        // Clean Tap Detection: Finger did not drag and was a quick tap -> CLICK
+        if (!isMoving && totalMoved < 8 && touchDuration < 350) {
+            if (currentTouchCount === 1) {
+                sendMouseAction({ type: 'MOUSE', action: 'click' });
+                if (window.AndroidBridge && window.AndroidBridge.vibrate) {
+                    window.AndroidBridge.vibrate(25);
+                } else if (navigator.vibrate) {
+                    navigator.vibrate(25);
+                }
+            } else if (currentTouchCount === 2) {
+                sendMouseAction({ type: 'MOUSE', action: 'right_click' });
+                if (window.AndroidBridge && window.AndroidBridge.vibrate) {
+                    window.AndroidBridge.vibrate(45);
+                } else if (navigator.vibrate) {
+                    navigator.vibrate(45);
+                }
+            }
+        }
+
         lastTouchX = null;
         lastTouchY = null;
-        if (e.changedTouches.length === 1 && touchCount === 1) {
-            sendMouseAction({ action: 'click' });
-        } else if (touchCount === 2) {
-            sendMouseAction({ action: 'right_click' });
-        }
-        touchCount = 0;
+        lastTwoTouchY = null;
+        currentTouchCount = 0;
+        isMoving = false;
+        totalMoved = 0;
     });
 
+    // Touch Scroll Strip (Vertical wheel slider)
     const strip = document.getElementById('touchScrollStrip');
     if (strip) {
         let lastScrollY = null;
         strip.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) lastScrollY = e.touches[0].clientY;
-        });
+        }, { passive: false });
+
         strip.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (e.touches.length === 1 && lastScrollY !== null) {
                 const dy = e.touches[0].clientY - lastScrollY;
                 lastScrollY = e.touches[0].clientY;
-                sendMouseAction({ action: 'scroll', deltaY: dy * 4 });
+                sendMouseAction({ type: 'MOUSE', action: 'scroll', deltaY: dy * 4 });
             }
-        });
+        }, { passive: false });
+
         strip.addEventListener('touchend', () => lastScrollY = null);
     }
 }
 
 function sendMouseClick(type) {
-    if (type === 'left') sendMouseAction({ action: 'click' });
-    else if (type === 'right') sendMouseAction({ action: 'right_click' });
-    else if (type === 'double') sendMouseAction({ action: 'double_click' });
+    if (window.AndroidBridge && window.AndroidBridge.vibrate) {
+        window.AndroidBridge.vibrate(30);
+    } else if (navigator.vibrate) {
+        navigator.vibrate(30);
+    }
+
+    if (type === 'left') {
+        sendMouseAction({ type: 'MOUSE', action: 'click' });
+    } else if (type === 'right') {
+        sendMouseAction({ type: 'MOUSE', action: 'right_click' });
+    } else if (type === 'double') {
+        sendMouseAction({ type: 'MOUSE', action: 'double_click' });
+    }
 }
 
 function sendMouseAction(payload) {
+    const data = Object.assign({ type: 'MOUSE' }, payload);
+
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(payload));
+        ws.send(JSON.stringify(data));
         return;
     }
+
     fetch(`${LAPTOP_BRIDGE_URL}/api/mouse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
     }).catch(() => {});
 }
 
-// 3D GAMING GYROSCOPE (RAW IN-GAME CAMERA AIMING)
+// GAMING GYROSCOPE (ACTIVATES DYNAMIC SCREEN ROTATION FOR GAMES)
 function initGyro() {
     const toggle = document.getElementById('gyroToggle');
     if (!toggle) return;
     toggle.addEventListener('change', (e) => {
         gyroActive = e.target.checked;
+        const modal = document.getElementById('remoteModal');
+
         if (gyroActive) {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(resp => {
-                    if (resp === 'granted') window.addEventListener('deviceorientation', handleOrientation);
-                });
-            } else {
-                window.addEventListener('deviceorientation', handleOrientation);
+            // Activate dynamic orientation sensor so screen auto-rotates to landscape for gaming
+            if (window.AndroidBridge && window.AndroidBridge.setScreenOrientation) {
+                window.AndroidBridge.setScreenOrientation('sensor');
+            } else if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock().catch(() => {});
             }
-            showToast('Gaming Gyroscope activated!');
+
+            // Listen for device orientation to apply wide landscape layout if rotated
+            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('orientationchange', handleOrientationChange);
+            showToast('Gaming Auto-Rotate Activated! (Rotate device for widescreen game controls)');
         } else {
+            // Lock back to vertical portrait orientation
+            if (window.AndroidBridge && window.AndroidBridge.setScreenOrientation) {
+                window.AndroidBridge.setScreenOrientation('portrait');
+            } else if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(() => {});
+            }
+
             window.removeEventListener('deviceorientation', handleOrientation);
-            lastBeta = null;
-            lastGamma = null;
+            window.removeEventListener('orientationchange', handleOrientationChange);
+            if (modal) modal.classList.remove('landscape-gaming-active');
+            showToast('Standard Portrait Touchpad');
         }
     });
 }
 
+function handleOrientationChange() {
+    const modal = document.getElementById('remoteModal');
+    if (!modal) return;
+    const isLandscape = window.innerWidth > window.innerHeight;
+    if (isLandscape && gyroActive) {
+        modal.classList.add('landscape-gaming-active');
+    } else {
+        modal.classList.remove('landscape-gaming-active');
+    }
+}
+
 function handleOrientation(e) {
     if (!gyroActive) return;
-    if (lastBeta !== null && lastGamma !== null) {
-        const deltaBeta = e.beta - lastBeta;
-        const deltaGamma = e.gamma - lastGamma;
-        if (Math.abs(deltaBeta) > 0.12 || Math.abs(deltaGamma) > 0.12) {
-            sendMouseAction({
-                type: 'GYRO',
-                pitchDelta: deltaBeta,
-                rollDelta: deltaGamma,
-                sensitivity: 3.2
-            });
-        }
+    const modal = document.getElementById('remoteModal');
+    if (!modal) return;
+
+    // Detect if device is tilted sideways (> 45 deg roll or tilt) to enable widescreen layout
+    const roll = Math.abs(e.gamma || 0);
+    if (roll > 45) {
+        modal.classList.add('landscape-gaming-active');
+    } else if (roll < 25) {
+        modal.classList.remove('landscape-gaming-active');
     }
-    lastBeta = e.beta;
-    lastGamma = e.gamma;
+    // Notice: Never moves mouse cursor! Mouse cursor is strictly controlled by finger touches.
 }
 
 // Remote Virtual Keyboard
