@@ -3469,8 +3469,58 @@ function triggerAirShareFromMessage(msgText) {
     checkLocationPermissionAndProceed(virtualChat);
 }
 
-// Step 2: Request Live Location Permission from User FIRST
+// Step 2: Request Live Location Permission from User FIRST (Native Android OS Dialog or Geolocation)
 function checkLocationPermissionAndProceed(chat) {
+    pendingAirShareChat = chat;
+    closeDrawer();
+
+    // 1. Check if running inside Android Native App with direct OS System Dialog API
+    if (window.AndroidBridge && typeof window.AndroidBridge.requestLocationPermission === 'function') {
+        // If already granted, retrieve location and show confirmation
+        if (window.AndroidBridge.hasLocationPermission && window.AndroidBridge.hasLocationPermission()) {
+            try {
+                const locStr = window.AndroidBridge.getLiveLocation();
+                if (locStr) {
+                    const parsed = JSON.parse(locStr);
+                    currentDeviceLocation.lat = parsed.lat;
+                    currentDeviceLocation.lng = parsed.lng;
+                }
+            } catch (_) {}
+            const promptModal = document.getElementById('airShareLocationPromptModal');
+            if (promptModal) promptModal.style.display = 'none';
+            showAirShareConfirmPopup(chat);
+            return;
+        }
+
+        // Setup the OS permission result callback triggered by MainActivity.onRequestPermissionsResult
+        window.onNativeLocationPermissionResult = function(granted) {
+            if (granted) {
+                try {
+                    const locStr = window.AndroidBridge.getLiveLocation();
+                    if (locStr) {
+                        const parsed = JSON.parse(locStr);
+                        currentDeviceLocation.lat = parsed.lat;
+                        currentDeviceLocation.lng = parsed.lng;
+                    }
+                } catch (_) {}
+                showToast('✓ Location permission granted!');
+                const promptModal = document.getElementById('airShareLocationPromptModal');
+                if (promptModal) promptModal.style.display = 'none';
+                showAirShareConfirmPopup(chat);
+            } else {
+                showToast('⚠️ Location permission is required for AirShare! Please allow access.', 3500);
+                const promptModal = document.getElementById('airShareLocationPromptModal');
+                if (promptModal) promptModal.style.display = 'flex';
+            }
+        };
+
+        showToast('📍 Requesting device location permission...');
+        // This triggers the native Android OS Permission Dialog: "Allow Codez48 Pilot to access this device's location?"
+        window.AndroidBridge.requestLocationPermission();
+        return;
+    }
+
+    // 2. Browser fallback for web browsers
     showToast('📍 Requesting live location permission for AirShare proximity...');
 
     if (!navigator.geolocation) {
