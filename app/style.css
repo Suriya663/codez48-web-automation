@@ -1153,11 +1153,22 @@ body {
 
 .remote-keyboard-strip {
     display: flex;
+    flex-direction: column;
     gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    background: #111827;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #1f2937;
 }
 
-.remote-keyboard-strip input {
+.keyboard-input-row {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+}
+
+.keyboard-input-row input {
     flex: 1;
     background: #1e293b;
     border: 1px solid #334155;
@@ -1166,17 +1177,55 @@ body {
     color: #ffffff;
     font-size: 13px;
     outline: none;
+    min-width: 0;
 }
 
-.remote-keyboard-strip button {
-    background: #334155;
-    color: #ffffff;
+.key-send-btn {
+    background: #2563eb !important;
+    color: #ffffff !important;
     border: none;
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.key-clear-btn {
+    background: #334155 !important;
+    color: #94a3b8 !important;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.keyboard-quick-keys-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.quick-key-btn {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.1s;
+}
+
+.quick-key-btn:active {
+    background: #38bdf8;
+    color: #0f172a;
+    transform: scale(0.95);
 }
 
 /* Massive Fullscreen Touchpad */
@@ -3398,4 +3447,200 @@ input:checked + .toggle-slider:before {
 
 .cli-doc-link:hover {
     text-decoration: underline;
+}
+
+/* ============================================================== */
+/* AIR SHARE: PROXIMITY BUMP & SHINING LUMINESCENT TOP WAVE       */
+/* ============================================================== */
+.air-share-top-wave {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 20%, #ffffff 50%, #38bdf8 80%, transparent 100%);
+    box-shadow: 0 0 24px 6px rgba(56, 189, 248, 0.95), 0 0 50px 14px rgba(255, 255, 255, 0.85);
+    z-index: 9999999;
+    pointer-events: none;
+    animation: airShareBeamSweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes airShareBeamSweep {
+    0% { transform: translateX(-100%); opacity: 0; }
+    25% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+.air-share-modal-card {
+    max-width: 440px;
+    width: 90%;
+    background: #0b1120;
+    color: #f8fafc;
+    border: 2px solid #1e293b;
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    text-align: center;
+}
+
+.air-share-header-title {
+    text-align: left;
+}
+
+.air-share-badge {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.air-share-header-title h3 {
+    margin: 4px 0 0 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.air-share-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 12px 0 20px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.air-share-radar-stage {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.air-share-center-phone {
+    position: relative;
+    z-index: 5;
+    background: #0f172a;
+    border: 2px solid #38bdf8;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+}
+
+.air-share-ripple {
+    position: absolute;
+    border: 1.5px solid rgba(56, 189, 248, 0.6);
+    border-radius: 50%;
+    animation: airSharePulse 2.4s ease-out infinite;
+}
+
+.air-share-ripple.r1 { width: 60px; height: 60px; animation-delay: 0s; }
+.air-share-ripple.r2 { width: 100px; height: 100px; animation-delay: 0.8s; }
+.air-share-ripple.r3 { width: 140px; height: 140px; animation-delay: 1.6s; }
+
+@keyframes airSharePulse {
+    0% { transform: scale(0.6); opacity: 0.8; }
+    100% { transform: scale(1.4); opacity: 0; }
+}
+
+.air-share-status-card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.air-share-pulse-dot {
+    width: 12px;
+    height: 12px;
+    background: #38bdf8;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #38bdf8;
+    animation: airShareBlink 1s infinite alternate;
+    flex-shrink: 0;
+}
+
+@keyframes airShareBlink {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(1.2); opacity: 1; }
+}
+
+.air-share-status-text strong {
+    display: block;
+    font-size: 13px;
+    color: #f1f5f9;
+}
+
+.air-share-status-text span {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.air-share-nearby-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.air-share-device-item {
+    background: #1e293b;
+    border: 1.5px solid #334155;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.air-share-device-item:hover {
+    border-color: #38bdf8;
+    background: #0f172a;
+}
+
+.air-share-actions-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.air-share-actions-row button {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary-action {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.btn-primary-action:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary-action {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155 !important;
 }

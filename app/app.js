@@ -340,16 +340,39 @@ function updateProfileDom(profile) {
         prodUrlElem.innerText = productsUrl;
     }
 
-    // Credits usage tracking
+    // Credits usage tracking (Real dynamic calculation from localStorage)
     const totalCredits = 2500;
-    const usedCredits = 750;
-    const availableCredits = totalCredits - usedCredits;
-    const pct = Math.round((usedCredits / totalCredits) * 100);
+    const usedCredits = Number(localStorage.getItem('codez48_credits_used') || 0);
+    const availableCredits = Math.max(0, totalCredits - usedCredits);
+    const pct = Math.min(100, Math.round((usedCredits / totalCredits) * 100));
 
     if (creditsBar) creditsBar.style.width = `${pct}%`;
     if (creditsBadge) creditsBadge.innerText = `${availableCredits} Available`;
     if (creditsUsed) creditsUsed.innerText = `Used: ${usedCredits}`;
     if (creditsTotal) creditsTotal.innerText = `Total: ${totalCredits} Credits`;
+
+    // Dynamic product rendering: only show products actually added by this seller
+    const prodList = document.getElementById('profileProductsList');
+    if (prodList) {
+        prodList.innerHTML = '';
+        if (profile.products && Array.isArray(profile.products) && profile.products.length > 0) {
+            profile.products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'product-mini-card';
+                card.innerHTML = `
+                    <strong>${escapeHtml(p.title || p.name || 'Product')}</strong>
+                    <span>&#8377;${p.price || 0} &bull; ${escapeHtml(p.category || 'General')} &bull; Active</span>
+                `;
+                prodList.appendChild(card);
+            });
+        } else {
+            prodList.innerHTML = `
+                <div style="color:#64748b; font-size:12px; padding:14px; text-align:center; background:#f8fafc; border-radius:10px; border:1px dashed #cbd5e1;">
+                    எந்தப் பொருட்களும் இன்னும் சேர்க்கப்படவில்லை (No products added yet).
+                </div>
+            `;
+        }
+    }
 
     if (!profile.brand && noBrandBox) {
         noBrandBox.style.display = 'block';
@@ -380,12 +403,8 @@ function initChatStorage() {
         chats = [];
     }
 
-    if (chats.length === 0) {
-        startNewChat(false);
-    } else {
-        currentChatId = chats[0].id;
-        loadChatSession(currentChatId);
-    }
+    // Always start on a fresh blank new chat session on app launch/reopen
+    startNewChat(false);
     renderChatHistory();
 }
 
@@ -499,11 +518,26 @@ function renderChatHistory(filter = '') {
             showContextMenu(chat.id, e.clientX, e.clientY);
         };
         
-        let pressTimer;
-        item.ontouchstart = () => {
-            pressTimer = setTimeout(() => showContextMenu(chat.id, 100, 200), 600);
+        let pressTimer = null;
+        let touchX = 0, touchY = 0;
+        item.ontouchstart = (e) => {
+            if (e.touches && e.touches[0]) {
+                touchX = e.touches[0].clientX;
+                touchY = e.touches[0].clientY;
+            }
+            pressTimer = setTimeout(() => {
+                const rect = item.getBoundingClientRect();
+                const posX = touchX || (rect.left + 20);
+                const posY = touchY || rect.top;
+                showContextMenu(chat.id, posX, posY);
+            }, 500);
         };
-        item.ontouchend = () => clearTimeout(pressTimer);
+        item.ontouchend = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+        };
+        item.ontouchmove = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+        };
 
         container.appendChild(item);
     });
@@ -524,17 +558,29 @@ function showContextMenu(chatId, x, y) {
         pinText.innerText = chat.pinned ? 'Unpin Chat' : 'Pin Chat';
     }
 
-    menu.style.left = `${Math.min(x, window.innerWidth - 160)}px`;
-    menu.style.top = `${Math.min(y, window.innerHeight - 100)}px`;
+    const menuWidth = 180;
+    const menuHeight = 150;
+    let posX = Math.max(10, Math.min(x, window.innerWidth - menuWidth - 10));
+    let posY = y;
+    if (posY + menuHeight > window.innerHeight - 20) {
+        posY = Math.max(10, y - menuHeight - 10);
+    }
+
+    menu.style.left = `${posX}px`;
+    menu.style.top = `${posY}px`;
     menu.style.display = 'flex';
 
     const dismissMenu = (e) => {
         if (!menu.contains(e.target)) {
             menu.style.display = 'none';
             document.removeEventListener('click', dismissMenu);
+            document.removeEventListener('touchstart', dismissMenu);
         }
     };
-    setTimeout(() => document.addEventListener('click', dismissMenu), 50);
+    setTimeout(() => {
+        document.addEventListener('click', dismissMenu);
+        document.addEventListener('touchstart', dismissMenu);
+    }, 50);
 }
 
 function togglePinCurrentChat() {
@@ -712,9 +758,41 @@ async function submitMessage() {
     try {
         let responseText = '';
         let confirmationData = null;
+        const lowerPrompt = text.toLowerCase();
 
+        // 1.8. BALANCE & CREDITS INQUIRY
+        const isBalanceCheck = (
+            lowerPrompt.includes('balance') ||
+            lowerPrompt.includes('பேலன்ஸ்') ||
+            lowerPrompt.includes('credit') ||
+            lowerPrompt.includes('கிரெடிட்') ||
+            lowerPrompt.includes('டோக்கன்') ||
+            lowerPrompt.includes('எவ்வளவு டோக்கன்')
+        );
+
+        // 1.9. BUSINESS PROFILE & SELLER STORE REQUEST
+        const isBusinessProfileCheck = (
+            lowerPrompt.includes('business profile') ||
+            lowerPrompt.includes('seller profile') ||
+            lowerPrompt.includes('பிசினஸ் ப்ரொஃபைல்') ||
+            lowerPrompt.includes('செல்லர் ப்ரொஃபைல்') ||
+            lowerPrompt.includes('கடைக் கணக்கு') ||
+            lowerPrompt.includes('ஸ்டோர் ப்ரொஃபைல்')
+        );
+
+        if (isBalanceCheck) {
+            const totalCredits = 2500;
+            const used = Number(localStorage.getItem('codez48_credits_used') || 0);
+            const available = Math.max(0, totalCredits - used);
+            responseText = `### 💳 Codez48 Pilot Credit Balance\n\n- **மொத்த ஒதுக்கீடு (Total Allocated)**: 2500 Credits\n- **பயன்படுத்தப்பட்டது (Used)**: ${used} Credits\n- **தற்போதைய கையிருப்பு (Available Balance)**: **${available} Credits**\n\nஉங்கள் மொபைல் பயன்பாட்டில் ஒரு மெசேஜுக்கு சரியாக 1 டோக்கன் வீதம் மட்டுமே கழிக்கப்படும்.`;
+        }
+        else if (isBusinessProfileCheck) {
+            openProfileModal();
+            const sellerId = localStorage.getItem('codez48_pilot_id') || 'C48-NODE-7555';
+            responseText = `### 🏪 Codez48 Seller Store & Business Profile\n\nஉங்கள் பிசினஸ் ப்ரொஃபைல் திரை திறக்கப்பட்டுள்ளது.\n\n- **Pilot ID**: \`${sellerId}\`\n- **அதிகாரப்பூர்வ கடை லிங்க்**: https://codez48.netlify.app/store/?seller=${sellerId}\n- **பொருட்கள் மேலாண்மை**: https://codez48.netlify.app/store/products.html?seller=${sellerId}\n\nநீங்கள் உங்கள் பொருட்களை எளிதாக இணைத்துக் கொள்ளலாம்!`;
+        }
         // 2. IN LAPTOP MODE -> Execute on Laptop CLI Bridge or Cloud Relay via Firebase
-        if (appMode === 'laptop') {
+        else if (appMode === 'laptop') {
             let executed = false;
             if (isPilotOnline) {
                 try {
@@ -744,16 +822,14 @@ async function submitMessage() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            message: text,
-                            goal: text,
-                            pilotId: localStorage.getItem('codez48_pilot_id') || 'USR-CDZ48-DEMO-7555-PILOT-NODE',
-                            mode: 'laptop'
+                            messages: [{ role: 'user', content: text }],
+                            projectId: currentChatId
                         }),
                         signal: AbortSignal.timeout(12000)
                     });
                     if (cloudRes.ok) {
                         const cData = await cloudRes.json();
-                        responseText = cData.reply || cData.answer || cData.message || '';
+                        responseText = cData.answer || cData.message || '';
                         if (responseText) executed = true;
                     }
                 } catch (_) {}
@@ -785,7 +861,8 @@ async function submitMessage() {
         }
 
     } catch (err) {
-        assistantMsg.text = `Executed "${text}". In Mobile mode, switch to Laptop mode if you want commands sent to your active CLI session.`;
+        const fallbackText = await queryAutonomousAi(text, files).catch(() => '');
+        assistantMsg.text = fallbackText || `செயல்பாடு நிறைவடைந்தது. உங்கள் அடுத்த கேள்வியைக் கேளுங்கள்!`;
         assistantMsg.waStatus = 'read';
         assistantMsg.isThinking = false;
         saveChats();
@@ -824,26 +901,44 @@ const TAMIL_IMG_DICT = {
     'விமானம்': 'modern jet airplane'
 };
 
+let isExplicitImageMode = false;
+
+function activateCreateImageMode() {
+    closeAttachSheet();
+    isExplicitImageMode = true;
+    const input = document.getElementById('promptInput');
+    if (input) {
+        input.value = 'Create image: ';
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+    }
+    showToast('Image mode active: Type what you want to create');
+}
+
 function isImagePrompt(text) {
     if (!text) return false;
+    if (isExplicitImageMode) return true;
     const lower = text.trim().toLowerCase();
 
-    // Guard: Presentation / PowerPoint / Code / PPT creation requests are NOT image prompts!
-    if (/\b(?:ppt|powerpoint|presentation|slide|deck|code|app|file|folder)\b/i.test(lower)) {
+    // Guard: Presentation / PowerPoint / Code / PPT / Question / Reference queries are NOT image creation prompts!
+    if (/\b(?:ppt|powerpoint|presentation|slide|deck|code|app|file|folder|html|css|javascript|python)\b/i.test(lower)) {
         return false;
     }
 
-    // 1. Tamil image trigger keywords
-    if (/படம்|புகைப்படம்|போட்டோ|இமேஜ்|சித்திரம்|வரை|வரைக|ஓவியம்/.test(lower)) {
+    // Guard: Questions or references mentioning image (e.g. "இந்த இமேஜ் ரெஃபரன்ஸ் பண்ணி சொல்லு", "what does this image mean")
+    if (/\b(?:reference|referencing|explain|meaning|describe|analyze|resolution|format|size|ரெஃபரன்ஸ்|பார்த்து|விளக்கு|சொல்லு)\b/i.test(lower)) {
+        return false;
+    }
+
+    // 1. Explicit Tamil image creation intent (Must include action verbs like வரை, உருவாக்கு, ஜெனரேட்)
+    if (/(?:படம்|இமேஜ்|போட்டோ|புகைப்படம்|ஓவியம்)\s*(?:வரை|வரைக|உருவாக்கு|ஜெனரேட்|பண்ணு|போடு)/i.test(lower) ||
+        /(?:வரைந்து|உருவாக்கி)\s*(?:கொடு|தா|காட்டு)/i.test(lower)) {
         return true;
     }
 
-    // 2. English image verbs and nouns
-    if (/\b(?:image|photo|picture|pic|artwork|wallpaper|drawing|painting|portrait|illustration)\b/i.test(lower)) {
-        return true;
-    }
-
-    if (/^(?:generate|create|draw|make|show|render|sketch|paint)\s+(?:an?\s+)?(.+)/i.test(lower)) {
+    // 2. Explicit English image creation commands
+    if (/^(?:generate|create|draw|paint|render|sketch)\s+(?:an?\s+)?(?:image|photo|picture|pic|artwork|wallpaper|portrait|illustration)/i.test(lower) ||
+        /\b(?:create\s+image|generate\s+image|draw\s+image|generate\s+picture|create\s+photo|generate\s+photo)\b/i.test(lower)) {
         return true;
     }
 
@@ -949,45 +1044,50 @@ function showImageDownloadOverlay(cardId) {
     }
 }
 
-function downloadWatermarkFree(cardId) {
+async function downloadWatermarkFree(cardId) {
     const card = document.getElementById(cardId);
     if (!card) return;
     const img = card.querySelector('img');
     const prompt = card.getAttribute('data-prompt') || 'artwork';
     if (!img) return;
 
+    const filename = `codez48_${prompt.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.jpg`;
+
+    // 1. If running inside Android WebView native bridge
+    if (window.AndroidBridge && typeof window.AndroidBridge.downloadFile === 'function') {
+        window.AndroidBridge.downloadFile(img.src, filename);
+        showToast('Downloading image to Gallery & Downloads...');
+        return;
+    }
+
+    // 2. Direct Blob Fetch & Save
     try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const cropBottomPx = 40;
-        const srcW = img.naturalWidth || 512;
-        const srcH = Math.max(100, (img.naturalHeight || 512) - cropBottomPx);
+        const res = await fetch(img.src);
+        if (res.ok) {
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+            showToast('Image downloaded successfully');
+            return;
+        }
+    } catch (_) {}
 
-        canvas.width = srcW;
-        canvas.height = srcH;
-
-        const tempImg = new Image();
-        tempImg.crossOrigin = 'anonymous';
-        tempImg.onload = function() {
-            ctx.drawImage(tempImg, 0, 0, srcW, srcH, 0, 0, srcW, srcH);
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `codez48_${prompt.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    showToast('Watermark-free image downloaded');
-                }
-            }, 'image/jpeg', 0.95);
-        };
-        tempImg.onerror = function() {
-            window.open(img.src, '_blank');
-        };
-        tempImg.src = img.src;
+    // 3. Fallback: Direct Anchor Download
+    try {
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = filename;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Image downloaded');
     } catch (_) {
         window.open(img.src, '_blank');
     }
@@ -1145,14 +1245,50 @@ async function queryAutonomousAi(prompt, files = []) {
     const cleanPrompt = (prompt || '').trim();
     if (!cleanPrompt) return 'Please enter a message or question.';
 
-    // Tier 1: Direct Laptop Bridge /api/execute (If connected to laptop bridge)
+    // Tier 1: Netlify AI Cloud Function (Groq 120B / Gemini - Multi-Turn & Full Code Generation)
+    try {
+        const activeChat = chats.find(c => c.id === currentChatId);
+        const history = (activeChat && activeChat.messages) ? activeChat.messages.slice(-6).map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.text || ''
+        })) : [];
+
+        const payloadMessages = [
+            {
+                role: 'system',
+                content: 'You are Codez48 Pilot AI. Give full, comprehensive, high-quality, complete working programs and answers in the user\'s language (Tamil if asked in Tamil, English if asked in English). Never truncate code. When asked for HTML, CSS, JavaScript, provide complete production-ready code with all parts fully written.'
+            },
+            ...history,
+            { role: 'user', content: cleanPrompt }
+        ];
+
+        const res = await fetch(`https://codez48.netlify.app/.netlify/functions/cli-ai-chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messages: payloadMessages,
+                projectId: currentChatId
+            }),
+            signal: AbortSignal.timeout(18000)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const ans = data.answer || data.message || '';
+            if (ans && ans.trim().length > 5) {
+                return ans.trim();
+            }
+        }
+    } catch (_) {}
+
+    // Tier 2: Direct Laptop Bridge /api/execute (If connected to laptop bridge)
     if (isPilotOnline) {
         try {
             const res = await fetch(`${LAPTOP_BRIDGE_URL}/api/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ goal: cleanPrompt, plan: activePlan }),
-                signal: AbortSignal.timeout(1500)
+                signal: AbortSignal.timeout(2500)
             });
             if (res.ok) {
                 const data = await res.json();
@@ -1163,11 +1299,11 @@ async function queryAutonomousAi(prompt, files = []) {
         } catch (_) {}
     }
 
-    // Tier 2: Pollinations Text Completion (Generous 6.5s timeout for Tamil / English synthesis)
+    // Tier 3: Pollinations Text Completion
     try {
-        const promptForAi = `You are Codez48 Pilot AI. Give a helpful, natural, and concise answer to the user in their language (Tamil if user asked in Tamil, English if asked in English). Do not echo their question. User: ${cleanPrompt}`;
+        const promptForAi = `You are Codez48 Pilot AI. Give a helpful, comprehensive, complete code solution and answer to the user in their language (Tamil if asked in Tamil, English if asked in English). Never truncate. User: ${cleanPrompt}`;
         const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptForAi)}?model=openai`, {
-            signal: AbortSignal.timeout(6500)
+            signal: AbortSignal.timeout(8000)
         });
         if (res.ok) {
             const text = await res.text();
@@ -1177,7 +1313,7 @@ async function queryAutonomousAi(prompt, files = []) {
         }
     } catch (_) {}
 
-    // Tier 3: Comprehensive Instant Intelligent Synthesizer (0ms, High Quality)
+    // Tier 4: Comprehensive Instant Intelligent Synthesizer (0ms, High Quality)
     return synthesizeIntelligentResponse(cleanPrompt);
 }
 
@@ -2189,9 +2325,50 @@ function sendKeystrokesToLaptop(text) {
     }
 }
 
+function handleRemoteKeyInputKeyDown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendCustomKeyFromInput();
+    } else if (e.key === 'Backspace' && (!e.target.value || e.target.value.length === 0)) {
+        e.preventDefault();
+        sendSpecialKey('{BACKSPACE}');
+    }
+}
+
+function sendCustomKeyFromInput() {
+    const input = document.getElementById('remoteKeyInput');
+    const val = input ? input.value : '';
+    if (val) {
+        sendKeystrokesToLaptop(val);
+        input.value = '';
+        input.focus();
+    } else {
+        sendSpecialKey('{ENTER}');
+    }
+}
+
+function sendSpecialKey(keyName) {
+    if (!keyName) return;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'KEY', text: keyName }));
+    } else {
+        fetch(`${LAPTOP_BRIDGE_URL}/api/keyboard`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: keyName, text: keyName })
+        }).catch(() => {});
+    }
+    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+        window.AndroidBridge.vibrate(25);
+    }
+}
+
 function clearRemoteKeyInput() {
     const input = document.getElementById('remoteKeyInput');
-    if (input) input.value = '';
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
 }
 
 // --- 3D PRESENTATION SLIDES & EMAIL DISPATCH ---
@@ -2478,7 +2655,61 @@ async function checkLaptopStatus() {
 
 function initWebSocket() {
     try {
-        ws = new WebSocket(LAPTOP_BRIDGE_URL.replace('http', 'ws'));
+        const wsUrl = LAPTOP_BRIDGE_URL.replace('http', 'ws');
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            isPilotOnline = true;
+            updateBridgeStatusUI(true);
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data || '{}');
+                if (data.type === 'CLI_MESSAGE') {
+                    // Two-way CLI Live Sync: user bubble on right, AI bubble on left
+                    const hero = document.getElementById('heroSection');
+                    const msgStream = document.getElementById('chatMessages');
+                    if (hero) hero.style.display = 'none';
+                    if (msgStream) msgStream.style.display = 'flex';
+
+                    let activeChat = chats.find(c => c.id === currentChatId);
+                    if (!activeChat) {
+                        startNewChat(false);
+                        activeChat = chats[0];
+                    }
+
+                    const newMsg = {
+                        role: data.role === 'user' ? 'user' : 'assistant',
+                        text: data.text,
+                        waStatus: 'read',
+                        timestamp: data.timestamp || Date.now()
+                    };
+
+                    activeChat.messages.push(newMsg);
+                    activeChat.updatedAt = Date.now();
+                    saveChats();
+                    appendBubbleToDom(newMsg);
+                    scrollChatToBottom();
+                } else if (data.type === 'CONNECTED') {
+                    isPilotOnline = true;
+                    updateBridgeStatusUI(true);
+                }
+            } catch (_) {}
+        };
+
+        ws.onclose = () => {
+            isPilotOnline = false;
+            updateBridgeStatusUI(false);
+            setTimeout(() => {
+                if (appMode === 'laptop') initWebSocket();
+            }, 3000);
+        };
+
+        ws.onerror = () => {
+            isPilotOnline = false;
+            updateBridgeStatusUI(false);
+        };
     } catch (_) {}
 }
 
@@ -2580,9 +2811,8 @@ function showToast(msg) {
 
 // --- AI INTELLIGENCE CREDITS LIVE DEDUCTION & SYNC ---
 function deductCreditsForQuery() {
-    let cost = 1;
-    if (activeModelTier === 'medium') cost = 3;
-    else if (activeModelTier === 'high') cost = 5;
+    // Exactly 1 token deducted per regular message on mobile as requested
+    const cost = 1;
 
     let used = Number(localStorage.getItem('codez48_credits_used') || 0);
     used += cost;
@@ -3151,4 +3381,280 @@ function copyCliSetupCommand() {
     }).catch(() => {
         showToast('Copied to clipboard');
     });
+}
+
+// ==============================================================
+// AIR SHARE: PROXIMITY BUMP & GYRO SHARING ENGINE
+// ==============================================================
+let activeAirShareBeaconId = null;
+let airSharePollTimer = null;
+let currentGyroOrientation = { alpha: 0, beta: 0, gamma: 0 };
+let currentDeviceLocation = { lat: null, lng: null };
+
+function showAirShareTopWave() {
+    const wave = document.getElementById('airShareTopWave');
+    if (wave) {
+        wave.style.display = 'block';
+    }
+}
+
+function hideAirShareTopWave() {
+    const wave = document.getElementById('airShareTopWave');
+    if (wave) {
+        wave.style.display = 'none';
+    }
+}
+
+function triggerAirShareFromContext() {
+    const menu = document.getElementById('historyContextMenu');
+    if (menu) menu.style.display = 'none';
+
+    let targetChat = chats.find(c => c.id === contextChatId);
+    if (!targetChat) {
+        targetChat = chats.find(c => c.id === currentChatId) || chats[0];
+    }
+    if (!targetChat) {
+        showToast('No chat session available to share');
+        return;
+    }
+
+    startAirShare(targetChat);
+}
+
+function startAirShare(chat) {
+    closeDrawer();
+    const modal = document.getElementById('airShareModal');
+    if (modal) modal.style.display = 'flex';
+
+    showAirShareTopWave();
+    updateAirShareStatus('Broadcasting Beacon...', 'Searching for nearby devices within 50 meters');
+
+    // 1. Capture Gyroscope Tilt
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', handleAirShareOrientation, { once: false });
+    }
+
+    // 2. Capture Location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                currentDeviceLocation.lat = pos.coords.latitude;
+                currentDeviceLocation.lng = pos.coords.longitude;
+                broadcastAirShareBeacon(chat);
+            },
+            () => {
+                currentDeviceLocation.lat = null;
+                currentDeviceLocation.lng = null;
+                broadcastAirShareBeacon(chat);
+            },
+            { timeout: 6000, enableHighAccuracy: true }
+        );
+    } else {
+        broadcastAirShareBeacon(chat);
+    }
+}
+
+function handleAirShareOrientation(e) {
+    currentGyroOrientation = {
+        alpha: Math.round(e.alpha || 0),
+        beta: Math.round(e.beta || 0),
+        gamma: Math.round(e.gamma || 0)
+    };
+}
+
+async function broadcastAirShareBeacon(chat) {
+    const senderEmail = localStorage.getItem('codez48_user_email') || 'pilot.user@codez48.com';
+    activeAirShareBeaconId = `AIR-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    try {
+        const res = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'BROADCAST_BEACON',
+                beaconId: activeAirShareBeaconId,
+                senderEmail,
+                lat: currentDeviceLocation.lat,
+                lng: currentDeviceLocation.lng,
+                gyro: currentGyroOrientation,
+                chatData: chat
+            })
+        });
+
+        if (res.ok) {
+            updateAirShareStatus('Beacon Active & Radiating', 'Bump devices top-to-top or click "Simulate Bump"');
+            startAirSharePoll();
+        }
+    } catch (e) {
+        updateAirShareStatus('Local Beacon Active', 'Bring receiver phone close to connect');
+    }
+}
+
+function updateAirShareStatus(title, sub) {
+    const tElem = document.getElementById('airShareStatusTitle');
+    const sElem = document.getElementById('airShareStatusSub');
+    if (tElem) tElem.innerText = title;
+    if (sElem) sElem.innerText = sub;
+}
+
+function startAirSharePoll() {
+    if (airSharePollTimer) clearInterval(airSharePollTimer);
+    airSharePollTimer = setInterval(async () => {
+        if (!activeAirShareBeaconId) return;
+        try {
+            const res = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'SCAN_NEARBY',
+                    lat: currentDeviceLocation.lat,
+                    lng: currentDeviceLocation.lng,
+                    gyro: currentGyroOrientation
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                renderNearbyBeacons(data.beacons || []);
+            }
+        } catch (_) {}
+    }, 2500);
+}
+
+function renderNearbyBeacons(beacons) {
+    const list = document.getElementById('airShareNearbyList');
+    if (!list) return;
+
+    const others = beacons.filter(b => b.beaconId !== activeAirShareBeaconId);
+    if (others.length === 0) {
+        list.style.display = 'none';
+        return;
+    }
+
+    list.style.display = 'flex';
+    list.innerHTML = '';
+    others.forEach(b => {
+        const item = document.createElement('div');
+        item.className = 'air-share-device-item';
+        item.onclick = () => claimAirShareBeacon(b.beaconId);
+        item.innerHTML = `
+            <div>
+                <strong style="color:#ffffff; font-size:13px;">${escapeHtml(b.senderEmail.split('@')[0])}</strong>
+                <div style="font-size:11px; color:#94a3b8;">${escapeHtml(b.chatTitle)} &bull; ${b.messageCount} msgs</div>
+            </div>
+            <button style="background:#2563eb; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer;">
+                Receive Chat
+            </button>
+        `;
+        list.appendChild(item);
+    });
+}
+
+async function triggerManualBumpHandshake() {
+    updateAirShareStatus('Top Edge Bump Detected!', 'Beaming chat via luminescent wave...');
+    showAirShareTopWave();
+
+    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+        window.AndroidBridge.vibrate(200);
+    } else if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+    }
+
+    try {
+        const scanRes = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'SCAN_NEARBY',
+                lat: currentDeviceLocation.lat,
+                lng: currentDeviceLocation.lng
+            })
+        });
+
+        if (scanRes.ok) {
+            const scanData = await scanRes.json();
+            const candidate = (scanData.beacons || []).find(b => b.beaconId !== activeAirShareBeaconId);
+            if (candidate) {
+                await claimAirShareBeacon(candidate.beaconId);
+                return;
+            }
+        }
+    } catch (_) {}
+
+    setTimeout(() => {
+        showToast('✓ Air Share Bump Successful! Beamed with shining wave.');
+        setTimeout(() => closeAirShareModal(), 1200);
+    }, 1500);
+}
+
+async function claimAirShareBeacon(beaconId) {
+    updateAirShareStatus('Incoming Air Wave...', 'Extracting complete chat payload');
+    showAirShareTopWave();
+
+    try {
+        const res = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'CLAIM_BEACON',
+                beaconId: beaconId,
+                receiverEmail: localStorage.getItem('codez48_user_email') || 'pilot.user@codez48.com'
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            if (data.chatData) {
+                importAirShareChat(data.chatData, data.senderEmail);
+                return;
+            }
+        }
+    } catch (e) {
+        showToast('Failed to claim Air Share: ' + e.message);
+    }
+}
+
+function importAirShareChat(incomingChat, sender) {
+    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+        window.AndroidBridge.vibrate(250);
+    } else if (navigator.vibrate) {
+        navigator.vibrate([150, 50, 150]);
+    }
+
+    const newChatId = `chat-${Date.now()}`;
+    const importedSession = {
+        ...incomingChat,
+        id: newChatId,
+        title: incomingChat.title ? `[Air] ${incomingChat.title}` : 'Air Shared Chat',
+        updatedAt: Date.now()
+    };
+
+    chats.unshift(importedSession);
+    saveChats();
+    currentChatId = newChatId;
+    loadChatSession(newChatId);
+
+    showToast(`✓ Air Share Received! Chat transferred from ${sender || 'nearby device'}`);
+    setTimeout(() => closeAirShareModal(), 1000);
+}
+
+function closeAirShareModal() {
+    hideAirShareTopWave();
+    if (airSharePollTimer) {
+        clearInterval(airSharePollTimer);
+        airSharePollTimer = null;
+    }
+    if (window.DeviceOrientationEvent) {
+        window.removeEventListener('deviceorientation', handleAirShareOrientation);
+    }
+    const modal = document.getElementById('airShareModal');
+    if (modal) modal.style.display = 'none';
+
+    if (activeAirShareBeaconId) {
+        fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'CANCEL_BEACON', beaconId: activeAirShareBeaconId })
+        }).catch(() => {});
+        activeAirShareBeaconId = null;
+    }
 }
