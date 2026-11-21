@@ -760,8 +760,9 @@ const handlePilot = async () => {
 
     await validateEnvironment();
 
+    let mobileMouseBridge = null;
     try {
-        const mobileMouseBridge = require('./src/pilot/remote/mobile-mouse-bridge');
+        mobileMouseBridge = require('./src/pilot/remote/mobile-mouse-bridge');
         mobileMouseBridge.start(agentController);
     } catch (_) {}
 
@@ -769,10 +770,18 @@ const handlePilot = async () => {
     const directGoal = process.argv.slice(3).join(' ').trim();
     if (directGoal) {
         logger.status(`Executing Pilot goal: "${directGoal}"\n`);
+        if (mobileMouseBridge && typeof mobileMouseBridge.broadcastCliMessage === 'function') {
+            mobileMouseBridge.broadcastCliMessage('user', directGoal);
+        }
         const result = await agentController.processGoal(directGoal, [], apiCall, rl);
         if (result && typeof result === 'object' && result.answer) {
             const cleaned = cleanAiAnswerText(result.answer);
-            if (cleaned) logger.user(`\nAI: ${cleaned}\n`);
+            if (cleaned) {
+                logger.user(`\nAI: ${cleaned}\n`);
+                if (mobileMouseBridge && typeof mobileMouseBridge.broadcastCliMessage === 'function') {
+                    mobileMouseBridge.broadcastCliMessage('assistant', cleaned);
+                }
+            }
         }
         process.exit(0);
         return;
@@ -793,6 +802,10 @@ const handlePilot = async () => {
         if (!userInput || !userInput.trim()) {
             if (!process.stdin.isTTY) break; // exit if piped and no input
             continue;
+        }
+
+        if (mobileMouseBridge && typeof mobileMouseBridge.broadcastCliMessage === 'function') {
+            mobileMouseBridge.broadcastCliMessage('user', userInput);
         }
 
         // Clear require cache for core controllers so live updates on disk take effect immediately without restart
@@ -824,6 +837,10 @@ const handlePilot = async () => {
             }
         } else if (result && result.message) {
             summaryText = result.message;
+        }
+
+        if (mobileMouseBridge && typeof mobileMouseBridge.broadcastCliMessage === 'function' && summaryText) {
+            mobileMouseBridge.broadcastCliMessage('assistant', summaryText);
         }
 
         try {

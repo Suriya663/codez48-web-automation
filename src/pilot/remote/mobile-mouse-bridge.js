@@ -53,6 +53,7 @@ class MobileMouseBridge {
             });
 
             const workerBootstrap = `
+Add-Type -AssemblyName System.Windows.Forms
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -100,7 +101,22 @@ while ($line = [Console]::ReadLine()) {
         } elseif ($cmd -eq "k") {
             # Keystroke typing
             $text = $line.Substring(2)
-            [System.Windows.Forms.SendKeys]::SendWait($text)
+            try {
+                if ($text -eq "{ENTER}" -or $text -eq "\`n" -or $text -eq "\`r\`n") {
+                    [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
+                } elseif ($text -eq "{BACKSPACE}" -or $text -eq "{BS}") {
+                    [System.Windows.Forms.SendKeys]::SendWait("{BACKSPACE}")
+                } elseif ($text -eq "{TAB}") {
+                    [System.Windows.Forms.SendKeys]::SendWait("{TAB}")
+                } elseif ($text -eq "{ESC}" -or $text -eq "{ESCAPE}") {
+                    [System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+                } elseif ($text -eq "{SPACE}") {
+                    [System.Windows.Forms.SendKeys]::SendWait(" ")
+                } else {
+                    $escaped = [System.Text.RegularExpressions.Regex]::Replace($text, "([+^%~(){}\[\]])", "{$1}")
+                    [System.Windows.Forms.SendKeys]::SendWait($escaped)
+                }
+            } catch {}
         }
     } catch {}
 }
@@ -133,6 +149,21 @@ while ($line = [Console]::ReadLine()) {
             }
         }
         return false;
+    }
+
+    broadcastCliMessage(role, text) {
+        if (!text) return;
+        const msg = JSON.stringify({
+            type: 'CLI_MESSAGE',
+            role: role || 'assistant',
+            text: text,
+            timestamp: Date.now()
+        });
+        for (const dev of this.connectedDevices) {
+            if (dev && typeof dev.send === 'function' && dev.readyState === WebSocket.OPEN) {
+                try { dev.send(msg); } catch (_) {}
+            }
+        }
     }
 
     start(agentControllerRef) {
@@ -237,7 +268,7 @@ while ($line = [Console]::ReadLine()) {
                 req.on('end', () => {
                     try {
                         const data = JSON.parse(body || '{}');
-                        const text = data.text || '';
+                        const text = data.text || data.key || '';
                         if (text) {
                             this.sendWorkerCmd(`k ${text}`);
                         }
