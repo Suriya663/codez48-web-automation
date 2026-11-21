@@ -3384,26 +3384,12 @@ function copyCliSetupCommand() {
 }
 
 // ==============================================================
-// AIR SHARE: PROXIMITY BUMP & GYRO SHARING ENGINE
+// AIR SHARE: TRANSLUCENT SMOKE SCREENSHOT DYNAMIC TRANSFER
 // ==============================================================
 let activeAirShareBeaconId = null;
-let airSharePollTimer = null;
 let currentGyroOrientation = { alpha: 0, beta: 0, gamma: 0 };
 let currentDeviceLocation = { lat: null, lng: null };
-
-function showAirShareTopWave() {
-    const wave = document.getElementById('airShareTopWave');
-    if (wave) {
-        wave.style.display = 'block';
-    }
-}
-
-function hideAirShareTopWave() {
-    const wave = document.getElementById('airShareTopWave');
-    if (wave) {
-        wave.style.display = 'none';
-    }
-}
+let isAirShareListening = false;
 
 function triggerAirShareFromContext() {
     const menu = document.getElementById('historyContextMenu');
@@ -3418,56 +3404,62 @@ function triggerAirShareFromContext() {
         return;
     }
 
-    startAirShare(targetChat);
+    startAirShareSmokeSend(targetChat);
 }
 
-function startAirShare(chat) {
+// 1. SENDER: Center wavering smoke card -> Circle at top -> Beams into other phone
+function startAirShareSmokeSend(chat) {
     closeDrawer();
-    const modal = document.getElementById('airShareModal');
-    if (modal) modal.style.display = 'flex';
 
-    showAirShareTopWave();
-    updateAirShareStatus('Broadcasting Beacon...', 'Searching for nearby devices within 50 meters');
+    const stage = document.getElementById('airShareSmokeStage');
+    const card = document.getElementById('airShareSmokeCard');
+    const title = document.getElementById('smokeChatTitle');
 
-    // 1. Capture Gyroscope Tilt
-    if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', handleAirShareOrientation, { once: false });
+    if (title) title.innerText = (chat.title || 'Chat Snapshot').slice(0, 24);
+
+    if (stage && card) {
+        stage.style.display = 'flex';
+        card.classList.remove('receiving-flow');
+        card.classList.remove('sending-flow');
+        void card.offsetWidth; // Trigger reflow
+        card.classList.add('sending-flow');
     }
 
-    // 2. Capture Location
+    // Gentle tactile haptic on launch
+    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+        window.AndroidBridge.vibrate(40);
+    } else if (navigator.vibrate) {
+        navigator.vibrate(40);
+    }
+
+    // Capture location silently
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 currentDeviceLocation.lat = pos.coords.latitude;
                 currentDeviceLocation.lng = pos.coords.longitude;
-                broadcastAirShareBeacon(chat);
+                broadcastAirSharePayload(chat);
             },
-            () => {
-                currentDeviceLocation.lat = null;
-                currentDeviceLocation.lng = null;
-                broadcastAirShareBeacon(chat);
-            },
-            { timeout: 6000, enableHighAccuracy: true }
+            () => broadcastAirSharePayload(chat),
+            { timeout: 3000 }
         );
     } else {
-        broadcastAirShareBeacon(chat);
+        broadcastAirSharePayload(chat);
     }
+
+    // Auto-hide stage after send animation completes (2.1s)
+    setTimeout(() => {
+        if (stage) stage.style.display = 'none';
+        if (card) card.classList.remove('sending-flow');
+    }, 2200);
 }
 
-function handleAirShareOrientation(e) {
-    currentGyroOrientation = {
-        alpha: Math.round(e.alpha || 0),
-        beta: Math.round(e.beta || 0),
-        gamma: Math.round(e.gamma || 0)
-    };
-}
-
-async function broadcastAirShareBeacon(chat) {
+async function broadcastAirSharePayload(chat) {
     const senderEmail = localStorage.getItem('codez48_user_email') || 'pilot.user@codez48.com';
     activeAirShareBeaconId = `AIR-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     try {
-        const res = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+        await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3480,27 +3472,64 @@ async function broadcastAirShareBeacon(chat) {
                 chatData: chat
             })
         });
+    } catch (_) {}
+}
 
-        if (res.ok) {
-            updateAirShareStatus('Beacon Active & Radiating', 'Bump devices top-to-top or click "Simulate Bump"');
-            startAirSharePoll();
-        }
-    } catch (e) {
-        updateAirShareStatus('Local Beacon Active', 'Bring receiver phone close to connect');
+// 2. RECEIVER: Top overflow circle -> Flows to Center wavering -> Fullscreen blast -> Reveal Chat
+function triggerAirShareSmokeReceive(chatData, senderEmail) {
+    const stage = document.getElementById('airShareSmokeStage');
+    const card = document.getElementById('airShareSmokeCard');
+    const title = document.getElementById('smokeChatTitle');
+
+    if (title) title.innerText = (chatData.title || 'Incoming Chat').slice(0, 24);
+
+    if (stage && card) {
+        stage.style.display = 'flex';
+        card.classList.remove('sending-flow');
+        card.classList.remove('receiving-flow');
+        void card.offsetWidth; // Trigger reflow
+        card.classList.add('receiving-flow');
     }
+
+    // Mid-animation haptic bump when arriving in center & blasting
+    setTimeout(() => {
+        if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+            window.AndroidBridge.vibrate(180);
+        } else if (navigator.vibrate) {
+            navigator.vibrate([80, 40, 80]);
+        }
+    }, 1800);
+
+    // On blast finish (~2.2s): Load chat into viewport
+    setTimeout(() => {
+        if (stage) stage.style.display = 'none';
+        if (card) card.classList.remove('receiving-flow');
+
+        // Import chat into local storage and open it
+        const newChatId = `chat-${Date.now()}`;
+        const importedSession = {
+            ...chatData,
+            id: newChatId,
+            title: chatData.title ? `[Air] ${chatData.title}` : 'Air Shared Chat',
+            updatedAt: Date.now()
+        };
+
+        chats.unshift(importedSession);
+        saveChats();
+        currentChatId = newChatId;
+        loadChatSession(newChatId);
+
+        showToast(`✓ Air Share: ${senderEmail ? senderEmail.split('@')[0] : 'Device'} சாட் பெறப்பட்டது!`);
+    }, 2250);
 }
 
-function updateAirShareStatus(title, sub) {
-    const tElem = document.getElementById('airShareStatusTitle');
-    const sElem = document.getElementById('airShareStatusSub');
-    if (tElem) tElem.innerText = title;
-    if (sElem) sElem.innerText = sub;
-}
+// 3. CONTINUOUS BACKGROUND PROXIMITY LISTENER
+function initAirShareListener() {
+    if (isAirShareListening) return;
+    isAirShareListening = true;
 
-function startAirSharePoll() {
-    if (airSharePollTimer) clearInterval(airSharePollTimer);
-    airSharePollTimer = setInterval(async () => {
-        if (!activeAirShareBeaconId) return;
+    // Check periodically for nearby beacons
+    setInterval(async () => {
         try {
             const res = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
                 method: 'POST',
@@ -3508,153 +3537,35 @@ function startAirSharePoll() {
                 body: JSON.stringify({
                     action: 'SCAN_NEARBY',
                     lat: currentDeviceLocation.lat,
-                    lng: currentDeviceLocation.lng,
-                    gyro: currentGyroOrientation
+                    lng: currentDeviceLocation.lng
                 })
             });
+
             if (res.ok) {
                 const data = await res.json();
-                renderNearbyBeacons(data.beacons || []);
+                const candidates = (data.beacons || []).filter(b => b.beaconId !== activeAirShareBeaconId && b.hasChat);
+                if (candidates.length > 0) {
+                    const target = candidates[0];
+                    const claimRes = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'CLAIM_BEACON',
+                            beaconId: target.beaconId,
+                            receiverEmail: localStorage.getItem('codez48_user_email') || 'receiver@codez48.com'
+                        })
+                    });
+                    if (claimRes.ok) {
+                        const claimData = await claimRes.json();
+                        if (claimData && claimData.chatData) {
+                            triggerAirShareSmokeReceive(claimData.chatData, claimData.senderEmail);
+                        }
+                    }
+                }
             }
         } catch (_) {}
-    }, 2500);
+    }, 4000);
 }
 
-function renderNearbyBeacons(beacons) {
-    const list = document.getElementById('airShareNearbyList');
-    if (!list) return;
-
-    const others = beacons.filter(b => b.beaconId !== activeAirShareBeaconId);
-    if (others.length === 0) {
-        list.style.display = 'none';
-        return;
-    }
-
-    list.style.display = 'flex';
-    list.innerHTML = '';
-    others.forEach(b => {
-        const item = document.createElement('div');
-        item.className = 'air-share-device-item';
-        item.onclick = () => claimAirShareBeacon(b.beaconId);
-        item.innerHTML = `
-            <div>
-                <strong style="color:#ffffff; font-size:13px;">${escapeHtml(b.senderEmail.split('@')[0])}</strong>
-                <div style="font-size:11px; color:#94a3b8;">${escapeHtml(b.chatTitle)} &bull; ${b.messageCount} msgs</div>
-            </div>
-            <button style="background:#2563eb; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer;">
-                Receive Chat
-            </button>
-        `;
-        list.appendChild(item);
-    });
-}
-
-async function triggerManualBumpHandshake() {
-    updateAirShareStatus('Top Edge Bump Detected!', 'Beaming chat via luminescent wave...');
-    showAirShareTopWave();
-
-    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
-        window.AndroidBridge.vibrate(200);
-    } else if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]);
-    }
-
-    try {
-        const scanRes = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'SCAN_NEARBY',
-                lat: currentDeviceLocation.lat,
-                lng: currentDeviceLocation.lng
-            })
-        });
-
-        if (scanRes.ok) {
-            const scanData = await scanRes.json();
-            const candidate = (scanData.beacons || []).find(b => b.beaconId !== activeAirShareBeaconId);
-            if (candidate) {
-                await claimAirShareBeacon(candidate.beaconId);
-                return;
-            }
-        }
-    } catch (_) {}
-
-    setTimeout(() => {
-        showToast('✓ Air Share Bump Successful! Beamed with shining wave.');
-        setTimeout(() => closeAirShareModal(), 1200);
-    }, 1500);
-}
-
-async function claimAirShareBeacon(beaconId) {
-    updateAirShareStatus('Incoming Air Wave...', 'Extracting complete chat payload');
-    showAirShareTopWave();
-
-    try {
-        const res = await fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'CLAIM_BEACON',
-                beaconId: beaconId,
-                receiverEmail: localStorage.getItem('codez48_user_email') || 'pilot.user@codez48.com'
-            })
-        });
-
-        if (res.ok) {
-            const data = await res.json();
-            if (data.chatData) {
-                importAirShareChat(data.chatData, data.senderEmail);
-                return;
-            }
-        }
-    } catch (e) {
-        showToast('Failed to claim Air Share: ' + e.message);
-    }
-}
-
-function importAirShareChat(incomingChat, sender) {
-    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
-        window.AndroidBridge.vibrate(250);
-    } else if (navigator.vibrate) {
-        navigator.vibrate([150, 50, 150]);
-    }
-
-    const newChatId = `chat-${Date.now()}`;
-    const importedSession = {
-        ...incomingChat,
-        id: newChatId,
-        title: incomingChat.title ? `[Air] ${incomingChat.title}` : 'Air Shared Chat',
-        updatedAt: Date.now()
-    };
-
-    chats.unshift(importedSession);
-    saveChats();
-    currentChatId = newChatId;
-    loadChatSession(newChatId);
-
-    showToast(`✓ Air Share Received! Chat transferred from ${sender || 'nearby device'}`);
-    setTimeout(() => closeAirShareModal(), 1000);
-}
-
-function closeAirShareModal() {
-    hideAirShareTopWave();
-    if (airSharePollTimer) {
-        clearInterval(airSharePollTimer);
-        airSharePollTimer = null;
-    }
-    if (window.DeviceOrientationEvent) {
-        window.removeEventListener('deviceorientation', handleAirShareOrientation);
-    }
-    const modal = document.getElementById('airShareModal');
-    if (modal) modal.style.display = 'none';
-
-    if (activeAirShareBeaconId) {
-        fetch(`https://codez48.netlify.app/.netlify/functions/air-share-sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'CANCEL_BEACON', beaconId: activeAirShareBeaconId })
-        }).catch(() => {});
-        activeAirShareBeaconId = null;
-    }
-}
+// Start listener after DOM ready
+setTimeout(() => initAirShareListener(), 2000);

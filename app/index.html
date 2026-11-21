@@ -10,8 +10,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Air Share Shining Luminescent Top Wave Effect -->
-    <div id="airShareTopWave" class="air-share-top-wave" style="display:none;"></div>
+    <!-- Air Share Translucent Smoke Screenshot Dynamic Transfer Stage -->
+    <div id="airShareSmokeStage" class="air-share-smoke-stage" style="display:none;">
+        <div id="airShareSmokeCard" class="air-share-smoke-card">
+            <div class="smoke-card-shimmer"></div>
+            <div class="smoke-card-content">
+                <div class="smoke-card-header">
+                    <span class="smoke-dot"></span>
+                    <strong id="smokeChatTitle">Chat Snapshot</strong>
+                </div>
+                <div class="smoke-preview-lines">
+                    <div class="smoke-preview-line l1"></div>
+                    <div class="smoke-preview-line l2"></div>
+                    <div class="smoke-preview-line l3"></div>
+                </div>
+            </div>
+            <div class="smoke-vapor-glow"></div>
+        </div>
+    </div>
 
     <div id="app" class="app-viewport">
 
@@ -747,56 +763,6 @@
                 <div class="logout-actions-grid">
                     <button type="button" class="btn-secondary" onclick="closeLogoutModal()">Cancel</button>
                     <button type="button" class="btn-danger" onclick="executeLogout()">Yes, Log Out</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================== -->
-        <!-- MODAL: SHARE WITH AIR (PROXIMITY BUMP & GYRO SHARING)         -->
-        <!-- ============================================================== -->
-        <div id="airShareModal" class="full-modal" style="display:none; z-index: 10002;">
-            <div class="modal-inner-card air-share-modal-card">
-                <div class="modal-top-bar">
-                    <div class="air-share-header-title">
-                        <span class="air-share-badge">PROXIMITY BUMP</span>
-                        <h3>Share with Air</h3>
-                    </div>
-                    <button class="close-modal-btn" onclick="closeAirShareModal()">&times;</button>
-                </div>
-                
-                <p class="air-share-desc">
-                    Hold phones close together or bump top edges to transfer this chat instantly using GPS proximity and Gyroscope alignment.
-                </p>
-
-                <div class="air-share-radar-stage">
-                    <div class="air-share-ripple r1"></div>
-                    <div class="air-share-ripple r2"></div>
-                    <div class="air-share-ripple r3"></div>
-                    <div class="air-share-center-phone">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
-                            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
-                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                        </svg>
-                    </div>
-                </div>
-
-                <div id="airShareStatusCard" class="air-share-status-card">
-                    <div id="airShareStatusIndicator" class="air-share-pulse-dot"></div>
-                    <div class="air-share-status-text">
-                        <strong id="airShareStatusTitle">Broadcasting Beacon...</strong>
-                        <span id="airShareStatusSub">Scanning nearby devices within 50 meters</span>
-                    </div>
-                </div>
-
-                <div id="airShareNearbyList" class="air-share-nearby-list" style="display:none;"></div>
-
-                <div class="air-share-actions-row">
-                    <button class="btn-primary-action" id="airShareBumpActionBtn" onclick="triggerManualBumpHandshake()">
-                        Simulate Top Edge Bump
-                    </button>
-                    <button class="btn-secondary-action" onclick="closeAirShareModal()">
-                        Cancel
-                    </button>
                 </div>
             </div>
         </div>
