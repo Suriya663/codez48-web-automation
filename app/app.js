@@ -3418,36 +3418,7 @@ let currentDeviceLocation = { lat: null, lng: null };
 let isAirShareListening = false;
 let pendingAirShareChat = null;
 
-// Permission Confirmation: Small white modal asks "Share this content? Yes / No"
-function requestAirShareConfirmation(chat) {
-    pendingAirShareChat = chat;
-    closeDrawer();
-    const modal = document.getElementById('airShareConfirmModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    } else {
-        proceedWithAirShareTransfer();
-    }
-}
-
-function cancelAirShareConfirmation() {
-    pendingAirShareChat = null;
-    const modal = document.getElementById('airShareConfirmModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function proceedWithAirShareTransfer() {
-    const modal = document.getElementById('airShareConfirmModal');
-    if (modal) modal.style.display = 'none';
-
-    const chatToTransfer = pendingAirShareChat || chats.find(c => c.id === currentChatId) || chats[0];
-    pendingAirShareChat = null;
-
-    if (chatToTransfer) {
-        startAirShareSmokeSend(chatToTransfer);
-    }
-}
-
+// Step 1: Trigger AirShare from Drawer Context Menu
 function triggerAirShareFromContext() {
     const menu = document.getElementById('historyContextMenu');
     if (menu) menu.style.display = 'none';
@@ -3461,9 +3432,12 @@ function triggerAirShareFromContext() {
         return;
     }
 
-    requestAirShareConfirmation(targetChat);
+    pendingAirShareChat = targetChat;
+    closeDrawer();
+    checkLocationPermissionAndProceed(targetChat);
 }
 
+// Step 1 (alt): Trigger AirShare from Message Actions
 function triggerAirShareFromMessage(msgText) {
     const virtualChat = {
         id: `air_msg_${Date.now()}`,
@@ -3472,7 +3446,98 @@ function triggerAirShareFromMessage(msgText) {
             { role: 'assistant', text: msgText || '', timestamp: Date.now() }
         ]
     };
-    requestAirShareConfirmation(virtualChat);
+    pendingAirShareChat = virtualChat;
+    closeDrawer();
+    checkLocationPermissionAndProceed(virtualChat);
+}
+
+// Step 2: Request Live Location Permission from User FIRST
+function checkLocationPermissionAndProceed(chat) {
+    showToast('📍 Requesting live location permission for AirShare proximity...');
+
+    if (!navigator.geolocation) {
+        showToast('⚠️ Geolocation not supported on this device');
+        showAirShareConfirmPopup(chat);
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            // Location Permission ACCEPTED!
+            currentDeviceLocation.lat = pos.coords.latitude;
+            currentDeviceLocation.lng = pos.coords.longitude;
+            
+            // Dismiss prompt modal if open
+            const promptModal = document.getElementById('airShareLocationPromptModal');
+            if (promptModal) promptModal.style.display = 'none';
+
+            // SHOW the "Share this content? Yes / No" popup AFTER permission is granted!
+            showAirShareConfirmPopup(chat);
+        },
+        (err) => {
+            // Location Permission DENIED or dismissed!
+            console.warn('Location permission rejected:', err);
+            showToast('⚠️ Location permission is required for AirShare! Please allow access.', 3500);
+
+            // Display White Location Permission Prompt Modal
+            const promptModal = document.getElementById('airShareLocationPromptModal');
+            if (promptModal) {
+                promptModal.style.display = 'flex';
+            }
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+}
+
+function retryLocationPermission() {
+    const promptModal = document.getElementById('airShareLocationPromptModal');
+    if (promptModal) promptModal.style.display = 'none';
+
+    const chat = pendingAirShareChat || chats.find(c => c.id === currentChatId) || chats[0];
+    if (chat) {
+        checkLocationPermissionAndProceed(chat);
+    }
+}
+
+function dismissLocationPrompt() {
+    pendingAirShareChat = null;
+    const promptModal = document.getElementById('airShareLocationPromptModal');
+    if (promptModal) promptModal.style.display = 'none';
+}
+
+// Step 3: Show White Confirmation Popup ('Share this content? Yes / No')
+function showAirShareConfirmPopup(chat) {
+    pendingAirShareChat = chat;
+    const modal = document.getElementById('airShareConfirmModal');
+    if (modal) {
+        const detail = document.getElementById('airConfirmDetail');
+        if (detail && chat && chat.title) {
+            detail.innerText = `Do you want to share "${chat.title.slice(0, 24)}" with nearby device?`;
+        }
+        modal.style.display = 'flex';
+    } else {
+        proceedWithAirShareTransfer();
+    }
+}
+
+function cancelAirShareConfirmation() {
+    pendingAirShareChat = null;
+    const modal = document.getElementById('airShareConfirmModal');
+    if (modal) modal.style.display = 'none';
+    showToast('AirShare cancelled');
+}
+
+// Step 4: User clicked 'Yes' -> Proceed with Smooth Glass Orb Transfer
+function proceedWithAirShareTransfer() {
+    const modal = document.getElementById('airShareConfirmModal');
+    if (modal) modal.style.display = 'none';
+
+    const chatToTransfer = pendingAirShareChat || chats.find(c => c.id === currentChatId) || chats[0];
+    pendingAirShareChat = null;
+
+    if (chatToTransfer) {
+        startAirShareSmokeSend(chatToTransfer);
+    }
 }
 
 // 1. SENDER: Top Aurora Glow + Concentric Ripple Waves + Elongate & Beams into Top Seam

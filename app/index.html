@@ -99,6 +99,24 @@
         </div>
     </div>
 
+    <!-- Air Share Location Permission Request Popup (White Box) -->
+    <div id="airShareLocationPromptModal" class="air-share-confirm-backdrop" style="display:none;">
+        <div class="air-share-confirm-box">
+            <div class="air-confirm-icon-wrap" style="background:#fef3c7; border-color:#fde68a;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+            </div>
+            <h3 class="air-confirm-title">Location Permission</h3>
+            <p class="air-confirm-subtitle">Live location access is required to identify nearby devices for AirShare proximity transfer. Please accept permission to proceed.</p>
+            <div class="air-confirm-actions">
+                <button class="air-btn-cancel" onclick="dismissLocationPrompt()">Cancel</button>
+                <button class="air-btn-confirm" onclick="retryLocationPermission()">Allow Location</button>
+            </div>
+        </div>
+    </div>
+
     <div id="app" class="app-viewport">
 
         <!-- TOP BAR: CENTERED INSTANT DROPDOWN & COMPACT MODE TOGGLE -->
