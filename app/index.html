@@ -10,22 +10,105 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Air Share Translucent Smoke Screenshot Dynamic Transfer Stage -->
-    <div id="airShareSmokeStage" class="air-share-smoke-stage" style="display:none;">
-        <div id="airShareSmokeCard" class="air-share-smoke-card">
-            <div class="smoke-card-shimmer"></div>
-            <div class="smoke-card-content">
-                <div class="smoke-card-header">
-                    <span class="smoke-dot"></span>
-                    <strong id="smokeChatTitle">Chat Snapshot</strong>
+    <!-- iOS 17 NameDrop / AirDrop Fluid Proximity Sharing Stage (1:1 Match to Video) -->
+    <div id="airShareSmokeStage" class="airdrop-proximity-stage" style="display:none;">
+        <!-- 1. Ambient Dynamic Veil (Blur & Darken with organic vignette) -->
+        <div class="airdrop-ambient-veil"></div>
+
+        <!-- 2. Screen Liquid Warp / Lens Distortion SVG Layer -->
+        <svg class="airdrop-svg-defs" aria-hidden="true" width="0" height="0">
+            <defs>
+                <radialGradient id="auroraCoreGrad" cx="50%" cy="0%" r="80%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+                    <stop offset="15%" stop-color="#fdf4ff" stop-opacity="0.95"/>
+                    <stop offset="35%" stop-color="#c084fc" stop-opacity="0.85"/>
+                    <stop offset="60%" stop-color="#38bdf8" stop-opacity="0.6"/>
+                    <stop offset="85%" stop-color="#818cf8" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="liquidGlowDisplacement" x="-20%" y="-20%" width="140%" height="140%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="3" result="warpNoise"/>
+                    <feDisplacementMap in="SourceGraphic" in2="warpNoise" scale="22" xChannelSelector="R" yChannelSelector="G"/>
+                </filter>
+            </defs>
+        </svg>
+
+        <!-- 3. Top Edge Fluid Aurora Flare (Radiant Prismatic Bloom) -->
+        <div class="airdrop-top-aurora">
+            <div class="aurora-flare-core"></div>
+            <div class="aurora-flare-halo violet"></div>
+            <div class="aurora-flare-halo cyan"></div>
+            <div class="aurora-flare-halo amber"></div>
+            <div class="aurora-light-beam"></div>
+        </div>
+
+        <!-- 4. Concentric Liquid Ripple Rings (Cascading Downwards from Top Edge) -->
+        <div class="airdrop-ripples-field">
+            <div class="airdrop-wave-ring r1"></div>
+            <div class="airdrop-wave-ring r2"></div>
+            <div class="airdrop-wave-ring r3"></div>
+            <div class="airdrop-wave-ring r4"></div>
+            <div class="airdrop-wave-ring r5"></div>
+        </div>
+
+        <!-- 5. Shimmering Starlight Micro-Sparkles along Top Seam -->
+        <div class="airdrop-sparkles-seam">
+            <span class="star-sparkle s1"></span>
+            <span class="star-sparkle s2"></span>
+            <span class="star-sparkle s3"></span>
+            <span class="star-sparkle s4"></span>
+            <span class="star-sparkle s5"></span>
+            <span class="star-sparkle s6"></span>
+            <span class="star-sparkle s7"></span>
+            <span class="star-sparkle s8"></span>
+        </div>
+
+        <!-- 6. iOS Floating Dynamic Glass Card -->
+        <div id="airShareSmokeCard" class="airdrop-transfer-card">
+            <div class="airdrop-card-glow-reflection"></div>
+            <div class="airdrop-card-inner">
+                <!-- Top Island Capsule Header -->
+                <div class="airdrop-island-capsule">
+                    <div class="capsule-icon-wrap">
+                        <svg class="airdrop-svg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="18" r="2.5" fill="#0284c7"/>
+                            <path d="M7.75 14.5a6 6 0 0 1 8.5 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+                            <path d="M4.5 11.2a10.5 10.5 0 0 1 15 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+                            <path d="M1.5 8a15 15 0 0 1 21 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="capsule-text-col">
+                        <span class="capsule-kicker">AirDrop</span>
+                        <span class="capsule-subtext" id="airdropDirectionLabel">Connected to Nearby iPhone / Pilot</span>
+                    </div>
+                    <div class="capsule-status-pill">
+                        <span class="pulsing-green-dot"></span>
+                        <span class="status-txt" id="airdropStatusText">Ready</span>
+                    </div>
                 </div>
-                <div class="smoke-preview-lines">
-                    <div class="smoke-preview-line l1"></div>
-                    <div class="smoke-preview-line l2"></div>
-                    <div class="smoke-preview-line l3"></div>
+
+                <!-- Content Preview Banner (Clean Apple-Style Presentation) -->
+                <div class="airdrop-content-preview">
+                    <div class="preview-avatar-box">
+                        <div class="avatar-icon-ring">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="preview-meta-box">
+                        <strong id="smokeChatTitle" class="preview-title">Codez48 Pilot Session</strong>
+                        <span class="preview-info" id="smokePreviewDetail">Live AI Conversation • Encrypted</span>
+                    </div>
+                </div>
+
+                <!-- Subtle Liquid Flow Bar -->
+                <div class="airdrop-flow-indicator">
+                    <div class="flow-track">
+                        <div class="flow-thumb"></div>
+                    </div>
                 </div>
             </div>
-            <div class="smoke-vapor-glow"></div>
         </div>
     </div>
 

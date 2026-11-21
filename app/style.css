@@ -3450,9 +3450,10 @@ input:checked + .toggle-slider:before {
 }
 
 /* ============================================================== */
-/* AIR SHARE: TRANSLUCENT SMOKE SCREENSHOT DYNAMIC TRANSFER       */
+/* AIR SHARE: iOS 17 NAMEDROP / AIRDROP FLUID PROXIMITY TRANSFER   */
+/* (1:1 Faithful Recreation of Official Apple Fluid Warp Video)    */
 /* ============================================================== */
-.air-share-smoke-stage {
+.airdrop-proximity-stage {
     position: fixed;
     inset: 0;
     width: 100vw;
@@ -3465,65 +3466,308 @@ input:checked + .toggle-slider:before {
     justify-content: center;
 }
 
-.air-share-smoke-card {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 250px;
-    height: 360px;
-    background: rgba(220, 226, 235, 0.38); /* Translucent light gray smoke */
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border: 1.5px solid rgba(255, 255, 255, 0.75);
-    border-radius: 28px;
-    box-shadow: 
-        0 24px 50px rgba(15, 23, 42, 0.22),
-        0 0 40px 10px rgba(203, 213, 225, 0.45),
-        inset 0 1px 3px rgba(255, 255, 255, 0.85);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 18px;
-    box-sizing: border-box;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
-
-.smoke-card-shimmer {
+/* 1. Ambient Dynamic Veil with Organic Liquid Lens Refraction */
+.airdrop-ambient-veil {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.2) 100%);
+    background: radial-gradient(ellipse at 50% 0%, rgba(15, 23, 42, 0.55) 0%, rgba(3, 7, 18, 0.78) 100%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+.airdrop-proximity-stage.active .airdrop-ambient-veil {
+    opacity: 1;
+}
+
+/* 2. Top Edge Fluid Aurora Flare (Celestial Radiant Bloom at Contact Seam) */
+.airdrop-top-aurora {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 440px;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.aurora-flare-core {
+    position: absolute;
+    top: -65px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.6);
+    width: 320px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 45%, #ffffff 0%, rgba(255, 255, 255, 0.98) 25%, rgba(254, 240, 138, 0.85) 45%, rgba(244, 114, 182, 0.6) 70%, transparent 100%);
+    filter: blur(22px);
+    mix-blend-mode: screen;
+    opacity: 0;
+}
+
+.aurora-flare-halo {
+    position: absolute;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+    opacity: 0;
+}
+
+.aurora-flare-halo.violet {
+    top: -110px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.6);
+    width: 580px;
+    height: 350px;
+    background: radial-gradient(ellipse at 50% 30%, rgba(168, 85, 247, 0.9) 0%, rgba(139, 92, 246, 0.65) 40%, rgba(99, 102, 241, 0.35) 70%, transparent 100%);
+    filter: blur(52px);
+}
+
+.aurora-flare-halo.cyan {
+    top: -85px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.6);
+    width: 480px;
+    height: 300px;
+    background: radial-gradient(ellipse at 50% 30%, rgba(56, 189, 248, 0.85) 0%, rgba(14, 165, 233, 0.55) 45%, rgba(6, 182, 212, 0.25) 75%, transparent 100%);
+    filter: blur(42px);
+}
+
+.aurora-flare-halo.amber {
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.6);
+    width: 360px;
+    height: 220px;
+    background: radial-gradient(ellipse at 50% 25%, rgba(251, 191, 36, 0.8) 0%, rgba(245, 158, 11, 0.45) 50%, transparent 80%);
+    filter: blur(30px);
+}
+
+.aurora-light-beam {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleY(0.4);
+    width: 240px;
+    height: 380px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(192, 132, 252, 0.4) 40%, rgba(56, 189, 248, 0.15) 75%, transparent 100%);
+    filter: blur(34px);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform-origin: top center;
+}
+
+/* 3. Concentric Rippling Liquid Light Waves Propagating Downwards */
+.airdrop-ripples-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.airdrop-wave-ring {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    border: 2.5px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 
+        0 0 35px 8px rgba(168, 85, 247, 0.75),
+        inset 0 0 25px 5px rgba(56, 189, 248, 0.65),
+        0 0 60px 18px rgba(236, 72, 153, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+/* 4. Shimmering Starlight Micro-Sparkles along Top Contact Seam */
+.airdrop-sparkles-seam {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 40px;
     pointer-events: none;
 }
 
-.smoke-card-content {
+.star-sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 10px 3px #ffffff, 0 0 18px 6px rgba(168, 85, 247, 0.85);
+    opacity: 0;
+}
+.star-sparkle.s1 { top: 4px; left: 15%; animation-delay: 0.1s; }
+.star-sparkle.s2 { top: 12px; left: 32%; animation-delay: 0.3s; }
+.star-sparkle.s3 { top: 6px; left: 48%; animation-delay: 0.05s; }
+.star-sparkle.s4 { top: 14px; left: 62%; animation-delay: 0.25s; }
+.star-sparkle.s5 { top: 5px; left: 78%; animation-delay: 0.18s; }
+.star-sparkle.s6 { top: 10px; left: 90%; animation-delay: 0.4s; }
+.star-sparkle.s7 { top: 2px; left: 24%; animation-delay: 0.35s; }
+.star-sparkle.s8 { top: 8px; left: 70%; animation-delay: 0.15s; }
+
+/* 5. iOS Floating Dynamic Glass Card */
+.airdrop-transfer-card {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 320px;
+    max-width: 88vw;
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(36px) saturate(200%);
+    -webkit-backdrop-filter: blur(36px) saturate(200%);
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    border-radius: 32px;
+    box-shadow: 
+        0 26px 65px rgba(15, 23, 42, 0.28),
+        0 0 45px 12px rgba(168, 85, 247, 0.28),
+        inset 0 1px 3px #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.airdrop-card-glow-reflection {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.3) 100%);
+    pointer-events: none;
+}
+
+.airdrop-card-inner {
     position: relative;
     z-index: 2;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    justify-content: space-between;
+    gap: 16px;
 }
 
-.smoke-card-header {
+/* Island Capsule Header */
+.airdrop-island-capsule {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
-.smoke-dot {
-    width: 10px;
-    height: 10px;
-    background: #0f172a;
+.capsule-icon-wrap {
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(15, 23, 42, 0.4);
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
 }
 
-.smoke-card-header strong {
-    font-size: 13px;
+.airdrop-svg-icon {
+    display: block;
+}
+
+.capsule-text-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.capsule-kicker {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #0284c7;
+}
+
+.capsule-subtext {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.capsule-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.pulsing-green-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 8px #22c55e;
+    animation: airdropDotPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes airdropDotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.35); opacity: 0.7; }
+}
+
+.status-txt {
+    font-size: 11px;
+    font-weight: 700;
+    color: #15803d;
+}
+
+/* Content Preview Banner */
+.airdrop-content-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: rgba(241, 245, 249, 0.85);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 18px;
+}
+
+.preview-avatar-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+}
+
+.preview-avatar-box svg {
+    stroke: #ffffff;
+}
+
+.preview-meta-box {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.preview-title {
+    font-size: 14px;
     font-weight: 800;
     color: #0f172a;
     letter-spacing: -0.2px;
@@ -3533,203 +3777,255 @@ input:checked + .toggle-slider:before {
     max-width: 190px;
 }
 
-.smoke-preview-lines {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 20px 0;
+.preview-info {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 2px;
 }
 
-.smoke-preview-line {
-    border-radius: 10px;
-    background: rgba(15, 23, 42, 0.12);
+/* Fluid neon flow indicator track */
+.airdrop-flow-indicator {
+    width: 100%;
+    height: 4px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    overflow: hidden;
+    position: relative;
 }
 
-.smoke-preview-line.l1 {
-    width: 75%;
-    height: 28px;
-    align-self: flex-start;
-    border-radius: 12px 12px 12px 2px;
+.flow-track {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
-.smoke-preview-line.l2 {
-    width: 60%;
-    height: 36px;
-    align-self: flex-end;
-    background: rgba(15, 23, 42, 0.18);
-    border-radius: 12px 12px 2px 12px;
-}
-
-.smoke-preview-line.l3 {
-    width: 80%;
-    height: 30px;
-    align-self: flex-start;
-    border-radius: 12px 12px 12px 2px;
-}
-
-.smoke-vapor-glow {
+.flow-thumb {
     position: absolute;
-    inset: -20px;
-    background: radial-gradient(circle, rgba(226, 232, 240, 0.5) 0%, transparent 70%);
-    filter: blur(12px);
-    pointer-events: none;
-    z-index: 1;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #0284c7, #a855f7, transparent);
+    border-radius: 4px;
+    animation: airdropFlowLoop 1.4s infinite linear;
 }
 
-/* 1. SENDER ANIMATION: Center -> Wavering -> Circle at Top -> Out */
-.air-share-smoke-card.sending-flow {
-    animation: smokeSenderTimeline 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+@keyframes airdropFlowLoop {
+    0% { left: -40%; }
+    100% { left: 100%; }
 }
 
-@keyframes smokeSenderTimeline {
+/* ============================================================== */
+/* ACTIVE ANIMATION STAGES: SENDING & RECEIVING CHOREOGRAPHY       */
+/* ============================================================== */
+
+/* STAGE ACTIVE: AURORA & SPARKLES IGNITE */
+.airdrop-proximity-stage.active .aurora-flare-core {
+    animation: airdropCoreIgnite 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.airdrop-proximity-stage.active .aurora-flare-halo.violet {
+    animation: airdropHaloViolet 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.airdrop-proximity-stage.active .aurora-flare-halo.cyan {
+    animation: airdropHaloCyan 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.airdrop-proximity-stage.active .aurora-flare-halo.amber {
+    animation: airdropHaloAmber 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.airdrop-proximity-stage.active .aurora-light-beam {
+    animation: airdropLightBeam 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.airdrop-proximity-stage.active .star-sparkle {
+    animation: airdropSparkleTwinkle 1.8s ease-in-out forwards;
+}
+
+/* CONCENTRIC WATER WAVES RIPPLE CASCADE */
+.airdrop-proximity-stage.active .airdrop-wave-ring.r1 {
+    animation: airdropRippleWave 1.9s cubic-bezier(0.15, 0.85, 0.35, 1) 0.05s forwards;
+}
+.airdrop-proximity-stage.active .airdrop-wave-ring.r2 {
+    animation: airdropRippleWave 1.9s cubic-bezier(0.15, 0.85, 0.35, 1) 0.28s forwards;
+}
+.airdrop-proximity-stage.active .airdrop-wave-ring.r3 {
+    animation: airdropRippleWave 1.9s cubic-bezier(0.15, 0.85, 0.35, 1) 0.52s forwards;
+}
+.airdrop-proximity-stage.active .airdrop-wave-ring.r4 {
+    animation: airdropRippleWave 1.9s cubic-bezier(0.15, 0.85, 0.35, 1) 0.76s forwards;
+}
+.airdrop-proximity-stage.active .airdrop-wave-ring.r5 {
+    animation: airdropRippleWave 1.9s cubic-bezier(0.15, 0.85, 0.35, 1) 1.0s forwards;
+}
+
+@keyframes airdropCoreIgnite {
+    0% { transform: translateX(-50%) scale(0.3); opacity: 0; }
+    20% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+    50% { transform: translateX(-50%) scale(1.35); opacity: 1; }
+    75% { transform: translateX(-50%) scale(1.55); opacity: 0.95; }
+    100% { transform: translateX(-50%) scale(0.8); opacity: 0; }
+}
+
+@keyframes airdropHaloViolet {
+    0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
+    22% { transform: translateX(-50%) scale(1.1); opacity: 0.95; }
+    60% { transform: translateX(-50%) scale(1.4); opacity: 0.9; }
+    100% { transform: translateX(-50%) scale(1.0); opacity: 0; }
+}
+
+@keyframes airdropHaloCyan {
+    0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
+    25% { transform: translateX(-50%) scale(1.18); opacity: 0.9; }
+    65% { transform: translateX(-50%) scale(1.45); opacity: 0.85; }
+    100% { transform: translateX(-50%) scale(0.9); opacity: 0; }
+}
+
+@keyframes airdropHaloAmber {
+    0% { transform: translateX(-50%) scale(0.3); opacity: 0; }
+    20% { transform: translateX(-50%) scale(1.05); opacity: 0.85; }
+    60% { transform: translateX(-50%) scale(1.25); opacity: 0.8; }
+    100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+}
+
+@keyframes airdropLightBeam {
+    0% { transform: translateX(-50%) scaleY(0.2); opacity: 0; }
+    25% { transform: translateX(-50%) scaleY(1.05); opacity: 0.85; }
+    65% { transform: translateX(-50%) scaleY(1.2); opacity: 0.75; }
+    100% { transform: translateX(-50%) scaleY(0.4); opacity: 0; }
+}
+
+@keyframes airdropRippleWave {
     0% {
-        top: 50%;
-        left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 28px;
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.65);
-    }
-    14% {
-        top: 50%;
-        left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 28px;
+        transform: translate(-50%, -50%) scale(0.05);
         opacity: 0.95;
-        transform: translate(-50%, -50%) scale(1.02);
-    }
-    26% {
-        top: 50%;
-        left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 24px 32px 26px 30px;
-        opacity: 0.92;
-        transform: translate(-50%, -50%) scale(0.99) rotate(-0.5deg);
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22), 0 0 45px 12px rgba(203, 213, 225, 0.6);
     }
     40% {
-        top: 50%;
-        left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 32px 24px 30px 26px;
-        opacity: 0.95;
-        transform: translate(-50%, -50%) scale(1.01) rotate(0.5deg);
-        box-shadow: 0 24px 50px rgba(15, 23, 42, 0.24), 0 0 50px 14px rgba(226, 232, 240, 0.65);
-    }
-    52% {
-        top: 50%;
-        left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 28px;
-        opacity: 0.95;
-        transform: translate(-50%, -50%) scale(1.0);
-    }
-    74% {
-        top: 90px;
-        left: 50%;
-        width: 110px;
-        height: 110px;
-        border-radius: 42%;
-        opacity: 0.92;
-        transform: translate(-50%, -50%) scale(0.9);
-    }
-    86% {
-        top: 25px;
-        left: 50%;
-        width: 58px;
-        height: 58px;
-        border-radius: 50%;
-        opacity: 0.98;
-        transform: translate(-50%, -50%) scale(0.85);
-        box-shadow: 0 0 35px 14px rgba(255, 255, 255, 0.95);
+        opacity: 0.85;
     }
     100% {
-        top: -80px;
-        left: 50%;
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
+        transform: translate(-50%, -50%) scale(6.5);
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
     }
 }
 
-/* 2. RECEIVER ANIMATION: Top Overflow Circle -> Center -> Blast */
-.air-share-smoke-card.receiving-flow {
-    animation: smokeReceiverTimeline 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+@keyframes airdropSparkleTwinkle {
+    0%, 100% { opacity: 0; transform: scale(0.2); }
+    30%, 70% { opacity: 1; transform: scale(1.3); }
 }
 
-@keyframes smokeReceiverTimeline {
+/* 1. SENDER TIMELINE: Center -> Hover -> Elongate Liquid Stretch -> Beams into Top Contact Point */
+.airdrop-transfer-card.sending-flow {
+    animation: airdropSenderCardTimeline 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes airdropSenderCardTimeline {
     0% {
-        top: -80px;
+        top: 52%;
         left: 50%;
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
+        transform: translate(-50%, -50%) scale(0.6);
+        border-radius: 32px;
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
-        box-shadow: 0 0 35px 14px rgba(255, 255, 255, 0.95);
     }
     18% {
-        top: 35px;
-        left: 50%;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        opacity: 0.98;
-        transform: translate(-50%, -50%) scale(0.9);
-        box-shadow: 0 0 45px 16px rgba(255, 255, 255, 1);
-    }
-    45% {
         top: 50%;
         left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 28px;
-        opacity: 0.95;
         transform: translate(-50%, -50%) scale(1.02);
+        border-radius: 32px;
+        opacity: 1;
+        box-shadow: 0 28px 65px rgba(15, 23, 42, 0.28), 0 0 50px 14px rgba(168, 85, 247, 0.35);
     }
-    58% {
+    38% {
         top: 50%;
         left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 24px 32px 26px 30px;
-        opacity: 0.92;
-        transform: translate(-50%, -50%) scale(0.99) rotate(-0.5deg);
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22), 0 0 45px 12px rgba(203, 213, 225, 0.6);
+        transform: translate(-50%, -50%) scale(1.0);
+        border-radius: 32px;
+        opacity: 1;
+    }
+    55% {
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%) scaleX(0.92) scaleY(1.12);
+        border-radius: 36px 36px 28px 28px;
+        opacity: 0.98;
     }
     72% {
-        top: 50%;
+        top: 22%;
         left: 50%;
-        width: 250px;
-        height: 360px;
-        border-radius: 32px 24px 30px 26px;
-        opacity: 0.96;
-        transform: translate(-50%, -50%) scale(1.02) rotate(0.5deg);
+        transform: translate(-50%, -50%) scaleX(0.82) scaleY(1.24);
+        border-radius: 42px 42px 24px 24px;
+        opacity: 0.95;
     }
-    86% {
-        top: 50%;
+    88% {
+        top: 4%;
         left: 50%;
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0px;
-        opacity: 0.6;
-        transform: translate(-50%, -50%) scale(1.4);
-        box-shadow: 0 0 100px 30px rgba(255, 255, 255, 0.9);
+        transform: translate(-50%, -50%) scale(0.35);
+        border-radius: 50%;
+        opacity: 0.9;
+        box-shadow: 0 0 50px 20px rgba(255, 255, 255, 1);
     }
     100% {
-        top: 50%;
+        top: -60px;
         left: 50%;
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0px;
+        transform: translate(-50%, -50%) scale(0.1);
+        border-radius: 50%;
         opacity: 0;
-        transform: translate(-50%, -50%) scale(2.2);
+    }
+}
+
+/* 2. RECEIVER TIMELINE: Top Seam Flare -> Drops from Top -> Fluid Bounce -> Dissolves into Active Chat */
+.airdrop-transfer-card.receiving-flow {
+    animation: airdropReceiverCardTimeline 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes airdropReceiverCardTimeline {
+    0% {
+        top: -60px;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.2);
+        border-radius: 50%;
+        opacity: 0;
+        box-shadow: 0 0 50px 20px rgba(255, 255, 255, 1);
+    }
+    18% {
+        top: 8%;
+        left: 50%;
+        transform: translate(-50%, -50%) scaleX(0.78) scaleY(1.22);
+        border-radius: 44px 44px 30px 30px;
+        opacity: 0.95;
+    }
+    45% {
+        top: 49%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.04);
+        border-radius: 32px;
+        opacity: 1;
+        box-shadow: 0 28px 65px rgba(15, 23, 42, 0.28), 0 0 45px 12px rgba(168, 85, 247, 0.32);
+    }
+    60% {
+        top: 48%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.99);
+        border-radius: 32px;
+        opacity: 1;
+    }
+    75% {
+        top: 48%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.0);
+        border-radius: 32px;
+        opacity: 1;
+    }
+    90% {
+        top: 48%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.08);
+        border-radius: 32px;
+        opacity: 0.7;
+    }
+    100% {
+        top: 48%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.3);
+        border-radius: 40px;
+        opacity: 0;
     }
 }

@@ -1433,6 +1433,23 @@ function appendBubbleToDom(msg) {
     }
 
     renderBubbleContent(bubble, msg);
+
+    // Long-press on bubble triggers iOS 17 NameDrop / AirDrop fluid transfer
+    let bubblePressTimer = null;
+    bubble.addEventListener('touchstart', () => {
+        bubblePressTimer = setTimeout(() => {
+            if (msg.text && msg.text !== 'Thinking...') {
+                triggerAirShareFromMessage(msg.text);
+            }
+        }, 600);
+    }, { passive: true });
+    bubble.addEventListener('touchend', () => {
+        if (bubblePressTimer) clearTimeout(bubblePressTimer);
+    });
+    bubble.addEventListener('touchmove', () => {
+        if (bubblePressTimer) clearTimeout(bubblePressTimer);
+    });
+
     container.appendChild(bubble);
     return bubble;
 }
@@ -1510,6 +1527,15 @@ function renderBubbleContent(bubble, msg) {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 14 4 9 9 4"></polyline>
                         <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+                    </svg>
+                </button>
+                <!-- 4. AirDrop / Proximity Share (Apple iOS 17 Style) -->
+                <button class="msg-action-btn black-drawn" title="AirDrop Share" onclick="triggerAirShareFromMessage(decodeURIComponent('${safeText}'))" aria-label="AirDrop">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="18" r="2.5" fill="#000000"></circle>
+                        <path d="M7.75 14.5a6 6 0 0 1 8.5 0"></path>
+                        <path d="M4.5 11.2a10.5 10.5 0 0 1 15 0"></path>
+                        <path d="M1.5 8a15 15 0 0 1 21 0"></path>
                     </svg>
                 </button>
             </div>
@@ -3384,7 +3410,7 @@ function copyCliSetupCommand() {
 }
 
 // ==============================================================
-// AIR SHARE: TRANSLUCENT SMOKE SCREENSHOT DYNAMIC TRANSFER
+// AIR SHARE: iOS 17 NAMEDROP / AIRDROP FLUID PROXIMITY TRANSFER
 // ==============================================================
 let activeAirShareBeaconId = null;
 let currentGyroOrientation = { alpha: 0, beta: 0, gamma: 0 };
@@ -3407,30 +3433,56 @@ function triggerAirShareFromContext() {
     startAirShareSmokeSend(targetChat);
 }
 
-// 1. SENDER: Center wavering smoke card -> Circle at top -> Beams into other phone
+function triggerAirShareFromMessage(msgText) {
+    const activeChat = chats.find(c => c.id === currentChatId);
+    const virtualChat = {
+        id: `air_msg_${Date.now()}`,
+        title: (msgText || 'Shared Message').slice(0, 26),
+        messages: [
+            { role: 'assistant', text: msgText || '', timestamp: Date.now() }
+        ]
+    };
+    startAirShareSmokeSend(virtualChat);
+}
+
+// 1. SENDER: Top Aurora Glow + Concentric Ripple Waves + Elongate & Beams into Top Seam
 function startAirShareSmokeSend(chat) {
     closeDrawer();
 
     const stage = document.getElementById('airShareSmokeStage');
     const card = document.getElementById('airShareSmokeCard');
     const title = document.getElementById('smokeChatTitle');
+    const directionLabel = document.getElementById('airdropDirectionLabel');
+    const statusText = document.getElementById('airdropStatusText');
+    const detail = document.getElementById('smokePreviewDetail');
 
-    if (title) title.innerText = (chat.title || 'Chat Snapshot').slice(0, 24);
+    if (title) title.innerText = (chat.title || 'Pilot Chat').slice(0, 26);
+    if (directionLabel) directionLabel.innerText = 'Sharing to Nearby iPhone / Pilot';
+    if (statusText) statusText.innerText = 'Sending...';
+    if (detail) detail.innerText = 'Live AI Conversation • End-to-End Encrypted';
 
     if (stage && card) {
         stage.style.display = 'flex';
+        stage.classList.remove('active');
         card.classList.remove('receiving-flow');
         card.classList.remove('sending-flow');
-        void card.offsetWidth; // Trigger reflow
+        void card.offsetWidth; // Force CSS reflow
+        stage.classList.add('active');
         card.classList.add('sending-flow');
     }
 
-    // Gentle tactile haptic on launch
-    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
-        window.AndroidBridge.vibrate(40);
-    } else if (navigator.vibrate) {
-        navigator.vibrate(40);
-    }
+    // Choreographed tactile haptics matching Apple iOS 17 NameDrop cadence
+    const triggerHaptic = (ms) => {
+        if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+            window.AndroidBridge.vibrate(Array.isArray(ms) ? ms[0] : ms);
+        } else if (navigator.vibrate) {
+            navigator.vibrate(ms);
+        }
+    };
+
+    triggerHaptic(30);
+    setTimeout(() => triggerHaptic(45), 450);
+    setTimeout(() => triggerHaptic([60, 30, 90]), 1100);
 
     // Capture location silently
     if (navigator.geolocation) {
@@ -3447,11 +3499,15 @@ function startAirShareSmokeSend(chat) {
         broadcastAirSharePayload(chat);
     }
 
-    // Auto-hide stage after send animation completes (2.1s)
+    // Auto-hide stage after send animation completes (2.2s)
     setTimeout(() => {
-        if (stage) stage.style.display = 'none';
         if (card) card.classList.remove('sending-flow');
-    }, 2200);
+        if (stage) {
+            stage.classList.remove('active');
+            stage.style.display = 'none';
+        }
+        showToast('✓ AirDrop: Shared successfully to nearby device!');
+    }, 2250);
 }
 
 async function broadcastAirSharePayload(chat) {
@@ -3475,35 +3531,49 @@ async function broadcastAirSharePayload(chat) {
     } catch (_) {}
 }
 
-// 2. RECEIVER: Top overflow circle -> Flows to Center wavering -> Fullscreen blast -> Reveal Chat
+// 2. RECEIVER: Top Seam Flare -> Drops from Top -> Fluid Bounce -> Dissolves into Active Chat
 function triggerAirShareSmokeReceive(chatData, senderEmail) {
     const stage = document.getElementById('airShareSmokeStage');
     const card = document.getElementById('airShareSmokeCard');
     const title = document.getElementById('smokeChatTitle');
+    const directionLabel = document.getElementById('airdropDirectionLabel');
+    const statusText = document.getElementById('airdropStatusText');
+    const detail = document.getElementById('smokePreviewDetail');
 
-    if (title) title.innerText = (chatData.title || 'Incoming Chat').slice(0, 24);
+    if (title) title.innerText = (chatData.title || 'Incoming Chat').slice(0, 26);
+    if (directionLabel) directionLabel.innerText = senderEmail ? `From: ${senderEmail.split('@')[0]}` : 'Nearby Device Connected';
+    if (statusText) statusText.innerText = 'Received!';
+    if (detail) detail.innerText = 'Session Decrypted • Tap to open';
 
     if (stage && card) {
         stage.style.display = 'flex';
+        stage.classList.remove('active');
         card.classList.remove('sending-flow');
         card.classList.remove('receiving-flow');
         void card.offsetWidth; // Trigger reflow
+        stage.classList.add('active');
         card.classList.add('receiving-flow');
     }
 
-    // Mid-animation haptic bump when arriving in center & blasting
-    setTimeout(() => {
+    const triggerHaptic = (ms) => {
         if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
-            window.AndroidBridge.vibrate(180);
+            window.AndroidBridge.vibrate(Array.isArray(ms) ? ms[0] : ms);
         } else if (navigator.vibrate) {
-            navigator.vibrate([80, 40, 80]);
+            navigator.vibrate(ms);
         }
-    }, 1800);
+    };
 
-    // On blast finish (~2.2s): Load chat into viewport
+    triggerHaptic(40);
+    setTimeout(() => triggerHaptic(60), 500);
+    setTimeout(() => triggerHaptic([80, 40, 100]), 1350);
+
+    // On blast finish (~2.3s): Load chat into viewport
     setTimeout(() => {
-        if (stage) stage.style.display = 'none';
         if (card) card.classList.remove('receiving-flow');
+        if (stage) {
+            stage.classList.remove('active');
+            stage.style.display = 'none';
+        }
 
         // Import chat into local storage and open it
         const newChatId = `chat-${Date.now()}`;
@@ -3519,8 +3589,8 @@ function triggerAirShareSmokeReceive(chatData, senderEmail) {
         currentChatId = newChatId;
         loadChatSession(newChatId);
 
-        showToast(`✓ Air Share: ${senderEmail ? senderEmail.split('@')[0] : 'Device'} சாட் பெறப்பட்டது!`);
-    }, 2250);
+        showToast(`✓ AirDrop: Received chat from ${senderEmail ? senderEmail.split('@')[0] : 'Device'}!`);
+    }, 2350);
 }
 
 // 3. CONTINUOUS BACKGROUND PROXIMITY LISTENER
