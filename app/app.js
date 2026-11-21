@@ -1467,6 +1467,10 @@ function updateBubbleDom(bubble, msg) {
     renderBubbleContent(bubble, msg);
 }
 
+function sendInteractiveConfirmation(id, choice) {
+    showToast(`Option selected: ${choice}`);
+}
+
 function renderBubbleContent(bubble, msg) {
     if (!bubble) return;
     let content = '';
@@ -2676,6 +2680,20 @@ async function checkLaptopStatus() {
     if (tag) {
         tag.className = 'tag offline';
         tag.innerText = 'Standby';
+    }
+}
+
+function updateBridgeStatusUI(isOnline) {
+    isPilotOnline = !!isOnline;
+    const tag = document.getElementById('bridgeStatusTag');
+    if (tag) {
+        if (isPilotOnline) {
+            tag.className = 'tag online';
+            tag.innerText = 'Connected';
+        } else {
+            tag.className = 'tag offline';
+            tag.innerText = 'Standby';
+        }
     }
 }
 
