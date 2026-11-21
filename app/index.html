@@ -63,51 +63,38 @@
             <span class="star-sparkle s8"></span>
         </div>
 
-        <!-- 6. iOS Floating Dynamic Glass Card -->
-        <div id="airShareSmokeCard" class="airdrop-transfer-card">
-            <div class="airdrop-card-glow-reflection"></div>
-            <div class="airdrop-card-inner">
-                <!-- Top Island Capsule Header -->
-                <div class="airdrop-island-capsule">
-                    <div class="capsule-icon-wrap">
-                        <svg class="airdrop-svg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="18" r="2.5" fill="#0284c7"/>
-                            <path d="M7.75 14.5a6 6 0 0 1 8.5 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
-                            <path d="M4.5 11.2a10.5 10.5 0 0 1 15 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
-                            <path d="M1.5 8a15 15 0 0 1 21 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <div class="capsule-text-col">
-                        <span class="capsule-kicker">AirDrop</span>
-                        <span class="capsule-subtext" id="airdropDirectionLabel">Connected to Nearby iPhone / Pilot</span>
-                    </div>
-                    <div class="capsule-status-pill">
-                        <span class="pulsing-green-dot"></span>
-                        <span class="status-txt" id="airdropStatusText">Ready</span>
-                    </div>
-                </div>
+        <!-- 6. Pure Apple Liquid Glass Circle with Chromatic Shining Sweep (Zero Text, Zero Boxes, Pure Glass Effect) -->
+        <div id="airShareSmokeCard" class="airdrop-glass-orb">
+            <!-- 3D Spherical Specular Glass Refraction -->
+            <div class="glass-orb-body">
+                <!-- Sweeping Chromatic Light Beam on Glass -->
+                <div class="glass-shining-sweep"></div>
+                <!-- Prismatic Liquid Inner Glow Core -->
+                <div class="glass-prismatic-core"></div>
+                <!-- Lens Reflection Highlight Arc -->
+                <div class="glass-lens-arc"></div>
+            </div>
+            <!-- Outer Radiant Halo Pulse -->
+            <div class="glass-orb-aura"></div>
+        </div>
+    </div>
 
-                <!-- Content Preview Banner (Clean Apple-Style Presentation) -->
-                <div class="airdrop-content-preview">
-                    <div class="preview-avatar-box">
-                        <div class="avatar-icon-ring">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="preview-meta-box">
-                        <strong id="smokeChatTitle" class="preview-title">Codez48 Pilot Session</strong>
-                        <span class="preview-info" id="smokePreviewDetail">Live AI Conversation • Encrypted</span>
-                    </div>
-                </div>
-
-                <!-- Subtle Liquid Flow Bar -->
-                <div class="airdrop-flow-indicator">
-                    <div class="flow-track">
-                        <div class="flow-thumb"></div>
-                    </div>
-                </div>
+    <!-- Air Share Permission Confirmation Popup (White Box: 'Share this content?' Yes / No) -->
+    <div id="airShareConfirmModal" class="air-share-confirm-backdrop" style="display:none;">
+        <div class="air-share-confirm-box">
+            <div class="air-confirm-icon-wrap">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="18" r="2.5" fill="#0284c7"></circle>
+                    <path d="M7.75 14.5a6 6 0 0 1 8.5 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"></path>
+                    <path d="M4.5 11.2a10.5 10.5 0 0 1 15 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"></path>
+                    <path d="M1.5 8a15 15 0 0 1 21 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"></path>
+                </svg>
+            </div>
+            <h3 class="air-confirm-title">Share this content?</h3>
+            <p class="air-confirm-subtitle" id="airConfirmDetail">Do you want to share this content with nearby device?</p>
+            <div class="air-confirm-actions">
+                <button class="air-btn-cancel" onclick="cancelAirShareConfirmation()">No</button>
+                <button class="air-btn-confirm" onclick="proceedWithAirShareTransfer()">Yes</button>
             </div>
         </div>
     </div>

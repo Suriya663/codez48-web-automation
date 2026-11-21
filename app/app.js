@@ -3416,6 +3416,37 @@ let activeAirShareBeaconId = null;
 let currentGyroOrientation = { alpha: 0, beta: 0, gamma: 0 };
 let currentDeviceLocation = { lat: null, lng: null };
 let isAirShareListening = false;
+let pendingAirShareChat = null;
+
+// Permission Confirmation: Small white modal asks "Share this content? Yes / No"
+function requestAirShareConfirmation(chat) {
+    pendingAirShareChat = chat;
+    closeDrawer();
+    const modal = document.getElementById('airShareConfirmModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        proceedWithAirShareTransfer();
+    }
+}
+
+function cancelAirShareConfirmation() {
+    pendingAirShareChat = null;
+    const modal = document.getElementById('airShareConfirmModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function proceedWithAirShareTransfer() {
+    const modal = document.getElementById('airShareConfirmModal');
+    if (modal) modal.style.display = 'none';
+
+    const chatToTransfer = pendingAirShareChat || chats.find(c => c.id === currentChatId) || chats[0];
+    pendingAirShareChat = null;
+
+    if (chatToTransfer) {
+        startAirShareSmokeSend(chatToTransfer);
+    }
+}
 
 function triggerAirShareFromContext() {
     const menu = document.getElementById('historyContextMenu');
@@ -3430,11 +3461,10 @@ function triggerAirShareFromContext() {
         return;
     }
 
-    startAirShareSmokeSend(targetChat);
+    requestAirShareConfirmation(targetChat);
 }
 
 function triggerAirShareFromMessage(msgText) {
-    const activeChat = chats.find(c => c.id === currentChatId);
     const virtualChat = {
         id: `air_msg_${Date.now()}`,
         title: (msgText || 'Shared Message').slice(0, 26),
@@ -3442,7 +3472,7 @@ function triggerAirShareFromMessage(msgText) {
             { role: 'assistant', text: msgText || '', timestamp: Date.now() }
         ]
     };
-    startAirShareSmokeSend(virtualChat);
+    requestAirShareConfirmation(virtualChat);
 }
 
 // 1. SENDER: Top Aurora Glow + Concentric Ripple Waves + Elongate & Beams into Top Seam

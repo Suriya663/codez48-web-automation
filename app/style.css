@@ -3616,204 +3616,214 @@ input:checked + .toggle-slider:before {
 .star-sparkle.s7 { top: 2px; left: 24%; animation-delay: 0.35s; }
 .star-sparkle.s8 { top: 8px; left: 70%; animation-delay: 0.15s; }
 
-/* 5. iOS Floating Dynamic Glass Card */
-.airdrop-transfer-card {
+/* 5. Pure Apple Liquid Glass Circle (Zero Text, Zero Boxes, Pure Glass Optics) */
+.airdrop-glass-orb {
     position: absolute;
     top: 48%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.7);
-    width: 320px;
-    max-width: 88vw;
-    background: rgba(255, 255, 255, 0.84);
-    backdrop-filter: blur(36px) saturate(200%);
-    -webkit-backdrop-filter: blur(36px) saturate(200%);
-    border: 1.5px solid rgba(255, 255, 255, 0.95);
-    border-radius: 32px;
-    box-shadow: 
-        0 26px 65px rgba(15, 23, 42, 0.28),
-        0 0 45px 12px rgba(168, 85, 247, 0.28),
-        inset 0 1px 3px #ffffff;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: hidden;
-    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
     pointer-events: none;
+    opacity: 0;
     will-change: transform, opacity;
 }
 
-.airdrop-card-glow-reflection {
+.glass-orb-body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.15) 35%, rgba(168, 85, 247, 0.28) 70%, rgba(56, 189, 248, 0.32) 100%);
+    backdrop-filter: blur(28px) brightness(1.35) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) brightness(1.35) saturate(200%);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 
+        0 0 65px 20px rgba(168, 85, 247, 0.55),
+        inset 0 0 45px 12px rgba(255, 255, 255, 0.9),
+        inset 0 -15px 30px rgba(56, 189, 248, 0.5),
+        0 25px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+/* Sweeping Chromatic Light Beam on Curved Glass Surface */
+.glass-shining-sweep {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.3) 100%);
+    top: -40%;
+    left: -60%;
+    width: 220%;
+    height: 180%;
+    background: linear-gradient(125deg, transparent 20%, rgba(255,255,255,0.08) 35%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.12) 65%, transparent 80%);
+    transform: rotate(-15deg);
+    animation: glassShiningSweepLoop 1.4s infinite ease-in-out;
     pointer-events: none;
 }
 
-.airdrop-card-inner {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+@keyframes glassShiningSweepLoop {
+    0% { transform: translateY(-50%) translateX(-40%) rotate(-15deg); opacity: 0; }
+    25% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { transform: translateY(40%) translateX(40%) rotate(-15deg); opacity: 0; }
 }
 
-/* Island Capsule Header */
-.airdrop-island-capsule {
+/* Top Crescent Specular Highlight Arc */
+.glass-lens-arc {
+    position: absolute;
+    top: 6px;
+    left: 12%;
+    width: 76%;
+    height: 38%;
+    border-top: 3.5px solid rgba(255, 255, 255, 0.98);
+    border-radius: 50%;
+    filter: blur(0.7px);
+    pointer-events: none;
+}
+
+/* Inner Prismatic Glowing Core */
+.glass-prismatic-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(192, 132, 252, 0.5) 50%, transparent 100%);
+    filter: blur(10px);
+    mix-blend-mode: screen;
+}
+
+.glass-orb-aura {
+    position: absolute;
+    inset: -25px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(56, 189, 248, 0.2) 60%, transparent 80%);
+    filter: blur(16px);
+    mix-blend-mode: screen;
+    animation: glassOrbAuraPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes glassOrbAuraPulse {
+    0%, 100% { transform: scale(0.95); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 0.95; }
+}
+
+/* ============================================================== */
+/* WHITE CONFIRMATION POPUP (Share this content? Yes / No)        */
+/* ============================================================== */
+.air-share-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 1000002;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    animation: confirmFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.capsule-icon-wrap {
-    width: 42px;
-    height: 42px;
+.air-share-confirm-box {
+    background: #ffffff;
+    width: 320px;
+    max-width: 88vw;
+    border-radius: 28px;
+    padding: 26px 22px 22px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 
+        0 25px 60px rgba(15, 23, 42, 0.35),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    animation: confirmScaleUp 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.air-confirm-icon-wrap {
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     background: #f0f9ff;
-    border: 1px solid #bae6fd;
+    border: 1.5px solid #bae6fd;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+    margin-bottom: 14px;
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.18);
 }
 
-.airdrop-svg-icon {
-    display: block;
-}
-
-.capsule-text-col {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-}
-
-.capsule-kicker {
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #0284c7;
-}
-
-.capsule-subtext {
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.capsule-status-pill {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
-    border-radius: 20px;
-    background: rgba(34, 197, 94, 0.12);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.pulsing-green-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #16a34a;
-    box-shadow: 0 0 8px #22c55e;
-    animation: airdropDotPulse 1.2s infinite ease-in-out;
-}
-
-@keyframes airdropDotPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.35); opacity: 0.7; }
-}
-
-.status-txt {
-    font-size: 11px;
-    font-weight: 700;
-    color: #15803d;
-}
-
-/* Content Preview Banner */
-.airdrop-content-preview {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 14px;
-    background: rgba(241, 245, 249, 0.85);
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 18px;
-}
-
-.preview-avatar-box {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: #0f172a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
-}
-
-.preview-avatar-box svg {
-    stroke: #ffffff;
-}
-
-.preview-meta-box {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.preview-title {
-    font-size: 14px;
+.air-confirm-title {
+    font-size: 19px;
     font-weight: 800;
     color: #0f172a;
-    letter-spacing: -0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 190px;
+    letter-spacing: -0.4px;
+    margin: 0 0 6px 0;
 }
 
-.preview-info {
-    font-size: 11px;
+.air-confirm-subtitle {
+    font-size: 13px;
     font-weight: 500;
     color: #64748b;
-    margin-top: 2px;
+    line-height: 1.45;
+    margin: 0 0 20px 0;
 }
 
-/* Fluid neon flow indicator track */
-.airdrop-flow-indicator {
+.air-confirm-actions {
+    display: flex;
+    gap: 12px;
     width: 100%;
-    height: 4px;
-    border-radius: 4px;
+}
+
+.air-btn-cancel {
+    flex: 1;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.air-btn-cancel:active {
     background: #e2e8f0;
-    overflow: hidden;
-    position: relative;
+    transform: scale(0.97);
 }
 
-.flow-track {
-    width: 100%;
-    height: 100%;
-    position: relative;
+.air-btn-confirm {
+    flex: 1;
+    padding: 12px 16px;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(2, 132, 199, 0.38);
+    transition: all 0.15s ease;
 }
 
-.flow-thumb {
-    position: absolute;
-    top: 0;
-    left: -40%;
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, #0284c7, #a855f7, transparent);
-    border-radius: 4px;
-    animation: airdropFlowLoop 1.4s infinite linear;
+.air-btn-confirm:active {
+    background: #0369a1;
+    transform: scale(0.97);
 }
 
-@keyframes airdropFlowLoop {
-    0% { left: -40%; }
-    100% { left: 100%; }
+@keyframes confirmFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes confirmScaleUp {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
 /* ============================================================== */
@@ -3912,120 +3922,110 @@ input:checked + .toggle-slider:before {
     30%, 70% { opacity: 1; transform: scale(1.3); }
 }
 
-/* 1. SENDER TIMELINE: Center -> Hover -> Elongate Liquid Stretch -> Beams into Top Contact Point */
-.airdrop-transfer-card.sending-flow {
-    animation: airdropSenderCardTimeline 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* 1. SENDER TIMELINE: Circular Liquid Glass Orb with Shining Sweep Glides Up to Screen Top */
+.airdrop-glass-orb.sending-flow {
+    animation: airdropSenderGlassOrbTimeline 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes airdropSenderCardTimeline {
+@keyframes airdropSenderGlassOrbTimeline {
     0% {
         top: 52%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(0.6);
-        border-radius: 32px;
+        transform: translate(-50%, -50%) scale(0.2);
         opacity: 0;
+        filter: blur(8px);
     }
-    18% {
-        top: 50%;
+    16% {
+        top: 48%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(1.02);
-        border-radius: 32px;
+        transform: translate(-50%, -50%) scale(1.04);
         opacity: 1;
-        box-shadow: 0 28px 65px rgba(15, 23, 42, 0.28), 0 0 50px 14px rgba(168, 85, 247, 0.35);
+        filter: blur(0px);
+        box-shadow: 0 0 65px 20px rgba(168, 85, 247, 0.6), inset 0 0 45px 12px rgba(255, 255, 255, 0.9);
     }
-    38% {
-        top: 50%;
+    32% {
+        top: 48%;
         left: 50%;
         transform: translate(-50%, -50%) scale(1.0);
-        border-radius: 32px;
         opacity: 1;
     }
-    55% {
-        top: 40%;
+    48% {
+        top: 36%;
         left: 50%;
-        transform: translate(-50%, -50%) scaleX(0.92) scaleY(1.12);
-        border-radius: 36px 36px 28px 28px;
+        transform: translate(-50%, -50%) scaleX(0.85) scaleY(1.25);
         opacity: 0.98;
     }
-    72% {
-        top: 22%;
+    68% {
+        top: 18%;
         left: 50%;
-        transform: translate(-50%, -50%) scaleX(0.82) scaleY(1.24);
-        border-radius: 42px 42px 24px 24px;
+        transform: translate(-50%, -50%) scaleX(0.76) scaleY(1.36);
         opacity: 0.95;
     }
-    88% {
-        top: 4%;
+    85% {
+        top: 2%;
         left: 50%;
         transform: translate(-50%, -50%) scale(0.35);
-        border-radius: 50%;
-        opacity: 0.9;
-        box-shadow: 0 0 50px 20px rgba(255, 255, 255, 1);
+        opacity: 0.95;
+        box-shadow: 0 0 60px 25px rgba(255, 255, 255, 1);
     }
     100% {
-        top: -60px;
+        top: -70px;
         left: 50%;
-        transform: translate(-50%, -50%) scale(0.1);
-        border-radius: 50%;
+        transform: translate(-50%, -50%) scale(0.08);
         opacity: 0;
     }
 }
 
-/* 2. RECEIVER TIMELINE: Top Seam Flare -> Drops from Top -> Fluid Bounce -> Dissolves into Active Chat */
-.airdrop-transfer-card.receiving-flow {
-    animation: airdropReceiverCardTimeline 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* 2. RECEIVER TIMELINE: Glass Orb Emerges from Top Seam -> Drops & Bounces at Center -> Dissolves into Chat */
+.airdrop-glass-orb.receiving-flow {
+    animation: airdropReceiverGlassOrbTimeline 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes airdropReceiverCardTimeline {
+@keyframes airdropReceiverGlassOrbTimeline {
     0% {
-        top: -60px;
+        top: -65px;
         left: 50%;
-        transform: translate(-50%, -50%) scale(0.2);
-        border-radius: 50%;
+        transform: translate(-50%, -50%) scale(0.15);
         opacity: 0;
-        box-shadow: 0 0 50px 20px rgba(255, 255, 255, 1);
+        box-shadow: 0 0 60px 25px rgba(255, 255, 255, 1);
     }
     18% {
-        top: 8%;
+        top: 10%;
         left: 50%;
-        transform: translate(-50%, -50%) scaleX(0.78) scaleY(1.22);
-        border-radius: 44px 44px 30px 30px;
+        transform: translate(-50%, -50%) scaleX(0.8) scaleY(1.3);
         opacity: 0.95;
     }
     45% {
-        top: 49%;
+        top: 48%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(1.04);
-        border-radius: 32px;
+        transform: translate(-50%, -50%) scale(1.06);
         opacity: 1;
-        box-shadow: 0 28px 65px rgba(15, 23, 42, 0.28), 0 0 45px 12px rgba(168, 85, 247, 0.32);
+        box-shadow: 0 0 65px 20px rgba(168, 85, 247, 0.6), inset 0 0 45px 12px rgba(255, 255, 255, 0.9);
     }
     60% {
         top: 48%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(0.99);
-        border-radius: 32px;
+        transform: translate(-50%, -50%) scale(0.97);
         opacity: 1;
     }
     75% {
         top: 48%;
         left: 50%;
         transform: translate(-50%, -50%) scale(1.0);
-        border-radius: 32px;
         opacity: 1;
     }
-    90% {
+    88% {
         top: 48%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(1.08);
-        border-radius: 32px;
-        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1.15);
+        opacity: 0.5;
+        filter: blur(6px);
     }
     100% {
         top: 48%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(1.3);
-        border-radius: 40px;
+        transform: translate(-50%, -50%) scale(1.5);
         opacity: 0;
+        filter: blur(14px);
     }
 }
